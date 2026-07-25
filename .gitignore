@@ -18,3 +18,9 @@ ts-builds
 #!.yarn/cache
 .pnp.*
 /.idea/*
+
+# Per-application local configuration
+apps/*/env.local.yaml
+
+# Local mount point for external runtime feature flags
+/runtime/feature-flags/
