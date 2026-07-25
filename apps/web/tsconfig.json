@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.apps-base.json",
+  "compilerOptions": {
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "jsx": "react-jsx",
+    "paths": {
+      "#/*": ["./src/*"]
+    },
+    "tsBuildInfoFile": "../../ts-builds/apps/web.tsbuildinfo"
+  },
+  "include": ["src"],
+  "references": [
+    {
+      "path": "../../packages/game-engine"
+    }
+  ]
+}

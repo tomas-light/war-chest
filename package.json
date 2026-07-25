@@ -1,0 +1,19 @@
+{
+  "name": "war-chest",
+  "private": true,
+  "packageManager": "yarn@4.17.1",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "types:build": "tsc --build",
+    "types:watch": "tsc --build --watch",
+    "types:clean": "tsc --build --clean"
+  },
+  "devDependencies": {
+    "@types/node": "22.18.3",
+    "typescript": "7.0.2"
+  }
+}

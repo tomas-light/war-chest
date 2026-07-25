@@ -1,0 +1,14 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "./packages/game-engine"
+    },
+    {
+      "path": "./apps/server"
+    },
+    {
+      "path": "./apps/web"
+    }
+  ]
+}

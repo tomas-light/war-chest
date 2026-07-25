@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.packages-base.json",
+  "compilerOptions": {
+    "outDir": "../../ts-builds/packages/game-engine",
+    "paths": {
+      "#/*": ["./src/*"]
+    },
+    "tsBuildInfoFile": "../../ts-builds/packages/game-engine.tsbuildinfo"
+  },
+  "include": ["src"]
+}

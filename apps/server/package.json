@@ -1,0 +1,12 @@
+{
+  "name": "@war-chest/server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "types:build": "tsc --build",
+    "types:watch": "tsc --build --watch"
+  },
+  "dependencies": {
+    "@war-chest/game-engine": "workspace:^"
+  }
+}
