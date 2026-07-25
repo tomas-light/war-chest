@@ -79,7 +79,7 @@ GET /auth/telegram/callback
 
 Телефон и разрешение боту отправлять сообщения для MVP не запрашиваем: для входа достаточно `openid profile`.
 
-Telegram client ID и secret выдаются через BotFather. Secret хранится только в серверном `env.local.yaml` или в смонтированном production-конфиге.
+Telegram client ID и secret выдаются через BotFather. Локально secret может находиться в серверном `env.local.yaml`. На стендах он передаётся явно процессу запуска или через Kubernetes Secret, если проект перейдёт на Kubernetes.
 
 ## HTTP API
 
