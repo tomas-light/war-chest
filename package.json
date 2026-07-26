@@ -8,12 +8,41 @@
     "packages/*"
   ],
   "scripts": {
+    "db:down": "docker compose down",
+    "db:generate": "yarn workspace @war-chest/database db:generate",
+    "db:migrate": "yarn workspace @war-chest/database db:migrate",
+    "db:seed": "yarn workspace @war-chest/database db:seed",
+    "db:studio": "yarn workspace @war-chest/database db:studio",
+    "db:up": "docker compose up -d postgres",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
+    "lint": "eslint . && stylelint \"**/*.{css,scss}\" --allow-empty-input",
+    "lint:fix": "eslint . --fix && stylelint \"**/*.{css,scss}\" --fix --allow-empty-input",
     "types:build": "tsc --build",
     "types:watch": "tsc --build --watch",
     "types:clean": "tsc --build --clean"
   },
   "devDependencies": {
+    "@eslint/compat": "2.1.0",
+    "@eslint/js": "10.0.1",
+    "@tomas-light/stylelint-config-idiomatic-order": "1.0.1",
     "@types/node": "22.18.3",
-    "typescript": "7.0.2"
+    "@typescript/native": "npm:typescript@7.0.2",
+    "eslint": "10.8.0",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-import-x": "4.17.1",
+    "eslint-plugin-prettier": "5.5.6",
+    "eslint-plugin-react": "7.37.5",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "globals": "17.8.0",
+    "postcss": "8.5.23",
+    "prettier": "3.9.6",
+    "stylelint": "17.14.1",
+    "stylelint-config-css-modules": "4.6.0",
+    "stylelint-config-standard": "40.0.0",
+    "stylelint-config-standard-scss": "17.0.0",
+    "stylelint-order": "8.1.1",
+    "typescript": "npm:@typescript/typescript6@6.0.2",
+    "typescript-eslint": "8.65.0"
   }
 }
