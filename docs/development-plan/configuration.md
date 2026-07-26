@@ -68,7 +68,6 @@ env.yaml
 APP_HOST: "0.0.0.0"
 APP_PORT: 3000
 DISCONNECTED_PLAYER_TIMEOUT_MINUTES: 15
-SNAPSHOT_EVERY_EVENTS: 100
 FEATURE_FLAGS_RUNTIME_FILE: "../../runtime/feature-flags/feature-flags.localhost.json"
 ```
 
@@ -76,10 +75,6 @@ FEATURE_FLAGS_RUNTIME_FILE: "../../runtime/feature-flags/feature-flags.localhost
 принадлежат `packages/auth` и здесь не дублируются.
 
 `DISCONNECTED_PLAYER_TIMEOUT_MINUTES` задаёт, сколько минут незавершённая партия ждёт отключившегося игрока. Таймер начинается, когда у игрока не остаётся ни одного активного соединения. После истечения времени игроку засчитывается поражение.
-
-`SNAPSHOT_EVERY_EVENTS` задаёт интервал сохранения снимков в памяти серверного процесса. При значении `100` сервер создаёт in-memory snapshot после каждого сотого игрового события. Значение `0` отключает автоматическое создание snapshots.
-
-Snapshot не считается событием, не увеличивает sequence number и не записывается в базу. Это временный производный кэш: цепочка событий остаётся единственным источником истины. После перезапуска сервера snapshots теряются и состояние собирается из полной истории.
 
 ### База данных
 
