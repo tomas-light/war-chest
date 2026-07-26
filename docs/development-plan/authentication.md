@@ -1,8 +1,82 @@
 # Авторизация
 
-Для MVP пользователь входит через Google или Telegram. После проверки внешнего провайдера сервер создаёт собственную сессию War Chest — дальнейшая работа игры не зависит от того, каким способом пользователь вошёл.
+Для MVP пользователь входит через Google, Telegram или Yandex ID. После проверки внешнего провайдера сервер создаёт собственную сессию War Chest — дальнейшая работа игры не зависит от того, каким способом пользователь вошёл.
 
 Пароли и собственная регистрация в MVP не нужны.
+
+## Пакет `packages/auth`
+
+Серверную реализацию авторизации выделяем в отдельный workspace-пакет. Так
+интеграции с провайдерами, создание сессии и их конфигурация образуют одну
+границу и не смешиваются с игровыми маршрутами Fastify.
+
+```text
+packages/auth/
+  env.yaml
+  env.local.yaml
+  src/
+    config/
+      load-config.ts
+      schema.ts
+    providers/
+      google.ts
+      telegram.ts
+      yandex.ts
+    avatars.ts
+    identities.ts
+    sessions.ts
+    index.ts
+  package.json
+  tsconfig.json
+```
+
+`packages/auth` содержит:
+
+- проверку ответов Google, Telegram и Yandex ID;
+- OAuth state, PKCE и обмен authorization code на токены;
+- нормализацию профиля провайдера во внутреннюю внешнюю идентичность;
+- загрузку и нормализацию аватара провайдера;
+- создание, проверку и отзыв сессии War Chest;
+- работу с session cookie через настройки пакета;
+- публичный API, который вызывают HTTP-адаптеры сервера.
+
+Пакет является серверным и не импортируется в браузерную сборку. Маршруты
+Fastify остаются в `apps/server`, но только преобразуют HTTP-запрос в вызов
+`@war-chest/auth` и устанавливают подготовленную пакетом cookie.
+
+Таблицы `users`, `user_identities` и `auth_sessions` по-прежнему описаны в
+`packages/database`. Пакет авторизации зависит от `@war-chest/database`, а пакет
+базы ничего не знает об OAuth-провайдерах.
+
+Конфигурация также принадлежит этой границе:
+
+```yaml
+AUTH_SESSION_COOKIE_NAME: "war_chest_session"
+AUTH_SESSION_TTL_MINUTES: 43200
+AUTH_COOKIE_SECURE: false
+AUTH_COOKIE_SAME_SITE: "lax"
+AUTH_SUCCESS_REDIRECT_URL: "http://localhost:5173"
+AUTH_AVATAR_MAX_SOURCE_BYTES: 1048576
+AUTH_AVATAR_FETCH_TIMEOUT_MS: 5000
+AUTH_AVATAR_SIZE_PX: 256
+GOOGLE_CLIENT_ID: ""
+TELEGRAM_CLIENT_ID: ""
+TELEGRAM_CLIENT_SECRET: ""
+TELEGRAM_REDIRECT_URI: "http://localhost:3000/auth/telegram/callback"
+YANDEX_CLIENT_ID: ""
+YANDEX_CLIENT_SECRET: ""
+YANDEX_REDIRECT_URI: "http://localhost:3000/auth/yandex/callback"
+```
+
+`packages/auth/env.yaml` хранится в Git с безопасными значениями и пустыми
+секретами. Локальные client ID и secrets находятся в
+`packages/auth/env.local.yaml`, который игнорируется Git. На стендах значения
+передаются процессу явно и имеют наивысший приоритет.
+
+Публичный Google client ID дополнительно остаётся в `apps/web/env.yaml`, потому
+что он нужен официальной кнопке в браузере. Это не секрет. Telegram и Yandex
+начинают redirect flow через сервер, поэтому их client ID клиентской сборке не
+нужны.
 
 ## Общая модель
 
@@ -12,8 +86,14 @@
 users
   id
   display_name
-  avatar_url
   created_at
+
+user_avatars
+  user_id
+  content
+  content_type
+  content_hash
+  updated_at
 
 user_identities
   id
@@ -30,9 +110,45 @@ auth_sessions
   revoked_at
 ```
 
-Пара `(provider, provider_subject)` уникальна. Email или Telegram username не используются как постоянный идентификатор и не служат основанием для автоматического объединения аккаунтов.
+Пара `(provider, provider_subject)` уникальна. Email, Telegram username или
+Yandex login не используются как постоянный идентификатор и не служат
+основанием для автоматического объединения аккаунтов.
 
-Связывание Google и Telegram с одним существующим пользователем можно добавить позже как отдельное подтверждаемое действие.
+Связывание идентичностей разных провайдеров с одним существующим пользователем
+можно добавить позже как отдельное подтверждаемое действие.
+
+## Аватар пользователя
+
+URL аватара внешнего провайдера в профиле не сохраняем и не отдаём клиенту.
+Иначе доступность изображения будет зависеть от того, может ли браузер другого
+игрока обратиться к Telegram, Google или Yandex.
+
+Во время успешного входа `packages/auth`:
+
+1. Получает адрес или данные аватара из проверенного ответа провайдера.
+2. Загружает изображение на сервере с ограничением времени и размера ответа.
+3. Проверяет, что полученный файл является поддерживаемым изображением.
+4. Уменьшает его до размера `AUTH_AVATAR_SIZE_PX` и сохраняет в едином формате.
+5. Записывает бинарные данные и hash в `user_avatars`.
+
+Сервер не загружает произвольный URL, переданный пользователем. Каждый provider
+adapter принимает аватар только из доверенного ответа своего провайдера и не
+разрешает переходы на локальные или внутренние сетевые адреса.
+
+При повторном входе сохранённая копия обновляется, если изображение изменилось.
+Если провайдер не вернул аватар или его загрузка завершилась ошибкой, вход всё
+равно продолжается: существующий аватар остаётся без изменений, а для нового
+пользователя клиент показывает локальную заглушку.
+
+Клиент получает не внешний адрес, а URL нашего API:
+
+```text
+GET /users/:userId/avatar?v=<contentHash>
+```
+
+Маршрут требует действующую сессию и возвращает изображение из PostgreSQL.
+`contentHash` меняется вместе с аватаром, поэтому ответ можно кэшировать как
+immutable, не показывая старое изображение после следующего входа пользователя.
 
 ## Сессия War Chest
 
@@ -42,9 +158,13 @@ auth_sessions
 2. Находит или создаёт `user_identity`.
 3. Находит или создаёт пользователя.
 4. Создаёт собственную сессию.
-5. Устанавливает случайный session token в `HttpOnly`, `Secure`, `SameSite` cookie.
+5. Устанавливает случайный session token в `HttpOnly`, `SameSite=Lax` cookie.
 
-В базе хранится только безопасный хеш session token. Та же cookie используется для HTTP и Socket.IO. Сервер проверяет сессию при каждом новом Socket.IO-соединении.
+В dev и production cookie также получает атрибут `Secure`. Для локального
+callback по обычному `http://localhost` значение `AUTH_COOKIE_SECURE` равно
+`false`. В базе хранится только безопасный хеш session token. Та же cookie
+используется для HTTP и Socket.IO. Сервер проверяет сессию при каждом новом
+Socket.IO-соединении.
 
 ## Google
 
@@ -56,7 +176,8 @@ POST /auth/google
 
 Сервер проверяет подпись, issuer, audience и срок действия токена, после чего создаёт сессию War Chest. Google отвечает только за момент входа; жизненным циклом нашей сессии управляет сервер.
 
-Google client ID указывается и в публичной конфигурации клиента, и в серверной конфигурации ожидаемой audience. Секреты Google в клиент не передаются.
+Google client ID указывается и в публичной конфигурации клиента, и в
+`packages/auth` как ожидаемая audience. Секреты Google в клиент не передаются.
 
 ## Telegram
 
@@ -79,7 +200,44 @@ GET /auth/telegram/callback
 
 Телефон и разрешение боту отправлять сообщения для MVP не запрашиваем: для входа достаточно `openid profile`.
 
-Telegram client ID и secret выдаются через BotFather. Локально secret может находиться в серверном `env.local.yaml`. На стендах он передаётся явно процессу запуска или через Kubernetes Secret, если проект перейдёт на Kubernetes.
+Telegram client ID и secret выдаются через BotFather. Локально secret находится
+в `packages/auth/env.local.yaml`. На стендах он передаётся явно процессу запуска
+или через Kubernetes Secret, если проект перейдёт на Kubernetes.
+
+## Yandex ID
+
+Используем серверный OAuth 2.0 Authorization Code Flow:
+
+- `state` для защиты от CSRF;
+- PKCE S256;
+- серверный обмен кода на OAuth-токен;
+- получение профиля через API Yandex ID;
+- `id` из ответа Yandex ID как `provider_subject`;
+- удаление OAuth-токена после создания собственной сессии War Chest.
+
+Маршруты:
+
+```text
+GET /auth/yandex/start
+GET /auth/yandex/callback
+```
+
+Yandex OAuth можно использовать при разработке на localhost. В настройках
+OAuth-приложения добавляем отдельный Redirect URI:
+
+```text
+http://localhost:3000/auth/yandex/callback
+```
+
+Redirect URI из запроса должен совпадать с зарегистрированным по схеме, хосту,
+порту и пути. Поэтому `localhost` нельзя незаметно заменить на `127.0.0.1`, а
+другой порт нужно зарегистрировать отдельным адресом. Одно OAuth-приложение
+может иметь несколько Redirect URI для localhost, dev и production.
+
+После callback пакет обменивает code на токен, запрашивает профиль через
+`https://login.yandex.ru/info` с токеном в заголовке `Authorization`, создаёт
+сессию War Chest и перенаправляет браузер на `AUTH_SUCCESS_REDIRECT_URL`.
+OAuth-токен Yandex не отправляется клиенту и не сохраняется как сессия игры.
 
 ## HTTP API
 
@@ -89,22 +247,35 @@ Telegram client ID и secret выдаются через BotFather. Локаль
 POST /auth/google
 GET  /auth/telegram/start
 GET  /auth/telegram/callback
+GET  /auth/yandex/start
+GET  /auth/yandex/callback
 GET  /auth/session
 POST /auth/logout
+GET  /users/:userId/avatar
 ```
 
 ## Критерии готовности
 
 - новый пользователь может войти через Google;
 - новый пользователь может войти через Telegram;
+- новый пользователь может войти через Yandex ID;
+- Yandex login работает через зарегистрированный localhost callback;
 - повторный вход находит существующую внешнюю идентичность;
 - приложение создаёт собственную серверную сессию;
 - logout отзывает сессию;
 - Socket.IO отклоняет соединение без действующей сессии;
 - идентичности разных провайдеров не объединяются автоматически;
+- клиент никогда не загружает аватар напрямую с домена провайдера;
+- аватар сохраняется в PostgreSQL и доступен через API War Chest;
+- ошибка обновления аватара не блокирует вход и не удаляет прежнюю копию;
+- реализация провайдеров и сессий находится в `packages/auth`;
+- пакет авторизации читает собственные `env.yaml` и необязательный `env.local.yaml`;
 - секреты провайдеров не попадают в клиентскую сборку.
 
 ## Полезные ссылки
 
 - [Google Identity Services: интеграция](https://developers.google.com/identity/gsi/web/guides/integrate)
 - [Telegram Login и OpenID Connect](https://core.telegram.org/bots/telegram-login)
+- [Yandex ID: регистрация приложения и Redirect URI](https://yandex.ru/dev/id/doc/ru/register-auth)
+- [Yandex ID: Authorization Code Flow и PKCE](https://yandex.ru/dev/id/doc/ru/codes/code-url)
+- [Yandex ID: получение профиля пользователя](https://yandex.ru/dev/id/doc/ru/user-information)

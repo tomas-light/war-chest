@@ -13,22 +13,24 @@ apps/
   server/       Node.js-сервер
   web/          React-клиент
 packages/
+  auth/         OAuth-провайдеры и сессии War Chest
   database/     схема PostgreSQL, подключение и миграции
   game-engine/  общая игровая логика и типы
 ```
 
-`packages/database` появится на этапе настройки базы. Сервер будет использовать
-его как workspace-зависимость, а не хранить схему и миграции внутри
-`apps/server`.
+`packages/database` и `packages/auth` появятся на соответствующих этапах плана.
+Сервер будет использовать их как workspace-зависимости, а не хранить
+инфраструктурную реализацию внутри `apps/server`.
 
 Для первой версии используем:
 
 - PostgreSQL в Docker как постоянное хранилище;
 - Node.js, Fastify и Socket.IO на сервере;
 - React и Vite на клиенте;
-- `env.yaml` и необязательные локальные файлы `env.local.yaml` для конфигурации приложений и пакета базы;
+- `env.yaml` и необязательные локальные файлы `env.local.yaml` для каждой конфигурационной границы;
 - отдельный runtime JSON-файл с полным набором feature flags для каждого окружения;
-- Google Identity Services и Telegram OpenID Connect для входа;
+- Google Identity Services, Telegram OpenID Connect и Yandex ID для входа;
+- отдельный TypeScript-пакет `auth` для провайдеров и сессий;
 - отдельный TypeScript-пакет `database` для схемы PostgreSQL и миграций;
 - общий TypeScript-пакет `game-engine`;
 - журнал игровых событий как источник истины;
@@ -43,7 +45,7 @@ Redis, Kubernetes, Helm, микросервисы и несколько экзе
 | [Конфигурация и feature flags](./configuration.md) | Приложения получают проверенную конфигурацию и согласованные флаги | Не начат |
 | [База данных](./database.md) | PostgreSQL запускается в Docker, миграции создают схему | Не начат |
 | [Сервер](./server.md) | Сервер проверяет команды, сохраняет события и рассылает обновления | Не начат |
-| [Авторизация](./authentication.md) | Пользователь входит через Google или Telegram и получает сессию War Chest | Не начат |
+| [Авторизация](./authentication.md) | Пользователь входит через Google, Telegram или Yandex ID и получает сессию War Chest | Не начат |
 | [Клиент](./client.md) | Игроки и зрители могут подключиться к партии | Не начат |
 | [Сквозной сценарий и качество](./delivery.md) | Игра переживает reconnect и перезапуск сервера | Не начат |
 | [Модель игры и движок](./game-engine.md) | Полные правила реализованы после готовности инфраструктуры | Не начат |
@@ -103,3 +105,4 @@ Feature flags хранятся вне сборки и deployment-артефак�
 - [Vite](https://vite.dev/guide/)
 - [Google Identity Services](https://developers.google.com/identity/gsi/web/guides/overview)
 - [Telegram Login и OpenID Connect](https://core.telegram.org/bots/telegram-login)
+- [OAuth для Yandex ID](https://yandex.ru/dev/id/doc/ru/)

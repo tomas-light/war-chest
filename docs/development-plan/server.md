@@ -14,6 +14,7 @@ apps/server/src/
   feature-flags/
     feature-flags.service.ts
   auth/
+    auth.routes.ts
   games/
     game.repository.ts
     game.service.ts
@@ -33,6 +34,10 @@ apps/server/src/
 `game.repository.ts` остаётся на сервере: он описывает нужные игровому сценарию
 запросы и границы транзакций, но выполняет их через схему и клиент пакета базы.
 
+Интеграции с Google, Telegram и Yandex ID, а также сессии War Chest находятся в
+`packages/auth`. Серверный `auth.routes.ts` остаётся тонким HTTP-адаптером над
+публичным API `@war-chest/auth`.
+
 ## HTTP API
 
 Минимальный набор маршрутов:
@@ -43,8 +48,11 @@ GET  /health
 POST /auth/google
 GET  /auth/telegram/start
 GET  /auth/telegram/callback
+GET  /auth/yandex/start
+GET  /auth/yandex/callback
 GET  /auth/session
 POST /auth/logout
+GET  /users/:userId/avatar
 
 GET  /config/feature-flags.json
 
@@ -56,12 +64,18 @@ GET  /me/games
 GET  /games/:gameId/events
 ```
 
-Подробная схема входа через Google и Telegram описана в разделе [«Авторизация»](./authentication.md).
+Подробная схема входа через Google, Telegram и Yandex ID описана в разделе
+[«Авторизация»](./authentication.md).
+
+`GET /users/:userId/avatar` читает сохранённое изображение из
+`packages/database`, требует сессию War Chest и поддерживает `ETag`. Клиент
+добавляет `contentHash` в query-параметр версии, поэтому неизменяемый ответ
+можно долго кэшировать.
 
 Сервер читает свой `env.yaml` и локальные переопределения до создания
 HTTP-приложения, затем инициализирует `@war-chest/database` с конфигурацией его
-собственной границы. При ошибке любой из конфигураций сервер не начинает
-принимать запросы.
+собственной границы и `@war-chest/auth` с конфигурацией авторизации. При ошибке
+любой из конфигураций сервер не начинает принимать запросы.
 
 Feature flags живут в отдельном runtime-файле активного окружения. Сервер не следит за его изменениями в фоне.
 
@@ -182,6 +196,8 @@ Snapshots не участвуют в транзакциях и никогда н
 
 - сервер запускается только с валидной конфигурацией;
 - сервер использует конфигурацию подключения из `packages/database`;
+- OAuth-маршруты используют реализацию и конфигурацию из `packages/auth`;
+- аватары отдаются с домена War Chest и не ссылаются на внешних провайдеров;
 - сервер читает runtime-файл при старте новой игры;
 - сервер отдаёт актуальный runtime-файл при инициализации клиента;
 - сервер не валидирует схему и состав feature-flags JSON;
