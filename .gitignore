@@ -19,8 +19,9 @@ ts-builds
 .pnp.*
 /.idea/*
 
-# Per-application local configuration
+# Per-application and per-package local configuration
 apps/*/env.local.yaml
+packages/*/env.local.yaml
 
 # Local mount point for external runtime feature flags
 /runtime/feature-flags/
