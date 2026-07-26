@@ -17,12 +17,14 @@ apps/
 packages/
   auth/         OAuth-провайдеры и сессии War Chest
   database/     схема PostgreSQL, подключение и миграции
+  fake-database/ схема IndexedDB для разработки клиента без сервера
   game-engine/  общая игровая логика и типы
 ```
 
-`packages/database` и `packages/auth` появятся на соответствующих этапах плана.
-Сервер будет использовать их как workspace-зависимости, а не хранить
-инфраструктурную реализацию внутри `apps/server`.
+`packages/database`, `packages/fake-database` и `packages/auth` появятся на
+соответствующих этапах плана. Сервер будет использовать production-пакеты как
+workspace-зависимости, а fake database останется browser-only зависимостью
+development-сборки клиента.
 
 Для первой версии используем:
 
@@ -34,6 +36,7 @@ packages/
 - Google Identity Services, Telegram OpenID Connect и Yandex ID для входа;
 - отдельный TypeScript-пакет `auth` для провайдеров и сессий;
 - отдельный TypeScript-пакет `database` для схемы PostgreSQL и миграций;
+- отдельный browser-only пакет `fake-database` для IndexedDB на базе `idb`;
 - общий TypeScript-пакет `game-engine`;
 - журнал игровых событий как источник истины;
 - состояние активных игр в памяти одного серверного процесса.
