@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.packages-base.json",
+  "compilerOptions": {
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "outDir": "../../ts-builds/packages/fake-database",
+    "paths": {
+      "#/*": ["./src/*"]
+    },
+    "tsBuildInfoFile": "../../ts-builds/packages/fake-database.tsbuildinfo"
+  },
+  "include": ["src"]
+}

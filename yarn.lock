@@ -154,6 +154,28 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@war-chest/auth@workspace:packages/auth":
+  version: 0.0.0-use.local
+  resolution: "@war-chest/auth@workspace:packages/auth"
+  dependencies:
+    "@war-chest/database": "workspace:^"
+  languageName: unknown
+  linkType: soft
+
+"@war-chest/database@workspace:^, @war-chest/database@workspace:packages/database":
+  version: 0.0.0-use.local
+  resolution: "@war-chest/database@workspace:packages/database"
+  languageName: unknown
+  linkType: soft
+
+"@war-chest/fake-database@workspace:packages/fake-database":
+  version: 0.0.0-use.local
+  resolution: "@war-chest/fake-database@workspace:packages/fake-database"
+  dependencies:
+    idb: "npm:8.0.3"
+  languageName: unknown
+  linkType: soft
+
 "@war-chest/game-engine@workspace:^, @war-chest/game-engine@workspace:packages/game-engine":
   version: 0.0.0-use.local
   resolution: "@war-chest/game-engine@workspace:packages/game-engine"
@@ -175,6 +197,13 @@ __metadata:
     "@war-chest/game-engine": "workspace:^"
   languageName: unknown
   linkType: soft
+
+"idb@npm:8.0.3":
+  version: 8.0.3
+  resolution: "idb@npm:8.0.3"
+  checksum: 10c0/421cd9a3281b7564528857031cc33fd9e95753f8191e483054cb25d1ceea7303a0d1462f4f69f5b41606f0f066156999e067478abf2460dfcf9cab80dae2a2b2
+  languageName: node
+  linkType: hard
 
 "typescript@npm:7.0.2":
   version: 7.0.2

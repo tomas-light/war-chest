@@ -5,6 +5,15 @@
       "path": "./packages/game-engine"
     },
     {
+      "path": "./packages/database"
+    },
+    {
+      "path": "./packages/auth"
+    },
+    {
+      "path": "./packages/fake-database"
+    },
+    {
       "path": "./apps/server"
     },
     {

@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.packages-base.json",
+  "compilerOptions": {
+    "outDir": "../../ts-builds/packages/auth",
+    "paths": {
+      "#/*": ["./src/*"]
+    },
+    "tsBuildInfoFile": "../../ts-builds/packages/auth.tsbuildinfo"
+  },
+  "include": ["src"],
+  "references": [
+    {
+      "path": "../database"
+    }
+  ]
+}
