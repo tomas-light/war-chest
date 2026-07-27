@@ -1,0 +1,7 @@
+.agents
+.yarn
+coverage
+docs
+node_modules
+packages/database/migrations
+ts-builds
