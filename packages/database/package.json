@@ -13,20 +13,21 @@
     "db:migrate": "tsx ./src/migrate.ts",
     "db:seed": "tsx ./src/seed.ts",
     "db:studio": "drizzle-kit studio",
-    "test": "tsx --test ./tests/*.test.ts",
+    "test": "vitest run ./tests",
     "types:build": "tsc --build",
     "types:watch": "tsc --build --watch"
   },
   "dependencies": {
+    "@war-chest/config": "workspace:^",
     "drizzle-orm": "0.45.2",
     "postgres": "3.4.9",
-    "yaml": "2.9.0",
     "zod": "4.4.3"
   },
   "devDependencies": {
     "@types/node": "22.18.3",
     "drizzle-kit": "0.31.10",
     "tsx": "4.23.1",
-    "typescript": "7.0.2"
+    "typescript": "7.0.2",
+    "vitest": "4.1.10"
   }
 }

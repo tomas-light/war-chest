@@ -44,10 +44,7 @@ export default tsEslint.config(
     languageOptions: {
       parserOptions: {
         projectService: {
-          allowDefaultProject: [
-            'packages/database/*.ts',
-            'packages/database/tests/*.ts',
-          ],
+          allowDefaultProject: ['packages/database/*.ts'],
           defaultProject: 'tsconfig.eslint.json',
         },
         tsconfigRootDir: import.meta.dirname,

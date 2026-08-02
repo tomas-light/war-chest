@@ -60,6 +60,13 @@ env.yaml
 - завершать запуск или сборку при неизвестных ключах и неверных типах;
 - отдавать остальному коду только проверенную плоскую конфигурацию.
 
+Общая техническая часть серверного загрузчика находится в
+`packages/config`. Она читает и объединяет YAML-файлы, применяет только
+перечисленные потребителем переменные процесса и единообразно оформляет ошибки
+Zod-валидации. Сами ключи, схемы и переданные в загрузчик функции парсинга
+остаются в `packages/database` и `packages/auth`, поэтому общий код не становится
+владельцем конфигурации этих пакетов.
+
 ### Сервер
 
 Пример структуры:
@@ -112,6 +119,7 @@ packages/database/env.yaml
 ```yaml
 AUTH_SESSION_COOKIE_NAME: "war_chest_session"
 AUTH_SESSION_TTL_MINUTES: 43200
+AUTH_OAUTH_STATE_TTL_MINUTES: 10
 AUTH_COOKIE_SECURE: false
 AUTH_COOKIE_SAME_SITE: "lax"
 AUTH_SUCCESS_REDIRECT_URL: "http://localhost:5173"
@@ -121,9 +129,16 @@ AUTH_AVATAR_SIZE_PX: 256
 GOOGLE_CLIENT_ID: ""
 TELEGRAM_CLIENT_ID: ""
 TELEGRAM_CLIENT_SECRET: ""
+TELEGRAM_AUTHORIZATION_ENDPOINT: "https://oauth.telegram.org/auth"
+TELEGRAM_TOKEN_ENDPOINT: "https://oauth.telegram.org/token"
+TELEGRAM_ISSUER: "https://oauth.telegram.org"
+TELEGRAM_JWKS_ENDPOINT: "https://oauth.telegram.org/.well-known/jwks.json"
 TELEGRAM_REDIRECT_URI: "http://localhost:3000/auth/telegram/callback"
 YANDEX_CLIENT_ID: ""
 YANDEX_CLIENT_SECRET: ""
+YANDEX_AUTHORIZATION_ENDPOINT: "https://oauth.yandex.ru/authorize"
+YANDEX_TOKEN_ENDPOINT: "https://oauth.yandex.ru/token"
+YANDEX_PROFILE_ENDPOINT: "https://login.yandex.ru/info"
 YANDEX_REDIRECT_URI: "http://localhost:3000/auth/yandex/callback"
 ```
 

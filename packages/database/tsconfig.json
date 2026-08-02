@@ -8,5 +8,10 @@
     "tsBuildInfoFile": "../../ts-builds/packages/database.tsbuildinfo",
     "types": ["node"]
   },
-  "include": ["src"]
+  "include": ["src"],
+  "references": [
+    {
+      "path": "../config"
+    }
+  ]
 }

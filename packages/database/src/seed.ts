@@ -10,7 +10,7 @@ import {
   users,
 } from './schema/index.js';
 
-const seedIdentifiers = {
+const SEED_IDENTIFIERS = {
   firstUser: '10000000-0000-4000-8000-000000000001',
   secondUser: '10000000-0000-4000-8000-000000000002',
   game: '20000000-0000-4000-8000-000000000001',
@@ -43,11 +43,11 @@ async function seedDatabase(): Promise<void> {
         .insert(users)
         .values([
           {
-            id: seedIdentifiers.firstUser,
+            id: SEED_IDENTIFIERS.firstUser,
             displayName: 'Ada',
           },
           {
-            id: seedIdentifiers.secondUser,
+            id: SEED_IDENTIFIERS.secondUser,
             displayName: 'Grace',
           },
         ])
@@ -58,13 +58,13 @@ async function seedDatabase(): Promise<void> {
         .values([
           {
             id: '50000000-0000-4000-8000-000000000001',
-            userId: seedIdentifiers.firstUser,
+            userId: SEED_IDENTIFIERS.firstUser,
             provider: 'google',
             providerSubject: 'seed-google-user',
           },
           {
             id: '50000000-0000-4000-8000-000000000002',
-            userId: seedIdentifiers.secondUser,
+            userId: SEED_IDENTIFIERS.secondUser,
             provider: 'telegram',
             providerSubject: 'seed-telegram-user',
           },
@@ -74,7 +74,7 @@ async function seedDatabase(): Promise<void> {
       await transaction
         .insert(games)
         .values({
-          id: seedIdentifiers.game,
+          id: SEED_IDENTIFIERS.game,
           status: 'waiting',
           currentVersion: 1,
         })
@@ -84,14 +84,14 @@ async function seedDatabase(): Promise<void> {
         .insert(gameParticipants)
         .values([
           {
-            gameId: seedIdentifiers.game,
-            userId: seedIdentifiers.firstUser,
+            gameId: SEED_IDENTIFIERS.game,
+            userId: SEED_IDENTIFIERS.firstUser,
             role: 'player',
             seat: 1,
           },
           {
-            gameId: seedIdentifiers.game,
-            userId: seedIdentifiers.secondUser,
+            gameId: SEED_IDENTIFIERS.game,
+            userId: SEED_IDENTIFIERS.secondUser,
             role: 'player',
             seat: 2,
           },
@@ -101,9 +101,9 @@ async function seedDatabase(): Promise<void> {
       await transaction
         .insert(processedCommands)
         .values({
-          id: seedIdentifiers.command,
-          gameId: seedIdentifiers.game,
-          userId: seedIdentifiers.firstUser,
+          id: SEED_IDENTIFIERS.command,
+          gameId: SEED_IDENTIFIERS.game,
+          userId: SEED_IDENTIFIERS.firstUser,
           commandType: 'CreateGame',
         })
         .onConflictDoNothing();
@@ -111,9 +111,9 @@ async function seedDatabase(): Promise<void> {
       await transaction
         .insert(gameEvents)
         .values({
-          id: seedIdentifiers.event,
-          gameId: seedIdentifiers.game,
-          commandId: seedIdentifiers.command,
+          id: SEED_IDENTIFIERS.event,
+          gameId: SEED_IDENTIFIERS.game,
+          commandId: SEED_IDENTIFIERS.command,
           sequence: 1,
           type: 'GameCreated',
           version: 1,

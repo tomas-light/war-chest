@@ -3,7 +3,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import { createDatabase } from './client.js';
 
-const defaultMigrationsFolder = fileURLToPath(
+const DEFAULT_MIGRATIONS_FOLDER = fileURLToPath(
   new URL('../migrations', import.meta.url)
 );
 
@@ -28,7 +28,7 @@ async function runMigrations(): Promise<void> {
 
   try {
     await migrate(connection.database, {
-      migrationsFolder: resolve(defaultMigrationsFolder),
+      migrationsFolder: resolve(DEFAULT_MIGRATIONS_FOLDER),
     });
   } finally {
     await connection.close();

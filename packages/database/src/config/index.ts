@@ -1,1 +1,1 @@
-export { DatabaseConfigError, loadDatabaseConfig } from './load-config.js';
+export { loadDatabaseConfig } from './load-config.js';

@@ -4,6 +4,11 @@
 
 Пароли и собственная регистрация в MVP не нужны.
 
+Пакет `@war-chest/auth` реализован. Его фактический публичный API, ограничения
+и поведение описаны в разделе [«Авторизация»](../auth/README.md). HTTP-маршруты
+Fastify, установка подготовленных cookie в ответ и проверка Socket.IO-соединений
+остаются частью серверного этапа.
+
 ## Пакет `packages/auth`
 
 Серверную реализацию авторизации выделяем в отдельный workspace-пакет. Так
@@ -53,6 +58,7 @@ Fastify остаются в `apps/server`, но только преобразу�
 ```yaml
 AUTH_SESSION_COOKIE_NAME: "war_chest_session"
 AUTH_SESSION_TTL_MINUTES: 43200
+AUTH_OAUTH_STATE_TTL_MINUTES: 10
 AUTH_COOKIE_SECURE: false
 AUTH_COOKIE_SAME_SITE: "lax"
 AUTH_SUCCESS_REDIRECT_URL: "http://localhost:5173"
@@ -62,9 +68,16 @@ AUTH_AVATAR_SIZE_PX: 256
 GOOGLE_CLIENT_ID: ""
 TELEGRAM_CLIENT_ID: ""
 TELEGRAM_CLIENT_SECRET: ""
+TELEGRAM_AUTHORIZATION_ENDPOINT: "https://oauth.telegram.org/auth"
+TELEGRAM_TOKEN_ENDPOINT: "https://oauth.telegram.org/token"
+TELEGRAM_ISSUER: "https://oauth.telegram.org"
+TELEGRAM_JWKS_ENDPOINT: "https://oauth.telegram.org/.well-known/jwks.json"
 TELEGRAM_REDIRECT_URI: "http://localhost:3000/auth/telegram/callback"
 YANDEX_CLIENT_ID: ""
 YANDEX_CLIENT_SECRET: ""
+YANDEX_AUTHORIZATION_ENDPOINT: "https://oauth.yandex.ru/authorize"
+YANDEX_TOKEN_ENDPOINT: "https://oauth.yandex.ru/token"
+YANDEX_PROFILE_ENDPOINT: "https://login.yandex.ru/info"
 YANDEX_REDIRECT_URI: "http://localhost:3000/auth/yandex/callback"
 ```
 
