@@ -1,14 +1,10 @@
-import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import test from 'node:test';
-import {
-  DatabaseConfigError,
-  loadDatabaseConfig,
-} from '../src/config/index.js';
+import { expect, test } from 'vitest';
+import { loadDatabaseConfig } from '../src/config/index.js';
 
-void test('loads base, local, and environment values in priority order', () => {
+test('loads base, local, and environment values in priority order', () => {
   withConfigDirectory(
     {
       'env.yaml': [
@@ -30,7 +26,7 @@ void test('loads base, local, and environment values in priority order', () => {
         },
       });
 
-      assert.deepEqual(config, {
+      expect(config).toEqual({
         DATABASE_URL: 'postgres://local:local@localhost/local',
         DATABASE_POOL_SIZE: 30,
         DATABASE_SSL: true,
@@ -39,7 +35,7 @@ void test('loads base, local, and environment values in priority order', () => {
   );
 });
 
-void test('works without env.local.yaml', () => {
+test('works without env.local.yaml', () => {
   withConfigDirectory(
     {
       'env.yaml': [
@@ -49,18 +45,17 @@ void test('works without env.local.yaml', () => {
       ].join('\n'),
     },
     (packageRoot) => {
-      assert.equal(
+      expect(
         loadDatabaseConfig({
           packageRoot,
           env: {},
-        }).DATABASE_POOL_SIZE,
-        10
-      );
+        }).DATABASE_POOL_SIZE
+      ).toBe(10);
     }
   );
 });
 
-void test('rejects unknown and nested YAML keys', () => {
+test('rejects unknown and nested YAML keys', () => {
   withConfigDirectory(
     {
       'env.yaml': [
@@ -71,14 +66,12 @@ void test('rejects unknown and nested YAML keys', () => {
       ].join('\n'),
     },
     (packageRoot) => {
-      assert.throws(
-        () =>
-          loadDatabaseConfig({
-            packageRoot,
-            env: {},
-          }),
-        DatabaseConfigError
-      );
+      expect(() =>
+        loadDatabaseConfig({
+          packageRoot,
+          env: {},
+        })
+      ).toThrow(/Invalid database configuration:.*UNKNOWN_KEY/);
     }
   );
 
@@ -92,14 +85,12 @@ void test('rejects unknown and nested YAML keys', () => {
       ].join('\n'),
     },
     (packageRoot) => {
-      assert.throws(
-        () =>
-          loadDatabaseConfig({
-            packageRoot,
-            env: {},
-          }),
-        DatabaseConfigError
-      );
+      expect(() =>
+        loadDatabaseConfig({
+          packageRoot,
+          env: {},
+        })
+      ).toThrow(/Database config value "DATABASE_POOL_SIZE"/);
     }
   );
 });

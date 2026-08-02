@@ -1,5 +1,5 @@
 {
-  "name": "@war-chest/auth",
+  "name": "@war-chest/config",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",
@@ -9,22 +9,15 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "test": "vitest run ./tests",
     "types:build": "tsc --build",
     "types:watch": "tsc --build --watch"
   },
   "dependencies": {
-    "@war-chest/config": "workspace:^",
-    "@war-chest/database": "workspace:^",
-    "drizzle-orm": "0.45.2",
-    "google-auth-library": "10.9.1",
-    "jose": "6.2.4",
-    "sharp": "0.35.3",
+    "yaml": "2.9.0",
     "zod": "4.4.3"
   },
   "devDependencies": {
     "@types/node": "22.18.3",
-    "typescript": "7.0.2",
-    "vitest": "4.1.10"
+    "typescript": "7.0.2"
   }
 }

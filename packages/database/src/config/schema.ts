@@ -43,7 +43,7 @@ export const databaseConfigSchema = z
 
 export type DatabaseConfig = z.infer<typeof databaseConfigSchema>;
 
-export const databaseConfigKeys = [
+export const DATABASE_CONFIG_KEYS = [
   'DATABASE_URL',
   'DATABASE_POOL_SIZE',
   'DATABASE_SSL',

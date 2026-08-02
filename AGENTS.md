@@ -89,26 +89,41 @@ function persistOrder(order: Order) {
 - Допускаются только общеизвестные аббревиатуры и короткие технические
   названия, например `dto`, `config`, `env`.
 - Названия должны отражать смысл сущности и не быть обезличенными.
+- Статические значения на уровне файла называй через `UPPER_SNAKE_CASE`. Это
+  относится к числам, строкам, регулярным выражениям, неизменяемым наборам и
+  другим значениям, которые используются как константы.
+- Именованные определения и доменные объекты, для которых в экосистеме принят
+  `camelCase`, не переименовывай в `UPPER_SNAKE_CASE`. Например, сохраняй
+  `camelCase` для Zod-схем, Drizzle-таблиц и Drizzle relations.
 
 ```ts
-const a = 1; // ❌ Обезличенное название
-const count = 1; // ✅ Название отражает смысл
+const delayMs = 500; // ❌ Неправильный стиль именования
+const DELAY_MS = 500; // ✅ Название заглавными буквами через подчёркивание
+const CONTENT_LENGTH_PATTERN = /^\d+$/; // ✅ Статическое регулярное выражение
 
-const usr = await loadUser(); // ❌ Неочевидное сокращение
-const user = await loadUser(); // ✅ Полное и понятное название
+const userSchema = z.object({}); // ✅ Zod-схема сохраняет camelCase
+export const users = pgTable('users', {}); // ✅ Drizzle-таблица сохраняет camelCase
 
-function calcAmt() {} // ❌ Сокращения затрудняют чтение
-function calculateTotalAmount() {} // ✅ Смысл функции понятен из названия
+function some() {
+  const a = 1; // ❌ Обезличенное название
+  const count = 1; // ✅ Название отражает смысл
 
-const orderDto = createOrderDto(); // ✅ DTO — общеизвестная аббревиатура
+  const usr = await loadUser(); // ❌ Неочевидное сокращение
+  const user = await loadUser(); // ✅ Полное и понятное название
 
-try {
-  // ...
-} catch (e) {} // ❌ Обезличенное название ошибки
+  function calcAmt() {} // ❌ Сокращения затрудняют чтение
+  function calculateTotalAmount() {} // ✅ Смысл функции понятен из названия
 
-try {
-  // ...
-} catch (error) {} // ✅ Понятное название ошибки
+  const orderDto = createOrderDto(); // ✅ DTO — общеизвестная аббревиатура
+
+  try {
+    // ...
+  } catch (e) {} // ❌ Обезличенное название ошибки
+
+  try {
+    // ...
+  } catch (error) {} // ✅ Понятное название ошибки
+}
 ```
 
 ## Экспорты
