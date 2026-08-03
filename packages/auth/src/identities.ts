@@ -22,7 +22,7 @@ export async function findOrCreateIdentity(
       return existingUser;
     }
 
-    const [updatedUser] = await database
+    const updatedUsers = await database
       .update(users)
       .set({ displayName: identity.displayName })
       .where(eq(users.id, existingUser.id))
@@ -30,6 +30,10 @@ export async function findOrCreateIdentity(
         displayName: users.displayName,
         id: users.id,
       });
+    const updatedUser = requireReturnedRow(
+      updatedUsers,
+      'updating an existing user'
+    );
 
     return {
       avatarHash: existingUser.avatarHash,
@@ -40,13 +44,14 @@ export async function findOrCreateIdentity(
 
   try {
     return await database.transaction(async (transaction) => {
-      const [createdUser] = await transaction
+      const createdUsers = await transaction
         .insert(users)
         .values({ displayName: identity.displayName })
         .returning({
           displayName: users.displayName,
           id: users.id,
         });
+      const createdUser = requireReturnedRow(createdUsers, 'creating a user');
       const createdIdentities = await transaction
         .insert(userIdentities)
         .values({
@@ -104,4 +109,17 @@ async function findIdentity(
     .limit(1);
 
   return user ?? null;
+}
+
+function requireReturnedRow<ReturnedRow>(
+  returnedRows: ReturnedRow[],
+  operation: string
+): ReturnedRow {
+  const [returnedRow] = returnedRows;
+
+  if (returnedRow === undefined) {
+    throw new Error(`Database returned no row after ${operation}`);
+  }
+
+  return returnedRow;
 }
