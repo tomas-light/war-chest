@@ -13,6 +13,7 @@
     "types:watch": "tsc --build --watch"
   },
   "dependencies": {
-    "idb": "8.0.3"
+    "idb": "8.0.3",
+    "typescript": "7.0.2"
   }
 }

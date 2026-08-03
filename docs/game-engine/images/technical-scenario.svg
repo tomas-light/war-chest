@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="720" viewBox="0 0 1500 720" role="img" aria-labelledby="title description">
+  <title id="title">Состояния технического игрового сценария</title>
+  <desc id="description">Отдельное создание первого события и переходы существующей игры между ожиданием игроков, активной партией и завершением. Недопустимая команда не создаёт событий.</desc>
+
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#334155"/>
+    </marker>
+    <style>
+      .title { font: 700 30px Arial, sans-serif; fill: #0f172a; text-anchor: middle; }
+      .state-title { font: 700 20px Arial, sans-serif; fill: #0f172a; text-anchor: middle; }
+      .text { font: 15px Arial, sans-serif; fill: #334155; text-anchor: middle; }
+      .small { font: 14px Arial, sans-serif; fill: #475569; text-anchor: middle; }
+      .state { fill: #ecfdf5; stroke: #059669; stroke-width: 2.5; rx: 14; }
+      .creation { fill: #eff6ff; stroke: #2563eb; stroke-width: 2.5; rx: 14; }
+      .finished { fill: #f5f3ff; stroke: #7c3aed; stroke-width: 2.5; rx: 14; }
+      .rejected { fill: #fff1f2; stroke: #e11d48; stroke-width: 2.5; rx: 14; }
+      .arrow { fill: none; stroke: #334155; stroke-width: 2.5; marker-end: url(#arrow); }
+      .loop { fill: none; stroke: #2563eb; stroke-width: 2.5; marker-end: url(#arrow); }
+      .reject-arrow { fill: none; stroke: #e11d48; stroke-width: 2; stroke-dasharray: 7 7; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1500" height="720" fill="#ffffff"/>
+  <text x="750" y="52" class="title">Технический сценарий до реализации правил</text>
+
+  <rect x="55" y="180" width="245" height="130" class="creation"/>
+  <text x="177" y="220" class="state-title">createGame(...)</text>
+  <text x="177" y="250" class="text">CreateGameCommandData</text>
+  <text x="177" y="276" class="small">доверенный вход, не GameState</text>
+
+  <rect x="450" y="180" width="245" height="130" class="state"/>
+  <text x="572" y="220" class="state-title">waiting</text>
+  <text x="572" y="250" class="text">0–2 игрока</text>
+  <text x="572" y="276" class="small">feature flags зафиксированы</text>
+
+  <rect x="845" y="180" width="245" height="130" class="state"/>
+  <text x="967" y="220" class="state-title">active</text>
+  <text x="967" y="250" class="text">ходят по очереди</text>
+  <text x="967" y="276" class="small">начинает место 1</text>
+
+  <rect x="1240" y="180" width="205" height="130" class="finished"/>
+  <text x="1342" y="220" class="state-title">finished</text>
+  <text x="1342" y="250" class="text">ходов больше нет</text>
+  <text x="1342" y="276" class="small">текущий игрок очищен</text>
+
+  <path d="M300 245 H450" class="arrow"/>
+  <text x="375" y="215" class="text">GameCreated</text>
+  <text x="375" y="237" class="small">applyEvent(null, event)</text>
+
+  <path d="M695 245 H845" class="arrow"/>
+  <text x="770" y="215" class="text">StartGame</text>
+  <text x="770" y="237" class="small">GameStarted</text>
+
+  <path d="M1090 245 H1240" class="arrow"/>
+  <text x="1165" y="215" class="text">FinishGame</text>
+  <text x="1165" y="237" class="small">GameFinished</text>
+
+  <path d="M505 180 V130 H640 V180" class="loop"/>
+  <text x="572" y="84" class="text">JoinGame × 2</text>
+  <text x="572" y="107" class="small">PlayerJoined, места 1 и 2</text>
+
+  <path d="M900 310 C900 400 1035 400 1035 310" class="loop"/>
+  <text x="967" y="397" class="text">TestMove</text>
+  <text x="967" y="420" class="small">TestMovePerformed, очередь меняется</text>
+
+  <rect x="470" y="525" width="560" height="120" class="rejected"/>
+  <text x="750" y="565" class="state-title">Недопустимая команда</text>
+  <text x="750" y="595" class="text">decide возвращает []</text>
+  <text x="750" y="620" class="small">событий нет, GameState остаётся прежним</text>
+
+  <path d="M572 310 V470 H620 V525" class="reject-arrow"/>
+  <path d="M967 420 V465 H825 V525" class="reject-arrow"/>
+  <path d="M1342 310 V450 H1000 V525" class="reject-arrow"/>
+
+  <text x="750" y="690" class="small">GameCreated получает sequence = 1; каждое следующее принятое действие — state.lastEventSequence + 1.</text>
+</svg>
