@@ -291,8 +291,8 @@ Zustand `persist` в `localStorage`.
 3. Добавить контракты `shared/api`, backend gateway и real-адаптеры HTTP и
    Socket.IO.
 4. Добавить глобальную dev-панель и persisted-переключатель real/fake.
-5. Реализовать fake backend, `SharedWorker` и `packages/fake-database` на
-   npm-пакете `idb`.
+5. Реализовать fake backend и `SharedWorker`, подключив готовый
+   `packages/fake-database` на npm-пакете `idb`.
 6. Загрузить application feature flags при инициализации.
 7. Реализовать вход через Google, Telegram и Yandex ID.
 8. Реализовать создание игры и присоединение к ней.
