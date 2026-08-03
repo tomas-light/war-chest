@@ -110,6 +110,10 @@
   <rect x="906" y="623" width="108" height="27" class="label-bg"/>
   <text x="960" y="642" class="edge-label">сессии</text>
 
+  <path d="M1090 457 H1280 V585" class="current"/>
+  <rect x="1110" y="443" width="160" height="27" class="label-bg"/>
+  <text x="1190" y="462" class="edge-label">типы (type-only)</text>
+
   <path d="M725 730 V835 H795" class="current"/>
   <path d="M1195 730 V835 H1125" class="current"/>
 

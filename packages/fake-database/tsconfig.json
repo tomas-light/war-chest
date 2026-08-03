@@ -8,5 +8,10 @@
     },
     "tsBuildInfoFile": "../../ts-builds/packages/fake-database.tsbuildinfo"
   },
-  "include": ["src"]
+  "include": ["src"],
+  "references": [
+    {
+      "path": "../database"
+    }
+  ]
 }

@@ -14,7 +14,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import { users } from './auth.js';
 
-type JsonPrimitive = boolean | number | string | null;
+export type JsonPrimitive = boolean | number | string | null;
 export type JsonValue =
   JsonPrimitive | { [key: string]: JsonValue } | JsonValue[];
 

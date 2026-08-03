@@ -99,25 +99,36 @@ PostgreSQL.
 
 ### Пакет `packages/fake-database`
 
-Работу с IndexedDB выделяем в browser-only workspace-пакет:
+✅ Browser-only workspace-пакет реализован. Фактический API, схема и принятые
+ограничения описаны в разделе [Fake database](../../fake-database/README.md).
 
 ```text
 packages/fake-database/
   src/
+    database.ts
+    fake-database.ts
     schema.ts
     migrations.ts
+    table.ts
     repositories/
     seed.ts
     reset.ts
     index.ts
-  package.json             зависимость от npm-пакета idb
+  tests/
+    fake-database.test.ts
+    tsconfig.json
+  package.json             зависимости от idb и типов database
   tsconfig.json
 ```
 
-Пакет содержит схему и миграции IndexedDB, репозитории, начальные fixtures и
-очистку fake-данных. Он не зависит от React и не импортируется real backend.
-Открывает базу и выполняет записи только SharedWorker, чтобы команды из разных
-вкладок не создавали две конкурирующие копии серверного состояния.
+Пакет содержит схему и миграции IndexedDB, типизированный табличный слой,
+репозитории, начальные fixtures и очистку fake-данных. Он не зависит от React и
+не импортируется real backend. Доменные сущности переиспользуются из
+`@war-chest/database` только на уровне типов.
+
+После реализации fake backend базу должен открывать и изменять только
+`SharedWorker`, чтобы команды из разных вкладок не создавали две конкурирующие
+копии серверного состояния. Сам worker в пакет не входит и пока не реализован.
 
 Для всей работы с IndexedDB используем npm-пакет `idb`. Схема, транзакции,
 миграции и репозитории `packages/fake-database` работают через его promise-based
@@ -126,7 +137,9 @@ API и типизированные database schemas; прямую работу 
 
 Fake-схема повторяет логические сущности, нужные контракту клиента: пользователей
 и сессии, игры и участников, обработанные команды, события и fake runtime
-feature flags. Она не обязана копировать физическую PostgreSQL-схему один в один.
+feature flags. Физическую PostgreSQL-схему она не копирует один в один. Из
+индексов добавлен только уникальный `[gameId, sequence]` для истории событий;
+малые коллекции фильтруются в памяти.
 
 ### Два пользователя
 
@@ -217,8 +230,8 @@ IndexedDB. Seed и reset позволяют подготовить началь�
 1. Вынести HTTP и Socket.IO за общие контракты `shared/api`.
 2. Добавить backend gateway и real-адаптеры.
 3. Смонтировать dev-панель над роутером и добавить persisted-переключатель.
-4. Создать `packages/fake-database` на базе npm-пакета `idb`, добавить схему
-   IndexedDB, миграции, seed и reset.
+4. ✅ Создан `packages/fake-database` на базе npm-пакета `idb`: добавлены схема
+   IndexedDB, миграция, таблицы, репозитории, транзакции, seed и reset.
 5. Реализовать fake backend в `SharedWorker` и RPC через `MessagePort`.
 6. Добавить три seeded fake-аккаунта и provider-specific авторизацию через
    кнопки Google, Telegram и Yandex.
