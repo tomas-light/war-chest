@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="860" viewBox="0 0 1500 860" role="img" aria-labelledby="title description">
+  <title id="title">Обработка команды и построение безопасного представления</title>
+  <desc id="description">Сервер передаёт команду в decide, сохраняет внутреннее событие, применяет его к состоянию и создаёт отдельное безопасное событие для каждого получателя.</desc>
+
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#334155"/>
+    </marker>
+    <style>
+      .title { font: 700 30px Arial, sans-serif; fill: #0f172a; text-anchor: middle; }
+      .section { font: 700 20px Arial, sans-serif; fill: #334155; }
+      .label { font: 700 17px Arial, sans-serif; fill: #0f172a; text-anchor: middle; }
+      .text { font: 15px Arial, sans-serif; fill: #334155; text-anchor: middle; }
+      .small { font: 14px Arial, sans-serif; fill: #475569; text-anchor: middle; }
+      .input { fill: #f8fafc; stroke: #64748b; stroke-width: 2; rx: 12; }
+      .function { fill: #eff6ff; stroke: #2563eb; stroke-width: 2.5; rx: 12; }
+      .event { fill: #f5f3ff; stroke: #7c3aed; stroke-width: 2.5; rx: 12; }
+      .storage { fill: #fff7ed; stroke: #ea580c; stroke-width: 2.5; rx: 12; }
+      .state { fill: #ecfdf5; stroke: #059669; stroke-width: 2.5; rx: 12; }
+      .viewer { fill: #f0fdfa; stroke: #0f766e; stroke-width: 2.5; rx: 12; }
+      .band { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 2; rx: 16; }
+      .arrow { fill: none; stroke: #334155; stroke-width: 2.5; marker-end: url(#arrow); }
+      .branch { fill: none; stroke: #0f766e; stroke-width: 2.5; marker-end: url(#arrow); }
+      .dashed { fill: none; stroke: #64748b; stroke-width: 2; stroke-dasharray: 7 7; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1500" height="860" fill="#ffffff"/>
+  <text x="750" y="52" class="title">От команды до состояния конкретного получателя</text>
+
+  <text x="45" y="102" class="section">Внутренний контур сервера после создания</text>
+  <text x="1090" y="100" class="small">первое событие: createGame(...) → GameCreated</text>
+
+  <rect x="45" y="135" width="200" height="105" class="input"/>
+  <text x="145" y="170" class="label">GameState</text>
+  <text x="145" y="198" class="text">+ playerId</text>
+  <text x="145" y="222" class="text">+ GameCommandData</text>
+
+  <path d="M245 187 H315" class="arrow"/>
+
+  <rect x="315" y="135" width="210" height="105" class="function"/>
+  <text x="420" y="168" class="label">decide</text>
+  <text x="420" y="196" class="text">hydrateCommand(data)</text>
+  <text x="420" y="220" class="small">command.decide(...)</text>
+
+  <path d="M525 187 H595" class="arrow"/>
+
+  <rect x="595" y="135" width="200" height="105" class="event"/>
+  <text x="695" y="174" class="label">GameEventData[]</text>
+  <text x="695" y="202" class="text">0 или 1 событие</text>
+
+  <path d="M795 187 H865" class="arrow"/>
+
+  <rect x="865" y="135" width="210" height="105" class="storage"/>
+  <text x="970" y="174" class="label">Транзакция</text>
+  <text x="970" y="202" class="text">ответственность сервера</text>
+
+  <path d="M1075 187 H1145" class="arrow"/>
+
+  <rect x="1145" y="135" width="150" height="105" class="function"/>
+  <text x="1220" y="168" class="label">applyEvent</text>
+  <text x="1220" y="196" class="text">hydrateEvent(data)</text>
+  <text x="1220" y="220" class="small">event.apply(state)</text>
+
+  <path d="M1295 187 H1320" class="arrow"/>
+
+  <rect x="1320" y="135" width="160" height="105" class="state"/>
+  <text x="1400" y="174" class="label">GameState</text>
+  <text x="1400" y="200" class="small">lastEventSequence</text>
+  <text x="1400" y="222" class="small">= N</text>
+
+  <rect x="45" y="320" width="1415" height="475" class="band"/>
+  <text x="75" y="362" class="section">Безопасный контур получателя</text>
+
+  <rect x="75" y="405" width="250" height="105" class="event"/>
+  <text x="200" y="438" class="label">GameEventData</text>
+  <text x="200" y="466" class="text">сохранённый JSON</text>
+  <text x="200" y="490" class="small">может содержать секрет</text>
+
+  <rect x="90" y="590" width="220" height="105" class="input"/>
+  <text x="200" y="629" class="label">Viewer</text>
+  <text x="200" y="657" class="text">игрок или зритель</text>
+
+  <path d="M325 457 H390" class="arrow"/>
+  <path d="M310 642 H350 V493 H390" class="arrow"/>
+
+  <rect x="390" y="420" width="250" height="120" class="function"/>
+  <text x="515" y="458" class="label">createViewEventFor</text>
+  <text x="515" y="488" class="text">hydrateEvent(data)</text>
+  <text x="515" y="513" class="small">event.toViewData(viewer)</text>
+
+  <path d="M640 480 H730" class="branch"/>
+
+  <rect x="730" y="420" width="250" height="120" class="viewer"/>
+  <text x="855" y="458" class="label">GameViewEventData</text>
+  <text x="855" y="488" class="text">та же sequence</text>
+  <text x="855" y="513" class="small">privateData только автору</text>
+
+  <path d="M980 480 H1070" class="branch"/>
+
+  <rect x="1070" y="420" width="190" height="120" class="function"/>
+  <text x="1165" y="458" class="label">applyViewEvent</text>
+  <text x="1165" y="488" class="text">hydrateViewEvent(data)</text>
+  <text x="1165" y="513" class="small">event.apply(view)</text>
+
+  <path d="M1260 480 H1330" class="branch"/>
+
+  <rect x="1330" y="420" width="100" height="120" class="viewer"/>
+  <text x="1380" y="458" class="label">GameView</text>
+  <text x="1380" y="488" class="text">для UI</text>
+
+  <path d="M1400 240 V290 H200 V405" class="dashed"/>
+  <text x="805" y="281" class="small">snapshot: createViewFor(GameState, Viewer) строит то же итоговое представление напрямую</text>
+
+  <text x="750" y="750" class="small">Внутренние GameState, GameEventData и ApplicableEvent не отправляются клиенту.</text>
+  <text x="750" y="830" class="small">При replay клиент гидратирует только безопасные GameViewEventData; внутренний GameEventData ему не нужен.</text>
+</svg>

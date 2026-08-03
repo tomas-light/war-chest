@@ -1,0 +1,70 @@
+import type { GAME_EVENT_VERSION, GAME_RULES_VERSION } from './events.js';
+import type { FeatureFlags, JsonValue } from './state.js';
+
+interface EventMetadata {
+  sequence: number;
+  version: typeof GAME_EVENT_VERSION;
+}
+
+export interface GameCreatedViewEventData extends EventMetadata {
+  payload: {
+    featureFlags: FeatureFlags;
+    rulesVersion: typeof GAME_RULES_VERSION;
+  };
+  type: 'GameCreated';
+}
+
+export interface PlayerJoinedViewEventData extends EventMetadata {
+  payload: {
+    playerId: string;
+    seat: number;
+  };
+  type: 'PlayerJoined';
+}
+
+export interface GameStartedViewEventData extends EventMetadata {
+  payload: {
+    firstPlayerId: string;
+  };
+  type: 'GameStarted';
+}
+
+interface PublicTestMoveData {
+  moveNumber: number;
+  nextPlayerId: string;
+  playerId: string;
+}
+
+export interface PublicTestMovePerformedViewEventData extends EventMetadata {
+  payload: PublicTestMoveData;
+  type: 'TestMovePerformed';
+}
+
+export interface PrivateTestMovePerformedViewEventData extends EventMetadata {
+  payload: PublicTestMoveData & {
+    privateData: JsonValue;
+  };
+  type: 'TestMovePerformed';
+}
+
+export interface GameFinishedViewEventData extends EventMetadata {
+  payload: {
+    finishedByPlayerId: string;
+  };
+  type: 'GameFinished';
+}
+
+export interface ViewSequenceAdvancedEventData extends EventMetadata {
+  type: 'ViewSequenceAdvanced';
+}
+
+export type TestMovePerformedViewEventData =
+  PrivateTestMovePerformedViewEventData | PublicTestMovePerformedViewEventData;
+
+export type GameViewEventData =
+  | GameCreatedViewEventData
+  | GameFinishedViewEventData
+  | GameStartedViewEventData
+  | PlayerJoinedViewEventData
+  | TestMovePerformedViewEventData
+  | ViewSequenceAdvancedEventData;

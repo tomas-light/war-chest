@@ -1,5 +1,9 @@
 # Модель игры и общий движок
 
+> Статус: технический сценарий до реализации правил готов. Фактическое
+> поведение пакета описано в разделе [Game engine](../game-engine/README.md).
+> Полные правила War Chest остаются будущим этапом.
+
 `packages/game-engine` должен стать единственным местом, где описаны правила игры. Это позволит серверу проверять ходы, а клиенту — подсвечивать доступные действия и воспроизводить историю без двух разных реализаций правил.
 
 Движок не должен зависеть от React, Socket.IO, Fastify или базы данных.
@@ -22,9 +26,16 @@
 ```text
 packages/game-engine/src/
   state.ts
+  command-data/
+    lifecycle-command-data.ts
+    test-scenario-command-data.ts
   commands.ts
   events.ts
   view-events.ts
+  errors/
+    nullable-game-state-error.ts
+    nullable-game-view-error.ts
+  create-game.ts
   decide.ts
   apply-event.ts
   apply-view-event.ts
@@ -32,24 +43,69 @@ packages/game-engine/src/
   restore-view.ts
   create-view.ts
   create-view-event.ts
+  commands/
+    decidable-command.ts
+    hydrate-command.ts
+    lifecycle/
+      hydrate-lifecycle-command.ts
+      lifecycle-rules.ts
+      join-game-command.ts
+      start-game-command.ts
+      finish-game-command.ts
+    test-scenario/
+      hydrate-test-scenario-command.ts
+      test-move-command.ts
+  events/
+    applicable-event.ts
+    hydrate-event.ts
+    lifecycle/
+      hydrate-lifecycle-event.ts
+      game-created-event.ts
+      player-joined-event.ts
+      game-started-event.ts
+      game-finished-event.ts
+    test-scenario/
+      hydrate-test-scenario-event.ts
+      test-move-performed-event.ts
+  view-events/
+    applicable-view-event.ts
+    hydrate-view-event.ts
+    lifecycle/
+      hydrate-lifecycle-view-event.ts
+      game-created-view-event.ts
+      player-joined-view-event.ts
+      game-started-view-event.ts
+      game-finished-view-event.ts
+    test-scenario/
+      hydrate-test-scenario-view-event.ts
+      test-move-performed-view-event.ts
+    synchronization/
+      hydrate-synchronization-view-event.ts
+      view-sequence-advanced-event.ts
   index.ts
 ```
 
 Основные операции:
 
 ```ts
+function createGame(command: CreateGameCommandData): GameCreatedEventData;
+
 function decide(
   state: GameState,
   playerId: string,
-  command: GameCommand,
-): GameEvent[];
+  command: GameCommandData,
+): GameEventData[];
+
+function hydrateCommand(command: GameCommandData): DecidableCommand;
 
 function applyEvent(
-  state: GameState,
-  event: GameEvent,
+  state: GameState | null,
+  event: GameEventData,
 ): GameState;
 
-function restoreGame(events: GameEvent[]): GameState;
+function hydrateEvent(event: GameEventData): ApplicableEvent;
+
+function restoreGame(events: GameEventData[]): GameState | null;
 
 function createViewFor(
   state: GameState,
@@ -57,58 +113,81 @@ function createViewFor(
 ): GameView;
 
 function createViewEventFor(
-  event: GameEvent,
+  event: GameEventData,
   viewer: Viewer,
-): GameViewEvent;
+): GameViewEventData;
 
 function applyViewEvent(
-  view: GameView,
-  event: GameViewEvent,
+  view: GameView | null,
+  event: GameViewEventData,
 ): GameView;
 
-function restoreView(events: GameViewEvent[]): GameView;
+function hydrateViewEvent(
+  event: GameViewEventData,
+): ApplicableViewEvent;
+
+function restoreView(events: GameViewEventData[]): GameView | null;
 ```
 
-`decide` вызывается первым. Он не изменяет переданный `GameState`, а проверяет,
-допустима ли команда, и возвращает события, которые описывают её результат. При
-отказе событий нет и состояние остаётся прежним.
+`createGame` создаёт первый `GameCreated` без искусственного состояния ещё не
+существующей игры. После его применения появляется `GameState` со статусом
+`waiting`. Для всех последующих команд вызывается `decide`: он не изменяет
+переданный `GameState`, а проверяет, допустима ли команда, и возвращает события,
+которые описывают её результат. При отказе событий нет и состояние остаётся
+прежним.
+
+`decide` гидратирует `GameCommandData` во временный `DecidableCommand` и
+вызывает его метод `decide(state, playerId)`. Lifecycle-команды и команды
+технического сценария используют отдельные групповые `switch`-гидраторы, поэтому
+добавление команды меняет только файлы своей механики.
 
 Сервер сохраняет полученные события в PostgreSQL. Только после успешной
 транзакции он последовательно передаёт каждое событие в `applyEvent` и получает
-новый `GameState`. `applyEvent` ничего не разрешает и не запрещает: это
-детерминированная функция применения уже произошедшего факта.
+новый `GameState`. `applyEvent` не проверяет игровые правила: это
+детерминированная функция применения уже произошедшего факта. Она проверяет
+только структуру истории — первый `GameCreated` применяется к `null` и не может
+встретиться повторно.
 
 ![Цикл decide, сохранения событий и applyEvent](./images/command-processing-flow.svg)
 
 При создании игры есть один дополнительный доверенный вход. Сервер читает
 актуальный runtime-файл и сам добавляет feature flags в команду `CreateGame`.
-Клиент эти значения не присылает. `decide` создаёт событие `GameCreated` с
+Клиент эти значения не присылает. `createGame` создаёт событие `GameCreated` с
 полным snapshot флагов.
 
-После сохранения `GameCreated` функция `applyEvent` переносит snapshot в
-`GameState`. Все последующие вызовы `decide`, включая `StartGame`, читают
-зафиксированные значения из состояния этой игры. Текущий runtime-файл больше не
-участвует в её поведении, а `GameStarted` не дублирует feature flags.
+После сохранения `GameCreated` функция `applyEvent(null, event)` создаёт
+`GameState` и переносит в него snapshot. Все последующие вызовы `decide`,
+включая `StartGame`, читают зафиксированные значения из состояния этой игры.
+Текущий runtime-файл больше не участвует в её поведении, а `GameStarted` не
+дублирует feature flags.
 
 При восстановлении или replay команды уже не проверяются повторно: сервер читает
-сохранённые события и вызывает только `applyEvent`. Благодаря этому прошлый
-результат не зависит от текущих правил, feature flags или внешней конфигурации.
+сохранённые `GameEventData` и вызывает только `applyEvent`. Функция гидратирует
+JSON в runtime-объект `ApplicableEvent`, а затем вызывает его метод `apply`.
+Благодаря этому прошлый результат не зависит от текущих правил, feature flags
+или внешней конфигурации.
 
 `PlayerDefeated` с причиной `disconnectTimeout` удаляет игрока из очереди ходов и фиксирует поражение. Если после этого выполнено условие завершения партии, движок создаёт `GameFinished`.
 
 Для replay `applyEvent` должен быть детерминированным: случайность вычисляется до создания события, а в событии сохраняется уже получившийся результат.
 
-Клиент не получает полный `GameState` и внутренние `GameEvent` со скрытыми
+Клиент не получает полный `GameState` и внутренние `GameEventData` со скрытыми
 данными. Сервер преобразует события в безопасные для конкретного получателя
-`GameViewEvent`. Функции `applyViewEvent` и `restoreView` позволяют клиенту
+`GameViewEventData`. Функции `applyViewEvent` и `restoreView` позволяют клиенту
 последовательно обновлять live-представление и локально восстанавливать любую
 точку истории из той же безопасной цепочки.
 
+Runtime-класс внутреннего события создаёт безопасный контракт через
+`toViewData(viewer)`. На стороне получателя `hydrateViewEvent` превращает этот
+JSON в отдельный `ApplicableViewEvent`, который применяет только разрешённые
+данные к `GameView`. Внутренний runtime-объект с полным payload клиенту не
+передаётся.
+
 Каждому внутреннему событию соответствует событие представления с тем же
 sequence number. Если изменение полностью скрыто от получателя, используется
-нейтральное `ViewVersionAdvanced`: оно обновляет версию, но не меняет
-`GameView`. Благодаря этому клиент видит непрерывную последовательность и не
-принимает скрытое событие за потерю данных.
+нейтральное `ViewSequenceAdvanced`: оно обновляет `lastEventSequence`, но не
+меняет остальные данные `GameView`. Благодаря этому клиент видит непрерывную
+последовательность и не принимает скрытое событие за потерю данных.
 
 `applyViewEvent` также детерминирована и не проверяет допустимость команд.
 Просмотр истории никогда не вызывает `decide`: доступные действия вычисляются
@@ -121,6 +200,8 @@ sequence number. Если изменение полностью скрыто о�
 
 ## Технический сценарий до реализации правил
 
+**Статус: ✅ реализовано.**
+
 До реализации правил используем небольшой сценарий, который проверит архитектуру:
 
 1. Создать игру.
@@ -131,6 +212,10 @@ sequence number. Если изменение полностью скрыто о�
 6. Восстановить итоговое состояние только из событий.
 
 Тестовый ход заменяем настоящей механикой в последнем этапе, не меняя транспорт, авторизацию и хранение.
+
+Реализация также проверяет безопасную доставку приватной части тестового хода:
+её получает только сделавший ход игрок, а второй игрок и зритель видят только
+публичную часть события.
 
 ## Когда начинаем полную реализацию
 
@@ -144,6 +229,10 @@ sequence number. Если изменение полностью скрыто о�
 - reconnect и feature flags проверены сквозными тестами.
 
 ## Критерии готовности
+
+Для технического сценария все перечисленные критерии выполнены и проверены
+модульными тестами. Их нужно будет проверить повторно после замены `TestMove`
+на настоящие правила.
 
 - правила работают без запущенного сервера и браузера;
 - одинаковая последовательность событий всегда создаёт одинаковое состояние;

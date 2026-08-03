@@ -9,7 +9,14 @@
     ".": "./src/index.ts"
   },
   "scripts": {
+    "test": "vitest run ./tests",
     "types:build": "tsc --build",
     "types:watch": "tsc --build --watch"
+  },
+  "dependencies": {
+    "typescript": "7.0.2"
+  },
+  "devDependencies": {
+    "vitest": "4.1.10"
   }
 }

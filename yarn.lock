@@ -2234,12 +2234,16 @@ __metadata:
   resolution: "@war-chest/fake-database@workspace:packages/fake-database"
   dependencies:
     idb: "npm:8.0.3"
+    typescript: "npm:7.0.2"
   languageName: unknown
   linkType: soft
 
 "@war-chest/game-engine@workspace:^, @war-chest/game-engine@workspace:packages/game-engine":
   version: 0.0.0-use.local
   resolution: "@war-chest/game-engine@workspace:packages/game-engine"
+  dependencies:
+    typescript: "npm:7.0.2"
+    vitest: "npm:4.1.10"
   languageName: unknown
   linkType: soft
 

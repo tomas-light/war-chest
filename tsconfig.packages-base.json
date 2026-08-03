@@ -1,10 +1,13 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
+    "alwaysStrict": true,
     "composite": true,
     "declaration": true,
     "declarationMap": true,
     "emitDeclarationOnly": true,
-    "outDir": "./ts-builds"
+    // "noUncheckedIndexedAccess": true,
+    "outDir": "./ts-builds",
+    "strictNullChecks": true
   }
 }
