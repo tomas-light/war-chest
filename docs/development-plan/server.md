@@ -14,7 +14,8 @@ apps/server/src/
   feature-flags/
     feature-flags.service.ts
   auth/
-    auth.routes.ts
+    auth-routes.ts
+    auth-session.ts
   games/
     game.repository.ts
     game.service.ts
@@ -64,6 +65,35 @@ POST /games/:gameId/join
 POST /games/:gameId/start
 GET  /games/:gameId/events
 ```
+
+`GET /auth/session` читает cookie с именем из конфигурации `packages/auth` и
+проверяет её через `auth.getSession()`. Действующая сессия возвращается в
+transport-формате с ISO-датой:
+
+```json
+{
+  "expiresAt": "2026-09-03T10:00:00.000Z",
+  "user": {
+    "id": "user-1",
+    "displayName": "Ada",
+    "avatarHash": "avatar-hash"
+  }
+}
+```
+
+Отсутствующая, истёкшая, отозванная или неизвестная сессия получает одинаковый
+ответ `401 unauthorized`, чтобы HTTP-слой не раскрывал причину отказа. Успешные
+ответы и ошибки этого маршрута отправляются с `Cache-Control: no-store`.
+
+`POST /auth/logout` безопасен при повторном вызове и при отсутствии session
+cookie. Адаптер передаёт token в `auth.logout()`, переносит все возвращённые
+пакетом атрибуты очищающей cookie в ответ и завершает запрос статусом `204`.
+Ответ logout также не кэшируется.
+
+Тот же адаптер предоставляет Fastify pre-handler `requireAuthSession` для
+защищённых HTTP-маршрутов. Он выполняет проверку один раз и сохраняет найденную
+`AuthSession` в текущем request, поэтому обработчики профилей и игр не читают
+cookie и не обращаются к `@war-chest/auth` повторно.
 
 `POST /games/:gameId/join` принимает выбранную пользователем позицию:
 

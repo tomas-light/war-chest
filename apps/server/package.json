@@ -10,6 +10,7 @@
     "types:watch": "tsc --build --watch"
   },
   "dependencies": {
+    "@fastify/cookie": "11.1.2",
     "@war-chest/auth": "workspace:^",
     "@war-chest/config": "workspace:^",
     "@war-chest/database": "workspace:^",

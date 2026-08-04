@@ -1,3 +1,4 @@
+import fastifyCookie from '@fastify/cookie';
 import type { Auth } from '@war-chest/auth';
 import type { DatabaseConnection } from '@war-chest/database';
 import Fastify, {
@@ -5,6 +6,8 @@ import Fastify, {
   type FastifyReply,
   type FastifyRequest,
 } from 'fastify';
+import { registerAuthRoutes } from './auth/auth-routes.js';
+import { registerAuthSession } from './auth/auth-session.js';
 
 export interface ServerDependencies {
   auth: Auth;
@@ -30,6 +33,9 @@ export function createApp(options: CreateAppOptions): FastifyInstance {
 
   app.decorate('serverDependencies', dependencies);
   app.addHook('onClose', closeDatabaseConnection);
+  app.register(fastifyCookie);
+  registerAuthSession(app);
+  app.register(registerAuthRoutes);
   app.get('/health', getHealth);
 
   return app;
