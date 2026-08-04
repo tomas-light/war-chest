@@ -22,8 +22,12 @@ export default tsEslint.config(
   {
     ignores: [
       '.yarn/**',
+      '.pnp.*',
       '**/coverage/**',
+      '**/dist/**',
       '**/node_modules/**',
+      '**/playwright-report/**',
+      '**/test-results/**',
       '**/ts-builds/**',
       'packages/database/migrations/**',
     ],
@@ -44,7 +48,7 @@ export default tsEslint.config(
     languageOptions: {
       parserOptions: {
         projectService: {
-          allowDefaultProject: ['packages/database/*.ts'],
+          allowDefaultProject: ['packages/database/*.ts', 'vitest.config.ts'],
           defaultProject: 'tsconfig.eslint.json',
         },
         tsconfigRootDir: import.meta.dirname,

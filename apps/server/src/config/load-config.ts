@@ -31,5 +31,6 @@ export function loadServerConfig(
       packageRoot,
       config.FEATURE_FLAGS_RUNTIME_FILE
     ),
+    WEB_ASSETS_ROOT: resolve(packageRoot, config.WEB_ASSETS_ROOT),
   };
 }

@@ -11,7 +11,11 @@ export async function startServer(): Promise<FastifyInstance> {
 
   try {
     const auth = createAuth({ database: databaseConnection.database });
-    app = createApp({ auth, databaseConnection });
+    app = createApp({
+      auth,
+      databaseConnection,
+      webAssetsRoot: config.APP_SERVE_WEB ? config.WEB_ASSETS_ROOT : undefined,
+    });
 
     await checkDatabaseConnection(databaseConnection);
     await app.listen({ host: config.APP_HOST, port: config.APP_PORT });

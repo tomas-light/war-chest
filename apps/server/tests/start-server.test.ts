@@ -32,8 +32,10 @@ test('explains how to start PostgreSQL when it is unavailable', async () => {
   mocks.loadServerConfig.mockReturnValue({
     APP_HOST: '127.0.0.1',
     APP_PORT: 3000,
+    APP_SERVE_WEB: false,
     DISCONNECTED_PLAYER_TIMEOUT_MINUTES: 15,
     FEATURE_FLAGS_RUNTIME_FILE: 'feature-flags.json',
+    WEB_ASSETS_ROOT: 'web-dist',
   });
   mocks.createDatabase.mockReturnValue({
     checkConnection,

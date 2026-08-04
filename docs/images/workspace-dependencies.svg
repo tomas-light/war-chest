@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1040" viewBox="0 0 1440 1040" role="img" aria-labelledby="title description">
   <title id="title">Зависимости приложений и пакетов War Chest</title>
-  <desc id="description">Схема показывает текущие и запланированные workspace-зависимости между приложениями web и server и пакетами game-engine, fake-database, auth, database и config.</desc>
+  <desc id="description">Схема показывает текущие и запланированные workspace-зависимости между приложениями web и server и пакетами api-contracts, game-engine, fake-database, auth, database и config.</desc>
 
   <defs>
     <marker id="arrow-current" markerWidth="11" markerHeight="11" refX="10" refY="4" orient="auto" markerUnits="strokeWidth">
@@ -21,6 +21,7 @@
       .group { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 2; rx: 20; }
       .app { fill: #eff6ff; stroke: #2563eb; stroke-width: 2.5; rx: 16; }
       .engine { fill: #f5f3ff; stroke: #7c3aed; stroke-width: 2.5; rx: 16; }
+      .contracts { fill: #f0f9ff; stroke: #0284c7; stroke-width: 2.5; rx: 16; }
       .fake { fill: #fffbeb; stroke: #d97706; stroke-width: 2.5; rx: 16; }
       .auth { fill: #f0fdfa; stroke: #0f766e; stroke-width: 2.5; rx: 16; }
       .database { fill: #ecfdf5; stroke: #059669; stroke-width: 2.5; rx: 16; }
@@ -66,12 +67,18 @@
   <text x="925" y="303" class="node-text">правила, команды, события</text>
   <text x="925" y="327" class="node-text">и безопасные представления</text>
 
-  <rect x="760" y="385" width="330" height="145" class="fake"/>
-  <text x="925" y="423" class="node-title">Fake Database</text>
-  <text x="925" y="451" class="node-path">packages/fake-database</text>
-  <text x="925" y="483" class="node-text">browser-only IndexedDB</text>
-  <rect x="865" y="497" width="120" height="24" class="chip"/>
-  <text x="925" y="514" class="small" text-anchor="middle">npm: idb</text>
+  <rect x="560" y="385" width="330" height="145" class="contracts"/>
+  <text x="725" y="423" class="node-title">API Contracts</text>
+  <text x="725" y="451" class="node-path">packages/api-contracts</text>
+  <text x="725" y="483" class="node-text">TypeScript-типы и Zod-схемы</text>
+  <text x="725" y="507" class="node-text">HTTP и Socket.IO сообщений</text>
+
+  <rect x="1030" y="385" width="330" height="145" class="fake"/>
+  <text x="1195" y="423" class="node-title">Fake Database</text>
+  <text x="1195" y="451" class="node-path">packages/fake-database</text>
+  <text x="1195" y="483" class="node-text">browser-only IndexedDB</text>
+  <rect x="1135" y="497" width="120" height="24" class="chip"/>
+  <text x="1195" y="514" class="small" text-anchor="middle">npm: idb</text>
 
   <rect x="560" y="585" width="330" height="145" class="auth"/>
   <text x="725" y="623" class="node-title">Auth</text>
@@ -94,15 +101,22 @@
   <rect x="515" y="237" width="142" height="27" class="label-bg"/>
   <text x="586" y="256" class="edge-label">общие правила</text>
 
-  <path d="M390 350 H610 V457 H760" class="planned"/>
-  <rect x="493" y="337" width="176" height="27" class="label-bg"/>
-  <text x="581" y="356" class="edge-label">только development</text>
+  <path d="M390 350 H950 V457 H1030" class="planned"/>
+  <rect x="760" y="337" width="176" height="27" class="label-bg"/>
+  <text x="848" y="356" class="edge-label">только development</text>
+
+  <path d="M390 315 H515 V370 H725 V385" class="current"/>
+  <path d="M390 650 H515 V545 H725 V530" class="current"/>
+  <rect x="570" y="532" width="136" height="27" class="label-bg"/>
+  <text x="638" y="551" class="edge-label">API-контракты</text>
+
+  <path d="M725 385 V367 H800 V350" class="current"/>
 
   <path d="M390 575 H475 V315 H760" class="current"/>
   <rect x="404" y="421" width="142" height="27" class="label-bg"/>
   <text x="475" y="440" class="edge-label">проверка команд</text>
 
-  <path d="M390 630 H560" class="planned"/>
+  <path d="M390 630 H560" class="current"/>
   <rect x="413" y="596" width="124" height="27" class="label-bg"/>
   <text x="475" y="615" class="edge-label">HTTP-адаптер</text>
 
@@ -110,14 +124,12 @@
   <rect x="906" y="623" width="108" height="27" class="label-bg"/>
   <text x="960" y="642" class="edge-label">сессии</text>
 
-  <path d="M1090 457 H1280 V585" class="current"/>
-  <rect x="1110" y="443" width="160" height="27" class="label-bg"/>
-  <text x="1190" y="462" class="edge-label">типы (type-only)</text>
+  <path d="M1195 530 V585" class="current"/>
 
   <path d="M725 730 V835 H795" class="current"/>
   <path d="M1195 730 V835 H1125" class="current"/>
 
-  <path d="M240 705 V920 H1335 V730" class="planned"/>
+  <path d="M240 705 V920 H1335 V730" class="current"/>
   <rect x="561" y="907" width="318" height="27" class="label-bg"/>
   <text x="720" y="926" class="edge-label">игровые репозитории и транзакции</text>
 

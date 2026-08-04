@@ -1,4 +1,6 @@
 import fastifyCookie from '@fastify/cookie';
+import fastifyStatic from '@fastify/static';
+import { API_PREFIX } from '@war-chest/api-contracts';
 import type { Auth } from '@war-chest/auth';
 import type { DatabaseConnection } from '@war-chest/database';
 import Fastify, {
@@ -8,6 +10,7 @@ import Fastify, {
 } from 'fastify';
 import { registerAuthRoutes } from './auth/auth-routes.js';
 import { registerAuthSession } from './auth/auth-session.js';
+import { createSocketServer } from './socket/socket-server.js';
 import {
   type UserRepository,
   createUserRepository,
@@ -25,6 +28,7 @@ interface CreateAppOptions {
   databaseConnection: DatabaseConnection;
   logger?: boolean;
   userRepository?: UserRepository;
+  webAssetsRoot?: string;
 }
 
 declare module 'fastify' {
@@ -47,9 +51,12 @@ export function createApp(options: CreateAppOptions): FastifyInstance {
   app.addHook('onClose', closeDatabaseConnection);
   app.register(fastifyCookie);
   registerAuthSession(app);
-  app.register(registerAuthRoutes);
-  app.register(registerUserRoutes);
-  app.get('/health', getHealth);
+  createSocketServer(app, options.auth);
+  app.register(registerApiRoutes, { prefix: API_PREFIX });
+
+  if (options.webAssetsRoot !== undefined) {
+    registerWebApp(app, options.webAssetsRoot);
+  }
 
   return app;
 
@@ -70,5 +77,46 @@ export function createApp(options: CreateAppOptions): FastifyInstance {
 
       return reply.code(503).send({ status: 'unavailable' });
     }
+  }
+
+  function registerApiRoutes(api: FastifyInstance): void {
+    api.register(registerAuthRoutes);
+    api.register(registerUserRoutes);
+    api.get('/health', getHealth);
+  }
+}
+
+function registerWebApp(app: FastifyInstance, webAssetsRoot: string): void {
+  app.register(fastifyStatic, {
+    immutable: true,
+    index: false,
+    maxAge: '30d',
+    root: webAssetsRoot,
+  });
+  app.setNotFoundHandler(sendWebAppOrNotFound);
+
+  function sendWebAppOrNotFound(
+    request: FastifyRequest,
+    reply: FastifyReply
+  ): FastifyReply {
+    const acceptsHtml = request.headers.accept?.includes('text/html') ?? false;
+    const isNavigationRequest =
+      (request.method === 'GET' || request.method === 'HEAD') && acceptsHtml;
+
+    const isApiRequest =
+      request.url === API_PREFIX || request.url.startsWith(`${API_PREFIX}/`);
+
+    if (isApiRequest || !isNavigationRequest) {
+      return reply.code(404).send({
+        error: {
+          code: 'not_found',
+          message: 'Resource was not found.',
+        },
+      });
+    }
+
+    return reply
+      .header('Cache-Control', 'no-cache')
+      .sendFile('index.html', { cacheControl: false });
   }
 }

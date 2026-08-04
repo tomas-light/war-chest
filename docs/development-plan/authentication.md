@@ -56,29 +56,29 @@ Fastify остаются в `apps/server`, но только преобразу�
 Конфигурация также принадлежит этой границе:
 
 ```yaml
-AUTH_SESSION_COOKIE_NAME: "war_chest_session"
+AUTH_SESSION_COOKIE_NAME: 'war_chest_session'
 AUTH_SESSION_TTL_MINUTES: 43200
 AUTH_OAUTH_STATE_TTL_MINUTES: 10
 AUTH_COOKIE_SECURE: false
-AUTH_COOKIE_SAME_SITE: "lax"
-AUTH_SUCCESS_REDIRECT_URL: "http://localhost:5173"
+AUTH_COOKIE_SAME_SITE: 'lax'
+AUTH_SUCCESS_REDIRECT_URL: 'http://localhost:5173'
 AUTH_AVATAR_MAX_SOURCE_BYTES: 1048576
 AUTH_AVATAR_FETCH_TIMEOUT_MS: 5000
 AUTH_AVATAR_SIZE_PX: 256
-GOOGLE_CLIENT_ID: ""
-TELEGRAM_CLIENT_ID: ""
-TELEGRAM_CLIENT_SECRET: ""
-TELEGRAM_AUTHORIZATION_ENDPOINT: "https://oauth.telegram.org/auth"
-TELEGRAM_TOKEN_ENDPOINT: "https://oauth.telegram.org/token"
-TELEGRAM_ISSUER: "https://oauth.telegram.org"
-TELEGRAM_JWKS_ENDPOINT: "https://oauth.telegram.org/.well-known/jwks.json"
-TELEGRAM_REDIRECT_URI: "http://localhost:3000/auth/telegram/callback"
-YANDEX_CLIENT_ID: ""
-YANDEX_CLIENT_SECRET: ""
-YANDEX_AUTHORIZATION_ENDPOINT: "https://oauth.yandex.ru/authorize"
-YANDEX_TOKEN_ENDPOINT: "https://oauth.yandex.ru/token"
-YANDEX_PROFILE_ENDPOINT: "https://login.yandex.ru/info"
-YANDEX_REDIRECT_URI: "http://localhost:3000/auth/yandex/callback"
+GOOGLE_CLIENT_ID: ''
+TELEGRAM_CLIENT_ID: ''
+TELEGRAM_CLIENT_SECRET: ''
+TELEGRAM_AUTHORIZATION_ENDPOINT: 'https://oauth.telegram.org/auth'
+TELEGRAM_TOKEN_ENDPOINT: 'https://oauth.telegram.org/token'
+TELEGRAM_ISSUER: 'https://oauth.telegram.org'
+TELEGRAM_JWKS_ENDPOINT: 'https://oauth.telegram.org/.well-known/jwks.json'
+TELEGRAM_REDIRECT_URI: 'http://localhost:5173/api/auth/telegram/callback'
+YANDEX_CLIENT_ID: ''
+YANDEX_CLIENT_SECRET: ''
+YANDEX_AUTHORIZATION_ENDPOINT: 'https://oauth.yandex.ru/authorize'
+YANDEX_TOKEN_ENDPOINT: 'https://oauth.yandex.ru/token'
+YANDEX_PROFILE_ENDPOINT: 'https://login.yandex.ru/info'
+YANDEX_REDIRECT_URI: 'http://localhost:5173/api/auth/yandex/callback'
 ```
 
 `packages/auth/env.yaml` хранится в Git с безопасными значениями и пустыми
@@ -156,7 +156,7 @@ adapter принимает аватар только из доверенного
 Клиент получает не внешний адрес, а URL нашего API:
 
 ```text
-GET /users/:userId/avatar?v=<contentHash>
+GET /api/users/:userId/avatar?v=<contentHash>
 ```
 
 Маршрут требует действующую сессию и возвращает изображение из PostgreSQL.
@@ -184,7 +184,7 @@ Socket.IO-соединении.
 На клиенте используем официальный Sign in with Google button из Google Identity Services. Клиент получает Google ID token и отправляет его серверу:
 
 ```text
-POST /auth/google
+POST /api/auth/google
 ```
 
 Сервер проверяет подпись, issuer, audience и срок действия токена, после чего создаёт сессию War Chest. Google отвечает только за момент входа; жизненным циклом нашей сессии управляет сервер.
@@ -205,8 +205,8 @@ Google client ID указывается и в публичной конфигу�
 Маршруты:
 
 ```text
-GET /auth/telegram/start
-GET /auth/telegram/callback
+GET /api/auth/telegram/start
+GET /api/auth/telegram/callback
 ```
 
 `/start` создаёт `state`, PKCE verifier и перенаправляет пользователя в Telegram. Callback проверяет `state`, обменивает код на токены, валидирует ID token и создаёт сессию War Chest.
@@ -231,15 +231,15 @@ Telegram client ID и secret выдаются через BotFather. Локаль
 Маршруты:
 
 ```text
-GET /auth/yandex/start
-GET /auth/yandex/callback
+GET /api/auth/yandex/start
+GET /api/auth/yandex/callback
 ```
 
 Yandex OAuth можно использовать при разработке на localhost. В настройках
 OAuth-приложения добавляем отдельный Redirect URI:
 
 ```text
-http://localhost:3000/auth/yandex/callback
+http://localhost:5173/api/auth/yandex/callback
 ```
 
 Redirect URI из запроса должен совпадать с зарегистрированным по схеме, хосту,
@@ -257,14 +257,14 @@ OAuth-токен Yandex не отправляется клиенту и не с�
 Итоговый набор маршрутов:
 
 ```text
-POST /auth/google
-GET  /auth/telegram/start
-GET  /auth/telegram/callback
-GET  /auth/yandex/start
-GET  /auth/yandex/callback
-GET  /auth/session
-POST /auth/logout
-GET  /users/:userId/avatar
+POST /api/auth/google
+GET  /api/auth/telegram/start
+GET  /api/auth/telegram/callback
+GET  /api/auth/yandex/start
+GET  /api/auth/yandex/callback
+GET  /api/auth/session
+POST /api/auth/logout
+GET  /api/users/:userId/avatar
 ```
 
 ## Критерии готовности

@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.packages-base.json",
+  "compilerOptions": {
+    "outDir": "../../ts-builds/packages/api-contracts",
+    "paths": {
+      "#/*": ["./src/*"]
+    },
+    "tsBuildInfoFile": "../../ts-builds/packages/api-contracts.tsbuildinfo"
+  },
+  "include": ["src"],
+  "references": [
+    {
+      "path": "../game-engine"
+    }
+  ]
+}

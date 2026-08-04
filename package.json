@@ -3,6 +3,9 @@
   "private": true,
   "packageManager": "yarn@4.17.1",
   "type": "module",
+  "engines": {
+    "node": ">=22.22.0"
+  },
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -15,11 +18,15 @@
     "db:studio": "yarn workspace @war-chest/database db:studio",
     "db:up": "docker compose up -d postgres",
     "dev:server": "yarn workspace @war-chest/server dev",
+    "dev:web": "yarn workspace @war-chest/web dev",
     "format": "prettier . --write",
     "format:check": "prettier . --check",
     "lint": "eslint . && stylelint \"**/*.{css,scss}\" --allow-empty-input",
     "lint:fix": "eslint . --fix && stylelint \"**/*.{css,scss}\" --fix --allow-empty-input",
     "test": "vitest run",
+    "test:components": "docker compose run --build --rm playwright yarn workspace @war-chest/web test:components",
+    "test:e2e": "docker compose run --build --rm playwright yarn workspace @war-chest/web test:e2e",
+    "test:e2e:real": "docker compose up -d --wait postgres && docker compose run --build --rm playwright yarn workspace @war-chest/web test:e2e:real",
     "types:build": "tsc --build",
     "types:watch": "tsc --build --watch",
     "types:clean": "tsc --build --clean"
