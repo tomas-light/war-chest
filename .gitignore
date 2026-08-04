@@ -26,5 +26,11 @@ packages/*/env.local.yaml
 # Local mount point for external runtime feature flags
 /runtime/feature-flags/
 
+# Test and build output
+apps/*/coverage/
+apps/*/dist/
+apps/*/playwright-report/
+apps/*/test-results/
+
 # Docker Compose local overrides and credentials
 /.env

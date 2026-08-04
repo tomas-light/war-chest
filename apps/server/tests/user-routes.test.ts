@@ -76,7 +76,7 @@ describe('user profile routes', () => {
     const response = await app.inject({
       headers: AUTH_HEADERS,
       method: 'GET',
-      url: `/users/${USER_ID}`,
+      url: `/api/users/${USER_ID}`,
     });
 
     expect(response.statusCode).toBe(200);
@@ -93,7 +93,7 @@ describe('user profile routes', () => {
     const response = await app.inject({
       headers: AUTH_HEADERS,
       method: 'GET',
-      url: `/users/${USER_ID}`,
+      url: `/api/users/${USER_ID}`,
     });
 
     expect(response.statusCode).toBe(404);
@@ -109,7 +109,7 @@ describe('user profile routes', () => {
     const response = await app.inject({
       headers: AUTH_HEADERS,
       method: 'GET',
-      url: '/users/not-a-uuid',
+      url: '/api/users/not-a-uuid',
     });
 
     expect(response.statusCode).toBe(400);
@@ -127,7 +127,7 @@ describe('user profile routes', () => {
     const response = await app.inject({
       headers: AUTH_HEADERS,
       method: 'GET',
-      url: `/users/${USER_ID}/avatar?v=avatar-version`,
+      url: `/api/users/${USER_ID}/avatar?v=avatar-version`,
     });
 
     expect(response.statusCode).toBe(200);
@@ -144,7 +144,7 @@ describe('user profile routes', () => {
     const response = await app.inject({
       headers: AUTH_HEADERS,
       method: 'GET',
-      url: `/users/${USER_ID}/avatar`,
+      url: `/api/users/${USER_ID}/avatar`,
     });
 
     expect(response.statusCode).toBe(404);
@@ -198,7 +198,7 @@ describe('user profile routes', () => {
     const response = await app.inject({
       headers: AUTH_HEADERS,
       method: 'GET',
-      url: `/users/${USER_ID}/games`,
+      url: `/api/users/${USER_ID}/games`,
     });
 
     expect(listFinishedGames).toHaveBeenCalledWith(USER_ID, {
@@ -239,7 +239,7 @@ describe('user profile routes', () => {
     const response = await app.inject({
       headers: AUTH_HEADERS,
       method: 'GET',
-      url: `/users/${USER_ID}/games?cursor=${cursor}&limit=5`,
+      url: `/api/users/${USER_ID}/games?cursor=${cursor}&limit=5`,
     });
 
     expect(response.statusCode).toBe(200);
@@ -256,7 +256,7 @@ describe('user profile routes', () => {
     const response = await app.inject({
       headers: AUTH_HEADERS,
       method: 'GET',
-      url: `/users/${USER_ID}/games?cursor=invalid`,
+      url: `/api/users/${USER_ID}/games?cursor=invalid`,
     });
 
     expect(response.statusCode).toBe(400);
@@ -275,7 +275,7 @@ describe('user profile routes', () => {
     const response = await app.inject({
       headers: AUTH_HEADERS,
       method: 'GET',
-      url: `/users/${USER_ID}/games`,
+      url: `/api/users/${USER_ID}/games`,
     });
 
     expect(response.statusCode).toBe(404);

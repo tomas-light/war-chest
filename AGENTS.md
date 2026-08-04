@@ -140,6 +140,45 @@ async function some() {
 }
 ```
 
+## Именование файлов
+
+- Называй файл так же, как главную сущность, которая экспортируется из него,
+  либо используй имя, описывающее смысловое объединение нескольких сущностей.
+- Используй в названиях файлов только стили `camelCase` и `PascalCase`. Не
+  используй `dashed-case`.
+
+```tsx
+// app-provider.ts ❌ dashed-case и несовпадение с именем компонента
+export function AppProviders() {}
+
+// AppProviders.tsx ✅ PascalCase по имени компонента
+export function AppProviders() {}
+```
+
+```ts
+// routes.ts ❌ имя файла не совпадает с главной экспортируемой сущностью
+export const appRoutes = [];
+
+// appRoutes.ts ✅ имя файла совпадает с главной экспортируемой сущностью
+export const appRoutes = [];
+```
+
+```ts
+// constants.ts ✅ допустимое имя для смыслового объединения разных экспортов
+export const PAGE_LIMIT = 25;
+export const DEFAULT_SORT = 'ASC';
+```
+
+- Называй SCSS-модуль по шаблону `<имя файла компонента>.module.scss` и
+  импортируй его с именем `classes`.
+
+```tsx
+// PlaceholderPage.tsx
+import classes from './PlaceholderPage.module.scss'; // ✅ Правильно
+
+export function PlaceholderPage() {}
+```
+
 ## Экспорты
 
 - Не добавляй преждевременные экспорты «на будущее» или ради возможного переиспользования.

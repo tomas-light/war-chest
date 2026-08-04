@@ -7,7 +7,10 @@ export default {
   ],
   ignoreFiles: [
     '**/coverage/**',
+    '**/dist/**',
     '**/node_modules/**',
+    '**/playwright-report/**',
+    '**/test-results/**',
     '**/ts-builds/**',
     'packages/database/migrations/**',
   ],

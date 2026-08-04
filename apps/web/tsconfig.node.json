@@ -1,0 +1,22 @@
+{
+  "extends": "../../tsconfig.apps-base.json",
+  "compilerOptions": {
+    "lib": ["DOM", "ES2022"],
+    "jsx": "react-jsx",
+    "tsBuildInfoFile": "../../ts-builds/apps/web-node.tsbuildinfo",
+    "types": ["node", "vite/client"]
+  },
+  "include": [
+    "config",
+    "playwright/gallery",
+    "playwright.config.ts",
+    "playwright.real.config.ts",
+    "tests/e2e",
+    "vite.config.ts"
+  ],
+  "references": [
+    {
+      "path": "../../packages/config"
+    }
+  ]
+}

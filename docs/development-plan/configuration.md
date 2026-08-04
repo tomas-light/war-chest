@@ -72,10 +72,12 @@ Zod-валидации. Сами ключи, схемы и переданные 
 Пример структуры:
 
 ```yaml
-APP_HOST: "0.0.0.0"
+APP_HOST: '0.0.0.0'
 APP_PORT: 3000
+APP_SERVE_WEB: false
+WEB_ASSETS_ROOT: '../web/dist'
 DISCONNECTED_PLAYER_TIMEOUT_MINUTES: 15
-FEATURE_FLAGS_RUNTIME_FILE: "../../runtime/feature-flags/feature-flags.localhost.json"
+FEATURE_FLAGS_RUNTIME_FILE: '../../runtime/feature-flags/feature-flags.localhost.json'
 ```
 
 Сервер читает YAML во время запуска. Настройки OAuth-провайдеров и сессии
@@ -88,7 +90,7 @@ FEATURE_FLAGS_RUNTIME_FILE: "../../runtime/feature-flags/feature-flags.localhost
 Пример `packages/database/env.yaml`:
 
 ```yaml
-DATABASE_URL: "postgres://war_chest:war_chest@localhost:5432/war_chest"
+DATABASE_URL: 'postgres://war_chest:war_chest@localhost:5432/war_chest'
 DATABASE_POOL_SIZE: 10
 DATABASE_SSL: false
 ```
@@ -117,29 +119,29 @@ packages/database/env.yaml
 Пример `packages/auth/env.yaml`:
 
 ```yaml
-AUTH_SESSION_COOKIE_NAME: "war_chest_session"
+AUTH_SESSION_COOKIE_NAME: 'war_chest_session'
 AUTH_SESSION_TTL_MINUTES: 43200
 AUTH_OAUTH_STATE_TTL_MINUTES: 10
 AUTH_COOKIE_SECURE: false
-AUTH_COOKIE_SAME_SITE: "lax"
-AUTH_SUCCESS_REDIRECT_URL: "http://localhost:5173"
+AUTH_COOKIE_SAME_SITE: 'lax'
+AUTH_SUCCESS_REDIRECT_URL: 'http://localhost:5173'
 AUTH_AVATAR_MAX_SOURCE_BYTES: 1048576
 AUTH_AVATAR_FETCH_TIMEOUT_MS: 5000
 AUTH_AVATAR_SIZE_PX: 256
-GOOGLE_CLIENT_ID: ""
-TELEGRAM_CLIENT_ID: ""
-TELEGRAM_CLIENT_SECRET: ""
-TELEGRAM_AUTHORIZATION_ENDPOINT: "https://oauth.telegram.org/auth"
-TELEGRAM_TOKEN_ENDPOINT: "https://oauth.telegram.org/token"
-TELEGRAM_ISSUER: "https://oauth.telegram.org"
-TELEGRAM_JWKS_ENDPOINT: "https://oauth.telegram.org/.well-known/jwks.json"
-TELEGRAM_REDIRECT_URI: "http://localhost:3000/auth/telegram/callback"
-YANDEX_CLIENT_ID: ""
-YANDEX_CLIENT_SECRET: ""
-YANDEX_AUTHORIZATION_ENDPOINT: "https://oauth.yandex.ru/authorize"
-YANDEX_TOKEN_ENDPOINT: "https://oauth.yandex.ru/token"
-YANDEX_PROFILE_ENDPOINT: "https://login.yandex.ru/info"
-YANDEX_REDIRECT_URI: "http://localhost:3000/auth/yandex/callback"
+GOOGLE_CLIENT_ID: ''
+TELEGRAM_CLIENT_ID: ''
+TELEGRAM_CLIENT_SECRET: ''
+TELEGRAM_AUTHORIZATION_ENDPOINT: 'https://oauth.telegram.org/auth'
+TELEGRAM_TOKEN_ENDPOINT: 'https://oauth.telegram.org/token'
+TELEGRAM_ISSUER: 'https://oauth.telegram.org'
+TELEGRAM_JWKS_ENDPOINT: 'https://oauth.telegram.org/.well-known/jwks.json'
+TELEGRAM_REDIRECT_URI: 'http://localhost:5173/api/auth/telegram/callback'
+YANDEX_CLIENT_ID: ''
+YANDEX_CLIENT_SECRET: ''
+YANDEX_AUTHORIZATION_ENDPOINT: 'https://oauth.yandex.ru/authorize'
+YANDEX_TOKEN_ENDPOINT: 'https://oauth.yandex.ru/token'
+YANDEX_PROFILE_ENDPOINT: 'https://login.yandex.ru/info'
+YANDEX_REDIRECT_URI: 'http://localhost:5173/api/auth/yandex/callback'
 ```
 
 Пакет авторизации загружает эту конфигурацию для интеграций с провайдерами и
@@ -169,10 +171,13 @@ Google client ID — единственное значение провайде�
 Пример структуры:
 
 ```yaml
-API_BASE_URL: "http://localhost:3000"
-SOCKET_URL: "http://localhost:3000"
-GOOGLE_CLIENT_ID: ""
+GOOGLE_CLIENT_ID: ''
 ```
+
+Адрес backend не является клиентской настройкой: браузер всегда обращается к
+своему origin через `/api/*` и `/api/socket.io`. В development эти пути
+проксирует Vite. В production `APP_SERVE_WEB: true` включает раздачу
+`apps/web/dist` сервером, включая SPA fallback для deep links.
 
 Клиентский YAML читается во время сборки Vite. Явные переменные команды сборки применяются после YAML и имеют наивысший приоритет. Любое итоговое значение оказывается доступным в браузере, поэтому в `apps/web/env.yaml`, `apps/web/env.local.yaml` и build-переменных клиента не должно быть секретов.
 
@@ -219,7 +224,7 @@ feature-flags.localhost.json
 Атомарное переименование не даёт серверу прочитать частично записанный JSON.
 
 Сервер не следит за файлом и не обновляет глобальное состояние в фоне. Чтение
-происходит на границе создания игры — при обработке `POST /games`. Обновление
+происходит на границе создания игры — при обработке `POST /api/games`. Обновление
 флагов не требует рестарта сервера или нового deployment cycle.
 
 Отдельной проверки схемы, полноты набора или списка известных ключей нет: содержимое JSON считается готовым runtime snapshot.
@@ -298,7 +303,7 @@ ConfigMap. При обычном ConfigMap volume Kubernetes обновляет 
 Сервер предоставляет:
 
 ```text
-GET /config/feature-flags.json
+GET /api/config/feature-flags.json
 ```
 
 Endpoint при запросе читает runtime-файл активного окружения и возвращает его содержимое без дополнительной проверки схемы.

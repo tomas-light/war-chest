@@ -11,11 +11,14 @@
   },
   "dependencies": {
     "@fastify/cookie": "11.1.2",
+    "@fastify/static": "10.1.2",
+    "@war-chest/api-contracts": "workspace:^",
     "@war-chest/auth": "workspace:^",
     "@war-chest/config": "workspace:^",
     "@war-chest/database": "workspace:^",
     "@war-chest/game-engine": "workspace:^",
     "fastify": "5.11.2",
+    "socket.io": "4.8.3",
     "zod": "4.4.3"
   },
   "devDependencies": {

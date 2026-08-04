@@ -24,8 +24,8 @@ Dev-панель монтируется в `app` выше роутера и ав
 
 ```ts
 interface DevBackendState {
-  backend: "real" | "fake";
-  setBackend(backend: "real" | "fake"): void;
+  backend: 'real' | 'fake';
+  setBackend(backend: 'real' | 'fake'): void;
 }
 ```
 
@@ -33,6 +33,8 @@ interface DevBackendState {
 На первом этапе после смены backend допустима полная перезагрузка вкладки: это
 даёт всем providers единый источник данных и исключает смешивание real- и
 fake-состояния.
+
+Текущий каркас использует именно полную перезагрузку страницы.
 
 При запуске app shell сначала читает сохранённый backend, а уже затем
 инициализирует API и загружает application feature flags. Недоступность real API
@@ -43,8 +45,8 @@ Dev-панель и fake backend подключаются только при `i
 реализация загружается через динамический `import()` после выбора режима:
 
 ```ts
-if (import.meta.env.DEV && backend === "fake") {
-  const { createFakeBackend } = await import("./fake/create-fake-backend");
+if (import.meta.env.DEV && backend === 'fake') {
+  const { createFakeBackend } = await import('./fake/create-fake-backend');
   return createFakeBackend();
 }
 ```
@@ -204,8 +206,8 @@ fake-режиме dev-панель изменяет данные самой fake
 interface DevelopmentApi {
   updateGameFeatureFlags(
     gameId: string,
-    featureFlags: FeatureFlags,
-  ): Promise<{ applied: boolean; reason?: "fake-mode-only" }>;
+    featureFlags: FeatureFlags
+  ): Promise<{ applied: boolean; reason?: 'fake-mode-only' }>;
 }
 ```
 
@@ -224,21 +226,24 @@ Fake-реализация в одной транзакции IndexedDB обно�
 не меняет production-правило: в real backend feature flags после `GameCreated`
 неизменяемы.
 
-Fake-реализация `GET /config/feature-flags.json` читает application flags из
+Fake-реализация `GET /api/config/feature-flags.json` читает application flags из
 IndexedDB. Seed и reset позволяют подготовить начальный набор без работающего
 сервера.
 
 ## Порядок реализации и проверка
 
-1. Вынести HTTP и Socket.IO за общие контракты `shared/api`.
-2. Добавить backend gateway и real-адаптеры.
-3. Смонтировать dev-панель над роутером и добавить persisted-переключатель.
+1. ✅ Добавить общие runtime-проверяемые HTTP- и Socket.IO-контракты в
+   `@war-chest/api-contracts` и базовый игровой connection в `shared/api`.
+2. 🟡 Добавлены базовый gateway и real Socket.IO adapter; HTTP adapter и общий
+   provider ещё не реализованы.
+3. ✅ Смонтировать dev-панель над роутером и добавить persisted-переключатель.
 4. ✅ Создан `packages/fake-database` на базе npm-пакета `idb`: добавлены схема
    IndexedDB, миграция, таблицы, репозитории, транзакции, seed и reset.
 5. Реализовать fake backend в `SharedWorker` и RPC через `MessagePort`.
 6. Добавить три seeded fake-аккаунта и provider-specific авторизацию через
    кнопки Google, Telegram и Yandex.
-7. Реализовать fake HTTP-контракт и fake игровое соединение.
+7. 🟡 Добавлено минимальное fake игровое соединение с пустым snapshot; fake HTTP
+   и обработка команд ещё не реализованы.
 8. Добавить fake-only управление feature flags через `DevelopmentApi`.
 9. Запустить общий набор contract-тестов против real и fake реализаций.
 10. Проверить состав production bundle.

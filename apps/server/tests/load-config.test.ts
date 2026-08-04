@@ -7,8 +7,10 @@ import { loadServerConfig } from '../src/config/index.js';
 const BASE_CONFIG = [
   'APP_HOST: "0.0.0.0"',
   'APP_PORT: 3000',
+  'APP_SERVE_WEB: false',
   'DISCONNECTED_PLAYER_TIMEOUT_MINUTES: 15',
   'FEATURE_FLAGS_RUNTIME_FILE: "feature-flags.base.json"',
+  'WEB_ASSETS_ROOT: "web-dist"',
 ].join('\n');
 
 test('loads base, local, and environment values in priority order', () => {
@@ -33,11 +35,13 @@ test('loads base, local, and environment values in priority order', () => {
       expect(config).toEqual({
         APP_HOST: '127.0.0.1',
         APP_PORT: 3200,
+        APP_SERVE_WEB: false,
         DISCONNECTED_PLAYER_TIMEOUT_MINUTES: 20,
         FEATURE_FLAGS_RUNTIME_FILE: join(
           packageRoot,
           'feature-flags.environment.json'
         ),
+        WEB_ASSETS_ROOT: join(packageRoot, 'web-dist'),
       });
     }
   );

@@ -1,32 +1,146 @@
-# war-chest
+# War Chest
 
-Yarn Workspaces monorepo for the War Chest web game.
+War Chest — Yarn Workspaces-монорепозиторий браузерной игры. В репозитории
+находятся React/Vite-клиент, Fastify/Socket.IO-server и общие пакеты игровой
+модели, базы данных, авторизации и transport-контрактов.
 
-## Structure
+Актуальная документация начинается с [docs/README.md](./docs/README.md):
 
-```text
-apps/
-  server/       Node.js server
-  web/          React client
-packages/
-  game-engine/  Shared game rules and domain types
-```
+- [фактическое поведение web-клиента](./docs/client/README.md);
+- [фактическое поведение server](./docs/server/README.md);
+- [план дальнейшей разработки](./docs/development-plan/README.md).
 
-## Commands
+## Требования
+
+- Node.js 22.22 или новее;
+- Yarn 4.17.1 через сохранённый в репозитории Yarn release;
+- Docker с Docker Compose для PostgreSQL и browser-тестов.
+
+Установить зависимости:
 
 ```shell
-yarn install
-yarn types:build
-yarn types:watch
-yarn types:clean
+corepack enable
+yarn install --immutable
 ```
 
-Workspace dependencies use the `workspace:^` protocol. TypeScript project
-references ensure that shared packages are checked before their consumers.
+## Development
 
-## Documentation
+Сначала запустите PostgreSQL и примените миграции:
 
-Project documentation lives in [`docs`](./docs/README.md).
+```shell
+yarn db:up
+yarn db:migrate
+```
 
-The current implementation roadmap starts with the
-[web game development plan](./docs/development-plan/README.md).
+При необходимости добавьте тестовые данные:
+
+```shell
+yarn db:seed
+```
+
+Затем откройте два терминала из корня репозитория.
+
+Server с watch mode:
+
+```shell
+yarn dev:server
+```
+
+Vite-клиент:
+
+```shell
+yarn dev:web
+```
+
+Приложение доступно на <http://localhost:5173>. Vite проксирует `/api/*` и
+`/api/socket.io` на Fastify по адресу <http://localhost:3000>, поэтому browser
+работает с одним origin. Development-панель позволяет переключить real/fake
+backend и перезагружает страницу после изменения.
+
+Локальные переопределения конфигурации помещаются в игнорируемые Git файлы:
+
+```text
+apps/server/env.local.yaml
+apps/web/env.local.yaml
+packages/auth/env.local.yaml
+packages/database/env.local.yaml
+```
+
+Подробности находятся в [документации конфигурации](./docs/development-plan/configuration.md).
+
+## Production bundle
+
+Собрать web-клиент в `apps/web/dist`:
+
+```shell
+yarn workspace @war-chest/web build
+```
+
+Перед сборкой проверьте `apps/web/env.yaml`, необязательный `env.local.yaml` и
+build environment: web-конфигурация встраивается в JavaScript bundle.
+
+## Preview production bundle
+
+Vite preview проверяет уже собранный `apps/web/dist`, но не заменяет production
+server. Для real API PostgreSQL и Fastify должны быть запущены отдельно:
+
+```shell
+yarn db:up
+yarn workspace @war-chest/server start
+```
+
+В другом терминале:
+
+```shell
+yarn workspace @war-chest/web preview
+```
+
+Preview доступен на <http://localhost:4173> и проксирует API на порт 3000.
+Dev-панель и fake backend в этом режиме отсутствуют.
+
+## Production mode
+
+В production Fastify раздаёт собранный SPA и API с одного origin.
+
+1. Соберите web bundle:
+
+   ```shell
+   yarn workspace @war-chest/web build
+   ```
+
+2. В `apps/server/env.local.yaml` или environment активируйте SPA hosting:
+
+   ```yaml
+   APP_SERVE_WEB: true
+   ```
+
+3. Подготовьте базу и запустите server без watch mode:
+
+   ```shell
+   yarn db:up
+   yarn db:migrate
+   yarn workspace @war-chest/server start
+   ```
+
+По умолчанию приложение доступно на <http://localhost:3000>. Fastify отдаёт
+assets из `apps/web/dist`, возвращает `index.html` для client deep links и
+обслуживает `/api/*` и `/api/socket.io`.
+
+Для другого домена или HTTPS дополнительно переопределите cookie и redirect URL
+в конфигурации `packages/auth`. Текущий server `start` исполняет TypeScript через
+`tsx`: отдельного скомпилированного server artifact пока нет, поэтому runtime
+installation должна содержать workspace dev dependencies.
+
+## Проверки
+
+```shell
+yarn types:build
+yarn lint
+yarn test
+yarn test:components
+yarn test:e2e
+yarn test:e2e:real
+```
+
+Все Playwright-команды выполняются в закреплённом Docker-образе. Real E2E также
+поднимает PostgreSQL.

@@ -3,6 +3,24 @@
 Сервер — авторитетный участник игры. Он принимает команды, проверяет их через `game-engine`, сохраняет получившиеся события и только после этого рассылает обновления игрокам и зрителям.
 
 HTTP используем для обычных операций, а Socket.IO — для активной игровой сессии.
+Все серверные HTTP-маршруты находятся под `/api`, Socket.IO использует путь
+`/api/socket.io`. В production тот же Fastify-процесс может раздавать сборку
+клиента и возвращать `index.html` для SPA deep links.
+
+## Статус реализации
+
+- [x] bootstrap Fastify, конфигурация и обязательная проверка PostgreSQL;
+- [x] `/api/health`, session, logout и user endpoints;
+- [x] Socket.IO authentication, Zod-валидация сообщений и игровые комнаты;
+- [x] опциональная раздача production SPA и deep-link fallback;
+- [ ] HTTP adapters Google, Telegram и Yandex OAuth;
+- [ ] runtime feature-flags endpoint;
+- [ ] игровые HTTP endpoints и game service;
+- [ ] выполнение, транзакционное сохранение и рассылка команд;
+- [ ] ActiveGame, reconnect deadline и восстановление после перезапуска.
+
+Точные доступные сейчас endpoints и ограничения transport scaffold описаны в
+[фактической документации server](../server/README.md).
 
 ## Предлагаемая структура
 
@@ -49,29 +67,29 @@ apps/server/src/
 Минимальный набор маршрутов:
 
 ```text
-GET  /health
+GET  /api/health
 
-POST /auth/google
-GET  /auth/telegram/start
-GET  /auth/telegram/callback
-GET  /auth/yandex/start
-GET  /auth/yandex/callback
-GET  /auth/session
-POST /auth/logout
-GET  /users/:userId
-GET  /users/:userId/avatar
-GET  /users/:userId/games
+POST /api/auth/google
+GET  /api/auth/telegram/start
+GET  /api/auth/telegram/callback
+GET  /api/auth/yandex/start
+GET  /api/auth/yandex/callback
+GET  /api/auth/session
+POST /api/auth/logout
+GET  /api/users/:userId
+GET  /api/users/:userId/avatar
+GET  /api/users/:userId/games
 
-GET  /config/feature-flags.json
+GET  /api/config/feature-flags.json
 
-POST /games
-GET  /games/:gameId
-POST /games/:gameId/join
-POST /games/:gameId/start
-GET  /games/:gameId/events
+POST /api/games
+GET  /api/games/:gameId
+POST /api/games/:gameId/join
+POST /api/games/:gameId/start
+GET  /api/games/:gameId/events
 ```
 
-`GET /auth/session` читает cookie с именем из конфигурации `packages/auth` и
+`GET /api/auth/session` читает cookie с именем из конфигурации `packages/auth` и
 проверяет её через `auth.getSession()`. Действующая сессия возвращается в
 transport-формате с ISO-датой:
 
@@ -90,7 +108,7 @@ transport-формате с ISO-датой:
 ответ `401 unauthorized`, чтобы HTTP-слой не раскрывал причину отказа. Успешные
 ответы и ошибки этого маршрута отправляются с `Cache-Control: no-store`.
 
-`POST /auth/logout` безопасен при повторном вызове и при отсутствии session
+`POST /api/auth/logout` безопасен при повторном вызове и при отсутствии session
 cookie. Адаптер передаёт token в `auth.logout()`, переносит все возвращённые
 пакетом атрибуты очищающей cookie в ответ и завершает запрос статусом `204`.
 Ответ logout также не кэшируется.
@@ -100,7 +118,7 @@ cookie. Адаптер передаёт token в `auth.logout()`, перенос
 `AuthSession` в текущем request, поэтому обработчики профилей и игр не читают
 cookie и не обращаются к `@war-chest/auth` повторно.
 
-`POST /games/:gameId/join` принимает выбранную пользователем позицию:
+`POST /api/games/:gameId/join` принимает выбранную пользователем позицию:
 
 ```json
 {
@@ -121,14 +139,14 @@ cookie и не обращаются к `@war-chest/auth` повторно.
 аватар и история доступны только пользователям с действующей сессией, но могут
 показывать как текущего пользователя, так и другого игрока.
 
-`GET /users/:userId/avatar` читает сохранённое изображение через
+`GET /api/users/:userId/avatar` читает сохранённое изображение через
 `auth.getAvatar()`. Клиент добавляет `avatarVersion` в query-параметр версии, а
 сервер разрешает долго хранить ответ в браузерном кэше:
 `Cache-Control: private, max-age=31536000, immutable`. После изменения аватара
 меняется URL, поэтому отдельный механизм проверки версии ответа не нужен.
 Если сохранённого изображения нет, endpoint возвращает `404 avatar_not_found`.
 
-`GET /users/:userId` возвращает публичную часть профиля: идентификатор,
+`GET /api/users/:userId` возвращает публичную часть профиля: идентификатор,
 отображаемое имя и версию аватара. Внешние идентичности и данные
 OAuth-провайдеров в ответ не входят.
 
@@ -140,13 +158,13 @@ OAuth-провайдеров в ответ не входят.
 }
 ```
 
-`GET /users/:userId/games` возвращает завершённые игры, в которых пользователь
+`GET /api/users/:userId/games` возвращает завершённые игры, в которых пользователь
 участвовал с ролью игрока. Игры, где пользователь был только зрителем, в список
 не входят. Результаты сортируются по времени завершения от новых к старым и
 отдаются страницами:
 
 ```text
-GET /users/:userId/games?cursor=<cursor>&limit=20
+GET /api/users/:userId/games?cursor=<cursor>&limit=20
 ```
 
 По умолчанию endpoint возвращает 20 игр, допустимый `limit` находится в
@@ -187,11 +205,11 @@ GET /users/:userId/games?cursor=<cursor>&limit=20
 Неизвестный пользователь получает `404 user_not_found`. Некорректные UUID,
 limit и cursor отклоняются до запроса истории.
 
-`GET /games/:gameId/events` возвращает упорядоченную цепочку событий для
+`GET /api/games/:gameId/events` возвращает упорядоченную цепочку событий для
 истории ходов и replay. Endpoint поддерживает загрузку по sequence number:
 
 ```text
-GET /games/:gameId/events?afterSequence=0&limit=500
+GET /api/games/:gameId/events?afterSequence=0&limit=500
 ```
 
 Ответ содержит sequence number и версию каждого события, а также безопасные
@@ -219,10 +237,10 @@ HTTP-приложения, затем инициализирует `@war-chest/d
 
 Feature flags живут в отдельном runtime-файле активного окружения. Сервер не следит за его изменениями в фоне.
 
-`GET /config/feature-flags.json` читает файл для инициализации общего
+`GET /api/config/feature-flags.json` читает файл для инициализации общего
 клиентского UI. Создание игры независимо читает тот же runtime-файл ещё раз.
 
-При обработке `POST /games` сервер независимо читает runtime-файл, добавляет
+При обработке `POST /api/games` сервер независимо читает runtime-файл, добавляет
 полученные значения в доверенную команду `CreateGame` и записывает полный
 snapshot в событие `GameCreated`. Клиент не передаёт игровые feature flags в
 запросе создания.
@@ -381,7 +399,7 @@ interface ActiveGame {
 - старт партии не перечитывает runtime-файл;
 - команды используют флаги текущей игры, а не актуальный runtime-файл;
 - замена runtime-файла не меняет уже созданные игры;
-- `/health` проверяет готовность приложения и базы;
+- `/api/health` проверяет готовность приложения и базы;
 - Socket.IO проверяет собственную сессию War Chest;
 - один пользователь не может занять два места в одной игре;
 - зритель не может отправить игровой ход;

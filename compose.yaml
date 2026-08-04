@@ -1,4 +1,18 @@
 services:
+  playwright:
+    build:
+      context: .
+      dockerfile: docker/playwright/Dockerfile
+    environment:
+      CI: 'true'
+      DATABASE_URL: postgresql://war_chest:war_chest@postgres:5432/war_chest
+    init: true
+    ipc: host
+    volumes:
+      - .:/source:ro
+      - yarn-cache:/root/.yarn/berry
+    working_dir: /workspace
+
   postgres:
     image: postgres:17.5-alpine
     environment:
@@ -21,3 +35,4 @@ services:
 
 volumes:
   postgres-data:
+  yarn-cache:

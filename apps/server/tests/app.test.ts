@@ -23,7 +23,7 @@ test('reports ready when the database connection is healthy', async () => {
   });
 
   try {
-    const response = await app.inject({ method: 'GET', url: '/health' });
+    const response = await app.inject({ method: 'GET', url: '/api/health' });
 
     expect({ body: response.body, statusCode: response.statusCode }).toEqual({
       body: '{"status":"ok"}',
@@ -54,7 +54,7 @@ test('reports unavailable when the database health check fails', async () => {
   });
 
   try {
-    const response = await app.inject({ method: 'GET', url: '/health' });
+    const response = await app.inject({ method: 'GET', url: '/api/health' });
 
     expect({ body: response.body, statusCode: response.statusCode }).toEqual({
       body: '{"status":"unavailable"}',

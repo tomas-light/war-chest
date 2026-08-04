@@ -45,7 +45,7 @@ describe('auth session routes', () => {
     const response = await app.inject({
       headers: { cookie: 'war_chest_session=session-token' },
       method: 'GET',
-      url: '/auth/session',
+      url: '/api/auth/session',
     });
 
     expect(getSession).toHaveBeenCalledWith('session-token');
@@ -95,7 +95,7 @@ describe('auth session routes', () => {
   test('rejects a request without a session cookie', async () => {
     const response = await app.inject({
       method: 'GET',
-      url: '/auth/session',
+      url: '/api/auth/session',
     });
 
     expect(getSession).not.toHaveBeenCalled();
@@ -115,7 +115,7 @@ describe('auth session routes', () => {
     const response = await app.inject({
       headers: { cookie: 'war_chest_session=expired-token' },
       method: 'GET',
-      url: '/auth/session',
+      url: '/api/auth/session',
     });
 
     expect(response.statusCode).toBe(401);
@@ -139,7 +139,7 @@ describe('auth session routes', () => {
     const response = await app.inject({
       headers: { cookie: 'war_chest_session=session-token' },
       method: 'POST',
-      url: '/auth/logout',
+      url: '/api/auth/logout',
     });
 
     expect(logout).toHaveBeenCalledWith('session-token');
@@ -173,7 +173,7 @@ describe('auth session routes', () => {
 
     const response = await app.inject({
       method: 'POST',
-      url: '/auth/logout',
+      url: '/api/auth/logout',
     });
 
     expect(logout).toHaveBeenCalledWith('');
