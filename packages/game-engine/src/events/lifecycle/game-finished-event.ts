@@ -23,9 +23,9 @@ export class GameFinishedEvent implements ApplicableEvent<GameFinishedEventData>
     return {
       ...state,
       currentPlayerId: null,
-      finishedByPlayerId: this.data.payload.finishedByPlayerId,
       lastEventSequence: this.data.sequence,
       status: 'finished',
+      winnerTeam: this.data.payload.winnerTeam,
     };
   }
 

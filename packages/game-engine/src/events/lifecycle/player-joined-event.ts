@@ -30,8 +30,16 @@ export class PlayerJoinedEvent implements ApplicableEvent<PlayerJoinedEventData>
           moveCount: 0,
           privateMoves: [],
           seat: this.data.payload.seat,
+          team: this.data.payload.team,
         },
       ],
+      teams: {
+        ...state.teams,
+        [this.data.payload.team]: [
+          ...state.teams[this.data.payload.team],
+          this.data.payload.playerId,
+        ],
+      },
     };
   }
 

@@ -24,6 +24,8 @@ export const gameStatus = pgEnum('game_status', [
   'finished',
 ]);
 
+export const gameTeam = pgEnum('game_team', ['black', 'white']);
+
 export const participantRole = pgEnum('participant_role', [
   'player',
   'spectator',
@@ -34,6 +36,7 @@ export const games = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     status: gameStatus('status').notNull().default('waiting'),
+    winnerTeam: gameTeam('winner_team'),
     currentVersion: integer('current_version').notNull().default(0),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
@@ -61,15 +64,16 @@ export const gameParticipants = pgTable(
       .references(() => users.id, { onDelete: 'restrict' }),
     role: participantRole('role').notNull(),
     seat: integer('seat'),
-    result: text('result'),
+    team: gameTeam('team'),
   },
   (table) => [
     primaryKey({
       name: 'game_participants_game_user_pk',
       columns: [table.gameId, table.userId],
     }),
-    uniqueIndex('game_participants_game_seat_unique').on(
+    uniqueIndex('game_participants_game_team_seat_unique').on(
       table.gameId,
+      table.team,
       table.seat
     ),
     index('game_participants_user_history_index').on(
@@ -78,8 +82,8 @@ export const gameParticipants = pgTable(
       table.gameId
     ),
     check(
-      'game_participants_role_seat_check',
-      sql`(${table.role} = 'player' AND ${table.seat} IS NOT NULL) OR (${table.role} = 'spectator' AND ${table.seat} IS NULL)`
+      'game_participants_role_position_check',
+      sql`(${table.role} = 'player' AND ${table.seat} IS NOT NULL AND ${table.team} IS NOT NULL) OR (${table.role} = 'spectator' AND ${table.seat} IS NULL AND ${table.team} IS NULL)`
     ),
     check(
       'game_participants_seat_positive',

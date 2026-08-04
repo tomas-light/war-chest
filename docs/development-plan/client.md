@@ -295,7 +295,8 @@ Zustand `persist` в `localStorage`.
    `packages/fake-database` на npm-пакете `idb`.
 6. Загрузить application feature flags при инициализации.
 7. Реализовать вход через Google, Telegram и Yandex ID.
-8. Реализовать создание игры и присоединение к ней.
+8. Реализовать создание игры, выбор свободного места в конкретной команде и
+   присоединение к ней.
 9. Получить feature flags из `GameCreated` или игрового snapshot и сохранить их
    в контексте игры.
 10. Добавить fake-only редактирование игровых feature flags в IndexedDB.

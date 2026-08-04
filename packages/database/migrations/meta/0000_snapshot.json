@@ -1,5 +1,5 @@
 {
-  "id": "b6831a9a-8703-4202-8c7a-1946095c2ee0",
+  "id": "e03646a2-2865-43b3-a9ec-2a4605302a21",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -468,19 +468,26 @@
           "primaryKey": false,
           "notNull": false
         },
-        "result": {
-          "name": "result",
-          "type": "text",
+        "team": {
+          "name": "team",
+          "type": "game_team",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": false
         }
       },
       "indexes": {
-        "game_participants_game_seat_unique": {
-          "name": "game_participants_game_seat_unique",
+        "game_participants_game_team_seat_unique": {
+          "name": "game_participants_game_team_seat_unique",
           "columns": [
             {
               "expression": "game_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "team",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -565,9 +572,9 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
-        "game_participants_role_seat_check": {
-          "name": "game_participants_role_seat_check",
-          "value": "(\"game_participants\".\"role\" = 'player' AND \"game_participants\".\"seat\" IS NOT NULL) OR (\"game_participants\".\"role\" = 'spectator' AND \"game_participants\".\"seat\" IS NULL)"
+        "game_participants_role_position_check": {
+          "name": "game_participants_role_position_check",
+          "value": "(\"game_participants\".\"role\" = 'player' AND \"game_participants\".\"seat\" IS NOT NULL AND \"game_participants\".\"team\" IS NOT NULL) OR (\"game_participants\".\"role\" = 'spectator' AND \"game_participants\".\"seat\" IS NULL AND \"game_participants\".\"team\" IS NULL)"
         },
         "game_participants_seat_positive": {
           "name": "game_participants_seat_positive",
@@ -594,6 +601,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'waiting'"
+        },
+        "winner_team": {
+          "name": "winner_team",
+          "type": "game_team",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
         },
         "current_version": {
           "name": "current_version",
@@ -777,6 +791,14 @@
         "waiting",
         "active",
         "finished"
+      ]
+    },
+    "public.game_team": {
+      "name": "game_team",
+      "schema": "public",
+      "values": [
+        "black",
+        "white"
       ]
     },
     "public.participant_role": {

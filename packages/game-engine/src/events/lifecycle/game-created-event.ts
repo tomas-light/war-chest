@@ -27,12 +27,13 @@ export class GameCreatedEvent implements ApplicableEvent<GameCreatedEventData> {
     return {
       currentPlayerId: null,
       featureFlags: { ...this.data.payload.featureFlags },
-      finishedByPlayerId: null,
       lastEventSequence: this.data.sequence,
       moveCount: 0,
       players: [],
       rulesVersion: this.data.payload.rulesVersion,
       status: 'waiting',
+      teams: { black: [], white: [] },
+      winnerTeam: null,
     };
   }
 

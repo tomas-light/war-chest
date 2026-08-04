@@ -1,5 +1,5 @@
 import type { GAME_EVENT_VERSION, GAME_RULES_VERSION } from './events.js';
-import type { FeatureFlags, JsonValue } from './state.js';
+import type { FeatureFlags, GameTeam, JsonValue } from './state.js';
 
 interface EventMetadata {
   sequence: number;
@@ -18,6 +18,7 @@ export interface PlayerJoinedViewEventData extends EventMetadata {
   payload: {
     playerId: string;
     seat: number;
+    team: GameTeam;
   };
   type: 'PlayerJoined';
 }
@@ -49,7 +50,7 @@ export interface PrivateTestMovePerformedViewEventData extends EventMetadata {
 
 export interface GameFinishedViewEventData extends EventMetadata {
   payload: {
-    finishedByPlayerId: string;
+    winnerTeam: GameTeam;
   };
   type: 'GameFinished';
 }
