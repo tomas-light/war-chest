@@ -1,2 +1,5 @@
-export { type LoadAuthConfigOptions, loadAuthConfig } from './load-config.js';
+export {
+  type LoadAuthConfigOptions,
+  loadAuthConfig,
+} from './loadAuthConfig.js';
 export { type AuthConfig } from './schema.js';

@@ -1,5 +1,5 @@
 import type { FakeAuthSession, FakeDatabaseConnection } from '../schema.js';
-import { createSchemaTable, runSchemaTableTransaction } from '../table.js';
+import { createSchemaTable, runSchemaTableTransaction } from '../Table.js';
 
 export interface FakeSessionRepository {
   findActive(sessionId: string, now?: Date): Promise<FakeAuthSession | null>;

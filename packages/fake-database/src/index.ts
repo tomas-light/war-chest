@@ -8,12 +8,12 @@ export {
   type FakeDatabase,
   type FakeDatabaseTables,
   createFakeDatabase,
-} from './fake-database.js';
+} from './FakeDatabase.js';
 export { FAKE_DATABASE_VERSION, migrateFakeDatabase } from './migrations.js';
 export {
   type FakeFeatureFlagsRepository,
   createFakeFeatureFlagsRepository,
-} from './repositories/feature-flags.js';
+} from './repositories/featureFlags.js';
 export {
   type FakeGameChanges,
   type FakeGameRepository,
@@ -28,7 +28,7 @@ export {
   type FakeUserWithIdentity,
   createFakeUserRepository,
 } from './repositories/users.js';
-export { resetFakeDatabase } from './reset.js';
+export { resetFakeDatabase } from './resetFakeDatabase.js';
 export {
   DEFAULT_FAKE_FEATURE_FLAGS,
   FAKE_PROVIDER_SUBJECTS,
@@ -63,4 +63,4 @@ export {
   createSchemaTable,
   createTransactionSchemaTable,
   runSchemaTableTransaction,
-} from './table.js';
+} from './Table.js';

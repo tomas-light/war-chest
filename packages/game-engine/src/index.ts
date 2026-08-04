@@ -1,5 +1,5 @@
-export { applyEvent } from './apply-event.js';
-export { applyViewEvent } from './apply-view-event.js';
+export { applyEvent } from './applyEvent.js';
+export { applyViewEvent } from './applyViewEvent.js';
 export type {
   CreateGameCommandData,
   FinishGameCommandData,
@@ -10,12 +10,12 @@ export type {
   TestMoveCommandData,
   TestScenarioCommandData,
 } from './commands.js';
-export { createGame } from './create-game.js';
-export { createViewEventFor } from './create-view-event.js';
-export { createViewFor } from './create-view.js';
+export { createGame } from './createGame.js';
+export { createViewEventFor } from './createViewEventFor.js';
+export { createViewFor } from './createViewFor.js';
 export { decide } from './decide.js';
-export { NullableGameStateError } from './errors/nullable-game-state-error.js';
-export { NullableGameViewError } from './errors/nullable-game-view-error.js';
+export { NullableGameStateError } from './errors/NullableGameStateError.js';
+export { NullableGameViewError } from './errors/NullableGameViewError.js';
 export { GAME_EVENT_VERSION, GAME_RULES_VERSION } from './events.js';
 export type {
   GameCreatedEventData,
@@ -25,14 +25,14 @@ export type {
   PlayerJoinedEventData,
   TestMovePerformedEventData,
 } from './events.js';
-export { hydrateEvent } from './events/hydrate-event.js';
-export type { ApplicableEvent } from './events/applicable-event.js';
-export { hydrateCommand } from './commands/hydrate-command.js';
-export type { DecidableCommand } from './commands/decidable-command.js';
-export { hydrateViewEvent } from './view-events/hydrate-view-event.js';
-export type { ApplicableViewEvent } from './view-events/applicable-view-event.js';
-export { restoreGame } from './restore-game.js';
-export { restoreView } from './restore-view.js';
+export { hydrateEvent } from './events/hydrateEvent.js';
+export type { ApplicableEvent } from './events/ApplicableEvent.js';
+export { hydrateCommand } from './commands/hydrateCommand.js';
+export type { DecidableCommand } from './commands/DecidableCommand.js';
+export { hydrateViewEvent } from './view-events/hydrateViewEvent.js';
+export type { ApplicableViewEvent } from './view-events/ApplicableViewEvent.js';
+export { restoreGame } from './restoreGame.js';
+export { restoreView } from './restoreView.js';
 export type {
   FeatureFlags,
   GamePlayer,
@@ -57,4 +57,4 @@ export type {
   PublicTestMovePerformedViewEventData,
   TestMovePerformedViewEventData,
   ViewSequenceAdvancedEventData,
-} from './view-events.js';
+} from './viewEvents.js';

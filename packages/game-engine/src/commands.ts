@@ -1,5 +1,5 @@
-import type { LifecycleCommandData } from './command-data/lifecycle-command-data.js';
-import type { TestScenarioCommandData } from './command-data/test-scenario-command-data.js';
+import type { LifecycleCommandData } from './command-data/LifecycleCommandData.js';
+import type { TestScenarioCommandData } from './command-data/TestScenarioCommandData.js';
 
 export type {
   CreateGameCommandData,
@@ -7,10 +7,10 @@ export type {
   JoinGameCommandData,
   LifecycleCommandData,
   StartGameCommandData,
-} from './command-data/lifecycle-command-data.js';
+} from './command-data/LifecycleCommandData.js';
 export type {
   TestMoveCommandData,
   TestScenarioCommandData,
-} from './command-data/test-scenario-command-data.js';
+} from './command-data/TestScenarioCommandData.js';
 
 export type GameCommandData = LifecycleCommandData | TestScenarioCommandData;

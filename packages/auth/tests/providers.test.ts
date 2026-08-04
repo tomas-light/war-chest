@@ -1,8 +1,8 @@
 import { exportJWK, generateKeyPair, SignJWT } from 'jose';
 import { afterEach, expect, test, vi } from 'vitest';
-import { createOAuthFlow } from '../src/oauth-flow.js';
-import { createTelegramProvider } from '../src/providers/telegram.js';
-import { createYandexProvider } from '../src/providers/yandex.js';
+import { createOAuthFlow } from '../src/OAuthFlow.js';
+import { createTelegramProvider } from '../src/providers/createTelegramProvider.js';
+import { createYandexProvider } from '../src/providers/createYandexProvider.js';
 
 const OAUTH_STATE_TTL_MILLISECONDS = 10 * 60 * 1000;
 

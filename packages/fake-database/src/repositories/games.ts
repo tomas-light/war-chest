@@ -12,7 +12,7 @@ import {
   type SchemaTable,
   createSchemaTable,
   runSchemaTableTransaction,
-} from '../table.js';
+} from '../Table.js';
 
 const FIRST_EVENT_SEQUENCE = 1;
 const MAX_INDEXED_DB_RESULT_COUNT = 4_294_967_295;

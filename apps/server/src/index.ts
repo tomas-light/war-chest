@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { startServer } from './start-server.js';
+import { startServer } from './startServer.js';
 
 void run();
 
