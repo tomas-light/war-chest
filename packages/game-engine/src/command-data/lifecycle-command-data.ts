@@ -1,4 +1,4 @@
-import type { FeatureFlags } from '../state.js';
+import type { FeatureFlags, GameTeam } from '../state.js';
 
 export interface CreateGameCommandData {
   featureFlags: FeatureFlags;
@@ -6,6 +6,8 @@ export interface CreateGameCommandData {
 }
 
 export interface JoinGameCommandData {
+  seat: number;
+  team: GameTeam;
   type: 'JoinGame';
 }
 

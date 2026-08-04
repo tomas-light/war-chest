@@ -28,8 +28,16 @@ export class PlayerJoinedViewEvent implements ApplicableViewEvent<PlayerJoinedVi
           id: this.data.payload.playerId,
           moveCount: 0,
           seat: this.data.payload.seat,
+          team: this.data.payload.team,
         },
       ],
+      teams: {
+        ...view.teams,
+        [this.data.payload.team]: [
+          ...view.teams[this.data.payload.team],
+          this.data.payload.playerId,
+        ],
+      },
     };
   }
 

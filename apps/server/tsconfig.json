@@ -11,6 +11,15 @@
   "include": ["src"],
   "references": [
     {
+      "path": "../../packages/config"
+    },
+    {
+      "path": "../../packages/database"
+    },
+    {
+      "path": "../../packages/auth"
+    },
+    {
       "path": "../../packages/game-engine"
     }
   ]

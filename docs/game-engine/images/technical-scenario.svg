@@ -37,7 +37,7 @@
   <rect x="845" y="180" width="245" height="130" class="state"/>
   <text x="967" y="220" class="state-title">active</text>
   <text x="967" y="250" class="text">ходят по очереди</text>
-  <text x="967" y="276" class="small">начинает место 1</text>
+  <text x="967" y="276" class="small">начинает позиция white/1</text>
 
   <rect x="1240" y="180" width="205" height="130" class="finished"/>
   <text x="1342" y="220" class="state-title">finished</text>
@@ -58,7 +58,7 @@
 
   <path d="M505 180 V130 H640 V180" class="loop"/>
   <text x="572" y="84" class="text">JoinGame × 2</text>
-  <text x="572" y="107" class="small">PlayerJoined, места 1 и 2</text>
+  <text x="572" y="107" class="small">PlayerJoined: white/1 и black/1</text>
 
   <path d="M900 310 C900 400 1035 400 1035 310" class="loop"/>
   <text x="967" y="397" class="text">TestMove</text>

@@ -22,9 +22,9 @@ export class GameFinishedViewEvent implements ApplicableViewEvent<GameFinishedVi
     return {
       ...view,
       currentPlayerId: null,
-      finishedByPlayerId: this.data.payload.finishedByPlayerId,
       lastEventSequence: this.data.sequence,
       status: 'finished',
+      winnerTeam: this.data.payload.winnerTeam,
     };
   }
 

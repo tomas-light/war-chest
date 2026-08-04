@@ -88,12 +88,14 @@ async function seedDatabase(): Promise<void> {
             userId: SEED_IDENTIFIERS.firstUser,
             role: 'player',
             seat: 1,
+            team: 'white',
           },
           {
             gameId: SEED_IDENTIFIERS.game,
             userId: SEED_IDENTIFIERS.secondUser,
             role: 'player',
-            seat: 2,
+            seat: 1,
+            team: 'black',
           },
         ])
         .onConflictDoNothing();

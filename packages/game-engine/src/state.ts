@@ -4,29 +4,38 @@ export type JsonValue =
 
 export type FeatureFlags = Readonly<Record<string, JsonPrimitive>>;
 export type GameStatus = 'waiting' | 'active' | 'finished';
+export type GameTeam = 'black' | 'white';
+
+export interface GameTeams {
+  black: readonly string[];
+  white: readonly string[];
+}
 
 export interface GamePlayer {
   id: string;
   moveCount: number;
   privateMoves: readonly PrivateMove[];
   seat: number;
+  team: GameTeam;
 }
 
 export interface GameState {
   currentPlayerId: string | null;
   featureFlags: FeatureFlags;
-  finishedByPlayerId: string | null;
   lastEventSequence: number;
   moveCount: number;
   players: readonly GamePlayer[];
   rulesVersion: number;
   status: GameStatus;
+  teams: GameTeams;
+  winnerTeam: GameTeam | null;
 }
 
 export interface GameViewPlayer {
   id: string;
   moveCount: number;
   seat: number;
+  team: GameTeam;
 }
 
 export interface PrivateMove {
@@ -37,13 +46,14 @@ export interface PrivateMove {
 export interface GameView {
   currentPlayerId: string | null;
   featureFlags: FeatureFlags;
-  finishedByPlayerId: string | null;
   lastEventSequence: number;
   moveCount: number;
   players: readonly GameViewPlayer[];
   privateMoves: readonly PrivateMove[];
   rulesVersion: number;
   status: GameStatus;
+  teams: GameTeams;
+  winnerTeam: GameTeam | null;
 }
 
 export type Viewer =
@@ -61,4 +71,11 @@ export function cloneJsonValue(value: JsonValue): JsonValue {
   }
 
   return value;
+}
+
+export function cloneGameTeams(teams: GameTeams): GameTeams {
+  return {
+    black: [...teams.black],
+    white: [...teams.white],
+  };
 }

@@ -2,7 +2,11 @@ import type { StartGameCommandData } from '../../command-data/lifecycle-command-
 import { type GameEventData, GAME_EVENT_VERSION } from '../../events.js';
 import type { GameState } from '../../state.js';
 import type { DecidableCommand } from '../decidable-command.js';
-import { REQUIRED_PLAYER_COUNT } from './lifecycle-rules.js';
+import {
+  FIRST_PLAYER_SEAT,
+  FIRST_PLAYER_TEAM,
+  REQUIRED_PLAYER_COUNT,
+} from './lifecycle-rules.js';
 
 // eslint-disable-next-line max-len
 export class StartGameCommand implements DecidableCommand<StartGameCommandData> {
@@ -26,14 +30,19 @@ export class StartGameCommand implements DecidableCommand<StartGameCommandData> 
       return [];
     }
 
-    const [firstPlayer] = state.players;
+    const firstPlayer = state.players.find(
+      (player) =>
+        player.team === FIRST_PLAYER_TEAM && player.seat === FIRST_PLAYER_SEAT
+    );
     if (firstPlayer == null) {
       return [];
     }
 
     return [
       {
-        payload: { firstPlayerId: firstPlayer.id },
+        payload: {
+          firstPlayerId: firstPlayer.id,
+        },
         sequence: state.lastEventSequence + 1,
         type: 'GameStarted',
         version: GAME_EVENT_VERSION,

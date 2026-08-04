@@ -2,7 +2,7 @@ import type { JoinGameCommandData } from '../../command-data/lifecycle-command-d
 import { type GameEventData, GAME_EVENT_VERSION } from '../../events.js';
 import type { GameState } from '../../state.js';
 import type { DecidableCommand } from '../decidable-command.js';
-import { REQUIRED_PLAYER_COUNT } from './lifecycle-rules.js';
+import { isGamePosition } from './lifecycle-rules.js';
 
 export class JoinGameCommand implements DecidableCommand<JoinGameCommandData> {
   private constructor(readonly data: JoinGameCommandData) {}
@@ -13,10 +13,19 @@ export class JoinGameCommand implements DecidableCommand<JoinGameCommandData> {
 
   decide(state: GameState, playerId: string): GameEventData[] {
     const isWaitingGame = state.status === 'waiting';
-    const hasAvailableSeat = state.players.length < REQUIRED_PLAYER_COUNT;
+    const isSupportedPosition = isGamePosition(this.data.team, this.data.seat);
+    const isAvailablePosition = !state.players.some(
+      (player) =>
+        player.team === this.data.team && player.seat === this.data.seat
+    );
     const isNewPlayer = !state.players.some((player) => player.id === playerId);
 
-    if (!isWaitingGame || !hasAvailableSeat || !isNewPlayer) {
+    if (
+      !isWaitingGame ||
+      !isSupportedPosition ||
+      !isAvailablePosition ||
+      !isNewPlayer
+    ) {
       return [];
     }
 
@@ -24,7 +33,8 @@ export class JoinGameCommand implements DecidableCommand<JoinGameCommandData> {
       {
         payload: {
           playerId,
-          seat: state.players.length + 1,
+          seat: this.data.seat,
+          team: this.data.team,
         },
         sequence: state.lastEventSequence + 1,
         type: 'PlayerJoined',

@@ -176,7 +176,7 @@ export function createFakeGameRepository(
         const processedCommands = transaction.table('processedCommands');
         const gameEvents = transaction.table('gameEvents');
 
-        await validateParticipantSeats(
+        await validateParticipantPositions(
           gameParticipants,
           changes.game.id,
           changes.participants ?? []
@@ -239,7 +239,7 @@ function validateGameChanges(changes: FakeGameChanges): void {
   }
 }
 
-async function validateParticipantSeats(
+async function validateParticipantPositions(
   gameParticipantTable: SchemaTable<FakeDatabaseSchema, 'gameParticipants'>,
   gameId: string,
   changedParticipants: readonly FakeGameParticipant[]
@@ -255,26 +255,41 @@ async function validateParticipantSeats(
     ),
     ...changedParticipants,
   ];
-  const occupiedSeats = new Set<number>();
+  const occupiedPositions = new Set<string>();
 
   for (const participant of participants) {
+    const hasSeat = participant.seat !== null;
+    const hasTeam = participant.team !== null;
+
+    if (hasSeat !== hasTeam) {
+      throw new Error(
+        'A fake participant seat and team must be selected together.'
+      );
+    }
+
     if (participant.role === 'spectator') {
-      if (participant.seat !== null) {
-        throw new Error('A fake spectator cannot occupy a player seat.');
+      if (hasSeat) {
+        throw new Error('A fake spectator cannot occupy a player position.');
       }
 
       continue;
     }
 
-    if (participant.seat === null || participant.seat <= 0) {
-      throw new Error('A fake player must occupy a positive seat.');
+    if (participant.seat === null || participant.team === null) {
+      throw new Error('A fake player must select a team and seat.');
     }
 
-    if (occupiedSeats.has(participant.seat)) {
-      throw new Error('A fake player seat must be unique within a game.');
+    if (participant.seat <= 0) {
+      throw new Error('A fake player seat must be positive.');
     }
 
-    occupiedSeats.add(participant.seat);
+    const positionKey = `${participant.team}:${participant.seat}`;
+
+    if (occupiedPositions.has(positionKey)) {
+      throw new Error('A fake player position must be unique within a game.');
+    }
+
+    occupiedPositions.add(positionKey);
   }
 }
 

@@ -78,6 +78,7 @@ describe('fake database', () => {
       id: 'inserted-table-game',
       startedAt: null,
       status: 'waiting',
+      winnerTeam: null,
     };
 
     await database.game.insert(game.id, game);
@@ -93,6 +94,7 @@ describe('fake database', () => {
       id: 'first-table-game',
       startedAt: null,
       status: 'waiting',
+      winnerTeam: null,
     };
     const secondGame: FakeGame = {
       createdAt: new Date('2026-08-03T10:01:00.000Z'),
@@ -101,6 +103,7 @@ describe('fake database', () => {
       id: 'second-table-game',
       startedAt: null,
       status: 'waiting',
+      winnerTeam: null,
     };
     await database.game.insert(firstGame.id, firstGame);
     await database.game.insert(secondGame.id, secondGame);
@@ -118,6 +121,7 @@ describe('fake database', () => {
       id: 'updated-table-game',
       startedAt: null,
       status: 'waiting',
+      winnerTeam: null,
     };
     await database.game.insert(game.id, game);
 
@@ -136,6 +140,7 @@ describe('fake database', () => {
       id: 'missing-table-game',
       startedAt: null,
       status: 'waiting',
+      winnerTeam: null,
     };
 
     await expect(database.game.update(game.id, game)).resolves.toBeUndefined();
@@ -150,6 +155,7 @@ describe('fake database', () => {
       id: 'deleted-table-game',
       startedAt: null,
       status: 'waiting',
+      winnerTeam: null,
     };
     await database.game.insert(game.id, game);
 
@@ -166,6 +172,7 @@ describe('fake database', () => {
       id: 'cleared-table-game',
       startedAt: null,
       status: 'waiting',
+      winnerTeam: null,
     };
     await database.game.insert(game.id, game);
 
@@ -182,6 +189,7 @@ describe('fake database', () => {
       id: 'rolled-back-table-game',
       startedAt: null,
       status: 'waiting',
+      winnerTeam: null,
     };
 
     await expect(
@@ -258,7 +266,7 @@ describe('fake database', () => {
     ).rejects.toThrow('Fake provider identity must be unique.');
   });
 
-  test('rejects duplicate player seats without an index', async () => {
+  test('rejects duplicate player positions without an index', async () => {
     const game: FakeGame = {
       createdAt: new Date('2026-08-03T10:00:00.000Z'),
       currentVersion: 0,
@@ -266,6 +274,7 @@ describe('fake database', () => {
       id: 'duplicate-seat-game',
       startedAt: null,
       status: 'waiting',
+      winnerTeam: null,
     };
 
     await expect(
@@ -275,21 +284,146 @@ describe('fake database', () => {
         participants: [
           {
             gameId: game.id,
-            result: null,
             role: 'player',
             seat: 1,
+            team: 'white',
             userId: FAKE_SEED_IDENTIFIERS.googleUser,
           },
           {
             gameId: game.id,
-            result: null,
             role: 'player',
             seat: 1,
+            team: 'white',
             userId: FAKE_SEED_IDENTIFIERS.telegramUser,
           },
         ],
       })
-    ).rejects.toThrow('A fake player seat must be unique within a game.');
+    ).rejects.toThrow('A fake player position must be unique within a game.');
+  });
+
+  test('allows the same seat number in opposing teams', async () => {
+    const game: FakeGame = {
+      createdAt: new Date('2026-08-03T10:00:00.000Z'),
+      currentVersion: 0,
+      finishedAt: null,
+      id: 'opposing-team-seats-game',
+      startedAt: null,
+      status: 'waiting',
+      winnerTeam: null,
+    };
+
+    await database.games.saveChanges({
+      events: [],
+      game,
+      participants: [
+        {
+          gameId: game.id,
+          role: 'player',
+          seat: 1,
+          team: 'white',
+          userId: FAKE_SEED_IDENTIFIERS.googleUser,
+        },
+        {
+          gameId: game.id,
+          role: 'player',
+          seat: 1,
+          team: 'black',
+          userId: FAKE_SEED_IDENTIFIERS.telegramUser,
+        },
+      ],
+    });
+
+    await expect(
+      database.games.listParticipants(game.id)
+    ).resolves.toHaveLength(2);
+  });
+
+  test('rejects a player seat without a team', async () => {
+    const game: FakeGame = {
+      createdAt: new Date('2026-08-03T10:00:00.000Z'),
+      currentVersion: 0,
+      finishedAt: null,
+      id: 'seat-without-team-game',
+      startedAt: null,
+      status: 'waiting',
+      winnerTeam: null,
+    };
+
+    await expect(
+      database.games.saveChanges({
+        events: [],
+        game,
+        participants: [
+          {
+            gameId: game.id,
+            role: 'player',
+            seat: 1,
+            team: null,
+            userId: FAKE_SEED_IDENTIFIERS.googleUser,
+          },
+        ],
+      })
+    ).rejects.toThrow(
+      'A fake participant seat and team must be selected together.'
+    );
+  });
+
+  test('rejects a player team without a seat', async () => {
+    const game: FakeGame = {
+      createdAt: new Date('2026-08-03T10:00:00.000Z'),
+      currentVersion: 0,
+      finishedAt: null,
+      id: 'team-without-seat-game',
+      startedAt: null,
+      status: 'waiting',
+      winnerTeam: null,
+    };
+
+    await expect(
+      database.games.saveChanges({
+        events: [],
+        game,
+        participants: [
+          {
+            gameId: game.id,
+            role: 'player',
+            seat: null,
+            team: 'white',
+            userId: FAKE_SEED_IDENTIFIERS.googleUser,
+          },
+        ],
+      })
+    ).rejects.toThrow(
+      'A fake participant seat and team must be selected together.'
+    );
+  });
+
+  test('rejects a player position assigned to a spectator', async () => {
+    const game: FakeGame = {
+      createdAt: new Date('2026-08-03T10:00:00.000Z'),
+      currentVersion: 0,
+      finishedAt: null,
+      id: 'spectator-team-game',
+      startedAt: null,
+      status: 'waiting',
+      winnerTeam: null,
+    };
+
+    await expect(
+      database.games.saveChanges({
+        events: [],
+        game,
+        participants: [
+          {
+            gameId: game.id,
+            role: 'spectator',
+            seat: 1,
+            team: 'white',
+            userId: FAKE_SEED_IDENTIFIERS.googleUser,
+          },
+        ],
+      })
+    ).rejects.toThrow('A fake spectator cannot occupy a player position.');
   });
 
   test('preserves changed application flags when the database reopens', async () => {
@@ -371,6 +505,7 @@ describe('fake database', () => {
       id: 'game-with-events',
       startedAt: null,
       status: 'waiting',
+      winnerTeam: null,
     };
     const firstEvent: FakeGameEvent = {
       commandId: null,
@@ -410,6 +545,7 @@ describe('fake database', () => {
       id: 'atomic-game',
       startedAt: null,
       status: 'waiting',
+      winnerTeam: null,
     };
     const gameCreatedEvent: FakeGameEvent = {
       commandId: null,
@@ -473,6 +609,7 @@ describe('fake database', () => {
       id: 'feature-flags-game',
       startedAt: null,
       status: 'waiting',
+      winnerTeam: null,
     };
     await database.games.saveChanges({
       events: [

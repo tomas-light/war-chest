@@ -38,6 +38,8 @@ export type {
   GamePlayer,
   GameState,
   GameStatus,
+  GameTeam,
+  GameTeams,
   GameView,
   GameViewPlayer,
   JsonPrimitive,

@@ -64,6 +64,15 @@ describe('game creation', () => {
       status: 'waiting',
     });
   });
+
+  test('creates empty team arrays from the first event', () => {
+    const event = createGame({ featureFlags: {}, type: 'CreateGame' });
+
+    expect(applyEvent(null, event).teams).toEqual({
+      black: [],
+      white: [],
+    });
+  });
 });
 
 describe('technical scenario', () => {
@@ -77,8 +86,8 @@ describe('technical scenario', () => {
       type: 'CreateGame',
     });
     commands = [
-      ['player-one', { type: 'JoinGame' }],
-      ['player-two', { type: 'JoinGame' }],
+      ['player-one', { seat: 1, team: 'white', type: 'JoinGame' }],
+      ['player-two', { seat: 1, team: 'black', type: 'JoinGame' }],
       ['player-one', { type: 'StartGame' }],
       ['player-one', { privateData: { card: 'hidden-one' }, type: 'TestMove' }],
       ['player-two', { privateData: { card: 'hidden-two' }, type: 'TestMove' }],
@@ -173,11 +182,21 @@ describe('technical scenario', () => {
     expect(state).toMatchObject({
       currentPlayerId: null,
       featureFlags: { gameHistory: true },
-      finishedByPlayerId: 'player-one',
       lastEventSequence: 7,
       moveCount: 2,
       status: 'finished',
     });
+  });
+
+  test('retains the teams selected before the game starts', () => {
+    expect(state.teams).toEqual({
+      black: ['player-two'],
+      white: ['player-one'],
+    });
+  });
+
+  test('records the current player team as the winner', () => {
+    expect(state.winnerTeam).toBe('white');
   });
 
   test('stores each player private move history', () => {
@@ -187,12 +206,14 @@ describe('technical scenario', () => {
         moveCount: 1,
         privateMoves: [{ data: { card: 'hidden-one' }, moveNumber: 1 }],
         seat: 1,
+        team: 'white',
       },
       {
         id: 'player-two',
         moveCount: 1,
         privateMoves: [{ data: { card: 'hidden-two' }, moveNumber: 2 }],
-        seat: 2,
+        seat: 1,
+        team: 'black',
       },
     ]);
   });
@@ -209,15 +230,21 @@ describe('commands rejected while waiting', () => {
     const gameCreated = createGame({ featureFlags: {}, type: 'CreateGame' });
     waitingState = applyEvent(null, gameCreated);
     const playerJoined = decide(waitingState, 'player-one', {
+      seat: 1,
+      team: 'white',
       type: 'JoinGame',
     });
     waitingState = playerJoined.reduce(applyEvent, waitingState);
   });
 
   test('rejects a duplicate player', () => {
-    expect(decide(waitingState, 'player-one', { type: 'JoinGame' })).toEqual(
-      []
-    );
+    expect(
+      decide(waitingState, 'player-one', {
+        seat: 1,
+        team: 'black',
+        type: 'JoinGame',
+      })
+    ).toEqual([]);
   });
 
   test('rejects start before the second player joins', () => {
@@ -228,6 +255,8 @@ describe('commands rejected while waiting', () => {
 
   test('rejects start from a player who has not joined', () => {
     const secondPlayerJoined = decide(waitingState, 'player-two', {
+      seat: 1,
+      team: 'black',
       type: 'JoinGame',
     });
     const fullWaitingState = secondPlayerJoined.reduce(
@@ -255,14 +284,126 @@ describe('commands rejected while waiting', () => {
   });
 });
 
+describe('explicit player seat selection', () => {
+  let waitingState: GameState;
+
+  beforeEach(() => {
+    const gameCreated = createGame({ featureFlags: {}, type: 'CreateGame' });
+    waitingState = applyEvent(null, gameCreated);
+  });
+
+  test('joins the player at the seat selected by the client', () => {
+    const [playerJoined] = decide(waitingState, 'player-one', {
+      seat: 1,
+      team: 'black',
+      type: 'JoinGame',
+    });
+
+    expect(playerJoined).toMatchObject({
+      payload: { playerId: 'player-one', seat: 1, team: 'black' },
+      type: 'PlayerJoined',
+    });
+  });
+
+  test('adds the player to the selected team before the game starts', () => {
+    const playerJoined = decide(waitingState, 'player-one', {
+      seat: 1,
+      team: 'black',
+      type: 'JoinGame',
+    });
+
+    expect(playerJoined.reduce(applyEvent, waitingState).teams).toEqual({
+      black: ['player-one'],
+      white: [],
+    });
+  });
+
+  test('rejects a seat that is not available in the current rules', () => {
+    expect(
+      decide(waitingState, 'player-one', {
+        seat: 2,
+        team: 'white',
+        type: 'JoinGame',
+      })
+    ).toEqual([]);
+  });
+
+  test('rejects a seat already occupied by another player', () => {
+    const playerJoined = decide(waitingState, 'player-one', {
+      seat: 1,
+      team: 'white',
+      type: 'JoinGame',
+    });
+    waitingState = playerJoined.reduce(applyEvent, waitingState);
+
+    expect(
+      decide(waitingState, 'player-two', {
+        seat: 1,
+        team: 'white',
+        type: 'JoinGame',
+      })
+    ).toEqual([]);
+  });
+
+  test('allows the same seat number in the opposing team', () => {
+    const playerJoined = decide(waitingState, 'player-one', {
+      seat: 1,
+      team: 'white',
+      type: 'JoinGame',
+    });
+    waitingState = playerJoined.reduce(applyEvent, waitingState);
+
+    expect(
+      decide(waitingState, 'player-two', {
+        seat: 1,
+        team: 'black',
+        type: 'JoinGame',
+      })
+    ).toHaveLength(1);
+  });
+});
+
+describe('team formation from selected positions', () => {
+  let activeState: GameState;
+
+  beforeEach(() => {
+    const gameCreated = createGame({ featureFlags: {}, type: 'CreateGame' });
+    const commands: readonly [string, GameCommandData][] = [
+      ['player-one', { seat: 1, team: 'black', type: 'JoinGame' }],
+      ['player-two', { seat: 1, team: 'white', type: 'JoinGame' }],
+      ['player-one', { type: 'StartGame' }],
+    ];
+
+    activeState = applyEvent(null, gameCreated);
+
+    for (const [playerId, command] of commands) {
+      activeState = decide(activeState, playerId, command).reduce(
+        applyEvent,
+        activeState
+      );
+    }
+  });
+
+  test('starts with the player who selected the first seat', () => {
+    expect(activeState.currentPlayerId).toBe('player-two');
+  });
+
+  test('assigns teams from selected positions rather than join order', () => {
+    expect(activeState.teams).toEqual({
+      black: ['player-one'],
+      white: ['player-two'],
+    });
+  });
+});
+
 describe('commands rejected while active', () => {
   let activeState: GameState;
 
   beforeEach(() => {
     const gameCreated = createGame({ featureFlags: {}, type: 'CreateGame' });
     const commands: readonly [string, GameCommandData][] = [
-      ['player-one', { type: 'JoinGame' }],
-      ['player-two', { type: 'JoinGame' }],
+      ['player-one', { seat: 1, team: 'white', type: 'JoinGame' }],
+      ['player-two', { seat: 1, team: 'black', type: 'JoinGame' }],
       ['player-two', { type: 'StartGame' }],
     ];
 
@@ -287,9 +428,13 @@ describe('commands rejected while active', () => {
   });
 
   test('rejects a new player after the game starts', () => {
-    expect(decide(activeState, 'third-player', { type: 'JoinGame' })).toEqual(
-      []
-    );
+    expect(
+      decide(activeState, 'third-player', {
+        seat: 1,
+        team: 'white',
+        type: 'JoinGame',
+      })
+    ).toEqual([]);
   });
 });
 
@@ -308,8 +453,8 @@ describe('safe player and spectator views', () => {
       type: 'CreateGame',
     });
     const commands: readonly [string, GameCommandData][] = [
-      ['player-one', { type: 'JoinGame' }],
-      ['player-two', { type: 'JoinGame' }],
+      ['player-one', { seat: 1, team: 'white', type: 'JoinGame' }],
+      ['player-two', { seat: 1, team: 'black', type: 'JoinGame' }],
       ['player-one', { type: 'StartGame' }],
       ['player-one', { privateData: 'hidden-one', type: 'TestMove' }],
       ['player-two', { privateData: 'hidden-two', type: 'TestMove' }],
@@ -427,7 +572,7 @@ test('advances a created view for a fully hidden event', () => {
 describe('history beginning with an invalid event', () => {
   test('throws NullableGameStateError for an internal history', () => {
     const playerJoined: GameEventData = {
-      payload: { playerId: 'player-one', seat: 1 },
+      payload: { playerId: 'player-one', seat: 1, team: 'white' },
       sequence: 1,
       type: 'PlayerJoined',
       version: GAME_EVENT_VERSION,
@@ -438,7 +583,7 @@ describe('history beginning with an invalid event', () => {
 
   test('explains the required first internal event', () => {
     const playerJoined: GameEventData = {
-      payload: { playerId: 'player-one', seat: 1 },
+      payload: { playerId: 'player-one', seat: 1, team: 'white' },
       sequence: 1,
       type: 'PlayerJoined',
       version: GAME_EVENT_VERSION,
