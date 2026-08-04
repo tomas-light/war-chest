@@ -14,6 +14,7 @@
     "db:seed": "yarn workspace @war-chest/database db:seed",
     "db:studio": "yarn workspace @war-chest/database db:studio",
     "db:up": "docker compose up -d postgres",
+    "dev:server": "yarn workspace @war-chest/server dev",
     "format": "prettier . --write",
     "format:check": "prettier . --check",
     "lint": "eslint . && stylelint \"**/*.{css,scss}\" --allow-empty-input",
