@@ -53,7 +53,11 @@ describe('auth session routes', () => {
     expect(response.headers['cache-control']).toBe('no-store');
     expect(response.json()).toEqual({
       expiresAt: '2026-09-03T10:00:00.000Z',
-      user: session.user,
+      user: {
+        avatarVersion: 'avatar-hash',
+        displayName: 'Ada',
+        id: 'user-1',
+      },
     });
   });
 

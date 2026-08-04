@@ -8,14 +8,23 @@ import Fastify, {
 } from 'fastify';
 import { registerAuthRoutes } from './auth/auth-routes.js';
 import { registerAuthSession } from './auth/auth-session.js';
+import {
+  type UserRepository,
+  createUserRepository,
+} from './users/user-repository.js';
+import { registerUserRoutes } from './users/user-routes.js';
 
-export interface ServerDependencies {
+interface ServerDependencies {
   auth: Auth;
   databaseConnection: DatabaseConnection;
+  userRepository: UserRepository;
 }
 
-export interface CreateAppOptions extends ServerDependencies {
+interface CreateAppOptions {
+  auth: Auth;
+  databaseConnection: DatabaseConnection;
   logger?: boolean;
+  userRepository?: UserRepository;
 }
 
 declare module 'fastify' {
@@ -29,6 +38,9 @@ export function createApp(options: CreateAppOptions): FastifyInstance {
   const dependencies: ServerDependencies = {
     auth: options.auth,
     databaseConnection: options.databaseConnection,
+    userRepository:
+      options.userRepository ??
+      createUserRepository(options.databaseConnection.database),
   };
 
   app.decorate('serverDependencies', dependencies);
@@ -36,6 +48,7 @@ export function createApp(options: CreateAppOptions): FastifyInstance {
   app.register(fastifyCookie);
   registerAuthSession(app);
   app.register(registerAuthRoutes);
+  app.register(registerUserRoutes);
   app.get('/health', getHealth);
 
   return app;

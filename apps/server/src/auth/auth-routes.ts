@@ -1,9 +1,10 @@
 import type { AuthCookie, AuthSession } from '@war-chest/auth';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import { type PublicUser, createPublicUser } from '../users/public-user.js';
 
 interface SessionResponse {
   expiresAt: string;
-  user: AuthSession['user'];
+  user: PublicUser;
 }
 
 export function registerAuthRoutes(app: FastifyInstance): void {
@@ -21,7 +22,7 @@ export function registerAuthRoutes(app: FastifyInstance): void {
     reply.header('Cache-Control', 'no-store');
     return {
       expiresAt: session.expiresAt.toISOString(),
-      user: session.user,
+      user: createPublicUser(session.user),
     };
   }
 
