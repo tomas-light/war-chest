@@ -1,4 +1,4 @@
-import { hydrateCommand } from './commands/hydrate-command.js';
+import { hydrateCommand } from './commands/hydrateCommand.js';
 import type { GameCommandData } from './commands.js';
 import type { GameEventData } from './events.js';
 import type { GameState } from './state.js';

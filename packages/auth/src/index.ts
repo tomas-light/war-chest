@@ -1,10 +1,10 @@
-export { createAuth } from './auth.js';
+export { createAuth } from './createAuth.js';
 export type {
   Auth,
   CreateAuthOptions,
   LoginResult,
   OAuthAuthorization,
-} from './auth.js';
+} from './createAuth.js';
 export { loadAuthConfig } from './config/index.js';
 export type { AuthConfig, LoadAuthConfigOptions } from './config/index.js';
 export { AuthError } from './errors.js';

@@ -1,1 +1,1 @@
-export { loadDatabaseConfig } from './load-config.js';
+export { loadDatabaseConfig } from './loadDatabaseConfig.js';

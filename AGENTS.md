@@ -142,8 +142,16 @@ async function some() {
 
 ## Именование файлов
 
-- Называй файл так же, как главную сущность, которая экспортируется из него,
-  либо используй имя, описывающее смысловое объединение нескольких сущностей.
+- Сначала определи, есть ли в файле явно главная экспортируемая сущность. Если
+  она есть, называй файл точно так же, как эту сущность, включая регистр букв.
+  Сущности в `PascalCase` должны находиться в файлах с именем в `PascalCase`, а
+  сущности в `camelCase` — в файлах с именем в `camelCase`.
+- Наличие вспомогательных типов, констант или фабрики не превращает файл в
+  смысловую группировку, если главная сущность остаётся очевидной. Например,
+  интерфейс `UserRepository` остаётся главной сущностью файла даже при наличии
+  функции `createUserRepository` и связанных типов.
+- Используй имя смыслового объединения нескольких сущностей только тогда, когда
+  среди экспортов действительно нельзя выделить одну главную сущность.
 - Используй в названиях файлов только стили `camelCase` и `PascalCase`. Не
   используй `dashed-case`.
 
@@ -164,10 +172,39 @@ export const appRoutes = [];
 ```
 
 ```ts
+// lifecycleCommandData.ts ❌ регистр имени файла не совпадает с главной сущностью
+export type CreateGameCommandData = { type: 'CreateGame' };
+export type LifecycleCommandData = CreateGameCommandData;
+
+// LifecycleCommandData.ts ✅ точное имя главной экспортируемой сущности
+export type CreateGameCommandData = { type: 'CreateGame' };
+export type LifecycleCommandData = CreateGameCommandData;
+```
+
+```ts
+// userRepository.ts ❌ вспомогательная фабрика не отменяет главную сущность
+export interface UserRepository {}
+export function createUserRepository(): UserRepository {
+  return {};
+}
+
+// UserRepository.ts ✅ файл назван по главному интерфейсу
+export interface UserRepository {}
+export function createUserRepository(): UserRepository {
+  return {};
+}
+```
+
+```ts
 // constants.ts ✅ допустимое имя для смыслового объединения разных экспортов
 export const PAGE_LIMIT = 25;
 export const DEFAULT_SORT = 'ASC';
 ```
+
+- При переименовании файла только изменением регистра на Windows используй
+  промежуточное имя, чтобы файловая система и Git корректно зафиксировали
+  изменение: `name.ts` → `Name1.ts` → `Name.ts`. После переименования обнови
+  регистр пути во всех импортах и проверь отсутствие старого варианта имени.
 
 - Называй SCSS-модуль по шаблону `<имя файла компонента>.module.scss` и
   импортируй его с именем `classes`.

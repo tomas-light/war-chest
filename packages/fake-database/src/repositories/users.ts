@@ -4,7 +4,7 @@ import type {
   FakeUser,
   FakeUserIdentity,
 } from '../schema.js';
-import { createSchemaTable, runSchemaTableTransaction } from '../table.js';
+import { createSchemaTable, runSchemaTableTransaction } from '../Table.js';
 
 export interface FakeUserWithIdentity {
   identity: FakeUserIdentity;

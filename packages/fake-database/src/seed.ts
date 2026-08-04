@@ -9,7 +9,7 @@ import type {
 import {
   type SchemaTableTransaction,
   runSchemaTableTransaction,
-} from './table.js';
+} from './Table.js';
 
 export const FAKE_SEED_CREATED_AT = new Date('2026-01-01T00:00:00.000Z');
 const SEED_STORE_NAMES = [
