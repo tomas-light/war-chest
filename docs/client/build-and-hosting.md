@@ -16,6 +16,18 @@ Vite слушает `0.0.0.0:5173`, требует свободный порт �
 `/api/socket.io` на `http://localhost:3000`. Изменения исходников обновляются
 через Vite HMR. Только в этом режиме доступны dev-панель и fake connection.
 
+При доступе через HTTPS-туннель его hostname нужно разрешить в
+`apps/web/env.local.yaml`:
+
+```yaml
+__VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS: '<dev-domain>'
+```
+
+Значение не содержит схему и путь. Vite передаёт его в `server.allowedHosts`,
+но не включает в публичную конфигурацию приложения. После изменения
+перезапустите `yarn dev:web`. Полный пример находится в
+[локальном входе через Telegram](../auth/telegram-local-development.md).
+
 ## Production bundle
 
 ```shell

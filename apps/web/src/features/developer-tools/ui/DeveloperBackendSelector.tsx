@@ -1,8 +1,8 @@
 import type { ChangeEvent } from 'react';
 import { type BackendKind, useDevBackendStore } from '#/shared/config';
-import classes from './DeveloperDrawer.module.scss';
+import classes from './DeveloperBackendSelector.module.scss';
 
-export function DeveloperDrawer() {
+export function DeveloperBackendSelector() {
   const backend = useDevBackendStore((state) => state.backend);
   const setBackend = useDevBackendStore((state) => state.setBackend);
 
@@ -11,15 +11,13 @@ export function DeveloperDrawer() {
   }
 
   return (
-    <aside className={classes.drawer} aria-label="Инструменты разработчика">
-      <label className={classes.field}>
-        <span>Backend</span>
-        <select value={backend} onChange={handleBackendChange}>
-          <option value="real">Real</option>
-          <option value="fake">Fake</option>
-        </select>
-      </label>
-    </aside>
+    <label className={classes.field}>
+      <span>Backend</span>
+      <select value={backend} onChange={handleBackendChange}>
+        <option value="real">Real API</option>
+        <option value="fake">Fake API</option>
+      </select>
+    </label>
   );
 
   function handleBackendChange(event: ChangeEvent<HTMLSelectElement>): void {

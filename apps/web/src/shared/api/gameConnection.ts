@@ -10,7 +10,6 @@ import {
   SOCKET_IO_PATH,
 } from '@war-chest/api-contracts';
 import { type Socket, io } from 'socket.io-client';
-import { readDevBackend } from '../config/backendKind';
 
 export interface GameConnectionHandlers {
   onError(message: GameErrorMessage): void;
@@ -76,11 +75,15 @@ export function createGameConnection(
 export async function createSelectedGameConnection(
   handlers: GameConnectionHandlers
 ): Promise<GameConnection> {
-  if (import.meta.env.DEV && readDevBackend() === 'fake') {
-    const { createFakeGameConnection } =
-      await import('./createFakeGameConnection');
+  if (import.meta.env.DEV) {
+    const { readDevBackend } = await import('../config/backendKind');
 
-    return createFakeGameConnection(handlers);
+    if (readDevBackend() === 'fake') {
+      const { createFakeGameConnection } =
+        await import('./createFakeGameConnection');
+
+      return createFakeGameConnection(handlers);
+    }
   }
 
   return createGameConnection(handlers);

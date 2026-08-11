@@ -99,7 +99,8 @@
 - загрузка application flags при инициализации;
 - получение feature flags из события и snapshot;
 - неизменность базовых флагов real-игры;
-- dev-панель на всех маршрутах, включая авторизацию;
+- переключатель backend внутри `/login` до входа;
+- dev-панель по кнопке в навигации после входа;
 - persisted-переключение real/fake backend;
 - единые API- и game-connection-контракты для обоих backend;
 - lazy loading fake backend только в development;

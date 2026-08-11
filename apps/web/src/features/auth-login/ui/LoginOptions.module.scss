@@ -1,0 +1,28 @@
+.options {
+  max-width: 320px;
+  display: grid;
+  gap: 14px;
+  margin-top: 32px;
+}
+
+.providerButton {
+  width: 100%;
+  min-height: 44px;
+}
+
+.googleButton {
+  min-height: 44px;
+}
+
+.error {
+  margin: 4px 0 0;
+  color: #ffb4a6;
+  line-height: 1.5;
+}
+
+.hint {
+  margin: 6px 0 0;
+  color: #9f927e;
+  font-size: 14px;
+  line-height: 1.5;
+}

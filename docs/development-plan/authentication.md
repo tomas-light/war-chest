@@ -4,10 +4,10 @@
 
 Пароли и собственная регистрация в MVP не нужны.
 
-Пакет `@war-chest/auth` реализован. Его фактический публичный API, ограничения
-и поведение описаны в разделе [«Авторизация»](../auth/README.md). HTTP-маршруты
-Fastify, установка подготовленных cookie в ответ и проверка Socket.IO-соединений
-остаются частью серверного этапа.
+Пакет `@war-chest/auth`, HTTP-маршруты Fastify, установка подготовленных cookie
+и проверка Socket.IO-соединений реализованы. Фактический публичный API пакета и
+его ограничения описаны в разделе [«Авторизация»](../auth/README.md), а текущие
+HTTP endpoints — в [документации server](../server/http-api.md).
 
 ## Пакет `packages/auth`
 
@@ -173,11 +173,11 @@ immutable, не показывая старое изображение посл�
 4. Создаёт собственную сессию.
 5. Устанавливает случайный session token в `HttpOnly`, `SameSite=Lax` cookie.
 
-В dev и production cookie также получает атрибут `Secure`. Для локального
-callback по обычному `http://localhost` значение `AUTH_COOKIE_SECURE` равно
-`false`. В базе хранится только безопасный хеш session token. Та же cookie
-используется для HTTP и Socket.IO. Сервер проверяет сессию при каждом новом
-Socket.IO-соединении.
+При HTTPS cookie также получает атрибут `Secure`. Для локального callback по
+обычному `http://localhost` значение `AUTH_COOKIE_SECURE` равно `false`, а для
+публичного HTTPS-туннеля — `true`. В базе хранится только безопасный хеш session
+token. Та же cookie используется для HTTP и Socket.IO. Сервер проверяет сессию
+при каждом новом Socket.IO-соединении.
 
 ## Google
 
@@ -216,6 +216,10 @@ GET /api/auth/telegram/callback
 Telegram client ID и secret выдаются через BotFather. Локально secret находится
 в `packages/auth/env.local.yaml`. На стендах он передаётся явно процессу запуска
 или через Kubernetes Secret, если проект перейдёт на Kubernetes.
+
+Telegram требует зарегистрированный HTTPS callback. Проверенная локальная
+настройка через BotFather Mini App и ngrok вынесена в
+[документацию авторизации](../auth/telegram-local-development.md).
 
 ## Yandex ID
 
