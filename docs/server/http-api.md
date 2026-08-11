@@ -5,17 +5,21 @@ JSON 404 и не попадает в SPA fallback.
 
 ## Реализованные endpoints
 
-| Метод  | URL                         | Авторизация | Поведение                            |
-| ------ | --------------------------- | ----------- | ------------------------------------ |
-| `GET`  | `/api/health`               | нет         | проверяет соединение с PostgreSQL    |
-| `GET`  | `/api/auth/session`         | session     | возвращает текущую сессию            |
-| `POST` | `/api/auth/logout`          | нестрогая   | отзывает сессию и очищает cookie     |
-| `GET`  | `/api/users/:userId`        | session     | возвращает публичный профиль         |
-| `GET`  | `/api/users/:userId/avatar` | session     | возвращает сохранённый avatar binary |
-| `GET`  | `/api/users/:userId/games`  | session     | возвращает страницу завершённых игр  |
+| Метод  | URL                           | Авторизация | Поведение                            |
+| ------ | ----------------------------- | ----------- | ------------------------------------ |
+| `GET`  | `/api/health`                 | нет         | проверяет соединение с PostgreSQL    |
+| `POST` | `/api/auth/google`            | нет         | проверяет Google ID token            |
+| `GET`  | `/api/auth/telegram/start`    | нет         | начинает Telegram OAuth flow         |
+| `GET`  | `/api/auth/telegram/callback` | state       | завершает Telegram OAuth flow        |
+| `GET`  | `/api/auth/yandex/start`      | нет         | начинает Yandex OAuth flow           |
+| `GET`  | `/api/auth/yandex/callback`   | state       | завершает Yandex OAuth flow          |
+| `GET`  | `/api/auth/session`           | session     | возвращает текущую сессию            |
+| `POST` | `/api/auth/logout`            | нестрогая   | отзывает сессию и очищает cookie     |
+| `GET`  | `/api/users/:userId`          | session     | возвращает публичный профиль         |
+| `GET`  | `/api/users/:userId/avatar`   | session     | возвращает сохранённый avatar binary |
+| `GET`  | `/api/users/:userId/games`    | session     | возвращает страницу завершённых игр  |
 
-OAuth, game и feature-flags endpoints из development plan пока не
-зарегистрированы.
+Game и feature-flags endpoints из development plan пока не зарегистрированы.
 
 ## Health
 
@@ -34,6 +38,30 @@ OAuth, game и feature-flags endpoints из development plan пока не
   "status": "unavailable"
 }
 ```
+
+## Вход через провайдеров
+
+`POST /api/auth/google` принимает JSON `{ "idToken": "..." }`. После успешной
+проверки server устанавливает session cookie и возвращает тот же
+`SessionResponse`, что и `/api/auth/session`.
+
+Telegram и Yandex используют redirect flow. Маршрут `/start` получает URL и
+OAuth state из `@war-chest/auth`, устанавливает подготовленную state cookie и
+отвечает `302` на страницу провайдера. Callback требует непустые `code` и
+`state`, передаёт их вместе со state cookie в пакет авторизации, очищает state
+cookie, устанавливает session cookie и перенаправляет браузер на
+`AUTH_SUCCESS_REDIRECT_URL`.
+
+Ожидаемые ошибки пакета переводятся в единый API envelope:
+
+| Код                       | HTTP | Ситуация                                    |
+| ------------------------- | ---- | ------------------------------------------- |
+| `invalid_credentials`     | 401  | провайдер не подтвердил credentials         |
+| `invalid_oauth_state`     | 400  | OAuth state недействителен или истёк        |
+| `provider_disabled`       | 503  | credentials провайдера не настроены         |
+| `provider_request_failed` | 502  | запрос внешнего провайдера завершился сбоем |
+
+Все ответы auth endpoints используют `Cache-Control: no-store`.
 
 ## Session и logout
 

@@ -15,6 +15,10 @@ export interface SessionResponse {
   user: PublicUser;
 }
 
+export interface GoogleLoginRequest {
+  idToken: string;
+}
+
 export interface ApiError {
   error: {
     code: string;

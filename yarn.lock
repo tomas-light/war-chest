@@ -2623,7 +2623,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@war-chest/fake-database@workspace:packages/fake-database":
+"@war-chest/fake-database@workspace:^, @war-chest/fake-database@workspace:packages/fake-database":
   version: 0.0.0-use.local
   resolution: "@war-chest/fake-database@workspace:packages/fake-database"
   dependencies:
@@ -2677,6 +2677,7 @@ __metadata:
     "@vitest/coverage-v8": "npm:4.1.10"
     "@war-chest/api-contracts": "workspace:^"
     "@war-chest/config": "workspace:^"
+    "@war-chest/fake-database": "workspace:^"
     "@war-chest/game-engine": "workspace:^"
     nice-web-routes: "npm:2.1.1"
     react: "npm:19.2.8"
@@ -2686,6 +2687,7 @@ __metadata:
     socket.io-client: "npm:4.8.3"
     typescript: "npm:7.0.2"
     vite: "npm:8.2.0"
+    vite-plugin-readable-classnames: "npm:1.5.11"
     vitest: "npm:4.1.10"
     zustand: "npm:5.0.14"
   languageName: unknown
@@ -8203,6 +8205,15 @@ __metadata:
   version: 1.1.2
   resolution: "vary@npm:1.1.2"
   checksum: 10c0/f15d588d79f3675135ba783c91a4083dcd290a2a5be9fcb6514220a1634e23df116847b1cc51f66bfb0644cf9353b2abb7815ae499bab06e46dd33c1a6bf1f4f
+  languageName: node
+  linkType: hard
+
+"vite-plugin-readable-classnames@npm:1.5.11":
+  version: 1.5.11
+  resolution: "vite-plugin-readable-classnames@npm:1.5.11"
+  peerDependencies:
+    vite: ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0
+  checksum: 10c0/422527ee6609b20aaf8e65c61a0fd933a51145f6507485d0e74496c98394550e82533d84dd74c4ee35d790dda521e87b0a7b411671c98a48d1e197016a66e288
   languageName: node
   linkType: hard
 

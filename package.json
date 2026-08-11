@@ -19,6 +19,7 @@
     "db:up": "docker compose up -d postgres",
     "dev:server": "yarn workspace @war-chest/server dev",
     "dev:web": "yarn workspace @war-chest/web dev",
+    "dev:ngrok": "ngrok http 5173",
     "format": "prettier . --write",
     "format:check": "prettier . --check",
     "lint": "eslint . && stylelint \"**/*.{css,scss}\" --allow-empty-input",

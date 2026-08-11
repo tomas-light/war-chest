@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import {
   gameEventsMessageSchema,
+  googleLoginRequestSchema,
   sessionResponseSchema,
 } from '../src/index.js';
 
@@ -16,6 +17,20 @@ describe('session response contract', () => {
     });
 
     expect(result.success).toBe(true);
+  });
+});
+
+describe('Google login request contract', () => {
+  test('accepts a non-empty ID token', () => {
+    const result = googleLoginRequestSchema.safeParse({ idToken: 'id-token' });
+
+    expect(result.success).toBe(true);
+  });
+
+  test('rejects an empty ID token', () => {
+    const result = googleLoginRequestSchema.safeParse({ idToken: ' ' });
+
+    expect(result.success).toBe(false);
   });
 });
 

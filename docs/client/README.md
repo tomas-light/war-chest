@@ -2,9 +2,9 @@
 
 `apps/web` — браузерное React-приложение War Chest. Сейчас это рабочий
 технический каркас: он запускается через Vite, строит маршруты, переключает
-real/fake backend в development-сборке и умеет принять игровой snapshot и
-последовательность событий. Полноценные экраны авторизации, лобби и игры ещё не
-реализованы — вместо них отображаются страницы-заглушки.
+real/fake backend в development-сборке, выполняет вход и умеет принять игровой
+snapshot и последовательность событий. Лобби и большинство игровых экранов
+пока остаются страницами-заглушками.
 
 Клиент всегда обращается к backend относительно своего origin. Обычные запросы
 должны начинаться с `/api/`, Socket.IO использует `/api/socket.io`. В
@@ -17,6 +17,9 @@ development и preview эти пути проксирует Vite, а в producti
 - маршрутизация React Router в Declarative Mode;
 - генерация URL через `nice-web-routes`;
 - TanStack Query provider с общей конфигурацией запросов;
+- загрузка сессии, защищённые маршруты и logout;
+- Google Identity Services, Telegram и Yandex login в real-режиме;
+- seeded fake-пользователи и сессии из `@war-chest/fake-database`;
 - Zustand-store активной игровой сессии;
 - real Socket.IO connection и минимальная fake-реализация;
 - development-панель с persisted-переключателем backend;
@@ -25,9 +28,8 @@ development и preview эти пути проксирует Vite, а в producti
 
 ## Что пока не работает
 
-- HTTP API client и загрузка данных через TanStack Query;
+- HTTP API client для остальных прикладных данных;
 - реальные формы и пользовательские сценарии на страницах;
-- авторизация из web-интерфейса;
 - fake HTTP backend, SharedWorker и IndexedDB gateway;
 - отправка игровых команд;
 - reconnect и запрос недостающих событий;

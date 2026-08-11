@@ -10,10 +10,10 @@ HTTP используем для обычных операций, а Socket.IO �
 ## Статус реализации
 
 - [x] bootstrap Fastify, конфигурация и обязательная проверка PostgreSQL;
-- [x] `/api/health`, session, logout и user endpoints;
+- [x] `/api/health`, OAuth, session, logout и user endpoints;
 - [x] Socket.IO authentication, Zod-валидация сообщений и игровые комнаты;
 - [x] опциональная раздача production SPA и deep-link fallback;
-- [ ] HTTP adapters Google, Telegram и Yandex OAuth;
+- [x] HTTP adapters Google, Telegram и Yandex OAuth;
 - [ ] runtime feature-flags endpoint;
 - [ ] игровые HTTP endpoints и game service;
 - [ ] выполнение, транзакционное сохранение и рассылка команд;

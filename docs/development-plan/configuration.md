@@ -172,6 +172,7 @@ Google client ID — единственное значение провайде�
 
 ```yaml
 GOOGLE_CLIENT_ID: ''
+__VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS: ''
 ```
 
 Адрес backend не является клиентской настройкой: браузер всегда обращается к
@@ -179,11 +180,17 @@ GOOGLE_CLIENT_ID: ''
 проксирует Vite. В production `APP_SERVE_WEB: true` включает раздачу
 `apps/web/dist` сервером, включая SPA fallback для deep links.
 
+`__VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS` используется только development-
+сервером Vite и не входит в `__WEB_CONFIG__`. Локально в нём можно указать
+hostname HTTPS-туннеля; значение без схемы и пути попадает в
+`server.allowedHosts`.
+
 Клиентский YAML читается во время сборки Vite. Явные переменные команды сборки применяются после YAML и имеют наивысший приоритет. Любое итоговое значение оказывается доступным в браузере, поэтому в `apps/web/env.yaml`, `apps/web/env.local.yaml` и build-переменных клиента не должно быть секретов.
 
-Dev-панель отображается во всех development-сборках, монтируется независимо от
-роутера и доступности API и удаляется из production-сборки через
-`import.meta.env.DEV`.
+Переключатель backend отображается во всех development-сборках: до входа он
+встроен в `/login`, а после входа доступен в dev-панели по кнопке `Dev` в
+навигации. Недоступность real API не скрывает `/login` и переключатель. Вся
+dev-механика удаляется из production-сборки через `import.meta.env.DEV`.
 
 ## Runtime feature flags
 

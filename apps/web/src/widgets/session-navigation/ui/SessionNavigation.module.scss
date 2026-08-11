@@ -1,0 +1,80 @@
+.layout {
+  min-height: 100vh;
+}
+
+.header {
+  position: relative;
+  z-index: 1;
+  min-height: 72px;
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  padding: 14px clamp(20px, 5vw, 64px);
+  border-bottom: 1px solid rgb(214 175 108 / 20%);
+  background: #1f1b14;
+}
+
+.brand {
+  color: #f4ead7;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 22px;
+  text-decoration: none;
+}
+
+.navigation {
+  display: flex;
+  gap: 18px;
+}
+
+.navigation a {
+  color: #c8baa3;
+  text-decoration: none;
+}
+
+.navigation a:hover,
+.navigation a:focus-visible,
+.developerButton:hover,
+.developerButton:focus-visible {
+  color: #f4ead7;
+}
+
+.developerButton {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #d6af6c;
+  cursor: pointer;
+  font: inherit;
+}
+
+.session {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-left: auto;
+  color: #c8baa3;
+}
+
+.error {
+  padding: 10px 24px;
+  margin: 0;
+  background: #632d25;
+  color: #fff3ef;
+  text-align: center;
+}
+
+.layout main {
+  min-height: calc(100vh - 72px);
+}
+
+@media (width <= 680px) {
+  .header {
+    gap: 12px 18px;
+    flex-wrap: wrap;
+  }
+
+  .session {
+    width: 100%;
+    margin-left: 0;
+  }
+}

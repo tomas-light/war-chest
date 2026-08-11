@@ -1,0 +1,39 @@
+.panel {
+  position: fixed;
+  z-index: 10;
+  top: 72px;
+  right: 0;
+  bottom: 0;
+  width: min(100%, 360px);
+  padding: 24px;
+  border-left: 1px solid rgb(214 175 108 / 35%);
+  background: #1f1b14;
+  box-shadow: -20px 0 48px rgb(0 0 0 / 32%);
+}
+
+.header {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.title {
+  margin: 0;
+  color: #f4ead7;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 24px;
+  font-weight: 500;
+}
+
+.closeButton {
+  padding: 7px 10px;
+  font-size: 12px;
+}
+
+@media (width <= 680px) {
+  .panel {
+    top: 0;
+  }
+}

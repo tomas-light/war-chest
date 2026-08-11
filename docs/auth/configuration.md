@@ -50,6 +50,12 @@ Telegram использует:
 - `TELEGRAM_ISSUER` и `TELEGRAM_JWKS_ENDPOINT`;
 - `TELEGRAM_REDIRECT_URI`.
 
+Client ID и Client Secret выдаёт OIDC-конфигурация Web Login в Mini App
+BotFather. После изменения credentials или redirect URI нужно перезапустить
+server: auth-конфигурация читается при создании сервиса. Проверенный сценарий с
+HTTPS-туннелем описан в
+[локальном входе через Telegram](./telegram-local-development.md).
+
 Yandex использует:
 
 - `YANDEX_CLIENT_ID` и `YANDEX_CLIENT_SECRET`;

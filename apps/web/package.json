@@ -16,6 +16,7 @@
   "dependencies": {
     "@tanstack/react-query": "5.101.4",
     "@war-chest/api-contracts": "workspace:^",
+    "@war-chest/fake-database": "workspace:^",
     "@war-chest/game-engine": "workspace:^",
     "nice-web-routes": "2.1.1",
     "react": "19.2.8",
@@ -34,6 +35,7 @@
     "sass-embedded": "1.100.0",
     "typescript": "7.0.2",
     "vite": "8.2.0",
+    "vite-plugin-readable-classnames": "1.5.11",
     "vitest": "4.1.10"
   }
 }

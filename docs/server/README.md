@@ -13,6 +13,7 @@
 - загрузка и Zod-валидация server-конфигурации;
 - обязательная проверка PostgreSQL перед началом прослушивания порта;
 - health endpoint;
+- вход через Google, Telegram и Yandex ID;
 - получение текущей сессии и logout;
 - защищённые endpoints профиля, аватара и истории завершённых игр;
 - Socket.IO authentication, runtime-валидация сообщений и комнаты игр;
@@ -21,7 +22,6 @@
 
 ## Что пока не работает
 
-- HTTP adapters входа через Google, Telegram и Yandex;
 - feature-flags endpoint;
 - создание, загрузка и запуск игры;
 - выполнение и сохранение игровых команд;

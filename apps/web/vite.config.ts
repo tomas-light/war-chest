@@ -1,5 +1,6 @@
 import { resolve } from 'node:path';
 import react from '@vitejs/plugin-react';
+import readableClassnames from 'vite-plugin-readable-classnames';
 import { defineConfig } from 'vitest/config';
 import { loadWebConfig } from './config/loadWebConfig.js';
 
@@ -14,14 +15,22 @@ const SERVER_PROXY = {
   },
 };
 
+const { __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS, ...config } = loadWebConfig();
+
+const SERVER_ALLOWED_HOSTS =
+  __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS === ''
+    ? []
+    : [__VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS];
+
 export default defineConfig({
   build: {
+    target: 'baseline-widely-available',
     outDir: 'dist',
   },
   define: {
-    __WEB_CONFIG__: JSON.stringify(loadWebConfig()),
+    __WEB_CONFIG__: JSON.stringify(config),
   },
-  plugins: [react()],
+  plugins: [react(), readableClassnames()],
   preview: {
     host: '0.0.0.0',
     port: 4173,
@@ -38,6 +47,7 @@ export default defineConfig({
     port: 5173,
     proxy: SERVER_PROXY,
     strictPort: true,
+    allowedHosts: SERVER_ALLOWED_HOSTS,
   },
   test: {
     environment: 'node',

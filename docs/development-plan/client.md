@@ -64,9 +64,9 @@ apps/web/src/
     game-move-history/
     user-profile-header/
     game-history-list/
-    developer-drawer/
   features/
     auth/
+    developer-tools/
     create-game/
     join-game/
     send-game-command/
@@ -296,9 +296,9 @@ snapshot. Клиент получает их уже при создании иг
 reconnect он получает актуальное состояние игры с теми же feature flags,
 которые были записаны в `GameCreated`.
 
-В development-сборке dev-панель доступна на любой странице, включая `/login`,
-и позволяет переключаться между real и fake backend. Выбор сохраняется через
-Zustand `persist` в `localStorage`.
+В development-сборке переключатель real/fake backend находится внутри `/login`
+до входа, а после входа доступен в dev-панели по кнопке `Dev` в навигации. Выбор
+сохраняется через Zustand `persist` в `localStorage`.
 
 Локальные overrides игровых флагов в Zustand не используем. В fake-режиме
 панель изменяет snapshot флагов выбранной игры в IndexedDB через
@@ -311,11 +311,16 @@ Zustand `persist` в `localStorage`.
 2. ✅ Добавить загрузку и проверку `env.yaml`.
 3. 🟡 Добавлены общие Zod-контракты, базовый `shared/api` gateway и real
    Socket.IO adapter. HTTP adapter и полноценный backend provider ещё нужны.
-4. ✅ Добавить глобальную dev-панель и persisted-переключатель real/fake.
+4. ✅ Добавить persisted-переключатель real/fake в `/login` и открываемую после
+   входа dev-панель.
 5. Реализовать fake backend и `SharedWorker`, подключив готовый
    `packages/fake-database` на npm-пакете `idb`.
 6. Загрузить application feature flags при инициализации.
-7. Реализовать вход через Google, Telegram и Yandex ID.
+7. ✅ Реализовать real-вход через Google, Telegram и Yandex ID, auth guard,
+   session restore и logout. Fake-вход использует seeded identities,
+   пользователей и сессии из `@war-chest/fake-database`; в `sessionStorage`
+   остаётся только ID сессии текущей вкладки. Перенос владения базой в
+   SharedWorker остаётся частью этапа 5.
 8. Реализовать создание игры, выбор свободного места в конкретной команде и
    присоединение к ней.
 9. Получить feature flags из `GameCreated` или игрового snapshot и сохранить их
@@ -337,7 +342,7 @@ Zustand `persist` в `localStorage`.
 
 - две вкладки могут войти в одну игру как разные игроки;
 - клиентский код разделён по слоям FSD и соблюдает направление зависимостей;
-- dev-панель доступна на всех маршрутах development-сборки;
+- переключатель backend доступен на `/login` и в dev-панели после входа;
 - выбор real/fake backend переживает reload;
 - страницы используют единые API-контракты и не знают о выбранном backend;
 - две вкладки могут играть разными fake-пользователями через один SharedWorker;

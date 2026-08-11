@@ -13,6 +13,7 @@ import type {
   GameLeaveMessage,
   GameSnapshotMessage,
   GameSyncMessage,
+  GoogleLoginRequest,
   PublicUser,
   SessionResponse,
 } from './types.js';
@@ -53,6 +54,10 @@ export const sessionResponseSchema: z.ZodType<SessionResponse> = z
     expiresAt: z.iso.datetime(),
     user: publicUserSchema,
   })
+  .strict();
+
+export const googleLoginRequestSchema: z.ZodType<GoogleLoginRequest> = z
+  .object({ idToken: z.string().trim().min(1) })
   .strict();
 
 export const apiErrorSchema: z.ZodType<ApiError> = z
