@@ -26,7 +26,7 @@ packages/database/
   migrations/            сгенерированные SQL-миграции
   src/
     config/
-      load-config.ts
+      loadDatabaseConfig.ts
       schema.ts
     schema/
       auth.ts
@@ -38,7 +38,7 @@ packages/database/
     seed.ts               тестовые данные
     index.ts              публичный API пакета
   tests/
-    load-config.test.ts
+    loadDatabaseConfig.test.ts
   drizzle.config.ts
   package.json
   tsconfig.json

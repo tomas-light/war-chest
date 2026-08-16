@@ -34,7 +34,8 @@ const jsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
     z.record(z.string(), jsonValueSchema),
   ])
 );
-const featureFlagsSchema = z.record(z.string(), jsonPrimitiveSchema);
+const featureFlagsSchema = z.record(z.string(), z.boolean());
+const gameIdSchema = z.uuid();
 const gameTeamSchema = z.enum(['black', 'white']);
 const eventMetadataSchema = z.object({
   sequence: z.number().int().positive(),
@@ -186,41 +187,41 @@ const gameCommandSchema = z.discriminatedUnion('type', [
 ]);
 
 export const gameJoinMessageSchema: z.ZodType<GameJoinMessage> = z
-  .object({ gameId: z.string() })
+  .object({ gameId: gameIdSchema })
   .strict();
 export const gameLeaveMessageSchema: z.ZodType<GameLeaveMessage> = z
-  .object({ gameId: z.string() })
+  .object({ gameId: gameIdSchema })
   .strict();
 export const gameSyncMessageSchema: z.ZodType<GameSyncMessage> = z
   .object({
     afterSequence: z.number().int().nonnegative(),
-    gameId: z.string(),
+    gameId: gameIdSchema,
   })
   .strict();
 export const gameCommandMessageSchema: z.ZodType<GameCommandMessage> = z
   .object({
     command: gameCommandSchema,
-    commandId: z.string(),
+    commandId: z.uuid(),
     expectedVersion: z.number().int().nonnegative(),
-    gameId: z.string(),
+    gameId: gameIdSchema,
   })
   .strict();
 export const gameSnapshotMessageSchema: z.ZodType<GameSnapshotMessage> = z
   .object({
-    gameId: z.string(),
+    gameId: gameIdSchema,
     view: gameViewSchema,
   })
   .strict();
 export const gameEventsMessageSchema: z.ZodType<GameEventsMessage> = z
   .object({
     events: z.array(gameViewEventSchema).readonly(),
-    gameId: z.string(),
+    gameId: gameIdSchema,
   })
   .strict();
 export const gameErrorMessageSchema: z.ZodType<GameErrorMessage> = z
   .object({
     code: z.string(),
-    gameId: z.string().nullable(),
+    gameId: gameIdSchema.nullable(),
     message: z.string(),
   })
   .strict();

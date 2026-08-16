@@ -16,6 +16,7 @@ test('serves the SPA entry point for a deep link navigation', async () => {
   const app = createApp({
     auth: {} as Auth,
     databaseConnection,
+    featureFlagsService: { read: vi.fn() },
     logger: false,
     webAssetsRoot,
   });
@@ -45,6 +46,7 @@ test('does not use the SPA fallback for an unknown API route', async () => {
   const app = createApp({
     auth: {} as Auth,
     databaseConnection,
+    featureFlagsService: { read: vi.fn() },
     logger: false,
     webAssetsRoot,
   });

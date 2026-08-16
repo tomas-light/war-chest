@@ -42,7 +42,6 @@ export type {
   GameTeams,
   GameView,
   GameViewPlayer,
-  JsonPrimitive,
   JsonValue,
   PrivateMove,
   Viewer,

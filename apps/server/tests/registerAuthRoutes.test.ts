@@ -48,7 +48,12 @@ describe('auth session routes', () => {
       close: vi.fn(),
     } as unknown as DatabaseConnection;
 
-    app = createApp({ auth, databaseConnection, logger: false });
+    app = createApp({
+      auth,
+      databaseConnection,
+      featureFlagsService: { read: vi.fn() },
+      logger: false,
+    });
   });
 
   afterEach(async () => {

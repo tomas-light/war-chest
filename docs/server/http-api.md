@@ -5,21 +5,40 @@ JSON 404 и не попадает в SPA fallback.
 
 ## Реализованные endpoints
 
-| Метод  | URL                           | Авторизация | Поведение                            |
-| ------ | ----------------------------- | ----------- | ------------------------------------ |
-| `GET`  | `/api/health`                 | нет         | проверяет соединение с PostgreSQL    |
-| `POST` | `/api/auth/google`            | нет         | проверяет Google ID token            |
-| `GET`  | `/api/auth/telegram/start`    | нет         | начинает Telegram OAuth flow         |
-| `GET`  | `/api/auth/telegram/callback` | state       | завершает Telegram OAuth flow        |
-| `GET`  | `/api/auth/yandex/start`      | нет         | начинает Yandex OAuth flow           |
-| `GET`  | `/api/auth/yandex/callback`   | state       | завершает Yandex OAuth flow          |
-| `GET`  | `/api/auth/session`           | session     | возвращает текущую сессию            |
-| `POST` | `/api/auth/logout`            | нестрогая   | отзывает сессию и очищает cookie     |
-| `GET`  | `/api/users/:userId`          | session     | возвращает публичный профиль         |
-| `GET`  | `/api/users/:userId/avatar`   | session     | возвращает сохранённый avatar binary |
-| `GET`  | `/api/users/:userId/games`    | session     | возвращает страницу завершённых игр  |
+| Метод  | URL                              | Авторизация | Поведение                            |
+| ------ | -------------------------------- | ----------- | ------------------------------------ |
+| `GET`  | `/api/health`                    | нет         | проверяет соединение с PostgreSQL    |
+| `POST` | `/api/auth/google`               | нет         | проверяет Google ID token            |
+| `GET`  | `/api/auth/telegram/start`       | нет         | начинает Telegram OAuth flow         |
+| `GET`  | `/api/auth/telegram/callback`    | state       | завершает Telegram OAuth flow        |
+| `GET`  | `/api/auth/yandex/start`         | нет         | начинает Yandex OAuth flow           |
+| `GET`  | `/api/auth/yandex/callback`      | state       | завершает Yandex OAuth flow          |
+| `GET`  | `/api/auth/session`              | session     | возвращает текущую сессию            |
+| `POST` | `/api/auth/logout`               | нестрогая   | отзывает сессию и очищает cookie     |
+| `GET`  | `/api/users/:userId`             | session     | возвращает публичный профиль         |
+| `GET`  | `/api/users/:userId/avatar`      | session     | возвращает сохранённый avatar binary |
+| `GET`  | `/api/users/:userId/games`       | session     | возвращает страницу завершённых игр  |
+| `GET`  | `/api/config/feature-flags.json` | нет         | возвращает текущие runtime flags     |
 
-Game и feature-flags endpoints из development plan пока не зарегистрированы.
+Game endpoints из development plan пока не зарегистрированы.
+
+## Runtime feature flags
+
+`GET /api/config/feature-flags.json` при каждом запросе заново читает файл из
+`FEATURE_FLAGS_RUNTIME_FILE`. Ответ — JSON-объект с произвольными ключами и
+только boolean-значениями. Успешный ответ получает `Cache-Control: no-store`,
+чтобы новая загрузка приложения не использовала устаревший HTTP cache:
+
+```json
+{
+  "gameHistory": true,
+  "spectatorMode": false
+}
+```
+
+Список ключей не зашит в сервер и может различаться между окружениями. Если
+файл отсутствует, содержит некорректный JSON, не является объектом или включает
+не-boolean значение, endpoint отвечает `503 feature_flags_unavailable`.
 
 ## Health
 

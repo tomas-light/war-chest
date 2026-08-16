@@ -21,7 +21,7 @@ packages/auth/
   env.local.yaml
   src/
     config/
-      load-config.ts
+      loadAuthConfig.ts
       schema.ts
     providers/
       google.ts

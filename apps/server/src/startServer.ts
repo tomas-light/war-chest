@@ -3,6 +3,7 @@ import { type DatabaseConnection, createDatabase } from '@war-chest/database';
 import type { FastifyInstance } from 'fastify';
 import { loadServerConfig } from './config/index.js';
 import { createApp } from './createApp.js';
+import { createFeatureFlagsService } from './featureFlags/FeatureFlagsService.js';
 
 export async function startServer(): Promise<FastifyInstance> {
   const config = loadServerConfig();
@@ -11,9 +12,13 @@ export async function startServer(): Promise<FastifyInstance> {
 
   try {
     const auth = createAuth({ database: databaseConnection.database });
+    const featureFlagsService = createFeatureFlagsService(
+      config.FEATURE_FLAGS_RUNTIME_FILE
+    );
     app = createApp({
       auth,
       databaseConnection,
+      featureFlagsService,
       webAssetsRoot: config.APP_SERVE_WEB ? config.WEB_ASSETS_ROOT : undefined,
     });
 

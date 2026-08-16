@@ -1,3 +1,4 @@
+import type { JsonValue } from '@war-chest/database';
 import type {
   FakeDatabaseConnection,
   FakeDatabaseSchema,
@@ -6,7 +7,6 @@ import type {
   FakeGameEvent,
   FakeGameParticipant,
   FakeProcessedCommand,
-  JsonValue,
 } from '../schema.js';
 import {
   type SchemaTable,

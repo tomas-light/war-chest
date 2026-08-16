@@ -52,8 +52,6 @@ export type {
   FakeRuntimeFeatureFlags,
   FakeUser,
   FakeUserIdentity,
-  JsonPrimitive,
-  JsonValue,
 } from './schema.js';
 export {
   type SchemaTable,

@@ -19,6 +19,7 @@ test('reports ready when the database connection is healthy', async () => {
   const app = createApp({
     auth: {} as Auth,
     databaseConnection,
+    featureFlagsService: { read: vi.fn() },
     logger: false,
   });
 
@@ -50,6 +51,7 @@ test('reports unavailable when the database health check fails', async () => {
   const app = createApp({
     auth: {} as Auth,
     databaseConnection,
+    featureFlagsService: { read: vi.fn() },
     logger: false,
   });
 
@@ -81,6 +83,7 @@ test('closes the database connection with the application', async () => {
   const app = createApp({
     auth: {} as Auth,
     databaseConnection,
+    featureFlagsService: { read: vi.fn() },
     logger: false,
   });
 

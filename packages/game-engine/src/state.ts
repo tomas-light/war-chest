@@ -1,8 +1,7 @@
-export type JsonPrimitive = boolean | number | string | null;
 export type JsonValue =
-  JsonPrimitive | { [key: string]: JsonValue } | JsonValue[];
+  boolean | number | string | null | { [key: string]: JsonValue } | JsonValue[];
 
-export type FeatureFlags = Readonly<Record<string, JsonPrimitive>>;
+export type FeatureFlags = Readonly<Record<string, boolean>>;
 export type GameStatus = 'waiting' | 'active' | 'finished';
 export type GameTeam = 'black' | 'white';
 

@@ -57,6 +57,7 @@ describe('user profile routes', () => {
     app = createApp({
       auth,
       databaseConnection,
+      featureFlagsService: { read: vi.fn() },
       logger: false,
       userRepository,
     });

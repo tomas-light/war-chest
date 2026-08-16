@@ -43,7 +43,8 @@
 ### Сервер
 
 - загрузка и валидация YAML-конфигурации;
-- загрузка JSON feature flags без проверки схемы;
+- загрузка JSON feature flags с проверкой объекта и boolean-значений, но без
+  списка известных ключей;
 - endpoint с application feature flags;
 - запись полного snapshot флагов в `GameCreated`;
 - отсутствие повторного чтения runtime-файла при старте партии;

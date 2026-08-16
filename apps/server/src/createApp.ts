@@ -10,6 +10,8 @@ import Fastify, {
 } from 'fastify';
 import { registerAuthRoutes } from './auth/registerAuthRoutes.js';
 import { registerAuthSession } from './auth/registerAuthSession.js';
+import type { FeatureFlagsService } from './featureFlags/FeatureFlagsService.js';
+import { registerFeatureFlagsRoutes } from './featureFlags/registerFeatureFlagsRoutes.js';
 import { createSocketServer } from './socket/createSocketServer.js';
 import { registerUserRoutes } from './users/registerUserRoutes.js';
 import {
@@ -20,12 +22,14 @@ import {
 interface ServerDependencies {
   auth: Auth;
   databaseConnection: DatabaseConnection;
+  featureFlagsService: FeatureFlagsService;
   userRepository: UserRepository;
 }
 
 interface CreateAppOptions {
   auth: Auth;
   databaseConnection: DatabaseConnection;
+  featureFlagsService: FeatureFlagsService;
   logger?: boolean;
   userRepository?: UserRepository;
   webAssetsRoot?: string;
@@ -42,6 +46,7 @@ export function createApp(options: CreateAppOptions): FastifyInstance {
   const dependencies: ServerDependencies = {
     auth: options.auth,
     databaseConnection: options.databaseConnection,
+    featureFlagsService: options.featureFlagsService,
     userRepository:
       options.userRepository ??
       createUserRepository(options.databaseConnection.database),
@@ -81,6 +86,7 @@ export function createApp(options: CreateAppOptions): FastifyInstance {
 
   function registerApiRoutes(api: FastifyInstance): void {
     api.register(registerAuthRoutes);
+    api.register(registerFeatureFlagsRoutes);
     api.register(registerUserRoutes);
     api.get('/health', getHealth);
   }

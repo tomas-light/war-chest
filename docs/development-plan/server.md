@@ -14,7 +14,7 @@ HTTP используем для обычных операций, а Socket.IO �
 - [x] Socket.IO authentication, Zod-валидация сообщений и игровые комнаты;
 - [x] опциональная раздача production SPA и deep-link fallback;
 - [x] HTTP adapters Google, Telegram и Yandex OAuth;
-- [ ] runtime feature-flags endpoint;
+- [x] runtime feature-flags reader и endpoint;
 - [ ] игровые HTTP endpoints и game service;
 - [ ] выполнение, транзакционное сохранение и рассылка команд;
 - [ ] ActiveGame, reconnect deadline и восстановление после перезапуска.
@@ -22,30 +22,38 @@ HTTP используем для обычных операций, а Socket.IO �
 Точные доступные сейчас endpoints и ограничения transport scaffold описаны в
 [фактической документации server](../server/README.md).
 
+Автономные постановки следующих работ находятся в разделе
+[«Реализация игрового server: этапы 4–8»](./server-implementation/README.md).
+Их следует использовать для передачи каждого этапа без контекста обсуждения.
+
 ## Предлагаемая структура
 
 ```text
 apps/server/src/
   config/
-    load-config.ts
+    loadServerConfig.ts
     schema.ts
-  feature-flags/
-    feature-flags.service.ts
+  featureFlags/
+    FeatureFlagsService.ts
+    registerFeatureFlagsRoutes.ts
   auth/
-    auth-routes.ts
-    auth-session.ts
+    registerAuthRoutes.ts
+    registerAuthSession.ts
   users/
-    public-user.ts
-    user-repository.ts
-    user-routes.ts
+    PublicUser.ts
+    UserRepository.ts
+    registerUserRoutes.ts
   games/
-    game.repository.ts
-    game.service.ts
-    game.routes.ts
-    game.socket.ts
-    active-games.ts
-  app.ts
+    ActiveGames.ts
+    GameRepository.ts
+    GameService.ts
+    registerGameRoutes.ts
+    registerGameSocket.ts
+  socket/
+    createSocketServer.ts
+  createApp.ts
   index.ts
+  startServer.ts
 ```
 
 Схема PostgreSQL, клиент и миграции находятся в `packages/database`. Сервер
@@ -54,12 +62,12 @@ apps/server/src/
 явно переданные переменные процесса. `DATABASE_URL` в конфигурации сервера не
 дублируется.
 
-`game.repository.ts` и `user-repository.ts` остаются на сервере: они описывают
+`GameRepository.ts` и `UserRepository.ts` остаются на сервере: они описывают
 нужные HTTP-сценариям запросы и границы транзакций, но выполняют их через схему
 и клиент пакета базы.
 
 Интеграции с Google, Telegram и Yandex ID, а также сессии War Chest находятся в
-`packages/auth`. Серверный `auth-routes.ts` остаётся тонким HTTP-адаптером над
+`packages/auth`. Серверный `registerAuthRoutes.ts` остаётся тонким HTTP-адаптером над
 публичным API `@war-chest/auth`.
 
 ## HTTP API
@@ -394,7 +402,8 @@ interface ActiveGame {
 - HTTP-история и события Socket.IO проходят одинаковую фильтрацию скрытых данных;
 - сервер читает runtime-файл при создании новой игры;
 - сервер отдаёт актуальный runtime-файл при инициализации клиента;
-- сервер не валидирует схему и состав feature-flags JSON;
+- сервер проверяет JSON-объект и boolean-тип каждого feature flag, но не знает
+  список ключей и не проверяет полноту набора;
 - `GameCreated` содержит полный snapshot флагов;
 - старт партии не перечитывает runtime-файл;
 - команды используют флаги текущей игры, а не актуальный runtime-файл;

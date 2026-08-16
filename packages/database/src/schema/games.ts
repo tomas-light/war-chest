@@ -14,9 +14,8 @@ import {
 } from 'drizzle-orm/pg-core';
 import { users } from './auth.js';
 
-export type JsonPrimitive = boolean | number | string | null;
 export type JsonValue =
-  JsonPrimitive | { [key: string]: JsonValue } | JsonValue[];
+  boolean | number | string | null | { [key: string]: JsonValue } | JsonValue[];
 
 export const gameStatus = pgEnum('game_status', [
   'waiting',
