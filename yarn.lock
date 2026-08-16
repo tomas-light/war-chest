@@ -2641,6 +2641,7 @@ __metadata:
   dependencies:
     typescript: "npm:7.0.2"
     vitest: "npm:4.1.10"
+    zod: "npm:4.4.3"
   languageName: unknown
   linkType: soft
 
@@ -2656,8 +2657,11 @@ __metadata:
     "@war-chest/config": "workspace:^"
     "@war-chest/database": "workspace:^"
     "@war-chest/game-engine": "workspace:^"
+    drizzle-orm: "npm:0.45.2"
     fastify: "npm:5.11.2"
+    postgres: "npm:3.4.9"
     socket.io: "npm:4.8.3"
+    socket.io-client: "npm:4.8.3"
     tsx: "npm:4.23.1"
     typescript: "npm:7.0.2"
     vitest: "npm:4.1.10"

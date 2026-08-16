@@ -4,6 +4,7 @@ export type JsonValue =
 export type FeatureFlags = Readonly<Record<string, boolean>>;
 export type GameStatus = 'waiting' | 'active' | 'finished';
 export type GameTeam = 'black' | 'white';
+export type PlayerPresence = 'connected' | 'defeated' | 'disconnected';
 
 export interface GameTeams {
   black: readonly string[];
@@ -13,7 +14,9 @@ export interface GameTeams {
 export interface GamePlayer {
   id: string;
   moveCount: number;
+  presence: PlayerPresence;
   privateMoves: readonly PrivateMove[];
+  reconnectDeadline: string | null;
   seat: number;
   team: GameTeam;
 }
@@ -33,6 +36,8 @@ export interface GameState {
 export interface GameViewPlayer {
   id: string;
   moveCount: number;
+  presence: PlayerPresence;
+  reconnectDeadline: string | null;
   seat: number;
   team: GameTeam;
 }

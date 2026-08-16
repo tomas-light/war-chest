@@ -102,6 +102,7 @@ export const processedCommands = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: 'restrict' }),
     commandType: text('command_type').notNull(),
+    requestHash: text('request_hash').notNull(),
     processedAt: timestamp('processed_at', { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -112,6 +113,10 @@ export const processedCommands = pgTable(
       table.processedAt
     ),
     index('processed_commands_user_id_index').on(table.userId),
+    check(
+      'processed_commands_request_hash_format',
+      sql`${table.requestHash} ~ '^[0-9a-f]{64}$'`
+    ),
   ]
 );
 

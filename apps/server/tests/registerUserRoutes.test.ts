@@ -3,10 +3,16 @@ import type { DatabaseConnection } from '@war-chest/database';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { createApp } from '../src/createApp.js';
-import type {
-  UserGamePage,
-  UserRepository,
+import {
+  type UserGamePage,
+  type UserRepository,
+  createUserRepository,
 } from '../src/users/UserRepository.js';
+
+vi.mock('../src/users/UserRepository.js', async (importOriginal) => ({
+  ...(await importOriginal()),
+  createUserRepository: vi.fn(),
+}));
 
 const USER_ID = '10000000-0000-4000-8000-000000000001';
 const OTHER_USER_ID = '10000000-0000-4000-8000-000000000002';
@@ -53,13 +59,13 @@ describe('user profile routes', () => {
       findPublicUser,
       listFinishedGames,
     };
+    vi.mocked(createUserRepository).mockReturnValue(userRepository);
 
     app = createApp({
       auth,
       databaseConnection,
+      disconnectedPlayerTimeoutMinutes: 15,
       featureFlagsService: { read: vi.fn() },
-      logger: false,
-      userRepository,
     });
   });
 

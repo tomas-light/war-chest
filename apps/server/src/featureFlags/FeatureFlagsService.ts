@@ -5,7 +5,7 @@ import { z } from 'zod';
 const featureFlagsSchema = z.record(z.string(), z.boolean());
 
 export interface FeatureFlagsService {
-  read(): Promise<FeatureFlags>;
+  read(this: void): Promise<FeatureFlags>;
 }
 
 export function createFeatureFlagsService(

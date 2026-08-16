@@ -19,8 +19,8 @@ describe('runtime feature flags route', () => {
     app = createApp({
       auth: {} as Auth,
       databaseConnection,
+      disconnectedPlayerTimeoutMinutes: 15,
       featureFlagsService: { read },
-      logger: false,
     });
   });
 

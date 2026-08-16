@@ -3,7 +3,10 @@ import type { ApplicableEvent } from '../ApplicableEvent.js';
 import { GameCreatedEvent } from './GameCreatedEvent.js';
 import { GameFinishedEvent } from './GameFinishedEvent.js';
 import { GameStartedEvent } from './GameStartedEvent.js';
+import { PlayerDefeatedEvent } from './PlayerDefeatedEvent.js';
+import { PlayerDisconnectedEvent } from './PlayerDisconnectedEvent.js';
 import { PlayerJoinedEvent } from './PlayerJoinedEvent.js';
+import { PlayerReconnectedEvent } from './PlayerReconnectedEvent.js';
 
 export function hydrateLifecycleEvent(
   data: GameEventData
@@ -13,6 +16,12 @@ export function hydrateLifecycleEvent(
       return GameCreatedEvent.fromData(data);
     case 'PlayerJoined':
       return PlayerJoinedEvent.fromData(data);
+    case 'PlayerDisconnected':
+      return PlayerDisconnectedEvent.fromData(data);
+    case 'PlayerReconnected':
+      return PlayerReconnectedEvent.fromData(data);
+    case 'PlayerDefeated':
+      return PlayerDefeatedEvent.fromData(data);
     case 'GameStarted':
       return GameStartedEvent.fromData(data);
     case 'GameFinished':

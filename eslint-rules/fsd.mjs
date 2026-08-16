@@ -16,25 +16,32 @@ const fsdTranslationsPlugin = {
 
 export function createFsdImportLinterConfigs(sourcePath) {
   return [
-    createFsdLayerImportConfig(
+    createFsdLayerImportConfig({
+      layer: 'shared',
+      prohibitedGroups: ['entities', 'features', 'widgets', 'pages', 'app'],
+      sameLayerProhibited: false,
       sourcePath,
-      'shared',
-      ['entities', 'features', 'widgets', 'pages', 'app'],
-      false
-    ),
-    createFsdLayerImportConfig(sourcePath, 'entities', [
-      'features',
-      'widgets',
-      'pages',
-      'app',
-    ]),
-    createFsdLayerImportConfig(sourcePath, 'features', [
-      'widgets',
-      'pages',
-      'app',
-    ]),
-    createFsdLayerImportConfig(sourcePath, 'widgets', ['pages', 'app']),
-    createFsdLayerImportConfig(sourcePath, 'pages', ['app']),
+    }),
+    createFsdLayerImportConfig({
+      layer: 'entities',
+      prohibitedGroups: ['features', 'widgets', 'pages', 'app'],
+      sourcePath,
+    }),
+    createFsdLayerImportConfig({
+      layer: 'features',
+      prohibitedGroups: ['widgets', 'pages', 'app'],
+      sourcePath,
+    }),
+    createFsdLayerImportConfig({
+      layer: 'widgets',
+      prohibitedGroups: ['pages', 'app'],
+      sourcePath,
+    }),
+    createFsdLayerImportConfig({
+      layer: 'pages',
+      prohibitedGroups: ['app'],
+      sourcePath,
+    }),
   ];
 }
 
@@ -50,12 +57,12 @@ export function getFsdTranslationsLinterConfig(sourcePath) {
   };
 }
 
-function createFsdLayerImportConfig(
+function createFsdLayerImportConfig({
   sourcePath,
   layer,
   prohibitedGroups = [],
-  sameLayerProhibited = true
-) {
+  sameLayerProhibited = true,
+}) {
   const prohibitedGroupsPattern = {
     message: `Importing '${prohibitedGroups.join(
       "', '"
@@ -110,12 +117,12 @@ function createNoFsdTranslationsRule() {
             return;
           }
 
-          validateFsdTranslationKey(
+          validateFsdTranslationKey({
             context,
             currentLocation,
-            staticNamespace,
-            node.arguments[0]
-          );
+            node: node.arguments[0],
+            staticKey: staticNamespace,
+          });
         },
         JSXAttribute(node) {
           if (
@@ -131,12 +138,12 @@ function createNoFsdTranslationsRule() {
             return;
           }
 
-          validateFsdTranslationKey(
+          validateFsdTranslationKey({
             context,
             currentLocation,
-            staticValue,
-            node.value
-          );
+            node: node.value,
+            staticKey: staticValue,
+          });
         },
       };
     },
@@ -151,7 +158,12 @@ function createNoFsdTranslationsRule() {
   };
 }
 
-function validateFsdTranslationKey(context, currentLocation, staticKey, node) {
+function validateFsdTranslationKey({
+  context,
+  currentLocation,
+  staticKey,
+  node,
+}) {
   const parsedLocation = parseFsdLayerAndSlice(staticKey);
 
   if (!parsedLocation) {

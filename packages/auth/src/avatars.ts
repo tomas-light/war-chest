@@ -31,31 +31,38 @@ interface NormalizedAvatar {
   contentType: 'image/webp';
 }
 
+interface UpdateProviderAvatarInput {
+  avatarUrl: string | undefined;
+  config: AuthConfig;
+  database: Database;
+  existingAvatarHash: null | string;
+  userId: string;
+}
+
 export async function updateProviderAvatar(
-  database: Database,
-  userId: string,
-  avatarUrl: string | undefined,
-  existingAvatarHash: null | string,
-  config: AuthConfig
+  input: UpdateProviderAvatarInput
 ): Promise<string | null> {
-  if (avatarUrl === undefined) {
+  if (input.avatarUrl === undefined) {
     return null;
   }
 
   try {
-    const avatar = await downloadAndNormalizeAvatar(avatarUrl, config);
+    const avatar = await downloadAndNormalizeAvatar(
+      input.avatarUrl,
+      input.config
+    );
 
-    if (avatar.contentHash === existingAvatarHash) {
+    if (avatar.contentHash === input.existingAvatarHash) {
       return avatar.contentHash;
     }
 
-    await database
+    await input.database
       .insert(userAvatars)
       .values({
         content: avatar.content,
         contentHash: avatar.contentHash,
         contentType: avatar.contentType,
-        userId,
+        userId: input.userId,
       })
       .onConflictDoUpdate({
         set: {

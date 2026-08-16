@@ -17,8 +17,6 @@
   сборка и тестовые контуры `apps/web`.
 - [Server](./server/README.md) — фактический HTTP API, Socket.IO и раздача SPA
   из `apps/server`.
-- [Этапы игрового server](./development-plan/server-implementation/README.md) —
-  автономные постановки этапов 4–8 для продолжения реализации.
 
 ## Зависимости приложений и пакетов
 

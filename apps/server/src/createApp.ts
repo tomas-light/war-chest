@@ -12,6 +12,10 @@ import { registerAuthRoutes } from './auth/registerAuthRoutes.js';
 import { registerAuthSession } from './auth/registerAuthSession.js';
 import type { FeatureFlagsService } from './featureFlags/FeatureFlagsService.js';
 import { registerFeatureFlagsRoutes } from './featureFlags/registerFeatureFlagsRoutes.js';
+import { createActiveGames } from './games/ActiveGames.js';
+import { createGameRepository } from './games/GameRepository.js';
+import { type GameService, createGameService } from './games/GameService.js';
+import { registerGameRoutes } from './games/registerGameRoutes.js';
 import { createSocketServer } from './socket/createSocketServer.js';
 import { registerUserRoutes } from './users/registerUserRoutes.js';
 import {
@@ -23,15 +27,15 @@ interface ServerDependencies {
   auth: Auth;
   databaseConnection: DatabaseConnection;
   featureFlagsService: FeatureFlagsService;
+  gameService: GameService;
   userRepository: UserRepository;
 }
 
 interface CreateAppOptions {
   auth: Auth;
   databaseConnection: DatabaseConnection;
+  disconnectedPlayerTimeoutMinutes: number;
   featureFlagsService: FeatureFlagsService;
-  logger?: boolean;
-  userRepository?: UserRepository;
   webAssetsRoot?: string;
 }
 
@@ -42,21 +46,31 @@ declare module 'fastify' {
 }
 
 export function createApp(options: CreateAppOptions): FastifyInstance {
-  const app = Fastify({ logger: options.logger ?? true });
+  const app = Fastify({ logger: true });
+
+  const gameRepository = createGameRepository(
+    options.databaseConnection.database
+  );
+
   const dependencies: ServerDependencies = {
     auth: options.auth,
     databaseConnection: options.databaseConnection,
     featureFlagsService: options.featureFlagsService,
-    userRepository:
-      options.userRepository ??
-      createUserRepository(options.databaseConnection.database),
+    gameService: createGameService({
+      activeGames: createActiveGames(),
+      disconnectedPlayerTimeoutMs:
+        options.disconnectedPlayerTimeoutMinutes * 60 * 1000,
+      featureFlagsService: options.featureFlagsService,
+      gameRepository,
+    }),
+    userRepository: createUserRepository(options.databaseConnection.database),
   };
 
   app.decorate('serverDependencies', dependencies);
   app.addHook('onClose', closeDatabaseConnection);
   app.register(fastifyCookie);
   registerAuthSession(app);
-  createSocketServer(app, options.auth);
+  createSocketServer(app, options.auth, dependencies.gameService);
   app.register(registerApiRoutes, { prefix: API_PREFIX });
 
   if (options.webAssetsRoot !== undefined) {
@@ -66,6 +80,7 @@ export function createApp(options: CreateAppOptions): FastifyInstance {
   return app;
 
   async function closeDatabaseConnection(): Promise<void> {
+    dependencies.gameService.close();
     await dependencies.databaseConnection.close();
   }
 
@@ -87,6 +102,7 @@ export function createApp(options: CreateAppOptions): FastifyInstance {
   function registerApiRoutes(api: FastifyInstance): void {
     api.register(registerAuthRoutes);
     api.register(registerFeatureFlagsRoutes);
+    api.register(registerGameRoutes);
     api.register(registerUserRoutes);
     api.get('/health', getHealth);
   }

@@ -6,16 +6,21 @@ import {
 import { z } from 'zod';
 import type {
   ApiError,
+  CreateGameRequest,
   GameCommandMessage,
   GameErrorMessage,
   GameEventsMessage,
+  GameEventsResponse,
   GameJoinMessage,
   GameLeaveMessage,
+  GameResponse,
   GameSnapshotMessage,
   GameSyncMessage,
   GoogleLoginRequest,
+  JoinGameRequest,
   PublicUser,
   SessionResponse,
+  StartGameRequest,
 } from './types.js';
 
 export const API_PREFIX = '/api';
@@ -72,10 +77,40 @@ export const apiErrorSchema: z.ZodType<ApiError> = z
   })
   .strict();
 
+export const createGameRequestSchema: z.ZodType<CreateGameRequest> = z
+  .object({ commandId: z.uuid() })
+  .strict();
+
+export const gameParamsSchema = z.object({ gameId: gameIdSchema }).strict();
+
+export const gameEventsQuerySchema = z
+  .object({
+    afterSequence: z.coerce.number().int().nonnegative().default(0),
+  })
+  .strict();
+
+export const joinGameRequestSchema: z.ZodType<JoinGameRequest> = z
+  .object({
+    commandId: z.uuid(),
+    expectedVersion: z.number().int().nonnegative(),
+    seat: z.number().int().positive(),
+    team: gameTeamSchema,
+  })
+  .strict();
+
+export const startGameRequestSchema: z.ZodType<StartGameRequest> = z
+  .object({
+    commandId: z.uuid(),
+    expectedVersion: z.number().int().nonnegative(),
+  })
+  .strict();
+
 const gameViewPlayerSchema = z
   .object({
     id: z.string(),
     moveCount: z.number().int().nonnegative(),
+    presence: z.enum(['connected', 'defeated', 'disconnected']),
+    reconnectDeadline: z.iso.datetime().nullable(),
     seat: z.number().int().positive(),
     team: gameTeamSchema,
   })
@@ -130,6 +165,34 @@ const playerJoinedViewEventSchema = eventMetadataSchema
     type: z.literal('PlayerJoined'),
   })
   .strict();
+const playerDisconnectedViewEventSchema = eventMetadataSchema
+  .extend({
+    payload: z
+      .object({
+        playerId: z.string(),
+        reconnectDeadline: z.iso.datetime(),
+      })
+      .strict(),
+    type: z.literal('PlayerDisconnected'),
+  })
+  .strict();
+const playerReconnectedViewEventSchema = eventMetadataSchema
+  .extend({
+    payload: z.object({ playerId: z.string() }).strict(),
+    type: z.literal('PlayerReconnected'),
+  })
+  .strict();
+const playerDefeatedViewEventSchema = eventMetadataSchema
+  .extend({
+    payload: z
+      .object({
+        playerId: z.string(),
+        reason: z.literal('disconnectTimeout'),
+      })
+      .strict(),
+    type: z.literal('PlayerDefeated'),
+  })
+  .strict();
 const gameStartedViewEventSchema = eventMetadataSchema
   .extend({
     payload: z.object({ firstPlayerId: z.string() }).strict(),
@@ -162,11 +225,28 @@ const viewSequenceAdvancedEventSchema = eventMetadataSchema
 export const gameViewEventSchema = z.discriminatedUnion('type', [
   gameCreatedViewEventSchema,
   playerJoinedViewEventSchema,
+  playerDisconnectedViewEventSchema,
+  playerReconnectedViewEventSchema,
+  playerDefeatedViewEventSchema,
   gameStartedViewEventSchema,
   testMovePerformedViewEventSchema,
   gameFinishedViewEventSchema,
   viewSequenceAdvancedEventSchema,
 ]);
+
+export const gameResponseSchema: z.ZodType<GameResponse> = z
+  .object({
+    gameId: gameIdSchema,
+    view: gameViewSchema,
+  })
+  .strict();
+
+export const gameEventsResponseSchema: z.ZodType<GameEventsResponse> = z
+  .object({
+    events: z.array(gameViewEventSchema).readonly(),
+    gameId: gameIdSchema,
+  })
+  .strict();
 
 const gameCommandSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('FinishGame') }).strict(),
@@ -221,6 +301,7 @@ export const gameEventsMessageSchema: z.ZodType<GameEventsMessage> = z
 export const gameErrorMessageSchema: z.ZodType<GameErrorMessage> = z
   .object({
     code: z.string(),
+    currentVersion: z.number().int().nonnegative().optional(),
     gameId: gameIdSchema.nullable(),
     message: z.string(),
   })

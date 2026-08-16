@@ -3,15 +3,16 @@ import {
   type InterServerEvents,
   type ServerToClientEvents,
   type SocketData,
-  gameCommandMessageSchema,
-  gameJoinMessageSchema,
-  gameLeaveMessageSchema,
-  gameSyncMessageSchema,
   SOCKET_IO_PATH,
 } from '@war-chest/api-contracts';
 import type { Auth } from '@war-chest/auth';
 import type { FastifyInstance } from 'fastify';
 import { type ExtendedError, type Socket, Server } from 'socket.io';
+import type { GameService } from '../games/GameService.js';
+import {
+  broadcastGameEvents,
+  registerGameSocket,
+} from '../games/registerGameSocket.js';
 
 type GameSocketServer = Server<
   ClientToServerEvents,
@@ -22,8 +23,10 @@ type GameSocketServer = Server<
 
 export function createSocketServer(
   app: FastifyInstance,
-  auth: Auth
+  auth: Auth,
+  gameService: GameService
 ): GameSocketServer {
+  const pendingSocketOperations = new Set<Promise<void>>();
   const socketServer = new Server<
     ClientToServerEvents,
     ServerToClientEvents,
@@ -37,8 +40,17 @@ export function createSocketServer(
   socketServer.use((socket, continueConnection) => {
     void authenticateSocket(socket, continueConnection);
   });
-  socketServer.on('connection', registerGameSocket);
-  app.addHook('onClose', closeSocketServer);
+  socketServer.on('connection', (socket) => {
+    registerGameSocket({
+      gameService,
+      socket,
+      trackSocketOperation,
+    });
+  });
+  const unsubscribeFromGameUpdates = gameService.subscribe((update) =>
+    broadcastGameEvents(socketServer, gameService, update)
+  );
+  app.addHook('preClose', closeSocketServer);
 
   return socketServer;
 
@@ -76,71 +88,22 @@ export function createSocketServer(
     }
   }
 
-  function registerGameSocket(
-    socket: Socket<
-      ClientToServerEvents,
-      ServerToClientEvents,
-      InterServerEvents,
-      SocketData
-    >
-  ): void {
-    socket.on('game:command', receiveGameCommand);
-    socket.on('game:join', joinGame);
-    socket.on('game:leave', leaveGame);
-    socket.on('game:sync', synchronizeGame);
-
-    function receiveGameCommand(message: unknown): void {
-      if (!gameCommandMessageSchema.safeParse(message).success) {
-        emitInvalidMessage('game:command');
-      }
-    }
-
-    function joinGame(message: unknown): void {
-      const result = gameJoinMessageSchema.safeParse(message);
-
-      if (!result.success) {
-        emitInvalidMessage('game:join');
-        return;
-      }
-
-      void socket.join(getGameRoom(result.data.gameId));
-    }
-
-    function leaveGame(message: unknown): void {
-      const result = gameLeaveMessageSchema.safeParse(message);
-
-      if (!result.success) {
-        emitInvalidMessage('game:leave');
-        return;
-      }
-
-      void socket.leave(getGameRoom(result.data.gameId));
-    }
-
-    function synchronizeGame(message: unknown): void {
-      if (!gameSyncMessageSchema.safeParse(message).success) {
-        emitInvalidMessage('game:sync');
-      }
-    }
-
-    function emitInvalidMessage(eventName: string): void {
-      socket.emit('game:error', {
-        code: 'invalid_message',
-        gameId: null,
-        message: `Invalid ${eventName} message.`,
-      });
-    }
-  }
-
   async function closeSocketServer(): Promise<void> {
+    unsubscribeFromGameUpdates();
     await new Promise<void>((resolve) => {
       void socketServer.close(() => {
         resolve();
       });
     });
+    await Promise.all(pendingSocketOperations);
   }
-}
 
-function getGameRoom(gameId: string): string {
-  return `game:${gameId}`;
+  function trackSocketOperation(operation: Promise<void>): void {
+    pendingSocketOperations.add(operation);
+    void operation
+      .finally(() => {
+        pendingSocketOperations.delete(operation);
+      })
+      .catch(() => undefined);
+  }
 }

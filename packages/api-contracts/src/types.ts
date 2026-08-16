@@ -26,6 +26,32 @@ export interface ApiError {
   };
 }
 
+export interface CreateGameRequest {
+  commandId: string;
+}
+
+export interface GameResponse {
+  gameId: string;
+  view: GameView;
+}
+
+export interface JoinGameRequest {
+  commandId: string;
+  expectedVersion: number;
+  seat: number;
+  team: 'black' | 'white';
+}
+
+export interface StartGameRequest {
+  commandId: string;
+  expectedVersion: number;
+}
+
+export interface GameEventsResponse {
+  events: readonly GameViewEventData[];
+  gameId: string;
+}
+
 export interface GameJoinMessage {
   gameId: string;
 }
@@ -58,6 +84,7 @@ export interface GameEventsMessage {
 
 export interface GameErrorMessage {
   code: string;
+  currentVersion?: number;
   gameId: string | null;
   message: string;
 }

@@ -204,14 +204,18 @@ describe('technical scenario', () => {
       {
         id: 'player-one',
         moveCount: 1,
+        presence: 'connected',
         privateMoves: [{ data: { card: 'hidden-one' }, moveNumber: 1 }],
+        reconnectDeadline: null,
         seat: 1,
         team: 'white',
       },
       {
         id: 'player-two',
         moveCount: 1,
+        presence: 'connected',
         privateMoves: [{ data: { card: 'hidden-two' }, moveNumber: 2 }],
+        reconnectDeadline: null,
         seat: 1,
         team: 'black',
       },

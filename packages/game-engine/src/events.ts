@@ -25,6 +25,29 @@ export interface PlayerJoinedEventData extends EventMetadata {
   type: 'PlayerJoined';
 }
 
+export interface PlayerDisconnectedEventData extends EventMetadata {
+  payload: {
+    playerId: string;
+    reconnectDeadline: string;
+  };
+  type: 'PlayerDisconnected';
+}
+
+export interface PlayerReconnectedEventData extends EventMetadata {
+  payload: {
+    playerId: string;
+  };
+  type: 'PlayerReconnected';
+}
+
+export interface PlayerDefeatedEventData extends EventMetadata {
+  payload: {
+    playerId: string;
+    reason: 'disconnectTimeout';
+  };
+  type: 'PlayerDefeated';
+}
+
 export interface GameStartedEventData extends EventMetadata {
   payload: {
     firstPlayerId: string;
@@ -53,5 +76,8 @@ export type GameEventData =
   | GameCreatedEventData
   | GameFinishedEventData
   | GameStartedEventData
+  | PlayerDefeatedEventData
+  | PlayerDisconnectedEventData
   | PlayerJoinedEventData
+  | PlayerReconnectedEventData
   | TestMovePerformedEventData;

@@ -147,23 +147,23 @@ export function createAuth(options: CreateAuthOptions): Auth {
 
   async function login(identity: ProviderIdentity): Promise<LoginResult> {
     const user = await findOrCreateIdentity(options.database, identity);
-    const avatarHash = await updateProviderAvatar(
-      options.database,
-      user.id,
-      identity.avatarUrl,
-      user.avatarHash,
-      config
-    );
+    const avatarHash = await updateProviderAvatar({
+      avatarUrl: identity.avatarUrl,
+      config,
+      database: options.database,
+      existingAvatarHash: user.avatarHash,
+      userId: user.id,
+    });
 
-    return createSession(
-      options.database,
-      {
+    return createSession({
+      config,
+      database: options.database,
+      now: new Date(),
+      user: {
         ...user,
         avatarHash: avatarHash ?? user.avatarHash,
       },
-      config,
-      new Date()
-    );
+    });
   }
 
   function getSession(sessionToken: string): Promise<AuthSession | null> {

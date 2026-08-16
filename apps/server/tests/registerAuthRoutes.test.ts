@@ -51,8 +51,8 @@ describe('auth session routes', () => {
     app = createApp({
       auth,
       databaseConnection,
+      disconnectedPlayerTimeoutMinutes: 15,
       featureFlagsService: { read: vi.fn() },
-      logger: false,
     });
   });
 

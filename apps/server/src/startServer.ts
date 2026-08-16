@@ -18,11 +18,14 @@ export async function startServer(): Promise<FastifyInstance> {
     app = createApp({
       auth,
       databaseConnection,
+      disconnectedPlayerTimeoutMinutes:
+        config.DISCONNECTED_PLAYER_TIMEOUT_MINUTES,
       featureFlagsService,
       webAssetsRoot: config.APP_SERVE_WEB ? config.WEB_ASSETS_ROOT : undefined,
     });
 
     await checkDatabaseConnection(databaseConnection);
+    await app.serverDependencies.gameService.recoverActiveGames();
     await app.listen({ host: config.APP_HOST, port: config.APP_PORT });
 
     return app;
