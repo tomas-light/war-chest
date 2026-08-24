@@ -7,6 +7,13 @@ import type { UserGameCursor, UserGamePage } from './UserRepository.js';
 const DEFAULT_HISTORY_LIMIT = 20;
 const MAXIMUM_HISTORY_LIMIT = 100;
 
+interface SendErrorInput {
+  code: string;
+  message: string;
+  reply: FastifyReply;
+  statusCode: number;
+}
+
 const userParamsSchema = z.object({ userId: z.uuid() }).strict();
 const userGameQuerySchema = z
   .object({
@@ -62,7 +69,12 @@ export function registerUserRoutes(app: FastifyInstance): void {
     const avatar = await auth.getAvatar(userId);
 
     if (avatar === null) {
-      return sendError(reply, 404, 'avatar_not_found', 'Avatar was not found.');
+      return sendError({
+        code: 'avatar_not_found',
+        message: 'Avatar was not found.',
+        reply,
+        statusCode: 404,
+      });
     }
 
     return sendAvatar(reply, avatar);
@@ -81,12 +93,12 @@ export function registerUserRoutes(app: FastifyInstance): void {
     const queryResult = userGameQuerySchema.safeParse(request.query);
 
     if (!queryResult.success) {
-      return sendError(
+      return sendError({
+        code: 'invalid_request',
+        message: 'History pagination parameters are invalid.',
         reply,
-        400,
-        'invalid_request',
-        'History pagination parameters are invalid.'
-      );
+        statusCode: 400,
+      });
     }
 
     const cursor = parseCursor(queryResult.data.cursor, reply);
@@ -127,7 +139,12 @@ function parseUserId(
   const result = userParamsSchema.safeParse(request.params);
 
   if (!result.success) {
-    sendError(reply, 400, 'invalid_request', 'User id must be a valid UUID.');
+    sendError({
+      code: 'invalid_request',
+      message: 'User id must be a valid UUID.',
+      reply,
+      statusCode: 400,
+    });
     return null;
   }
 
@@ -153,7 +170,12 @@ function parseCursor(
       gameId: cursor.gameId,
     };
   } catch {
-    sendError(reply, 400, 'invalid_cursor', 'History cursor is invalid.');
+    sendError({
+      code: 'invalid_cursor',
+      message: 'History cursor is invalid.',
+      reply,
+      statusCode: 400,
+    });
     return null;
   }
 }
@@ -185,14 +207,16 @@ function sendAvatar(reply: FastifyReply, avatar: StoredAvatar): FastifyReply {
 }
 
 function sendUserNotFound(reply: FastifyReply): FastifyReply {
-  return sendError(reply, 404, 'user_not_found', 'User was not found.');
+  return sendError({
+    code: 'user_not_found',
+    message: 'User was not found.',
+    reply,
+    statusCode: 404,
+  });
 }
 
-function sendError(
-  reply: FastifyReply,
-  statusCode: number,
-  code: string,
-  message: string
-): FastifyReply {
-  return reply.code(statusCode).send({ error: { code, message } });
+function sendError(input: SendErrorInput): FastifyReply {
+  return input.reply
+    .code(input.statusCode)
+    .send({ error: { code: input.code, message: input.message } });
 }

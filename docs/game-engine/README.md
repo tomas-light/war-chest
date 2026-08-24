@@ -7,8 +7,9 @@
 
 Сейчас пакет реализует технический сценарий, на котором можно строить транспорт,
 хранение и синхронизацию: создать игру, присоединить двух игроков, начать
-партию, выполнить тестовые ходы по очереди и завершить игру. Полных правил War
-Chest, победы по игровым условиям и обработки отключения игрока пока нет.
+партию, выполнить тестовые ходы по очереди, сохранить отключение и возвращение
+игрока, завершить игру вручную или по reconnect timeout. Полных правил War
+Chest и победы по игровым условиям пока нет.
 
 ## Что уже работает
 
@@ -19,8 +20,13 @@ Chest, победы по игровым условиям и обработки �
 - выбор игроком места в конкретной команде до старта партии;
 - актуальные составы команд `white` и `black` с момента создания партии;
 - фиксация победившей команды при техническом завершении;
+- состояния presence `connected`, `disconnected` и `defeated` с точным
+  reconnect deadline;
+- проверка disconnect, своевременного reconnect и поражения по таймауту;
+- атомарная цепочка `PlayerDefeated` и `GameFinished` для server repository;
 - зафиксированный snapshot feature flags в `GameCreated`;
 - последовательные номера и версия формата событий;
+- строгая runtime-валидация persisted `GameEventData`;
 - детерминированное применение событий и восстановление состояния;
 - отдельные представления игрока и зрителя;
 - доставка приватной части тестового хода только его автору;
@@ -34,21 +40,22 @@ Chest, победы по игровым условиям и обработки �
 
 ## Публичный API
 
-Основной цикл строится вокруг одиннадцати функций:
+Основной цикл строится вокруг двенадцати функций:
 
-| Функция | Назначение |
-| --- | --- |
-| `createGame(command)` | Создаёт первый `GameCreated` без существующего `GameState` |
-| `hydrateCommand(data)` | Превращает `GameCommandData` во временный объект `DecidableCommand` |
-| `decide(state, playerId, command)` | Проверяет команду и возвращает новые события либо пустой массив |
-| `hydrateEvent(data)` | Превращает сохранённый `GameEventData` во временный объект `ApplicableEvent` |
-| `applyEvent(state, event)` | Применяет факт; для первого `GameCreated` принимает `null` |
-| `restoreGame(events)` | Собирает состояние из истории или возвращает `null` для пустой истории |
-| `createViewFor(state, viewer)` | Создаёт безопасный полный snapshot для получателя |
-| `createViewEventFor(event, viewer)` | Преобразует внутреннее событие для конкретного получателя |
-| `hydrateViewEvent(data)` | Превращает `GameViewEventData` во временный объект `ApplicableViewEvent` |
-| `applyViewEvent(view, event)` | Применяет безопасный факт; первый `GameCreated` принимает вместе с `null` |
-| `restoreView(events)` | Собирает представление или возвращает `null` для пустой истории |
+| Функция                             | Назначение                                                                   |
+| ----------------------------------- | ---------------------------------------------------------------------------- |
+| `createGame(command)`               | Создаёт первый `GameCreated` без существующего `GameState`                   |
+| `hydrateCommand(data)`              | Превращает `GameCommandData` во временный объект `DecidableCommand`          |
+| `decide(state, playerId, command)`  | Проверяет команду и возвращает новые события либо пустой массив              |
+| `parseGameEventData(value)`         | Проверяет persisted unknown-значение и возвращает строгий `GameEventData`    |
+| `hydrateEvent(data)`                | Превращает проверенный `GameEventData` во временный объект `ApplicableEvent` |
+| `applyEvent(state, event)`          | Применяет факт; для первого `GameCreated` принимает `null`                   |
+| `restoreGame(events)`               | Собирает состояние из истории или возвращает `null` для пустой истории       |
+| `createViewFor(state, viewer)`      | Создаёт безопасный полный snapshot для получателя                            |
+| `createViewEventFor(event, viewer)` | Преобразует внутреннее событие для конкретного получателя                    |
+| `hydrateViewEvent(data)`            | Превращает `GameViewEventData` во временный объект `ApplicableViewEvent`     |
+| `applyViewEvent(view, event)`       | Применяет безопасный факт; первый `GameCreated` принимает вместе с `null`    |
+| `restoreView(events)`               | Собирает представление или возвращает `null` для пустой истории              |
 
 Экспортируемые функции, константы и типы собраны в
 [`packages/game-engine/src/index.ts`](../../packages/game-engine/src/index.ts).

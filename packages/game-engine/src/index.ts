@@ -14,6 +14,13 @@ export { createGame } from './createGame.js';
 export { createViewEventFor } from './createViewEventFor.js';
 export { createViewFor } from './createViewFor.js';
 export { decide } from './decide.js';
+export { decidePresence } from './decidePresence.js';
+export type {
+  DefeatDisconnectedPlayerCommandData,
+  DisconnectPlayerCommandData,
+  PresenceCommandData,
+  ReconnectPlayerCommandData,
+} from './command-data/PresenceCommandData.js';
 export { NullableGameStateError } from './errors/NullableGameStateError.js';
 export { NullableGameViewError } from './errors/NullableGameViewError.js';
 export { GAME_EVENT_VERSION, GAME_RULES_VERSION } from './events.js';
@@ -22,11 +29,15 @@ export type {
   GameEventData,
   GameFinishedEventData,
   GameStartedEventData,
+  PlayerDefeatedEventData,
+  PlayerDisconnectedEventData,
   PlayerJoinedEventData,
+  PlayerReconnectedEventData,
   TestMovePerformedEventData,
 } from './events.js';
 export { hydrateEvent } from './events/hydrateEvent.js';
 export type { ApplicableEvent } from './events/ApplicableEvent.js';
+export { parseGameEventData } from './parseGameEventData.js';
 export { hydrateCommand } from './commands/hydrateCommand.js';
 export type { DecidableCommand } from './commands/DecidableCommand.js';
 export { hydrateViewEvent } from './view-events/hydrateViewEvent.js';
@@ -42,8 +53,8 @@ export type {
   GameTeams,
   GameView,
   GameViewPlayer,
-  JsonPrimitive,
   JsonValue,
+  PlayerPresence,
   PrivateMove,
   Viewer,
 } from './state.js';
@@ -52,7 +63,10 @@ export type {
   GameFinishedViewEventData,
   GameStartedViewEventData,
   GameViewEventData,
+  PlayerDefeatedViewEventData,
+  PlayerDisconnectedViewEventData,
   PlayerJoinedViewEventData,
+  PlayerReconnectedViewEventData,
   PrivateTestMovePerformedViewEventData,
   PublicTestMovePerformedViewEventData,
   TestMovePerformedViewEventData,

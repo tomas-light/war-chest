@@ -34,8 +34,8 @@ describe('game creation', () => {
   test('creates the first persisted event without a game state', () => {
     const featureFlags: FeatureFlags = {
       gameHistory: true,
-      maximumPlayers: 2,
-      rulesVariant: 'standard',
+      hiddenHands: false,
+      spectatorMode: true,
     };
     const event = createGame({ featureFlags, type: 'CreateGame' });
 
@@ -53,8 +53,8 @@ describe('game creation', () => {
   test('creates a waiting state from the first event', () => {
     const featureFlags: FeatureFlags = {
       gameHistory: true,
-      maximumPlayers: 2,
-      rulesVariant: 'standard',
+      hiddenHands: false,
+      spectatorMode: true,
     };
     const event = createGame({ featureFlags, type: 'CreateGame' });
 
@@ -204,14 +204,18 @@ describe('technical scenario', () => {
       {
         id: 'player-one',
         moveCount: 1,
+        presence: 'connected',
         privateMoves: [{ data: { card: 'hidden-one' }, moveNumber: 1 }],
+        reconnectDeadline: null,
         seat: 1,
         team: 'white',
       },
       {
         id: 'player-two',
         moveCount: 1,
+        presence: 'connected',
         privateMoves: [{ data: { card: 'hidden-two' }, moveNumber: 2 }],
+        reconnectDeadline: null,
         seat: 1,
         team: 'black',
       },

@@ -23,6 +23,29 @@ export interface PlayerJoinedViewEventData extends EventMetadata {
   type: 'PlayerJoined';
 }
 
+export interface PlayerDisconnectedViewEventData extends EventMetadata {
+  payload: {
+    playerId: string;
+    reconnectDeadline: string;
+  };
+  type: 'PlayerDisconnected';
+}
+
+export interface PlayerReconnectedViewEventData extends EventMetadata {
+  payload: {
+    playerId: string;
+  };
+  type: 'PlayerReconnected';
+}
+
+export interface PlayerDefeatedViewEventData extends EventMetadata {
+  payload: {
+    playerId: string;
+    reason: 'disconnectTimeout';
+  };
+  type: 'PlayerDefeated';
+}
+
 export interface GameStartedViewEventData extends EventMetadata {
   payload: {
     firstPlayerId: string;
@@ -66,6 +89,9 @@ export type GameViewEventData =
   | GameCreatedViewEventData
   | GameFinishedViewEventData
   | GameStartedViewEventData
+  | PlayerDefeatedViewEventData
+  | PlayerDisconnectedViewEventData
   | PlayerJoinedViewEventData
+  | PlayerReconnectedViewEventData
   | TestMovePerformedViewEventData
   | ViewSequenceAdvancedEventData;

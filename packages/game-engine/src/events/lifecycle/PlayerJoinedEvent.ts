@@ -28,7 +28,9 @@ export class PlayerJoinedEvent implements ApplicableEvent<PlayerJoinedEventData>
         {
           id: this.data.payload.playerId,
           moveCount: 0,
+          presence: 'connected',
           privateMoves: [],
+          reconnectDeadline: null,
           seat: this.data.payload.seat,
           team: this.data.payload.team,
         },

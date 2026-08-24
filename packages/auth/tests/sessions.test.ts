@@ -34,16 +34,16 @@ test('stores only a hash and prepares a secure server session cookie', async () 
     YANDEX_REDIRECT_URI: 'https://example.com/auth/yandex/callback',
     YANDEX_TOKEN_ENDPOINT: 'https://oauth.yandex.ru/token',
   };
-  const result = await createSession(
+  const result = await createSession({
+    config,
     database,
-    {
+    now,
+    user: {
       avatarHash: null,
       displayName: 'Player',
       id: 'user-id',
     },
-    config,
-    now
-  );
+  });
 
   expect(insertedSession).toBeDefined();
 

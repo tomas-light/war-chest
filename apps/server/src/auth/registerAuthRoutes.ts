@@ -10,6 +10,13 @@ import { createPublicUser } from '../users/PublicUser.js';
 
 type RedirectProvider = 'telegram' | 'yandex';
 
+interface SendErrorInput {
+  code: string;
+  message: string;
+  reply: FastifyReply;
+  statusCode: number;
+}
+
 const oauthCallbackQuerySchema = z
   .object({
     code: z.string().trim().min(1),
@@ -36,12 +43,12 @@ export function registerAuthRoutes(app: FastifyInstance): void {
     const requestResult = googleLoginRequestSchema.safeParse(request.body);
 
     if (!requestResult.success) {
-      return sendError(
+      return sendError({
+        code: 'invalid_request',
+        message: 'Google ID token is required.',
         reply,
-        400,
-        'invalid_request',
-        'Google ID token is required.'
-      );
+        statusCode: 400,
+      });
     }
 
     try {
@@ -114,12 +121,12 @@ export function registerAuthRoutes(app: FastifyInstance): void {
     const queryResult = oauthCallbackQuerySchema.safeParse(request.query);
 
     if (!queryResult.success) {
-      return sendError(
+      return sendError({
+        code: 'invalid_request',
+        message: 'OAuth callback parameters are invalid.',
         reply,
-        400,
-        'invalid_request',
-        'OAuth callback parameters are invalid.'
-      );
+        statusCode: 400,
+      });
     }
 
     const stateCookieName = `${auth.sessionCookieName}_${provider}_oauth_state`;
@@ -190,43 +197,40 @@ function handleAuthError(error: unknown, reply: FastifyReply): FastifyReply {
 
   switch (error.code) {
     case 'invalid_credentials':
-      return sendError(
+      return sendError({
+        code: error.code,
+        message: 'Provider credentials are invalid.',
         reply,
-        401,
-        error.code,
-        'Provider credentials are invalid.'
-      );
+        statusCode: 401,
+      });
     case 'invalid_oauth_state':
-      return sendError(
+      return sendError({
+        code: error.code,
+        message: 'OAuth state is invalid or expired.',
         reply,
-        400,
-        error.code,
-        'OAuth state is invalid or expired.'
-      );
+        statusCode: 400,
+      });
     case 'provider_disabled':
-      return sendError(
+      return sendError({
+        code: error.code,
+        message: 'The selected login provider is not configured.',
         reply,
-        503,
-        error.code,
-        'The selected login provider is not configured.'
-      );
+        statusCode: 503,
+      });
     case 'provider_request_failed':
-      return sendError(
+      return sendError({
+        code: error.code,
+        message: 'The login provider request failed.',
         reply,
-        502,
-        error.code,
-        'The login provider request failed.'
-      );
+        statusCode: 502,
+      });
   }
 }
 
-function sendError(
-  reply: FastifyReply,
-  statusCode: number,
-  code: string,
-  message: string
-): FastifyReply {
-  return reply.code(statusCode).send({ error: { code, message } });
+function sendError(input: SendErrorInput): FastifyReply {
+  return input.reply
+    .code(input.statusCode)
+    .send({ error: { code: input.code, message: input.message } });
 }
 
 function setNoStore(reply: FastifyReply): void {

@@ -19,7 +19,8 @@ test('reports ready when the database connection is healthy', async () => {
   const app = createApp({
     auth: {} as Auth,
     databaseConnection,
-    logger: false,
+    disconnectedPlayerTimeoutMinutes: 15,
+    featureFlagsService: { read: vi.fn() },
   });
 
   try {
@@ -50,7 +51,8 @@ test('reports unavailable when the database health check fails', async () => {
   const app = createApp({
     auth: {} as Auth,
     databaseConnection,
-    logger: false,
+    disconnectedPlayerTimeoutMinutes: 15,
+    featureFlagsService: { read: vi.fn() },
   });
 
   try {
@@ -81,7 +83,8 @@ test('closes the database connection with the application', async () => {
   const app = createApp({
     auth: {} as Auth,
     databaseConnection,
-    logger: false,
+    disconnectedPlayerTimeoutMinutes: 15,
+    featureFlagsService: { read: vi.fn() },
   });
 
   await app.close();

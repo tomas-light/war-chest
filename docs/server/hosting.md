@@ -21,8 +21,9 @@ WEB_ASSETS_ROOT: '../web/dist'
 переменными окружения. `WEB_ASSETS_ROOT` и путь feature flags разрешаются в
 абсолютные пути относительно `apps/server`.
 
-`DISCONNECTED_PLAYER_TIMEOUT_MINUTES` и `FEATURE_FLAGS_RUNTIME_FILE` уже
-валидируются, но ещё не используются runtime game service.
+`DISCONNECTED_PLAYER_TIMEOUT_MINUTES` задаёт срок возвращения активного игрока.
+`FEATURE_FLAGS_RUNTIME_FILE` читается при создании новой игры; exact duplicate
+ранее выполненного `CreateGame` возвращается без повторного чтения файла.
 
 Database и auth читают собственные конфигурации из `packages/database` и
 `packages/auth`; server не дублирует их ключи.
@@ -39,10 +40,22 @@ Database и auth читают собственные конфигурации и
 3. создаёт auth service;
 4. собирает Fastify и Socket.IO;
 5. проверяет PostgreSQL;
-6. начинает слушать `APP_HOST:APP_PORT`.
+6. восстанавливает незавершённые игры и их deadline timers из PostgreSQL;
+7. начинает слушать `APP_HOST:APP_PORT`.
 
-При ошибке созданные ресурсы закрываются. При штатном `app.close()` закрываются
-Socket.IO и database connection.
+Будущий reconnect deadline планируется на оставшееся время. Уже истёкший
+deadline ставится в последовательную очередь игры немедленно. Строка игры
+блокируется перед сохранением system events, поэтому конкурирующие workers не
+создают повторное поражение.
+
+Временная ошибка сохранения deadline-результата запускает exponential backoff
+с задержками от 1 секунды до 60 секунд. Каждая попытка повторно проверяет
+актуальность deadline. При закрытии service timers очищаются, а новые retries
+не планируются.
+
+При ошибке созданные ресурсы закрываются. При штатном `app.close()` Fastify
+сначала закрывает Socket.IO в `preClose`, дожидается начатых игровых операций,
+а затем закрывает game service и database connection в `onClose`.
 
 Отдельного скомпилированного server artifact сейчас нет: script `start`
 исполняет TypeScript через `tsx`, поэтому production installation должна

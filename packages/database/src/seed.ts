@@ -17,6 +17,8 @@ const SEED_IDENTIFIERS = {
   command: '30000000-0000-4000-8000-000000000001',
   event: '40000000-0000-4000-8000-000000000001',
 } as const;
+const CREATE_GAME_REQUEST_HASH =
+  'bdea43dc54d89791fa249a3ef1786b10e6cfe2be12570ab18fbb1a77b5161e02';
 
 if (isDirectExecution()) {
   void seedDatabaseFromCommandLine();
@@ -107,6 +109,7 @@ async function seedDatabase(): Promise<void> {
           gameId: SEED_IDENTIFIERS.game,
           userId: SEED_IDENTIFIERS.firstUser,
           commandType: 'CreateGame',
+          requestHash: CREATE_GAME_REQUEST_HASH,
         })
         .onConflictDoNothing();
 

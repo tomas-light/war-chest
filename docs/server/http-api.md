@@ -5,21 +5,86 @@ JSON 404 и не попадает в SPA fallback.
 
 ## Реализованные endpoints
 
-| Метод  | URL                           | Авторизация | Поведение                            |
-| ------ | ----------------------------- | ----------- | ------------------------------------ |
-| `GET`  | `/api/health`                 | нет         | проверяет соединение с PostgreSQL    |
-| `POST` | `/api/auth/google`            | нет         | проверяет Google ID token            |
-| `GET`  | `/api/auth/telegram/start`    | нет         | начинает Telegram OAuth flow         |
-| `GET`  | `/api/auth/telegram/callback` | state       | завершает Telegram OAuth flow        |
-| `GET`  | `/api/auth/yandex/start`      | нет         | начинает Yandex OAuth flow           |
-| `GET`  | `/api/auth/yandex/callback`   | state       | завершает Yandex OAuth flow          |
-| `GET`  | `/api/auth/session`           | session     | возвращает текущую сессию            |
-| `POST` | `/api/auth/logout`            | нестрогая   | отзывает сессию и очищает cookie     |
-| `GET`  | `/api/users/:userId`          | session     | возвращает публичный профиль         |
-| `GET`  | `/api/users/:userId/avatar`   | session     | возвращает сохранённый avatar binary |
-| `GET`  | `/api/users/:userId/games`    | session     | возвращает страницу завершённых игр  |
+| Метод  | URL                              | Авторизация | Поведение                             |
+| ------ | -------------------------------- | ----------- | ------------------------------------- |
+| `GET`  | `/api/health`                    | нет         | проверяет соединение с PostgreSQL     |
+| `POST` | `/api/auth/google`               | нет         | проверяет Google ID token             |
+| `GET`  | `/api/auth/telegram/start`       | нет         | начинает Telegram OAuth flow          |
+| `GET`  | `/api/auth/telegram/callback`    | state       | завершает Telegram OAuth flow         |
+| `GET`  | `/api/auth/yandex/start`         | нет         | начинает Yandex OAuth flow            |
+| `GET`  | `/api/auth/yandex/callback`      | state       | завершает Yandex OAuth flow           |
+| `GET`  | `/api/auth/session`              | session     | возвращает текущую сессию             |
+| `POST` | `/api/auth/logout`               | нестрогая   | отзывает сессию и очищает cookie      |
+| `POST` | `/api/games`                     | session     | создаёт игру                          |
+| `GET`  | `/api/games/:gameId`             | session     | возвращает безопасный snapshot        |
+| `POST` | `/api/games/:gameId/join`        | session     | добавляет игрока на выбранную позицию |
+| `POST` | `/api/games/:gameId/start`       | session     | запускает заполненную игру            |
+| `GET`  | `/api/games/:gameId/events`      | session     | возвращает безопасный хвост истории   |
+| `GET`  | `/api/users/:userId`             | session     | возвращает публичный профиль          |
+| `GET`  | `/api/users/:userId/avatar`      | session     | возвращает сохранённый avatar binary  |
+| `GET`  | `/api/users/:userId/games`       | session     | возвращает страницу завершённых игр   |
+| `GET`  | `/api/config/feature-flags.json` | нет         | возвращает текущие runtime flags      |
 
-Game и feature-flags endpoints из development plan пока не зарегистрированы.
+## Игровой API
+
+Все игровые маршруты требуют действующую session cookie. `userId` берётся
+только из сессии; body не принимает identity или feature flags. `gameId` и
+`commandId` должны быть UUID, версии и `afterSequence` — неотрицательными
+целыми числами.
+
+`POST /api/games` принимает `{ "commandId": "uuid" }`. Новая игра отвечает
+`201`, exact duplicate — `200` с тем же `gameId` и актуальным безопасным view.
+Server сначала проверяет, не был ли `commandId` уже обработан. Exact duplicate
+возвращается без чтения runtime feature flags, поэтому повтор успешного запроса
+не зависит от текущей доступности файла. Только новая команда читает flags и
+сохраняет их snapshot первым событием.
+
+`POST /api/games/:gameId/join` принимает `commandId`, `expectedVersion`, `seat`
+и `team`. Повторный join на уже занятую тем же пользователем позицию возвращает
+текущее view без смены места. Попытка перейти на другую позицию отклоняется, а
+позиция считается совпадающей только при одинаковых `team` и `seat`. Пользователь
+без участия может выполнить `JoinGame`; остальные игровые команды доступны
+только игрокам, а не зрителям. `POST /api/games/:gameId/start` принимает
+`commandId` и `expectedVersion`.
+
+`GET /api/games/:gameId` возвращает полный персональный snapshot.
+`GET /api/games/:gameId/events?afterSequence=N` возвращает безопасные события
+со строго большим sequence; без query история начинается с первого события.
+Игрок в snapshot содержит `presence` и nullable ISO `reconnectDeadline`.
+Presence-события доступны в том же безопасном event tail, что и игровые
+события.
+
+Ожидаемые игровые ошибки:
+
+| Код                         | HTTP | Ситуация                                       |
+| --------------------------- | ---- | ---------------------------------------------- |
+| `invalid_request`           | 400  | params, query или body не прошли Zod           |
+| `unauthorized`              | 401  | нет действующей сессии                         |
+| `game_command_forbidden`    | 403  | пользователь не может выполнить команду        |
+| `game_not_found`            | 404  | игра с корректным UUID не найдена              |
+| `game_position_occupied`    | 409  | выбранная позиция уже занята                   |
+| `game_version_conflict`     | 409  | клиентская версия устарела                     |
+| `command_id_conflict`       | 409  | UUID команды принадлежит другому запросу       |
+| `game_command_rejected`     | 422  | команда отклонена игровыми правилами           |
+| `feature_flags_unavailable` | 503  | новый create не прочитал runtime feature flags |
+
+## Runtime feature flags
+
+`GET /api/config/feature-flags.json` при каждом запросе заново читает файл из
+`FEATURE_FLAGS_RUNTIME_FILE`. Ответ — JSON-объект с произвольными ключами и
+только boolean-значениями. Успешный ответ получает `Cache-Control: no-store`,
+чтобы новая загрузка приложения не использовала устаревший HTTP cache:
+
+```json
+{
+  "gameHistory": true,
+  "spectatorMode": false
+}
+```
+
+Список ключей не зашит в сервер и может различаться между окружениями. Если
+файл отсутствует, содержит некорректный JSON, не является объектом или включает
+не-boolean значение, endpoint отвечает `503 feature_flags_unavailable`.
 
 ## Health
 

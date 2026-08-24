@@ -20,6 +20,8 @@ export function createViewFor(state: GameState, viewer: Viewer): GameView {
     players: state.players.map((player) => ({
       id: player.id,
       moveCount: player.moveCount,
+      presence: player.presence,
+      reconnectDeadline: player.reconnectDeadline,
       seat: player.seat,
       team: player.team,
     })),

@@ -32,26 +32,31 @@ interface CreatedSession {
   session: AuthSession;
 }
 
+interface CreateSessionInput {
+  config: AuthConfig;
+  database: Database;
+  now: Date;
+  user: AuthUser;
+}
+
 export async function createSession(
-  database: Database,
-  user: AuthUser,
-  config: AuthConfig,
-  now: Date
+  input: CreateSessionInput
 ): Promise<CreatedSession> {
   const sessionToken = randomBytes(32).toString('base64url');
   const expiresAt = new Date(
-    now.getTime() + config.AUTH_SESSION_TTL_MINUTES * MILLISECONDS_PER_MINUTE
+    input.now.getTime() +
+      input.config.AUTH_SESSION_TTL_MINUTES * MILLISECONDS_PER_MINUTE
   );
 
-  await database.insert(authSessions).values({
+  await input.database.insert(authSessions).values({
     expiresAt,
     tokenHash: hashSessionToken(sessionToken),
-    userId: user.id,
+    userId: input.user.id,
   });
 
   return {
-    cookie: createSessionCookie(config, sessionToken, expiresAt),
-    session: { expiresAt, user },
+    cookie: createSessionCookie(input.config, sessionToken, expiresAt),
+    session: { expiresAt, user: input.user },
   };
 }
 

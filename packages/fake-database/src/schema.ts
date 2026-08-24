@@ -3,8 +3,6 @@ import type {
   Game,
   GameEvent,
   GameParticipant,
-  JsonPrimitive as DatabaseJsonPrimitive,
-  JsonValue as DatabaseJsonValue,
   ProcessedCommand,
   User,
   UserIdentity,
@@ -25,9 +23,7 @@ export const FAKE_DATABASE_STORE_NAMES = [
 export type FakeAuthProvider = UserIdentity['provider'];
 export type FakeGameStatus = Game['status'];
 export type FakeParticipantRole = GameParticipant['role'];
-export type JsonPrimitive = DatabaseJsonPrimitive;
-export type JsonValue = DatabaseJsonValue;
-export type FakeFeatureFlags = Readonly<Record<string, JsonPrimitive>>;
+export type FakeFeatureFlags = Readonly<Record<string, boolean>>;
 
 export type FakeUser = User;
 export type FakeUserIdentity = UserIdentity;

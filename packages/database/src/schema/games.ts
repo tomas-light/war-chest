@@ -14,9 +14,8 @@ import {
 } from 'drizzle-orm/pg-core';
 import { users } from './auth.js';
 
-export type JsonPrimitive = boolean | number | string | null;
 export type JsonValue =
-  JsonPrimitive | { [key: string]: JsonValue } | JsonValue[];
+  boolean | number | string | null | { [key: string]: JsonValue } | JsonValue[];
 
 export const gameStatus = pgEnum('game_status', [
   'waiting',
@@ -103,6 +102,7 @@ export const processedCommands = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: 'restrict' }),
     commandType: text('command_type').notNull(),
+    requestHash: text('request_hash').notNull(),
     processedAt: timestamp('processed_at', { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -113,6 +113,10 @@ export const processedCommands = pgTable(
       table.processedAt
     ),
     index('processed_commands_user_id_index').on(table.userId),
+    check(
+      'processed_commands_request_hash_format',
+      sql`${table.requestHash} ~ '^[0-9a-f]{64}$'`
+    ),
   ]
 );
 

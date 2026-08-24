@@ -83,6 +83,34 @@ function persistOrder(order: Order) {
 }
 ```
 
+- Если функция принимает больше трёх параметров, объединяй их в один
+  аргумент-объект. В TypeScript описывай его именованным типом или интерфейсом,
+  чтобы на месте вызова были видны имена передаваемых значений и их назначение.
+
+```ts
+// ❌ Плохо: назначение соседних аргументов приходится восстанавливать по сигнатуре
+function sendMessage(userId: string, text: string, channel: string, urgent: boolean) {}
+
+// ✅ Хорошо: функция принимает один понятный аргумент-объект
+interface SendMessageInput {
+  channel: string;
+  text: string;
+  urgent: boolean;
+  userId: string;
+}
+
+function sendMessage(input: SendMessageInput) {
+  /* ... */
+}
+
+sendMessage({
+  channel: 'game',
+  text: 'Your turn',
+  urgent: true,
+  userId: 'user-one',
+});
+```
+
 ## Работа с массивами
 
 - При извлечении элементов массива по известным позициям отдавай предпочтение
@@ -137,6 +165,35 @@ async function some() {
   try {
     // ...
   } catch (error) {} // ✅ Понятное название ошибки
+}
+```
+
+## Типизация TypeScript
+
+- Не используй `any` ни явно, ни через утверждение типа или generic-аргумент:
+  запрещены `any`, `as any`, `<any>` и аналогичные конструкции. Для данных с
+  неизвестной структурой используй `unknown`, затем выполняй narrowing или
+  runtime-валидацию.
+- Не объявляй переменную через `let` без начального значения и без явной
+  аннотации типа. Такая переменная получает evolving `any`, даже если
+  TypeScript позднее уточняет её тип по присваиваниям.
+- Если значение присваивается внутри `try`, условной ветки или callback и его
+  нельзя сразу инициализировать, укажи явный доменный тип при объявлении.
+- После обнаружения `any` или нетипизированного `let` проверь аналогичные места
+  во всём затронутом package или application, а не исправляй только найденную
+  строку.
+
+```ts
+// ❌ Плохо: featureFlags начинает жизнь как evolving any
+let featureFlags;
+
+// ✅ Хорошо: ожидаемый доменный контракт известен до присваивания
+let featureFlags: FeatureFlags;
+
+try {
+  featureFlags = await featureFlagsService.read();
+} catch (error: unknown) {
+  // error необходимо сузить перед использованием
 }
 ```
 
@@ -358,6 +415,37 @@ import styles from './card.module.scss';
 
 ## Тесты
 
+### Не расширять production API ради тестов
+
+- Не добавляй в production-функции и фабрики аргументы, options-поля,
+  callbacks или значения по умолчанию, которые нужны только тестам. Это
+  относится, например, к подмене repository/service, часов, timers, генератора
+  идентификаторов, logger и других системных границ.
+- У каждого параметра production API должен быть реальный production-потребитель
+  или production-сценарий. Перед добавлением параметра найди этот вызов в
+  исходном коде; одного использования из тестов недостаточно.
+- Если тесту нужна управляемая зависимость, оставляй production-сигнатуру без
+  изменений и подменяй подходящую границу через `vi.mock`, `vi.spyOn`, fake
+  timers или `vi.stubGlobal`.
+- Не делай обязательную production-конфигурацию необязательной и не добавляй
+  fallback только для упрощения test setup. Передавай в тесте настоящее
+  контрактное значение либо мокай владельца конфигурации.
+- Dependency injection остаётся допустимым, когда зависимость действительно
+  передаётся production composition root и является частью архитектурного
+  контракта, а не тестовым обходом.
+
+```ts
+// ❌ Плохо: production-фабрика расширена только ради unit-теста
+function createOrderService(options: {
+  now?: () => Date;
+  orderRepository?: OrderRepository;
+}) {}
+
+// ✅ Хорошо: production получает реальные зависимости, а часы тест контролирует
+// через vi.useFakeTimers() и vi.setSystemTime()
+function createOrderService(orderRepository: OrderRepository) {}
+```
+
 ### Unit- и компонентные тесты: один тест — один контракт
 
 Правила этого подраздела относятся только к unit- и компонентным тестам. Они
@@ -409,13 +497,37 @@ describe('order calculation', () => {
 });
 ```
 
+## Запуск Yarn и package binaries в Windows
+
+- Не запускай Yarn через системные `corepack`, `corepack.cmd` или глобальный
+  `yarn`, а package binaries — через системные `npx` или `npx.cmd` даже для
+  пробной проверки: в рабочем окружении такие запуски могут завершиться ошибкой
+  `Access is denied`.
+- Сразу запускай закреплённый в репозитории Yarn через bundled Node. Текущая
+  команда для `yarn@4.17.1`:
+
+```powershell
+& 'C:\Users\pikac\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' '.yarn\releases\yarn-4.17.1.cjs' <аргументы Yarn>
+```
+
+- Package binaries запускай той же командой через `yarn exec`:
+
+```powershell
+& 'C:\Users\pikac\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' '.yarn\releases\yarn-4.17.1.cjs' exec <package binary> <аргументы>
+```
+
+- Перед запуском проверь актуальную версию в поле `packageManager` корневого
+  `package.json` и соответствующий файл в `.yarn/releases`. Если путь к bundled
+  Node неизвестен, сначала получи его из workspace dependencies, а не переходи
+  к системным Corepack или npx.
+
 ## Линтер
 
-- После окончания работы над задачей запускай `npx eslint . --fix` для затронутых файлов.
-- В Windows `npx` не находится в `PATH`. Не делай пробный вызов через bare
-  `npx`: сразу запускай команду как
-  `& 'C:\Program Files\nodejs\npx.cmd' eslint . --fix`.
-- Запускай `npx eslint . --fix` отдельным shell-вызовом. Не объединяй эту
+- После окончания работы над задачей запускай ESLint с `--fix` для затронутых
+  файлов.
+- В Windows запускай ESLint через bundled Node и закреплённый Yarn:
+  `& 'C:\Users\pikac\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' '.yarn\releases\yarn-4.17.1.cjs' exec eslint . --fix`.
+- Запускай `eslint . --fix` отдельным shell-вызовом. Не объединяй эту
   команду с предварительными проверками или другими PowerShell-командами в
   одном скрипте: составной запуск может завершиться ошибкой `Access is denied`.
 - Для вывода результата и ошибок CLI-команд допустимо использовать `console`.
