@@ -213,7 +213,7 @@ fake-режиме dev-панель изменяет данные самой fake
 interface DevelopmentApi {
   updateGameFeatureFlags(
     gameId: string,
-    featureFlags: FeatureFlags
+    featureFlags: RuntimeFeatureFlags
   ): Promise<{ applied: boolean; reason?: 'fake-mode-only' }>;
 }
 ```

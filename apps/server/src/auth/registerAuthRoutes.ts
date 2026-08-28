@@ -17,12 +17,10 @@ interface SendErrorInput {
   statusCode: number;
 }
 
-const oauthCallbackQuerySchema = z
-  .object({
-    code: z.string().trim().min(1),
-    state: z.string().trim().min(1),
-  })
-  .strict();
+const oauthCallbackQuerySchema = z.object({
+  code: z.string().trim().min(1),
+  state: z.string().trim().min(1),
+});
 
 export function registerAuthRoutes(app: FastifyInstance): void {
   const { auth } = app.serverDependencies;

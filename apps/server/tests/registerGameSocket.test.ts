@@ -7,6 +7,7 @@ import type {
 } from '@war-chest/api-contracts';
 import type { Auth, AuthSession } from '@war-chest/auth';
 import type { DatabaseConnection } from '@war-chest/database';
+import { DEFAULT_RUNTIME_FEATURE_FLAGS } from '@war-chest/feature-flags';
 import type { GameView } from '@war-chest/game-engine';
 import type { FastifyInstance } from 'fastify';
 import { type Socket as ClientSocket, io } from 'socket.io-client';
@@ -29,7 +30,7 @@ const GAME_ID = '20000000-0000-4000-8000-000000000001';
 const COMMAND_ID = '30000000-0000-4000-8000-000000000001';
 const WAITING_VIEW: GameView = {
   currentPlayerId: null,
-  featureFlags: { spectatorMode: true },
+  featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
   lastEventSequence: 1,
   moveCount: 0,
   players: [],

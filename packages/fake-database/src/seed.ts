@@ -1,7 +1,7 @@
+import { DEFAULT_RUNTIME_FEATURE_FLAGS } from '@war-chest/feature-flags';
 import type {
   FakeDatabaseConnection,
   FakeDatabaseSchema,
-  FakeFeatureFlags,
   FakeRuntimeFeatureFlags,
   FakeUser,
   FakeUserIdentity,
@@ -32,12 +32,6 @@ export const FAKE_PROVIDER_SUBJECTS = {
   telegram: 'fake-telegram-user',
   yandex: 'fake-yandex-user',
 } as const;
-
-export const DEFAULT_FAKE_FEATURE_FLAGS: FakeFeatureFlags = {
-  gameHistory: true,
-  optimisticMoves: false,
-  spectatorMode: true,
-};
 
 export const FAKE_USERS = [
   {
@@ -115,7 +109,7 @@ async function writeSeedFixtures(
 
   const runtimeFeatureFlags = transaction.table('runtimeFeatureFlags');
   const featureFlagsRecord: FakeRuntimeFeatureFlags = {
-    featureFlags: { ...DEFAULT_FAKE_FEATURE_FLAGS },
+    featureFlags: { ...DEFAULT_RUNTIME_FEATURE_FLAGS },
     id: 'application',
     updatedAt: FAKE_SEED_CREATED_AT,
   };

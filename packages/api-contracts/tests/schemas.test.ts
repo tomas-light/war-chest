@@ -1,3 +1,4 @@
+import { DEFAULT_RUNTIME_FEATURE_FLAGS } from '@war-chest/feature-flags';
 import { describe, expect, test } from 'vitest';
 import {
   createGameRequestSchema,
@@ -67,7 +68,7 @@ describe('game events contract', () => {
       events: [
         {
           payload: {
-            featureFlags: {},
+            featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
             rulesVersion: 1,
           },
           sequence: 1,
@@ -86,7 +87,10 @@ describe('game events contract', () => {
       events: [
         {
           payload: {
-            featureFlags: { maximumPlayers: 2 },
+            featureFlags: {
+              ...DEFAULT_RUNTIME_FEATURE_FLAGS,
+              spectatorMode: 2,
+            },
             rulesVersion: 1,
           },
           sequence: 1,

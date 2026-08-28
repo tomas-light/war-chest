@@ -1,3 +1,4 @@
+import { DEFAULT_RUNTIME_FEATURE_FLAGS } from '@war-chest/feature-flags';
 import { GAME_EVENT_VERSION, GAME_RULES_VERSION } from '@war-chest/game-engine';
 import { describe, expect, test } from 'vitest';
 import { createGameSessionStore } from './gameSessionStore';
@@ -8,7 +9,7 @@ describe('game session event synchronization', () => {
 
     store.getState().hydrate({
       currentPlayerId: null,
-      featureFlags: {},
+      featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
       lastEventSequence: 1,
       moveCount: 0,
       players: [],
@@ -35,7 +36,7 @@ describe('game session event synchronization', () => {
 
     store.getState().hydrate({
       currentPlayerId: null,
-      featureFlags: {},
+      featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
       lastEventSequence: 1,
       moveCount: 0,
       players: [],

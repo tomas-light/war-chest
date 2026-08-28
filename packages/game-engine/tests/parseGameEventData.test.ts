@@ -1,3 +1,4 @@
+import { DEFAULT_RUNTIME_FEATURE_FLAGS } from '@war-chest/feature-flags';
 import { describe, expect, test } from 'vitest';
 import {
   type GameEventData,
@@ -9,7 +10,10 @@ import {
 const SUPPORTED_EVENTS: readonly GameEventData[] = [
   {
     payload: {
-      featureFlags: { gameHistory: true, spectatorMode: false },
+      featureFlags: {
+        ...DEFAULT_RUNTIME_FEATURE_FLAGS,
+        spectatorMode: false,
+      },
       rulesVersion: GAME_RULES_VERSION,
     },
     sequence: 1,
@@ -135,7 +139,10 @@ describe('parseGameEventData', () => {
     expect(() =>
       parseGameEventData({
         payload: {
-          featureFlags: { spectatorMode: 'enabled' },
+          featureFlags: {
+            ...DEFAULT_RUNTIME_FEATURE_FLAGS,
+            spectatorMode: 'enabled',
+          },
           rulesVersion: GAME_RULES_VERSION,
         },
         sequence: 1,

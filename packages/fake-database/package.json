@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@war-chest/database": "workspace:^",
+    "@war-chest/feature-flags": "workspace:^",
     "idb": "8.0.3",
     "typescript": "7.0.2"
   }

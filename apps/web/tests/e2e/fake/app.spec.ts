@@ -27,11 +27,17 @@ test('signs in, restores the fake session and signs out', async ({ page }) => {
   await expect(page.getByRole('combobox', { name: 'Backend' })).toHaveValue(
     'fake'
   );
-  await page.getByRole('button', { name: 'Продолжить с Google' }).click();
+  await expect(
+    page.getByRole('button', { name: 'Продолжить с Google' })
+  ).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Продолжить с Yandex ID' })
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Продолжить с Telegram' }).click();
 
   await expect(page).toHaveURL(/\/lobby$/);
   await expect(page.getByRole('heading', { name: 'Лобби' })).toBeVisible();
-  await expect(page.getByText('G User')).toBeVisible();
+  await expect(page.getByText('T User')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Выйти' })).toBeVisible();
 
   await page.getByRole('button', { name: 'Dev' }).click();
@@ -93,12 +99,12 @@ test('signs in, restores the fake session and signs out', async ({ page }) => {
   });
 
   expect(fakeAuthState.sessionId).not.toBeNull();
-  expect(fakeAuthState.userId).toBe('10000000-0000-4000-8000-000000000001');
+  expect(fakeAuthState.userId).toBe('10000000-0000-4000-8000-000000000002');
 
   await page.reload();
 
   await expect(page).toHaveURL(/\/lobby$/);
-  await expect(page.getByText('G User')).toBeVisible();
+  await expect(page.getByText('T User')).toBeVisible();
 
   await page.getByRole('button', { name: 'Выйти' }).click();
 

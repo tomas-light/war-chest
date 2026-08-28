@@ -14,6 +14,9 @@
       "path": "../../packages/api-contracts"
     },
     {
+      "path": "../../packages/feature-flags"
+    },
+    {
       "path": "../../packages/fake-database"
     },
     {

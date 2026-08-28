@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.packages-base.json",
+  "compilerOptions": {
+    "outDir": "../../ts-builds/packages/feature-flags",
+    "paths": {
+      "#/*": ["./src/*"]
+    },
+    "tsBuildInfoFile": "../../ts-builds/packages/feature-flags.tsbuildinfo"
+  },
+  "include": ["src", "feature-flags.json"]
+}

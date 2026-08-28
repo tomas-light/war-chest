@@ -7,5 +7,10 @@
     },
     "tsBuildInfoFile": "../../ts-builds/packages/game-engine.tsbuildinfo"
   },
-  "include": ["src"]
+  "include": ["src"],
+  "references": [
+    {
+      "path": "../feature-flags"
+    }
+  ]
 }

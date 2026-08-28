@@ -14,6 +14,7 @@
     "types:watch": "tsc --build --watch"
   },
   "dependencies": {
+    "@war-chest/feature-flags": "workspace:^",
     "typescript": "7.0.2",
     "zod": "4.4.3"
   },

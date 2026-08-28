@@ -1,4 +1,5 @@
-import type { FeatureFlags, GameTeam, JsonValue } from './state.js';
+import type { RuntimeFeatureFlags } from '@war-chest/feature-flags';
+import type { GameTeam, JsonValue } from './state.js';
 
 export const GAME_EVENT_VERSION = 1;
 export const GAME_RULES_VERSION = 1;
@@ -10,7 +11,7 @@ interface EventMetadata {
 
 export interface GameCreatedEventData extends EventMetadata {
   payload: {
-    featureFlags: FeatureFlags;
+    featureFlags: RuntimeFeatureFlags;
     rulesVersion: typeof GAME_RULES_VERSION;
   };
   type: 'GameCreated';

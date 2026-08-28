@@ -23,9 +23,6 @@ ts-builds
 apps/*/env.local.yaml
 packages/*/env.local.yaml
 
-# Local mount point for external runtime feature flags
-/runtime/feature-flags/
-
 # Test and build output
 apps/*/coverage/
 apps/*/dist/

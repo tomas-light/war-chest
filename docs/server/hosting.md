@@ -13,7 +13,7 @@ APP_HOST: '0.0.0.0'
 APP_PORT: 3000
 APP_SERVE_WEB: false
 DISCONNECTED_PLAYER_TIMEOUT_MINUTES: 15
-FEATURE_FLAGS_RUNTIME_FILE: '../../runtime/feature-flags/feature-flags.localhost.json'
+FEATURE_FLAGS_RUNTIME_FILE: '../../packages/feature-flags/feature-flags.json'
 WEB_ASSETS_ROOT: '../web/dist'
 ```
 
@@ -24,6 +24,9 @@ WEB_ASSETS_ROOT: '../web/dist'
 `DISCONNECTED_PLAYER_TIMEOUT_MINUTES` задаёт срок возвращения активного игрока.
 `FEATURE_FLAGS_RUNTIME_FILE` читается при создании новой игры; exact duplicate
 ранее выполненного `CreateGame` возвращается без повторного чтения файла.
+Файл хранится в Git как типизированный контракт и безопасные локальные значения.
+Deployment подменяет в нём только boolean-значения нужного окружения, сохраняя
+полный набор ключей.
 
 Database и auth читают собственные конфигурации из `packages/database` и
 `packages/auth`; server не дублирует их ключи.

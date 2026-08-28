@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { DEFAULT_RUNTIME_FEATURE_FLAGS } from '@war-chest/feature-flags';
 import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import {
@@ -6,7 +7,6 @@ import {
   type FakeGame,
   type FakeGameEvent,
   createFakeDatabase,
-  DEFAULT_FAKE_FEATURE_FLAGS,
   deleteFakeDatabase,
   FAKE_PROVIDER_SUBJECTS,
   FAKE_SEED_IDENTIFIERS,
@@ -428,7 +428,7 @@ describe('fake database', () => {
 
   test('preserves changed application flags when the database reopens', async () => {
     const featureFlags = {
-      gameHistory: false,
+      ...DEFAULT_RUNTIME_FEATURE_FLAGS,
       spectatorMode: false,
     };
     await database.featureFlags.setApplication(featureFlags);
@@ -512,7 +512,10 @@ describe('fake database', () => {
       createdAt: new Date('2026-08-03T10:00:00.000Z'),
       gameId: game.id,
       id: 'first-event',
-      payload: { featureFlags: {}, rulesVersion: 1 },
+      payload: {
+        featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+        rulesVersion: 1,
+      },
       sequence: 1,
       type: 'GameCreated',
       version: 1,
@@ -552,7 +555,10 @@ describe('fake database', () => {
       createdAt: new Date('2026-08-03T10:00:00.000Z'),
       gameId: game.id,
       id: 'atomic-game-created',
-      payload: { featureFlags: {}, rulesVersion: 1 },
+      payload: {
+        featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+        rulesVersion: 1,
+      },
       sequence: 1,
       type: 'GameCreated',
       version: 1,
@@ -602,6 +608,10 @@ describe('fake database', () => {
   });
 
   test('replaces only feature flags in the saved GameCreated event', async () => {
+    const replacementFeatureFlags = {
+      ...DEFAULT_RUNTIME_FEATURE_FLAGS,
+      gameHistory: false,
+    };
     const game: FakeGame = {
       createdAt: new Date('2026-08-03T10:00:00.000Z'),
       currentVersion: 1,
@@ -618,7 +628,10 @@ describe('fake database', () => {
           createdAt: game.createdAt,
           gameId: game.id,
           id: 'feature-flags-event',
-          payload: { featureFlags: { oldFlag: true }, rulesVersion: 1 },
+          payload: {
+            featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+            rulesVersion: 1,
+          },
           sequence: 1,
           type: 'GameCreated',
           version: 1,
@@ -627,11 +640,11 @@ describe('fake database', () => {
       game,
     });
 
-    await database.games.replaceFeatureFlags(game.id, { newFlag: true });
+    await database.games.replaceFeatureFlags(game.id, replacementFeatureFlags);
 
     const [gameCreatedEvent] = await database.games.getEvents(game.id);
     expect(gameCreatedEvent?.payload).toEqual({
-      featureFlags: { newFlag: true },
+      featureFlags: replacementFeatureFlags,
       rulesVersion: 1,
     });
   });
@@ -644,7 +657,10 @@ describe('fake database', () => {
       revokedAt: null,
       userId: FAKE_SEED_IDENTIFIERS.googleUser,
     });
-    await database.featureFlags.setApplication({ changedFlag: true });
+    await database.featureFlags.setApplication({
+      ...DEFAULT_RUNTIME_FEATURE_FLAGS,
+      spectatorMode: false,
+    });
 
     await database.reset();
 
@@ -652,7 +668,7 @@ describe('fake database', () => {
       database.sessions.getById('session-to-reset')
     ).resolves.toBeNull();
     await expect(database.featureFlags.getApplication()).resolves.toEqual(
-      DEFAULT_FAKE_FEATURE_FLAGS
+      DEFAULT_RUNTIME_FEATURE_FLAGS
     );
     await expect(
       database.users.findByIdentity('google', FAKE_PROVIDER_SUBJECTS.google)

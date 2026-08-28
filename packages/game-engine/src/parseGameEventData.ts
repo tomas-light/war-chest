@@ -1,3 +1,4 @@
+import { runtimeFeatureFlagsSchema } from '@war-chest/feature-flags';
 import { z } from 'zod';
 import {
   type GameEventData,
@@ -19,7 +20,6 @@ const jsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
     z.record(z.string(), jsonValueSchema),
   ])
 );
-const featureFlagsSchema = z.record(z.string(), z.boolean());
 const gameTeamSchema = z.enum(['black', 'white']);
 const eventMetadataSchema = z.object({
   sequence: z.number().int().positive(),
@@ -32,7 +32,7 @@ const gameEventDataSchema: z.ZodType<GameEventData> = z.discriminatedUnion(
       .extend({
         payload: z
           .object({
-            featureFlags: featureFlagsSchema,
+            featureFlags: runtimeFeatureFlagsSchema,
             rulesVersion: z.literal(GAME_RULES_VERSION),
           })
           .strict(),

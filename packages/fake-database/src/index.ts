@@ -30,7 +30,6 @@ export {
 } from './repositories/users.js';
 export { resetFakeDatabase } from './resetFakeDatabase.js';
 export {
-  DEFAULT_FAKE_FEATURE_FLAGS,
   FAKE_PROVIDER_SUBJECTS,
   FAKE_SEED_IDENTIFIERS,
   FAKE_USER_IDENTITIES,
@@ -42,7 +41,6 @@ export type {
   FakeAuthSession,
   FakeDatabaseConnection,
   FakeDatabaseSchema,
-  FakeFeatureFlags,
   FakeGame,
   FakeGameEvent,
   FakeGameParticipant,

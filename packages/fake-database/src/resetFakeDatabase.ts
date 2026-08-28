@@ -1,10 +1,10 @@
+import { DEFAULT_RUNTIME_FEATURE_FLAGS } from '@war-chest/feature-flags';
 import {
   type FakeDatabaseConnection,
   type FakeDatabaseSchema,
   FAKE_DATABASE_STORE_NAMES,
 } from './schema.js';
 import {
-  DEFAULT_FAKE_FEATURE_FLAGS,
   FAKE_SEED_CREATED_AT,
   FAKE_USER_IDENTITIES,
   FAKE_USERS,
@@ -44,7 +44,7 @@ export async function resetFakeDatabase(
     }
 
     await transaction.table('runtimeFeatureFlags').insert('application', {
-      featureFlags: { ...DEFAULT_FAKE_FEATURE_FLAGS },
+      featureFlags: { ...DEFAULT_RUNTIME_FEATURE_FLAGS },
       id: 'application',
       updatedAt: FAKE_SEED_CREATED_AT,
     });

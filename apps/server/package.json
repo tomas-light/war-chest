@@ -16,6 +16,7 @@
     "@war-chest/auth": "workspace:^",
     "@war-chest/config": "workspace:^",
     "@war-chest/database": "workspace:^",
+    "@war-chest/feature-flags": "workspace:^",
     "@war-chest/game-engine": "workspace:^",
     "drizzle-orm": "0.45.2",
     "fastify": "5.11.2",

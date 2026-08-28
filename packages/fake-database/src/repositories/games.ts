@@ -1,8 +1,8 @@
 import type { JsonValue } from '@war-chest/database';
+import type { RuntimeFeatureFlags } from '@war-chest/feature-flags';
 import type {
   FakeDatabaseConnection,
   FakeDatabaseSchema,
-  FakeFeatureFlags,
   FakeGame,
   FakeGameEvent,
   FakeGameParticipant,
@@ -40,7 +40,7 @@ export interface FakeGameRepository {
   listParticipants(gameId: string): Promise<FakeGameParticipant[]>;
   replaceFeatureFlags(
     gameId: string,
-    featureFlags: FakeFeatureFlags
+    featureFlags: RuntimeFeatureFlags
   ): Promise<boolean>;
   saveChanges(changes: FakeGameChanges): Promise<void>;
 }
@@ -133,7 +133,7 @@ export function createFakeGameRepository(
 
   async function replaceFeatureFlags(
     gameId: string,
-    featureFlags: FakeFeatureFlags
+    featureFlags: RuntimeFeatureFlags
   ): Promise<boolean> {
     return runSchemaTableTransaction(
       database,

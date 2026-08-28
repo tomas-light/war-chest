@@ -7,6 +7,7 @@ import type {
   User,
   UserIdentity,
 } from '@war-chest/database';
+import type { RuntimeFeatureFlags } from '@war-chest/feature-flags';
 import type { DBSchema, IDBPDatabase } from 'idb';
 
 export const FAKE_DATABASE_STORE_NAMES = [
@@ -23,7 +24,6 @@ export const FAKE_DATABASE_STORE_NAMES = [
 export type FakeAuthProvider = UserIdentity['provider'];
 export type FakeGameStatus = Game['status'];
 export type FakeParticipantRole = GameParticipant['role'];
-export type FakeFeatureFlags = Readonly<Record<string, boolean>>;
 
 export type FakeUser = User;
 export type FakeUserIdentity = UserIdentity;
@@ -34,7 +34,7 @@ export type FakeProcessedCommand = ProcessedCommand;
 export type FakeGameEvent = GameEvent;
 
 export interface FakeRuntimeFeatureFlags {
-  featureFlags: FakeFeatureFlags;
+  featureFlags: RuntimeFeatureFlags;
   id: 'application';
   updatedAt: Date;
 }

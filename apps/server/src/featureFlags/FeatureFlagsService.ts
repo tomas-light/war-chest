@@ -1,11 +1,11 @@
 import { readFile } from 'node:fs/promises';
-import type { FeatureFlags } from '@war-chest/game-engine';
-import { z } from 'zod';
-
-const featureFlagsSchema = z.record(z.string(), z.boolean());
+import {
+  type RuntimeFeatureFlags,
+  runtimeFeatureFlagsSchema,
+} from '@war-chest/feature-flags';
 
 export interface FeatureFlagsService {
-  read(this: void): Promise<FeatureFlags>;
+  read(this: void): Promise<RuntimeFeatureFlags>;
 }
 
 export function createFeatureFlagsService(
@@ -13,10 +13,10 @@ export function createFeatureFlagsService(
 ): FeatureFlagsService {
   return { read };
 
-  async function read(): Promise<FeatureFlags> {
+  async function read(): Promise<RuntimeFeatureFlags> {
     const source = await readFile(runtimeFile, 'utf8');
     const value: unknown = JSON.parse(source);
 
-    return featureFlagsSchema.parse(value);
+    return runtimeFeatureFlagsSchema.parse(value);
   }
 }

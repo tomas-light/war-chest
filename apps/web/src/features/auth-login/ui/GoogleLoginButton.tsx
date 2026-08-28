@@ -29,17 +29,15 @@ interface GoogleIdentityServices {
   };
 }
 
-interface GoogleLoginButtonProps {
+interface Props {
   clientId: string;
   onCredential(this: void, idToken: string): void;
   onError(this: void, error: Error): void;
 }
 
-export function GoogleLoginButton({
-  clientId,
-  onCredential,
-  onError,
-}: GoogleLoginButtonProps) {
+export function GoogleLoginButton(props: Props) {
+  const { clientId, onCredential, onError } = props;
+
   const buttonContainerRef = useRef<HTMLDivElement>(null);
   const onCredentialRef = useRef(onCredential);
   const onErrorRef = useRef(onError);

@@ -1,3 +1,4 @@
+import { DEFAULT_RUNTIME_FEATURE_FLAGS } from '@war-chest/feature-flags';
 import { beforeEach, describe, expect, test } from 'vitest';
 import {
   type GameEventData,
@@ -20,7 +21,10 @@ describe('player presence', () => {
   let state: GameState;
 
   beforeEach(() => {
-    const gameCreated = createGame({ featureFlags: {}, type: 'CreateGame' });
+    const gameCreated = createGame({
+      featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+      type: 'CreateGame',
+    });
     events = [gameCreated];
     state = applyEvent(null, gameCreated);
 

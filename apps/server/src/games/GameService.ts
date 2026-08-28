@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
+import type { RuntimeFeatureFlags } from '@war-chest/feature-flags';
 import {
-  type FeatureFlags,
   type GameCommandData,
   type GameEventData,
   type GameState,
@@ -381,7 +381,7 @@ export function createGameService(
       return loadDuplicateCreatedGame(existingCommand.gameId);
     }
 
-    let featureFlags: FeatureFlags;
+    let featureFlags: RuntimeFeatureFlags;
 
     try {
       featureFlags = await options.featureFlagsService.read();
