@@ -41,6 +41,10 @@ HTTP-ответ сервер.
 
 ## Провайдеры
 
+Кнопки Google, Telegram и Yandex ID отображаются на `/login` без runtime feature
+flags. Готовность real-входа определяет конфигурация провайдера: при пустых
+обязательных credentials сервер возвращает `provider_disabled`.
+
 Google использует `GOOGLE_CLIENT_ID` как ожидаемую audience ID token.
 
 Telegram использует:

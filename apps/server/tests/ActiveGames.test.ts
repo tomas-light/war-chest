@@ -1,10 +1,11 @@
+import { DEFAULT_RUNTIME_FEATURE_FLAGS } from '@war-chest/feature-flags';
 import type { GameState } from '@war-chest/game-engine';
 import { describe, expect, test, vi } from 'vitest';
 import { createActiveGames } from '../src/games/ActiveGames.js';
 
 const WAITING_STATE: GameState = {
   currentPlayerId: null,
-  featureFlags: { spectatorMode: true },
+  featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
   lastEventSequence: 1,
   moveCount: 0,
   players: [],

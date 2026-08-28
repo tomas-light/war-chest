@@ -43,9 +43,12 @@ Declarative Mode.
 
 ## Авторизация
 
-В real-режиме клиент получает сессию через `GET /api/auth/session`. Официальная
-кнопка Google Identity Services отображается только при непустом
-`GOOGLE_CLIENT_ID`; полученный ID token отправляется в
+В real-режиме клиент получает сессию через `GET /api/auth/session`. На экране
+входа отображаются Google, Telegram и Yandex ID: реализованные провайдеры не
+управляются runtime feature flags и не зависят от загрузки application flags.
+
+Для Google дополнительно нужен непустой `GOOGLE_CLIENT_ID`. Официальная кнопка
+Google Identity Services возвращает ID token, который отправляется в
 `POST /api/auth/google`. Telegram и Yandex переводят браузер на соответствующий
 `/api/auth/<provider>/start`. Токены внешних провайдеров клиент не сохраняет.
 

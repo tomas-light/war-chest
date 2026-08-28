@@ -1,5 +1,6 @@
 import type { Auth, AuthSession } from '@war-chest/auth';
 import type { DatabaseConnection } from '@war-chest/database';
+import { DEFAULT_RUNTIME_FEATURE_FLAGS } from '@war-chest/feature-flags';
 import type { GameView } from '@war-chest/game-engine';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
@@ -20,7 +21,7 @@ const COMMAND_ID = '30000000-0000-4000-8000-000000000001';
 const AUTH_HEADERS = { cookie: 'war_chest_session=session-token' };
 const WAITING_VIEW: GameView = {
   currentPlayerId: null,
-  featureFlags: { spectatorMode: true },
+  featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
   lastEventSequence: 1,
   moveCount: 0,
   players: [],

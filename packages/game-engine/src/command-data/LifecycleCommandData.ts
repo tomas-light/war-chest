@@ -1,7 +1,8 @@
-import type { FeatureFlags, GameTeam } from '../state.js';
+import type { RuntimeFeatureFlags } from '@war-chest/feature-flags';
+import type { GameTeam } from '../state.js';
 
 export interface CreateGameCommandData {
-  featureFlags: FeatureFlags;
+  featureFlags: RuntimeFeatureFlags;
   type: 'CreateGame';
 }
 

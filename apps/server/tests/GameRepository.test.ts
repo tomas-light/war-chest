@@ -7,6 +7,7 @@ import {
   processedCommands,
   users,
 } from '@war-chest/database';
+import { DEFAULT_RUNTIME_FEATURE_FLAGS } from '@war-chest/feature-flags';
 import {
   type GameEventData,
   createGame,
@@ -46,6 +47,10 @@ const CREATE_REQUEST_HASH = 'a'.repeat(64);
 const SECOND_CREATE_REQUEST_HASH = 'b'.repeat(64);
 const GAME_REQUEST_HASH = 'c'.repeat(64);
 const SECOND_GAME_REQUEST_HASH = 'd'.repeat(64);
+const DEFAULT_CREATE_GAME_COMMAND = {
+  featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+  type: 'CreateGame',
+} as const;
 
 const describeWithPostgreSql =
   TEST_DATABASE_URL === undefined ? describe.skip : describe;
@@ -82,10 +87,7 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
   });
 
   test('creates the game, command, and first event atomically', async () => {
-    const event = createGame({
-      featureFlags: { spectatorMode: true },
-      type: 'CreateGame',
-    });
+    const event = createGame(DEFAULT_CREATE_GAME_COMMAND);
 
     const result = await repository.createGame({
       commandId: CREATE_COMMAND_ID,
@@ -123,7 +125,7 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
   });
 
   test('returns the stored game for an exact duplicate create command', async () => {
-    const event = createGame({ featureFlags: {}, type: 'CreateGame' });
+    const event = createGame(DEFAULT_CREATE_GAME_COMMAND);
     const firstResult = await repository.createGame({
       commandId: CREATE_COMMAND_ID,
       creatorUserId: FIRST_USER_ID,
@@ -149,7 +151,7 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
   });
 
   test('rejects a create command id reused by another user', async () => {
-    const event = createGame({ featureFlags: {}, type: 'CreateGame' });
+    const event = createGame(DEFAULT_CREATE_GAME_COMMAND);
     await repository.createGame({
       commandId: CREATE_COMMAND_ID,
       creatorUserId: FIRST_USER_ID,
@@ -169,7 +171,7 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
   });
 
   test('classifies concurrent create requests as created and duplicate', async () => {
-    const event = createGame({ featureFlags: {}, type: 'CreateGame' });
+    const event = createGame(DEFAULT_CREATE_GAME_COMMAND);
 
     const results = await Promise.all([
       repository.createGame({
@@ -198,7 +200,7 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
     const created = await repository.createGame({
       commandId: CREATE_COMMAND_ID,
       creatorUserId: FIRST_USER_ID,
-      event: createGame({ featureFlags: {}, type: 'CreateGame' }),
+      event: createGame(DEFAULT_CREATE_GAME_COMMAND),
       requestHash: CREATE_REQUEST_HASH,
     });
     const gameId = requireCreatedGameId(created);
@@ -257,7 +259,7 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
       userId: FIRST_USER_ID,
     });
     expect(storedEvents).toEqual([
-      createGame({ featureFlags: {}, type: 'CreateGame' }),
+      createGame(DEFAULT_CREATE_GAME_COMMAND),
       ...events,
     ]);
   });
@@ -266,7 +268,7 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
     const created = await repository.createGame({
       commandId: CREATE_COMMAND_ID,
       creatorUserId: FIRST_USER_ID,
-      event: createGame({ featureFlags: {}, type: 'CreateGame' }),
+      event: createGame(DEFAULT_CREATE_GAME_COMMAND),
       requestHash: CREATE_REQUEST_HASH,
     });
     const gameId = requireCreatedGameId(created);
@@ -299,13 +301,13 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
     const firstCreated = await repository.createGame({
       commandId: CREATE_COMMAND_ID,
       creatorUserId: FIRST_USER_ID,
-      event: createGame({ featureFlags: {}, type: 'CreateGame' }),
+      event: createGame(DEFAULT_CREATE_GAME_COMMAND),
       requestHash: CREATE_REQUEST_HASH,
     });
     const secondCreated = await repository.createGame({
       commandId: SECOND_CREATE_COMMAND_ID,
       creatorUserId: FIRST_USER_ID,
-      event: createGame({ featureFlags: {}, type: 'CreateGame' }),
+      event: createGame(DEFAULT_CREATE_GAME_COMMAND),
       requestHash: SECOND_CREATE_REQUEST_HASH,
     });
     const firstGameId = requireCreatedGameId(firstCreated);
@@ -346,13 +348,13 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
     const firstCreated = await repository.createGame({
       commandId: CREATE_COMMAND_ID,
       creatorUserId: FIRST_USER_ID,
-      event: createGame({ featureFlags: {}, type: 'CreateGame' }),
+      event: createGame(DEFAULT_CREATE_GAME_COMMAND),
       requestHash: CREATE_REQUEST_HASH,
     });
     const secondCreated = await repository.createGame({
       commandId: SECOND_CREATE_COMMAND_ID,
       creatorUserId: FIRST_USER_ID,
-      event: createGame({ featureFlags: {}, type: 'CreateGame' }),
+      event: createGame(DEFAULT_CREATE_GAME_COMMAND),
       requestHash: SECOND_CREATE_REQUEST_HASH,
     });
     const firstGameId = requireCreatedGameId(firstCreated);
@@ -403,7 +405,7 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
     const created = await repository.createGame({
       commandId: CREATE_COMMAND_ID,
       creatorUserId: FIRST_USER_ID,
-      event: createGame({ featureFlags: {}, type: 'CreateGame' }),
+      event: createGame(DEFAULT_CREATE_GAME_COMMAND),
       requestHash: CREATE_REQUEST_HASH,
     });
     const gameId = requireCreatedGameId(created);
@@ -434,7 +436,7 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
     const created = await repository.createGame({
       commandId: CREATE_COMMAND_ID,
       creatorUserId: FIRST_USER_ID,
-      event: createGame({ featureFlags: {}, type: 'CreateGame' }),
+      event: createGame(DEFAULT_CREATE_GAME_COMMAND),
       requestHash: CREATE_REQUEST_HASH,
     });
     const gameId = requireCreatedGameId(created);
@@ -478,7 +480,7 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
     const created = await repository.createGame({
       commandId: CREATE_COMMAND_ID,
       creatorUserId: FIRST_USER_ID,
-      event: createGame({ featureFlags: {}, type: 'CreateGame' }),
+      event: createGame(DEFAULT_CREATE_GAME_COMMAND),
       requestHash: CREATE_REQUEST_HASH,
     });
     const gameId = requireCreatedGameId(created);
@@ -532,7 +534,7 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
     const created = await repository.createGame({
       commandId: CREATE_COMMAND_ID,
       creatorUserId: FIRST_USER_ID,
-      event: createGame({ featureFlags: {}, type: 'CreateGame' }),
+      event: createGame(DEFAULT_CREATE_GAME_COMMAND),
       requestHash: CREATE_REQUEST_HASH,
     });
     const gameId = requireCreatedGameId(created);
@@ -568,7 +570,7 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
     const created = await repository.createGame({
       commandId: CREATE_COMMAND_ID,
       creatorUserId: FIRST_USER_ID,
-      event: createGame({ featureFlags: {}, type: 'CreateGame' }),
+      event: createGame(DEFAULT_CREATE_GAME_COMMAND),
       requestHash: CREATE_REQUEST_HASH,
     });
     const gameId = requireCreatedGameId(created);
@@ -599,7 +601,7 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
     const created = await repository.createGame({
       commandId: CREATE_COMMAND_ID,
       creatorUserId: FIRST_USER_ID,
-      event: createGame({ featureFlags: {}, type: 'CreateGame' }),
+      event: createGame(DEFAULT_CREATE_GAME_COMMAND),
       requestHash: CREATE_REQUEST_HASH,
     });
     const gameId = requireCreatedGameId(created);
@@ -625,7 +627,7 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
     const created = await repository.createGame({
       commandId: CREATE_COMMAND_ID,
       creatorUserId: FIRST_USER_ID,
-      event: createGame({ featureFlags: {}, type: 'CreateGame' }),
+      event: createGame(DEFAULT_CREATE_GAME_COMMAND),
       requestHash: CREATE_REQUEST_HASH,
     });
     const gameId = requireCreatedGameId(created);
@@ -651,7 +653,7 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
     const created = await repository.createGame({
       commandId: CREATE_COMMAND_ID,
       creatorUserId: FIRST_USER_ID,
-      event: createGame({ featureFlags: {}, type: 'CreateGame' }),
+      event: createGame(DEFAULT_CREATE_GAME_COMMAND),
       requestHash: CREATE_REQUEST_HASH,
     });
     const gameId = requireCreatedGameId(created);
@@ -690,7 +692,7 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
     const created = await repository.createGame({
       commandId: CREATE_COMMAND_ID,
       creatorUserId: FIRST_USER_ID,
-      event: createGame({ featureFlags: {}, type: 'CreateGame' }),
+      event: createGame(DEFAULT_CREATE_GAME_COMMAND),
       requestHash: CREATE_REQUEST_HASH,
     });
     const gameId = requireCreatedGameId(created);

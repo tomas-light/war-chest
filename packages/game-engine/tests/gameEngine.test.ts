@@ -1,6 +1,9 @@
+import {
+  type RuntimeFeatureFlags,
+  DEFAULT_RUNTIME_FEATURE_FLAGS,
+} from '@war-chest/feature-flags';
 import { beforeEach, describe, expect, test } from 'vitest';
 import {
-  type FeatureFlags,
   type GameCommandData,
   type GameEventData,
   type GameState,
@@ -32,10 +35,8 @@ describe('game creation', () => {
   });
 
   test('creates the first persisted event without a game state', () => {
-    const featureFlags: FeatureFlags = {
-      gameHistory: true,
-      hiddenHands: false,
-      spectatorMode: true,
+    const featureFlags: RuntimeFeatureFlags = {
+      ...DEFAULT_RUNTIME_FEATURE_FLAGS,
     };
     const event = createGame({ featureFlags, type: 'CreateGame' });
 
@@ -51,10 +52,8 @@ describe('game creation', () => {
   });
 
   test('creates a waiting state from the first event', () => {
-    const featureFlags: FeatureFlags = {
-      gameHistory: true,
-      hiddenHands: false,
-      spectatorMode: true,
+    const featureFlags: RuntimeFeatureFlags = {
+      ...DEFAULT_RUNTIME_FEATURE_FLAGS,
     };
     const event = createGame({ featureFlags, type: 'CreateGame' });
 
@@ -66,7 +65,10 @@ describe('game creation', () => {
   });
 
   test('creates empty team arrays from the first event', () => {
-    const event = createGame({ featureFlags: {}, type: 'CreateGame' });
+    const event = createGame({
+      featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+      type: 'CreateGame',
+    });
 
     expect(applyEvent(null, event).teams).toEqual({
       black: [],
@@ -82,7 +84,7 @@ describe('technical scenario', () => {
 
   beforeEach(() => {
     const gameCreatedEvent = createGame({
-      featureFlags: { gameHistory: true },
+      featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
       type: 'CreateGame',
     });
     commands = [
@@ -231,7 +233,10 @@ describe('commands rejected while waiting', () => {
   let waitingState: GameState;
 
   beforeEach(() => {
-    const gameCreated = createGame({ featureFlags: {}, type: 'CreateGame' });
+    const gameCreated = createGame({
+      featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+      type: 'CreateGame',
+    });
     waitingState = applyEvent(null, gameCreated);
     const playerJoined = decide(waitingState, 'player-one', {
       seat: 1,
@@ -292,7 +297,10 @@ describe('explicit player seat selection', () => {
   let waitingState: GameState;
 
   beforeEach(() => {
-    const gameCreated = createGame({ featureFlags: {}, type: 'CreateGame' });
+    const gameCreated = createGame({
+      featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+      type: 'CreateGame',
+    });
     waitingState = applyEvent(null, gameCreated);
   });
 
@@ -371,7 +379,10 @@ describe('team formation from selected positions', () => {
   let activeState: GameState;
 
   beforeEach(() => {
-    const gameCreated = createGame({ featureFlags: {}, type: 'CreateGame' });
+    const gameCreated = createGame({
+      featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+      type: 'CreateGame',
+    });
     const commands: readonly [string, GameCommandData][] = [
       ['player-one', { seat: 1, team: 'black', type: 'JoinGame' }],
       ['player-two', { seat: 1, team: 'white', type: 'JoinGame' }],
@@ -404,7 +415,10 @@ describe('commands rejected while active', () => {
   let activeState: GameState;
 
   beforeEach(() => {
-    const gameCreated = createGame({ featureFlags: {}, type: 'CreateGame' });
+    const gameCreated = createGame({
+      featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+      type: 'CreateGame',
+    });
     const commands: readonly [string, GameCommandData][] = [
       ['player-one', { seat: 1, team: 'white', type: 'JoinGame' }],
       ['player-two', { seat: 1, team: 'black', type: 'JoinGame' }],
@@ -453,7 +467,7 @@ describe('safe player and spectator views', () => {
 
   beforeEach(() => {
     const gameCreated = createGame({
-      featureFlags: { spectatorMode: true },
+      featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
       type: 'CreateGame',
     });
     const commands: readonly [string, GameCommandData][] = [
@@ -557,7 +571,10 @@ describe('safe player and spectator views', () => {
 });
 
 test('advances a created view for a fully hidden event', () => {
-  const gameCreated = createGame({ featureFlags: {}, type: 'CreateGame' });
+  const gameCreated = createGame({
+    featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+    type: 'CreateGame',
+  });
   const spectator: Viewer = { role: 'spectator' };
   const gameCreatedViewEvent = createViewEventFor(gameCreated, spectator);
   const view = applyViewEvent(null, gameCreatedViewEvent);
@@ -625,7 +642,10 @@ describe('history beginning with an invalid event', () => {
 
 describe('repeated GameCreated event', () => {
   test('rejects a repeated internal event', () => {
-    const gameCreated = createGame({ featureFlags: {}, type: 'CreateGame' });
+    const gameCreated = createGame({
+      featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+      type: 'CreateGame',
+    });
 
     expect(() => restoreGame([gameCreated, gameCreated])).toThrow(
       'GameCreated cannot be applied to an existing game'
@@ -633,7 +653,10 @@ describe('repeated GameCreated event', () => {
   });
 
   test('rejects a repeated safe event', () => {
-    const gameCreated = createGame({ featureFlags: {}, type: 'CreateGame' });
+    const gameCreated = createGame({
+      featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+      type: 'CreateGame',
+    });
     const spectator: Viewer = { role: 'spectator' };
     const gameCreatedViewEvent = createViewEventFor(gameCreated, spectator);
 

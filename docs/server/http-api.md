@@ -71,20 +71,22 @@ Presence-события доступны в том же безопасном eve
 ## Runtime feature flags
 
 `GET /api/config/feature-flags.json` при каждом запросе заново читает файл из
-`FEATURE_FLAGS_RUNTIME_FILE`. Ответ — JSON-объект с произвольными ключами и
-только boolean-значениями. Успешный ответ получает `Cache-Control: no-store`,
-чтобы новая загрузка приложения не использовала устаревший HTTP cache:
+`FEATURE_FLAGS_RUNTIME_FILE`. Полный набор ключей задаёт
+`packages/feature-flags/feature-flags.json`; значения всех флагов имеют тип
+`boolean`. Успешный ответ получает `Cache-Control: no-store`, чтобы новая
+загрузка приложения не использовала устаревший HTTP cache:
 
 ```json
 {
-  "gameHistory": true,
-  "spectatorMode": false
+  "myPageEnabled": true,
+  "newDrawerEnabled": false
 }
 ```
 
-Список ключей не зашит в сервер и может различаться между окружениями. Если
-файл отсутствует, содержит некорректный JSON, не является объектом или включает
-не-boolean значение, endpoint отвечает `503 feature_flags_unavailable`.
+Окружения могут менять значения, но не набор ключей. Если файл отсутствует,
+содержит некорректный JSON, не является объектом, пропускает известный ключ,
+добавляет неизвестный ключ или включает не-boolean значение, endpoint отвечает
+`503 feature_flags_unavailable`.
 
 ## Health
 

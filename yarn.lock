@@ -2572,6 +2572,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@war-chest/api-contracts@workspace:packages/api-contracts"
   dependencies:
+    "@war-chest/feature-flags": "workspace:^"
     "@war-chest/game-engine": "workspace:^"
     typescript: "npm:7.0.2"
     vitest: "npm:4.1.10"
@@ -2613,6 +2614,7 @@ __metadata:
   dependencies:
     "@types/node": "npm:22.18.3"
     "@war-chest/config": "workspace:^"
+    "@war-chest/feature-flags": "workspace:^"
     drizzle-kit: "npm:0.31.10"
     drizzle-orm: "npm:0.45.2"
     postgres: "npm:3.4.9"
@@ -2628,6 +2630,7 @@ __metadata:
   resolution: "@war-chest/fake-database@workspace:packages/fake-database"
   dependencies:
     "@war-chest/database": "workspace:^"
+    "@war-chest/feature-flags": "workspace:^"
     fake-indexeddb: "npm:6.2.5"
     idb: "npm:8.0.3"
     typescript: "npm:7.0.2"
@@ -2635,10 +2638,21 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@war-chest/feature-flags@workspace:^, @war-chest/feature-flags@workspace:packages/feature-flags":
+  version: 0.0.0-use.local
+  resolution: "@war-chest/feature-flags@workspace:packages/feature-flags"
+  dependencies:
+    typescript: "npm:7.0.2"
+    vitest: "npm:4.1.10"
+    zod: "npm:4.4.3"
+  languageName: unknown
+  linkType: soft
+
 "@war-chest/game-engine@workspace:^, @war-chest/game-engine@workspace:packages/game-engine":
   version: 0.0.0-use.local
   resolution: "@war-chest/game-engine@workspace:packages/game-engine"
   dependencies:
+    "@war-chest/feature-flags": "workspace:^"
     typescript: "npm:7.0.2"
     vitest: "npm:4.1.10"
     zod: "npm:4.4.3"
@@ -2656,6 +2670,7 @@ __metadata:
     "@war-chest/auth": "workspace:^"
     "@war-chest/config": "workspace:^"
     "@war-chest/database": "workspace:^"
+    "@war-chest/feature-flags": "workspace:^"
     "@war-chest/game-engine": "workspace:^"
     drizzle-orm: "npm:0.45.2"
     fastify: "npm:5.11.2"
@@ -2682,6 +2697,7 @@ __metadata:
     "@war-chest/api-contracts": "workspace:^"
     "@war-chest/config": "workspace:^"
     "@war-chest/fake-database": "workspace:^"
+    "@war-chest/feature-flags": "workspace:^"
     "@war-chest/game-engine": "workspace:^"
     nice-web-routes: "npm:2.1.1"
     react: "npm:19.2.8"

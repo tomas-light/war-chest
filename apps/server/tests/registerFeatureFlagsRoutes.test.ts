@@ -1,5 +1,6 @@
 import type { Auth } from '@war-chest/auth';
 import type { DatabaseConnection } from '@war-chest/database';
+import { DEFAULT_RUNTIME_FEATURE_FLAGS } from '@war-chest/feature-flags';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { createApp } from '../src/createApp.js';
@@ -29,7 +30,11 @@ describe('runtime feature flags route', () => {
   });
 
   test('returns the current runtime feature flags', async () => {
-    read.mockResolvedValue({ gameHistory: true, spectatorMode: false });
+    const featureFlags = {
+      ...DEFAULT_RUNTIME_FEATURE_FLAGS,
+      spectatorMode: false,
+    };
+    read.mockResolvedValue(featureFlags);
 
     const response = await app.inject({
       method: 'GET',
@@ -38,10 +43,7 @@ describe('runtime feature flags route', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.headers['cache-control']).toBe('no-store');
-    expect(response.json()).toEqual({
-      gameHistory: true,
-      spectatorMode: false,
-    });
+    expect(response.json()).toEqual(featureFlags);
   });
 
   test('reports unavailable when the runtime file cannot be read', async () => {

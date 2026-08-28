@@ -1,5 +1,6 @@
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { DEFAULT_RUNTIME_FEATURE_FLAGS } from '@war-chest/feature-flags';
 import { createDatabase } from './client.js';
 import {
   gameEvents,
@@ -123,7 +124,7 @@ async function seedDatabase(): Promise<void> {
           type: 'GameCreated',
           version: 1,
           payload: {
-            featureFlags: {},
+            featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
             rulesVersion: 1,
           },
         })

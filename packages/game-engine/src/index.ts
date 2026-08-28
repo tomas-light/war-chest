@@ -45,7 +45,6 @@ export type { ApplicableViewEvent } from './view-events/ApplicableViewEvent.js';
 export { restoreGame } from './restoreGame.js';
 export { restoreView } from './restoreView.js';
 export type {
-  FeatureFlags,
   GamePlayer,
   GameState,
   GameStatus,

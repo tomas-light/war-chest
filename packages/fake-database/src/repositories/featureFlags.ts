@@ -1,11 +1,12 @@
-import type { FakeDatabaseConnection, FakeFeatureFlags } from '../schema.js';
+import type { RuntimeFeatureFlags } from '@war-chest/feature-flags';
+import type { FakeDatabaseConnection } from '../schema.js';
 import { createSchemaTable, runSchemaTableTransaction } from '../Table.js';
 
 const APPLICATION_FEATURE_FLAGS_ID = 'application';
 
 export interface FakeFeatureFlagsRepository {
-  getApplication(): Promise<FakeFeatureFlags>;
-  setApplication(featureFlags: FakeFeatureFlags, now?: Date): Promise<void>;
+  getApplication(): Promise<RuntimeFeatureFlags>;
+  setApplication(featureFlags: RuntimeFeatureFlags, now?: Date): Promise<void>;
 }
 
 export function createFakeFeatureFlagsRepository(
@@ -18,15 +19,19 @@ export function createFakeFeatureFlagsRepository(
 
   return { getApplication, setApplication };
 
-  async function getApplication(): Promise<FakeFeatureFlags> {
+  async function getApplication(): Promise<RuntimeFeatureFlags> {
     const record = await runtimeFeatureFlagsTable.get(
       APPLICATION_FEATURE_FLAGS_ID
     );
-    return { ...record?.featureFlags };
+    if (record === undefined) {
+      throw new Error('Fake runtime feature flags are not initialized.');
+    }
+
+    return { ...record.featureFlags };
   }
 
   async function setApplication(
-    featureFlags: FakeFeatureFlags,
+    featureFlags: RuntimeFeatureFlags,
     now = new Date()
   ): Promise<void> {
     await runSchemaTableTransaction(

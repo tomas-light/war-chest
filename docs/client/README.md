@@ -18,7 +18,7 @@ development и preview эти пути проксирует Vite, а в producti
 - генерация URL через `nice-web-routes`;
 - TanStack Query provider с общей конфигурацией запросов;
 - загрузка сессии, защищённые маршруты и logout;
-- Google Identity Services, Telegram и Yandex login в real-режиме;
+- вход через Google, Telegram и Yandex ID в real-режиме;
 - seeded fake-пользователи и сессии из `@war-chest/fake-database`;
 - Zustand-store активной игровой сессии;
 - real Socket.IO connection и минимальная fake-реализация;

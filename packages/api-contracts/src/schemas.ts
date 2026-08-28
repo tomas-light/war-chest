@@ -1,3 +1,4 @@
+import { runtimeFeatureFlagsSchema } from '@war-chest/feature-flags';
 import {
   type JsonValue,
   GAME_EVENT_VERSION,
@@ -39,7 +40,6 @@ const jsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
     z.record(z.string(), jsonValueSchema),
   ])
 );
-const featureFlagsSchema = z.record(z.string(), z.boolean());
 const gameIdSchema = z.uuid();
 const gameTeamSchema = z.enum(['black', 'white']);
 const eventMetadataSchema = z.object({
@@ -125,7 +125,7 @@ const privateMoveSchema = z
 export const gameViewSchema = z
   .object({
     currentPlayerId: z.string().nullable(),
-    featureFlags: featureFlagsSchema,
+    featureFlags: runtimeFeatureFlagsSchema,
     lastEventSequence: z.number().int().positive(),
     moveCount: z.number().int().nonnegative(),
     players: z.array(gameViewPlayerSchema).readonly(),
@@ -146,7 +146,7 @@ const gameCreatedViewEventSchema = eventMetadataSchema
   .extend({
     payload: z
       .object({
-        featureFlags: featureFlagsSchema,
+        featureFlags: runtimeFeatureFlagsSchema,
         rulesVersion: z.literal(GAME_RULES_VERSION),
       })
       .strict(),

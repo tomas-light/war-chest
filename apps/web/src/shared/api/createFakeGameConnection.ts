@@ -1,3 +1,4 @@
+import { DEFAULT_RUNTIME_FEATURE_FLAGS } from '@war-chest/feature-flags';
 import { GAME_RULES_VERSION } from '@war-chest/game-engine';
 import type { GameConnection, GameConnectionHandlers } from './gameConnection';
 
@@ -13,7 +14,7 @@ export function createFakeGameConnection(
           gameId,
           view: {
             currentPlayerId: null,
-            featureFlags: {},
+            featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
             lastEventSequence: 1,
             moveCount: 0,
             players: [],

@@ -15,44 +15,34 @@ export function LoginOptions({ onAuthenticated }: LoginOptionsProps) {
   const [pendingProvider, setPendingProvider] = useState<AuthProvider | null>(
     null
   );
-  const isPending = pendingProvider !== null;
+  const isProviderPending = pendingProvider !== null;
 
   return (
     <div className={classes.options}>
-      {backend === 'real' && webConfig.GOOGLE_CLIENT_ID !== '' ? (
-        <GoogleLoginButton
-          clientId={webConfig.GOOGLE_CLIENT_ID}
-          onCredential={handleGoogleCredential}
-          onError={handleGoogleError}
-        />
-      ) : (
-        <Button
-          className={classes.providerButton}
-          disabled={isPending || backend === 'real'}
-          onClick={() => void handleLogin('google')}
-        >
-          {backend === 'real' ? 'Google не настроен' : 'Продолжить с Google'}
-        </Button>
-      )}
+      {renderGoogleLoginOption()}
+
       <Button
         className={classes.providerButton}
-        disabled={isPending}
+        disabled={isProviderPending}
         onClick={() => void handleLogin('telegram')}
       >
         Продолжить с Telegram
       </Button>
+
       <Button
         className={classes.providerButton}
-        disabled={isPending}
+        disabled={isProviderPending}
         onClick={() => void handleLogin('yandex')}
       >
         Продолжить с Yandex ID
       </Button>
+
       {errorMessage === null ? null : (
         <p className={classes.error} role="alert">
           {errorMessage}
         </p>
       )}
+
       {backend === 'fake' ? (
         <p className={classes.hint}>
           Fake-режим создаёт отдельного тестового игрока для каждого способа
@@ -61,6 +51,28 @@ export function LoginOptions({ onAuthenticated }: LoginOptionsProps) {
       ) : null}
     </div>
   );
+
+  function renderGoogleLoginOption() {
+    if (backend === 'real' && webConfig.GOOGLE_CLIENT_ID !== '') {
+      return (
+        <GoogleLoginButton
+          clientId={webConfig.GOOGLE_CLIENT_ID}
+          onCredential={handleGoogleCredential}
+          onError={handleGoogleError}
+        />
+      );
+    }
+
+    return (
+      <Button
+        className={classes.providerButton}
+        disabled={isProviderPending || backend === 'real'}
+        onClick={() => void handleLogin('google')}
+      >
+        {backend === 'real' ? 'Google не настроен' : 'Продолжить с Google'}
+      </Button>
+    );
+  }
 
   async function handleLogin(
     provider: AuthProvider,

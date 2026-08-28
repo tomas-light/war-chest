@@ -1,7 +1,8 @@
+import type { RuntimeFeatureFlags } from '@war-chest/feature-flags';
+
 export type JsonValue =
   boolean | number | string | null | { [key: string]: JsonValue } | JsonValue[];
 
-export type FeatureFlags = Readonly<Record<string, boolean>>;
 export type GameStatus = 'waiting' | 'active' | 'finished';
 export type GameTeam = 'black' | 'white';
 export type PlayerPresence = 'connected' | 'defeated' | 'disconnected';
@@ -23,7 +24,7 @@ export interface GamePlayer {
 
 export interface GameState {
   currentPlayerId: string | null;
-  featureFlags: FeatureFlags;
+  featureFlags: RuntimeFeatureFlags;
   lastEventSequence: number;
   moveCount: number;
   players: readonly GamePlayer[];
@@ -49,7 +50,7 @@ export interface PrivateMove {
 
 export interface GameView {
   currentPlayerId: string | null;
-  featureFlags: FeatureFlags;
+  featureFlags: RuntimeFeatureFlags;
   lastEventSequence: number;
   moveCount: number;
   players: readonly GameViewPlayer[];

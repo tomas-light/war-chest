@@ -1,5 +1,5 @@
 {
-  "name": "@war-chest/api-contracts",
+  "name": "@war-chest/feature-flags",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",
@@ -14,8 +14,6 @@
     "types:watch": "tsc --build --watch"
   },
   "dependencies": {
-    "@war-chest/feature-flags": "workspace:^",
-    "@war-chest/game-engine": "workspace:^",
     "zod": "4.4.3"
   },
   "devDependencies": {

@@ -10,6 +10,9 @@
   "include": ["src"],
   "references": [
     {
+      "path": "../feature-flags"
+    },
+    {
       "path": "../game-engine"
     }
   ]

@@ -1,3 +1,4 @@
+import { DEFAULT_RUNTIME_FEATURE_FLAGS } from '@war-chest/feature-flags';
 import {
   type GameEventData,
   applyEvent,
@@ -27,7 +28,7 @@ const CURRENT_TIME = new Date('2026-08-16T12:00:00.000Z');
 const CREATE_REQUEST_HASH =
   'bdea43dc54d89791fa249a3ef1786b10e6cfe2be12570ab18fbb1a77b5161e02';
 const GAME_CREATED_EVENT: GameEventData = {
-  payload: { featureFlags: { spectatorMode: true }, rulesVersion: 1 },
+  payload: { featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS, rulesVersion: 1 },
   sequence: 1,
   type: 'GameCreated',
   version: 1,
@@ -100,9 +101,9 @@ describe('GameService', () => {
   });
 
   test('reads runtime flags and persists their GameCreated event', async () => {
-    vi.mocked(featureFlagsService.read).mockResolvedValue({
-      spectatorMode: true,
-    });
+    vi.mocked(featureFlagsService.read).mockResolvedValue(
+      DEFAULT_RUNTIME_FEATURE_FLAGS
+    );
     vi.mocked(gameRepository.createGame).mockResolvedValue({
       gameId: GAME_ID,
       status: 'created',
@@ -128,8 +129,11 @@ describe('GameService', () => {
 
   test('reads runtime flags again for every create request', async () => {
     vi.mocked(featureFlagsService.read)
-      .mockResolvedValueOnce({ firstRequest: true })
-      .mockResolvedValueOnce({ secondRequest: true });
+      .mockResolvedValueOnce({
+        ...DEFAULT_RUNTIME_FEATURE_FLAGS,
+        gameHistory: false,
+      })
+      .mockResolvedValueOnce(DEFAULT_RUNTIME_FEATURE_FLAGS);
     vi.mocked(gameRepository.createGame)
       .mockResolvedValueOnce({ gameId: GAME_ID, status: 'created' })
       .mockResolvedValueOnce({ status: 'commandIdConflict' });
