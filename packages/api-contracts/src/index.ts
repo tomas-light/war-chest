@@ -17,10 +17,13 @@ export {
   gameViewSchema,
   googleLoginRequestSchema,
   joinGameRequestSchema,
+  lobbyGamesResponseSchema,
+  lobbyUpdatedMessageSchema,
   publicUserSchema,
   sessionResponseSchema,
   SOCKET_IO_PATH,
   startGameRequestSchema,
+  swapPlayerPositionsRequestSchema,
 } from './schemas.js';
 export type {
   ApiError,
@@ -38,9 +41,14 @@ export type {
   GoogleLoginRequest,
   InterServerEvents,
   JoinGameRequest,
+  LobbyGame,
+  LobbyGamePlayer,
+  LobbyGamesResponse,
+  LobbyUpdatedMessage,
   PublicUser,
   ServerToClientEvents,
   SessionResponse,
   SocketData,
   StartGameRequest,
+  SwapPlayerPositionsRequest,
 } from './types.js';

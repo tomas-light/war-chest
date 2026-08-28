@@ -4,6 +4,9 @@ export const appRoutes = createNiceWebRoutes({
   games: {
     gameId: () => ({}),
     new: {},
+    play: {
+      gameId: () => ({}),
+    },
   },
   history: {
     gameId: () => ({}),

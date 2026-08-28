@@ -9,6 +9,7 @@ interface EventMetadata {
 
 export interface GameCreatedViewEventData extends EventMetadata {
   payload: {
+    creatorId: string;
     featureFlags: RuntimeFeatureFlags;
     rulesVersion: typeof GAME_RULES_VERSION;
   };
@@ -22,6 +23,25 @@ export interface PlayerJoinedViewEventData extends EventMetadata {
     team: GameTeam;
   };
   type: 'PlayerJoined';
+}
+
+export interface PlayerPositionChangedViewEventData extends EventMetadata {
+  payload: {
+    playerId: string;
+    seat: number;
+    team: GameTeam;
+  };
+  type: 'PlayerPositionChanged';
+}
+
+export interface PlayerPositionsSwappedViewEventData extends EventMetadata {
+  payload: {
+    positions: [
+      { playerId: string; seat: number; team: GameTeam },
+      { playerId: string; seat: number; team: GameTeam },
+    ];
+  };
+  type: 'PlayerPositionsSwapped';
 }
 
 export interface PlayerDisconnectedViewEventData extends EventMetadata {
@@ -93,6 +113,8 @@ export type GameViewEventData =
   | PlayerDefeatedViewEventData
   | PlayerDisconnectedViewEventData
   | PlayerJoinedViewEventData
+  | PlayerPositionChangedViewEventData
+  | PlayerPositionsSwappedViewEventData
   | PlayerReconnectedViewEventData
   | TestMovePerformedViewEventData
   | ViewSequenceAdvancedEventData;

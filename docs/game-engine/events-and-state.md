@@ -117,16 +117,18 @@ switch только его механики, а общий `hydrateEvent` мен
 
 ## Внутренние события
 
-| Событие              | Данные                                               | Изменение состояния                                  |
-| -------------------- | ---------------------------------------------------- | ---------------------------------------------------- |
-| `GameCreated`        | `featureFlags`, `rulesVersion`                       | Создаёт `waiting`, фиксирует флаги и пустые команды  |
-| `PlayerJoined`       | `playerId`, `team`, `seat`                           | Добавляет подключённого игрока на выбранную позицию  |
-| `GameStarted`        | `firstPlayerId`                                      | Переводит игру в `active` и задаёт очередь           |
-| `PlayerDisconnected` | Игрок и точный reconnect deadline                    | Сохраняет отключение и deadline                      |
-| `PlayerReconnected`  | Игрок                                                | Возвращает presence в `connected` и очищает deadline |
-| `PlayerDefeated`     | Игрок и `disconnectTimeout`                          | Фиксирует поражение и очищает deadline               |
-| `TestMovePerformed`  | Игрок, номер хода, следующий игрок, приватные данные | Обновляет очередь, общий и личный счётчики           |
-| `GameFinished`       | `winnerTeam`                                         | Фиксирует победившую команду и очищает текущий ход   |
+| Событие                  | Данные                                               | Изменение состояния                                  |
+| ------------------------ | ---------------------------------------------------- | ---------------------------------------------------- |
+| `GameCreated`            | `creatorId`, `featureFlags`, `rulesVersion`          | Создаёт `waiting`, фиксирует создателя и флаги       |
+| `PlayerJoined`           | `playerId`, `team`, `seat`                           | Добавляет подключённого игрока на выбранную позицию  |
+| `PlayerPositionChanged`  | `playerId`, `team`, `seat`                           | Переносит игрока на другую свободную позицию         |
+| `PlayerPositionsSwapped` | две конечные позиции игроков                         | Атомарно меняет команды и места двух игроков         |
+| `GameStarted`            | `firstPlayerId`                                      | Переводит игру в `active` и задаёт очередь           |
+| `PlayerDisconnected`     | Игрок и точный reconnect deadline                    | Сохраняет отключение и deadline                      |
+| `PlayerReconnected`      | Игрок                                                | Возвращает presence в `connected` и очищает deadline |
+| `PlayerDefeated`         | Игрок и `disconnectTimeout`                          | Фиксирует поражение и очищает deadline               |
+| `TestMovePerformed`      | Игрок, номер хода, следующий игрок, приватные данные | Обновляет очередь, общий и личный счётчики           |
+| `GameFinished`           | `winnerTeam`                                         | Фиксирует победившую команду и очищает текущий ход   |
 
 Runtime-класс события не проверяет игровые правила, по которым оно было
 создано. Он считает событие уже подтверждённым фактом и детерминированно строит
@@ -146,7 +148,7 @@ Runtime-класс события не проверяет игровые пра�
 `state.lastEventSequence + 1`; это поле не является отдельной версией.
 
 Presence timestamps сериализуются как канонические строки ISO 8601 UTC. В
-`GameCreated` дополнительно хранится `rulesVersion`. Сейчас
+`GameCreated` дополнительно хранятся `creatorId` и `rulesVersion`. Сейчас
 `GAME_RULES_VERSION` также равна `1`. Feature flags копируются в событие, а
 затем в состояние, поэтому последующие команды и replay не читают актуальный
 runtime-файл повторно.

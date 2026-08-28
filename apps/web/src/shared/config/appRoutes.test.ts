@@ -6,6 +6,7 @@ test.each([
   ['lobby', appRoutes.lobby.url(), '/lobby'],
   ['new game', appRoutes.games.new.url(), '/games/new'],
   ['active game', appRoutes.games.gameId().url(), '/games/:gameId'],
+  ['game board', appRoutes.games.play.gameId().url(), '/games/play/:gameId'],
   ['profile', appRoutes.profile.url(), '/profile'],
   ['user profile', appRoutes.users.userId().url(), '/users/:userId'],
   ['game history', appRoutes.history.gameId().url(), '/history/:gameId'],

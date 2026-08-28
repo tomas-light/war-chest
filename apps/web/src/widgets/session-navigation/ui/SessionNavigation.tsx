@@ -1,6 +1,7 @@
 import { type ReactNode, lazy, Suspense, useState } from 'react';
 import { Link, Outlet } from 'react-router';
 import { useAuthSession } from '#/entities/auth-session';
+import { UserAvatar } from '#/entities/user';
 import { Button } from '#/shared/ui/button';
 import { WarChestLogo } from '#/shared/ui/war-chest-logo';
 import classes from './SessionNavigation.module.scss';
@@ -49,8 +50,16 @@ export function SessionNavigation(props: Props) {
           )}
         </nav>
         <div className={classes.session}>
+          {session === null || session === undefined ? null : (
+            <UserAvatar size="small" user={session.user} />
+          )}
           <span
-            className={isSessionPending ? classes.sessionLoading : undefined}
+            className={[
+              classes.sessionName,
+              isSessionPending ? classes.sessionLoading : undefined,
+            ]
+              .filter(Boolean)
+              .join(' ')}
           >
             {isSessionPending ? 'Проверяем сессию' : session?.user.displayName}
           </span>

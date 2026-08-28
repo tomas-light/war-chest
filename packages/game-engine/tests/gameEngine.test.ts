@@ -38,10 +38,15 @@ describe('game creation', () => {
     const featureFlags: RuntimeFeatureFlags = {
       ...DEFAULT_RUNTIME_FEATURE_FLAGS,
     };
-    const event = createGame({ featureFlags, type: 'CreateGame' });
+    const event = createGame({
+      creatorId: 'player-one',
+      featureFlags,
+      type: 'CreateGame',
+    });
 
     expect(event).toEqual({
       payload: {
+        creatorId: 'player-one',
         featureFlags,
         rulesVersion: 1,
       },
@@ -55,7 +60,11 @@ describe('game creation', () => {
     const featureFlags: RuntimeFeatureFlags = {
       ...DEFAULT_RUNTIME_FEATURE_FLAGS,
     };
-    const event = createGame({ featureFlags, type: 'CreateGame' });
+    const event = createGame({
+      creatorId: 'player-one',
+      featureFlags,
+      type: 'CreateGame',
+    });
 
     expect(applyEvent(null, event)).toMatchObject({
       featureFlags,
@@ -66,6 +75,7 @@ describe('game creation', () => {
 
   test('creates empty team arrays from the first event', () => {
     const event = createGame({
+      creatorId: 'player-one',
       featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
       type: 'CreateGame',
     });
@@ -84,6 +94,7 @@ describe('technical scenario', () => {
 
   beforeEach(() => {
     const gameCreatedEvent = createGame({
+      creatorId: 'player-one',
       featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
       type: 'CreateGame',
     });
@@ -234,6 +245,7 @@ describe('commands rejected while waiting', () => {
 
   beforeEach(() => {
     const gameCreated = createGame({
+      creatorId: 'player-one',
       featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
       type: 'CreateGame',
     });
@@ -246,14 +258,17 @@ describe('commands rejected while waiting', () => {
     waitingState = playerJoined.reduce(applyEvent, waitingState);
   });
 
-  test('rejects a duplicate player', () => {
-    expect(
-      decide(waitingState, 'player-one', {
-        seat: 1,
-        team: 'black',
-        type: 'JoinGame',
-      })
-    ).toEqual([]);
+  test('changes the joined player position while another place is free', () => {
+    const [positionChanged] = decide(waitingState, 'player-one', {
+      seat: 1,
+      team: 'black',
+      type: 'JoinGame',
+    });
+
+    expect(positionChanged).toMatchObject({
+      payload: { playerId: 'player-one', seat: 1, team: 'black' },
+      type: 'PlayerPositionChanged',
+    });
   });
 
   test('rejects start before the second player joins', () => {
@@ -262,7 +277,7 @@ describe('commands rejected while waiting', () => {
     );
   });
 
-  test('rejects start from a player who has not joined', () => {
+  test('rejects start from a non-creator who has not joined', () => {
     const secondPlayerJoined = decide(waitingState, 'player-two', {
       seat: 1,
       team: 'black',
@@ -275,6 +290,91 @@ describe('commands rejected while waiting', () => {
 
     expect(
       decide(fullWaitingState, 'player-three', { type: 'StartGame' })
+    ).toEqual([]);
+  });
+
+  test('rejects start from a joined player who is not the creator', () => {
+    const secondPlayerJoined = decide(waitingState, 'player-two', {
+      seat: 1,
+      team: 'black',
+      type: 'JoinGame',
+    });
+    const fullWaitingState = secondPlayerJoined.reduce(
+      applyEvent,
+      waitingState
+    );
+
+    expect(
+      decide(fullWaitingState, 'player-two', { type: 'StartGame' })
+    ).toEqual([]);
+  });
+
+  test('allows the creator to start without occupying a position', () => {
+    const gameCreated = createGame({
+      creatorId: 'game-creator',
+      featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+      type: 'CreateGame',
+    });
+    let fullWaitingState = applyEvent(null, gameCreated);
+    const commands: readonly [string, GameCommandData][] = [
+      ['player-one', { seat: 1, team: 'white', type: 'JoinGame' }],
+      ['player-two', { seat: 1, team: 'black', type: 'JoinGame' }],
+    ];
+
+    for (const [playerId, command] of commands) {
+      fullWaitingState = decide(fullWaitingState, playerId, command).reduce(
+        applyEvent,
+        fullWaitingState
+      );
+    }
+
+    expect(
+      decide(fullWaitingState, 'game-creator', { type: 'StartGame' })
+    ).toEqual([expect.objectContaining({ type: 'GameStarted' })]);
+  });
+
+  test('allows the creator to swap two occupied positions', () => {
+    const secondPlayerJoined = decide(waitingState, 'player-two', {
+      seat: 1,
+      team: 'black',
+      type: 'JoinGame',
+    });
+    const fullWaitingState = secondPlayerJoined.reduce(
+      applyEvent,
+      waitingState
+    );
+    const events = decide(fullWaitingState, 'player-one', {
+      type: 'SwapPlayerPositions',
+    });
+    const swappedState = events.reduce(applyEvent, fullWaitingState);
+
+    expect(swappedState.players).toEqual([
+      expect.objectContaining({ id: 'player-one', team: 'black' }),
+      expect.objectContaining({ id: 'player-two', team: 'white' }),
+    ]);
+  });
+
+  test('rejects a position swap from a non-creator', () => {
+    const secondPlayerJoined = decide(waitingState, 'player-two', {
+      seat: 1,
+      team: 'black',
+      type: 'JoinGame',
+    });
+    const fullWaitingState = secondPlayerJoined.reduce(
+      applyEvent,
+      waitingState
+    );
+
+    expect(
+      decide(fullWaitingState, 'player-two', {
+        type: 'SwapPlayerPositions',
+      })
+    ).toEqual([]);
+  });
+
+  test('rejects a position swap while a place is free', () => {
+    expect(
+      decide(waitingState, 'player-one', { type: 'SwapPlayerPositions' })
     ).toEqual([]);
   });
 
@@ -298,6 +398,7 @@ describe('explicit player seat selection', () => {
 
   beforeEach(() => {
     const gameCreated = createGame({
+      creatorId: 'player-one',
       featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
       type: 'CreateGame',
     });
@@ -325,6 +426,34 @@ describe('explicit player seat selection', () => {
     });
 
     expect(playerJoined.reduce(applyEvent, waitingState).teams).toEqual({
+      black: ['player-one'],
+      white: [],
+    });
+  });
+
+  test('moves the joined player between teams before the game starts', () => {
+    const playerJoined = decide(waitingState, 'player-one', {
+      seat: 1,
+      team: 'white',
+      type: 'JoinGame',
+    });
+    waitingState = playerJoined.reduce(applyEvent, waitingState);
+    const positionChanged = decide(waitingState, 'player-one', {
+      seat: 1,
+      team: 'black',
+      type: 'JoinGame',
+    });
+
+    const changedState = positionChanged.reduce(applyEvent, waitingState);
+
+    expect(changedState.players).toEqual([
+      expect.objectContaining({
+        id: 'player-one',
+        seat: 1,
+        team: 'black',
+      }),
+    ]);
+    expect(changedState.teams).toEqual({
       black: ['player-one'],
       white: [],
     });
@@ -380,6 +509,7 @@ describe('team formation from selected positions', () => {
 
   beforeEach(() => {
     const gameCreated = createGame({
+      creatorId: 'player-one',
       featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
       type: 'CreateGame',
     });
@@ -416,13 +546,14 @@ describe('commands rejected while active', () => {
 
   beforeEach(() => {
     const gameCreated = createGame({
+      creatorId: 'player-one',
       featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
       type: 'CreateGame',
     });
     const commands: readonly [string, GameCommandData][] = [
       ['player-one', { seat: 1, team: 'white', type: 'JoinGame' }],
       ['player-two', { seat: 1, team: 'black', type: 'JoinGame' }],
-      ['player-two', { type: 'StartGame' }],
+      ['player-one', { type: 'StartGame' }],
     ];
 
     activeState = applyEvent(null, gameCreated);
@@ -467,6 +598,7 @@ describe('safe player and spectator views', () => {
 
   beforeEach(() => {
     const gameCreated = createGame({
+      creatorId: 'player-one',
       featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
       type: 'CreateGame',
     });
@@ -572,6 +704,7 @@ describe('safe player and spectator views', () => {
 
 test('advances a created view for a fully hidden event', () => {
   const gameCreated = createGame({
+    creatorId: 'player-one',
     featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
     type: 'CreateGame',
   });
@@ -643,6 +776,7 @@ describe('history beginning with an invalid event', () => {
 describe('repeated GameCreated event', () => {
   test('rejects a repeated internal event', () => {
     const gameCreated = createGame({
+      creatorId: 'player-one',
       featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
       type: 'CreateGame',
     });
@@ -654,6 +788,7 @@ describe('repeated GameCreated event', () => {
 
   test('rejects a repeated safe event', () => {
     const gameCreated = createGame({
+      creatorId: 'player-one',
       featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
       type: 'CreateGame',
     });

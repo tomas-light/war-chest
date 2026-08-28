@@ -1,0 +1,229 @@
+.page {
+  width: min(1180px, 100%);
+  display: grid;
+  gap: 28px;
+  padding: clamp(28px, 5vw, 64px);
+  margin: 0 auto;
+}
+
+.hero {
+  position: relative;
+  display: flex;
+  gap: 24px;
+  align-items: end;
+  justify-content: space-between;
+  padding: clamp(24px, 4vw, 42px);
+  border: 1px solid rgb(199 150 53 / 36%);
+  border-radius: 4px 28px;
+  background:
+    linear-gradient(135deg, rgb(23 32 35 / 94%), rgb(8 13 16 / 96%)),
+    var(--wc-color-surface-raised);
+  box-shadow: 0 24px 60px rgb(0 0 0 / 30%);
+}
+
+.hero:after {
+  position: absolute;
+  right: 12%;
+  bottom: -1px;
+  width: 30%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--wc-color-cyan));
+  box-shadow: 0 0 12px var(--wc-color-cyan);
+  content: '';
+}
+
+.hero h1 {
+  margin: 4px 0 12px;
+  color: var(--wc-color-text);
+  font-family: var(--wc-font-display);
+  font-size: clamp(38px, 6vw, 60px);
+}
+
+.hero p {
+  max-width: 64ch;
+  margin: 0;
+  color: var(--wc-color-text-muted);
+  line-height: 1.55;
+}
+
+.eyebrow {
+  color: var(--wc-color-cyan-soft) !important;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.games {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.gameCard,
+.state {
+  display: grid;
+  gap: 20px;
+  padding: 24px;
+  border: 1px solid rgb(199 150 53 / 28%);
+  border-radius: 3px 20px;
+  background: linear-gradient(145deg, rgb(23 32 35 / 90%), rgb(8 13 16 / 94%));
+  box-shadow: inset 0 0 36px rgb(0 0 0 / 20%);
+}
+
+.state button {
+  justify-self: start;
+}
+
+.gameHeaderActions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.gameHeader {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.gameHeader time {
+  color: var(--wc-color-text-muted);
+  font-size: 12px;
+}
+
+.openGameButton {
+  width: 44px;
+  min-height: 44px;
+  display: grid;
+  padding: 0;
+  border-radius: 2px 12px;
+  place-items: center;
+}
+
+.openGameIcon {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.status {
+  color: var(--wc-color-cyan-soft);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.status[data-status='waiting'] {
+  color: var(--wc-color-brass-bright);
+}
+
+.teams {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+.teamSlot {
+  display: grid;
+  gap: 6px;
+}
+
+.playerIdentity {
+  min-width: 0;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.playerIdentity strong {
+  min-width: 0;
+}
+
+.teamSlot span {
+  color: var(--wc-color-text-muted);
+  font-size: 12px;
+}
+
+.teamSlot strong {
+  overflow: hidden;
+  color: var(--wc-color-text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.versus {
+  color: var(--wc-color-cyan);
+  font-family: var(--wc-font-display);
+  font-size: 12px;
+}
+
+.state {
+  place-items: center;
+  text-align: center;
+}
+
+.state h2,
+.state p {
+  margin: 0;
+}
+
+.state p {
+  color: var(--wc-color-text-muted);
+}
+
+.error {
+  color: var(--wc-color-error) !important;
+}
+
+@media (width <= 760px) {
+  .hero {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .games {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (width <= 480px) {
+  .page {
+    padding: 18px 14px 32px;
+  }
+
+  .hero,
+  .gameCard,
+  .state {
+    padding: 20px;
+  }
+
+  .teams {
+    grid-template-columns: 1fr;
+  }
+
+  .versus {
+    display: none;
+  }
+
+  .state button,
+  .hero button {
+    width: 100%;
+  }
+
+  .gameHeader {
+    align-items: start;
+  }
+
+  .gameHeaderActions {
+    flex-direction: column;
+    align-items: end;
+  }
+}

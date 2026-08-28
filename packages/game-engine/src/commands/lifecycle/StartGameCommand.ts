@@ -20,13 +20,11 @@ export class StartGameCommand implements DecidableCommand<StartGameCommandData> 
     const isWaitingGame = state.status === 'waiting';
     const hasRequiredPlayers = state.players.length === REQUIRED_PLAYER_COUNT;
 
-    // Заполненные места не означают, что команду отправил участник игры:
-    // посторонний игрок или зритель не должен иметь возможность начать партию.
-    const isJoinedPlayer = state.players.some(
-      (player) => player.id === playerId
-    );
+    // Состав может заполниться без участия создателя, но право начать партию
+    // остаётся только у пользователя, который создал эту игру.
+    const isGameCreator = state.creatorId === playerId;
 
-    if (!isWaitingGame || !hasRequiredPlayers || !isJoinedPlayer) {
+    if (!isWaitingGame || !hasRequiredPlayers || !isGameCreator) {
       return [];
     }
 

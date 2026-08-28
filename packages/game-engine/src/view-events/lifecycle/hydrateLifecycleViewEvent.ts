@@ -6,6 +6,8 @@ import { GameStartedViewEvent } from './GameStartedViewEvent.js';
 import { PlayerDefeatedViewEvent } from './PlayerDefeatedViewEvent.js';
 import { PlayerDisconnectedViewEvent } from './PlayerDisconnectedViewEvent.js';
 import { PlayerJoinedViewEvent } from './PlayerJoinedViewEvent.js';
+import { PlayerPositionChangedViewEvent } from './PlayerPositionChangedViewEvent.js';
+import { PlayerPositionsSwappedViewEvent } from './PlayerPositionsSwappedViewEvent.js';
 import { PlayerReconnectedViewEvent } from './PlayerReconnectedViewEvent.js';
 
 export function hydrateLifecycleViewEvent(
@@ -16,6 +18,10 @@ export function hydrateLifecycleViewEvent(
       return GameCreatedViewEvent.fromData(data);
     case 'PlayerJoined':
       return PlayerJoinedViewEvent.fromData(data);
+    case 'PlayerPositionChanged':
+      return PlayerPositionChangedViewEvent.fromData(data);
+    case 'PlayerPositionsSwapped':
+      return PlayerPositionsSwappedViewEvent.fromData(data);
     case 'PlayerDisconnected':
       return PlayerDisconnectedViewEvent.fromData(data);
     case 'PlayerReconnected':

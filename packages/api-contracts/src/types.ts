@@ -35,6 +35,24 @@ export interface GameResponse {
   view: GameView;
 }
 
+export interface LobbyGamePlayer extends PublicUser {
+  seat: number;
+  team: 'black' | 'white';
+}
+
+export interface LobbyGame {
+  createdAt: string;
+  id: string;
+  players: readonly LobbyGamePlayer[];
+  startedAt: string | null;
+  status: 'active' | 'waiting';
+}
+
+export interface LobbyGamesResponse {
+  currentPlayerGameId: string | null;
+  items: readonly LobbyGame[];
+}
+
 export interface JoinGameRequest {
   commandId: string;
   expectedVersion: number;
@@ -43,6 +61,11 @@ export interface JoinGameRequest {
 }
 
 export interface StartGameRequest {
+  commandId: string;
+  expectedVersion: number;
+}
+
+export interface SwapPlayerPositionsRequest {
   commandId: string;
   expectedVersion: number;
 }
@@ -89,17 +112,23 @@ export interface GameErrorMessage {
   message: string;
 }
 
+export interface LobbyUpdatedMessage {
+  gameId: string;
+}
+
 export interface ClientToServerEvents {
   'game:command': (message: GameCommandMessage) => void;
   'game:join': (message: GameJoinMessage) => void;
   'game:leave': (message: GameLeaveMessage) => void;
   'game:sync': (message: GameSyncMessage) => void;
+  'lobby:subscribe': (acknowledge: () => void) => void;
 }
 
 export interface ServerToClientEvents {
   'game:error': (message: GameErrorMessage) => void;
   'game:events': (message: GameEventsMessage) => void;
   'game:snapshot': (message: GameSnapshotMessage) => void;
+  'lobby:updated': (message: LobbyUpdatedMessage) => void;
 }
 
 export interface InterServerEvents {}

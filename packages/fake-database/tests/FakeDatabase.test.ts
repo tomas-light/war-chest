@@ -284,14 +284,12 @@ describe('fake database', () => {
         participants: [
           {
             gameId: game.id,
-            role: 'player',
             seat: 1,
             team: 'white',
             userId: FAKE_SEED_IDENTIFIERS.googleUser,
           },
           {
             gameId: game.id,
-            role: 'player',
             seat: 1,
             team: 'white',
             userId: FAKE_SEED_IDENTIFIERS.telegramUser,
@@ -318,14 +316,12 @@ describe('fake database', () => {
       participants: [
         {
           gameId: game.id,
-          role: 'player',
           seat: 1,
           team: 'white',
           userId: FAKE_SEED_IDENTIFIERS.googleUser,
         },
         {
           gameId: game.id,
-          role: 'player',
           seat: 1,
           team: 'black',
           userId: FAKE_SEED_IDENTIFIERS.telegramUser,
@@ -338,12 +334,12 @@ describe('fake database', () => {
     ).resolves.toHaveLength(2);
   });
 
-  test('rejects a player seat without a team', async () => {
+  test('rejects a non-positive player seat', async () => {
     const game: FakeGame = {
       createdAt: new Date('2026-08-03T10:00:00.000Z'),
       currentVersion: 0,
       finishedAt: null,
-      id: 'seat-without-team-game',
+      id: 'invalid-seat-game',
       startedAt: null,
       status: 'waiting',
       winnerTeam: null,
@@ -356,74 +352,13 @@ describe('fake database', () => {
         participants: [
           {
             gameId: game.id,
-            role: 'player',
-            seat: 1,
-            team: null,
-            userId: FAKE_SEED_IDENTIFIERS.googleUser,
-          },
-        ],
-      })
-    ).rejects.toThrow(
-      'A fake participant seat and team must be selected together.'
-    );
-  });
-
-  test('rejects a player team without a seat', async () => {
-    const game: FakeGame = {
-      createdAt: new Date('2026-08-03T10:00:00.000Z'),
-      currentVersion: 0,
-      finishedAt: null,
-      id: 'team-without-seat-game',
-      startedAt: null,
-      status: 'waiting',
-      winnerTeam: null,
-    };
-
-    await expect(
-      database.games.saveChanges({
-        events: [],
-        game,
-        participants: [
-          {
-            gameId: game.id,
-            role: 'player',
-            seat: null,
+            seat: 0,
             team: 'white',
             userId: FAKE_SEED_IDENTIFIERS.googleUser,
           },
         ],
       })
-    ).rejects.toThrow(
-      'A fake participant seat and team must be selected together.'
-    );
-  });
-
-  test('rejects a player position assigned to a spectator', async () => {
-    const game: FakeGame = {
-      createdAt: new Date('2026-08-03T10:00:00.000Z'),
-      currentVersion: 0,
-      finishedAt: null,
-      id: 'spectator-team-game',
-      startedAt: null,
-      status: 'waiting',
-      winnerTeam: null,
-    };
-
-    await expect(
-      database.games.saveChanges({
-        events: [],
-        game,
-        participants: [
-          {
-            gameId: game.id,
-            role: 'spectator',
-            seat: 1,
-            team: 'white',
-            userId: FAKE_SEED_IDENTIFIERS.googleUser,
-          },
-        ],
-      })
-    ).rejects.toThrow('A fake spectator cannot occupy a player position.');
+    ).rejects.toThrow('A fake player seat must be positive.');
   });
 
   test('preserves changed application flags when the database reopens', async () => {
@@ -513,6 +448,7 @@ describe('fake database', () => {
       gameId: game.id,
       id: 'first-event',
       payload: {
+        creatorId: FAKE_SEED_IDENTIFIERS.googleUser,
         featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
         rulesVersion: 1,
       },
@@ -556,6 +492,7 @@ describe('fake database', () => {
       gameId: game.id,
       id: 'atomic-game-created',
       payload: {
+        creatorId: FAKE_SEED_IDENTIFIERS.googleUser,
         featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
         rulesVersion: 1,
       },
@@ -629,6 +566,7 @@ describe('fake database', () => {
           gameId: game.id,
           id: 'feature-flags-event',
           payload: {
+            creatorId: FAKE_SEED_IDENTIFIERS.googleUser,
             featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
             rulesVersion: 1,
           },
@@ -644,6 +582,7 @@ describe('fake database', () => {
 
     const [gameCreatedEvent] = await database.games.getEvents(game.id);
     expect(gameCreatedEvent?.payload).toEqual({
+      creatorId: FAKE_SEED_IDENTIFIERS.googleUser,
       featureFlags: replacementFeatureFlags,
       rulesVersion: 1,
     });

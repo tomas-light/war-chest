@@ -16,15 +16,22 @@ export class JoinGameCommand implements DecidableCommand<JoinGameCommandData> {
     const isSupportedPosition = isGamePosition(this.data.team, this.data.seat);
     const isAvailablePosition = !state.players.some(
       (player) =>
-        player.team === this.data.team && player.seat === this.data.seat
+        player.id !== playerId &&
+        player.team === this.data.team &&
+        player.seat === this.data.seat
     );
-    const isNewPlayer = !state.players.some((player) => player.id === playerId);
+    const existingPlayer = state.players.find(
+      (player) => player.id === playerId
+    );
+    const hasRequestedPosition =
+      existingPlayer?.team === this.data.team &&
+      existingPlayer.seat === this.data.seat;
 
     if (
       !isWaitingGame ||
       !isSupportedPosition ||
       !isAvailablePosition ||
-      !isNewPlayer
+      hasRequestedPosition
     ) {
       return [];
     }
@@ -37,7 +44,10 @@ export class JoinGameCommand implements DecidableCommand<JoinGameCommandData> {
           team: this.data.team,
         },
         sequence: state.lastEventSequence + 1,
-        type: 'PlayerJoined',
+        type:
+          existingPlayer === undefined
+            ? 'PlayerJoined'
+            : 'PlayerPositionChanged',
         version: GAME_EVENT_VERSION,
       },
     ];

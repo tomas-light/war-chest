@@ -19,9 +19,12 @@ import type {
   GameSyncMessage,
   GoogleLoginRequest,
   JoinGameRequest,
+  LobbyGamesResponse,
+  LobbyUpdatedMessage,
   PublicUser,
   SessionResponse,
   StartGameRequest,
+  SwapPlayerPositionsRequest,
 } from './types.js';
 
 export const API_PREFIX = '/api';
@@ -78,7 +81,9 @@ export const apiErrorSchema: z.ZodType<ApiError> = z
   .strict();
 
 export const createGameRequestSchema: z.ZodType<CreateGameRequest> = z
-  .object({ commandId: z.uuid() })
+  .object({
+    commandId: z.uuid(),
+  })
   .strict();
 
 export const gameParamsSchema = z.object({ gameId: gameIdSchema }).strict();
@@ -105,6 +110,15 @@ export const startGameRequestSchema: z.ZodType<StartGameRequest> = z
   })
   .strict();
 
+type SwapPlayerPositionsSchema = z.ZodType<SwapPlayerPositionsRequest>;
+
+export const swapPlayerPositionsRequestSchema: SwapPlayerPositionsSchema = z
+  .object({
+    commandId: z.uuid(),
+    expectedVersion: z.number().int().nonnegative(),
+  })
+  .strict();
+
 const gameViewPlayerSchema = z
   .object({
     id: z.string(),
@@ -124,6 +138,7 @@ const privateMoveSchema = z
 
 export const gameViewSchema = z
   .object({
+    creatorId: z.string(),
     currentPlayerId: z.string().nullable(),
     featureFlags: runtimeFeatureFlagsSchema,
     lastEventSequence: z.number().int().positive(),
@@ -146,6 +161,7 @@ const gameCreatedViewEventSchema = eventMetadataSchema
   .extend({
     payload: z
       .object({
+        creatorId: z.string(),
         featureFlags: runtimeFeatureFlagsSchema,
         rulesVersion: z.literal(GAME_RULES_VERSION),
       })
@@ -163,6 +179,43 @@ const playerJoinedViewEventSchema = eventMetadataSchema
       })
       .strict(),
     type: z.literal('PlayerJoined'),
+  })
+  .strict();
+const playerPositionChangedViewEventSchema = eventMetadataSchema
+  .extend({
+    payload: z
+      .object({
+        playerId: z.string(),
+        seat: z.number().int().positive(),
+        team: gameTeamSchema,
+      })
+      .strict(),
+    type: z.literal('PlayerPositionChanged'),
+  })
+  .strict();
+const playerPositionsSwappedViewEventSchema = eventMetadataSchema
+  .extend({
+    payload: z
+      .object({
+        positions: z.tuple([
+          z
+            .object({
+              playerId: z.string(),
+              seat: z.number().int().positive(),
+              team: gameTeamSchema,
+            })
+            .strict(),
+          z
+            .object({
+              playerId: z.string(),
+              seat: z.number().int().positive(),
+              team: gameTeamSchema,
+            })
+            .strict(),
+        ]),
+      })
+      .strict(),
+    type: z.literal('PlayerPositionsSwapped'),
   })
   .strict();
 const playerDisconnectedViewEventSchema = eventMetadataSchema
@@ -225,6 +278,8 @@ const viewSequenceAdvancedEventSchema = eventMetadataSchema
 export const gameViewEventSchema = z.discriminatedUnion('type', [
   gameCreatedViewEventSchema,
   playerJoinedViewEventSchema,
+  playerPositionChangedViewEventSchema,
+  playerPositionsSwappedViewEventSchema,
   playerDisconnectedViewEventSchema,
   playerReconnectedViewEventSchema,
   playerDefeatedViewEventSchema,
@@ -239,6 +294,39 @@ export const gameResponseSchema: z.ZodType<GameResponse> = z
     gameId: gameIdSchema,
     view: gameViewSchema,
   })
+  .strict();
+
+const lobbyGamePlayerSchema = z
+  .object({
+    avatarVersion: z.string().nullable(),
+    displayName: z.string(),
+    id: z.string(),
+    seat: z.number().int().positive(),
+    team: gameTeamSchema,
+  })
+  .strict();
+
+export const lobbyGamesResponseSchema: z.ZodType<LobbyGamesResponse> = z
+  .object({
+    currentPlayerGameId: gameIdSchema.nullable(),
+    items: z
+      .array(
+        z
+          .object({
+            createdAt: z.iso.datetime(),
+            id: gameIdSchema,
+            players: z.array(lobbyGamePlayerSchema).readonly(),
+            startedAt: z.iso.datetime().nullable(),
+            status: z.enum(['active', 'waiting']),
+          })
+          .strict()
+      )
+      .readonly(),
+  })
+  .strict();
+
+export const lobbyUpdatedMessageSchema: z.ZodType<LobbyUpdatedMessage> = z
+  .object({ gameId: gameIdSchema })
   .strict();
 
 export const gameEventsResponseSchema: z.ZodType<GameEventsResponse> = z
@@ -258,6 +346,7 @@ const gameCommandSchema = z.discriminatedUnion('type', [
     })
     .strict(),
   z.object({ type: z.literal('StartGame') }).strict(),
+  z.object({ type: z.literal('SwapPlayerPositions') }).strict(),
   z
     .object({
       privateData: jsonValueSchema.optional(),

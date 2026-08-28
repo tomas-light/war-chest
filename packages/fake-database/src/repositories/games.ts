@@ -25,6 +25,7 @@ export interface FakeGameChanges {
 }
 
 export interface FakeGameRepository {
+  findCurrentPlayerGame(userId: string): Promise<FakeGame | null>;
   findProcessedCommand(commandId: string): Promise<FakeProcessedCommand | null>;
   getById(gameId: string): Promise<FakeGame | null>;
   getEvents(
@@ -58,6 +59,7 @@ export function createFakeGameRepository(
   );
 
   return {
+    findCurrentPlayerGame,
     findProcessedCommand,
     getById,
     getEvents,
@@ -67,6 +69,24 @@ export function createFakeGameRepository(
     replaceFeatureFlags,
     saveChanges,
   };
+
+  async function findCurrentPlayerGame(
+    userId: string
+  ): Promise<FakeGame | null> {
+    const participants = await gameParticipantTable.getAll();
+    const playerGameIds = new Set(
+      participants
+        .filter((participant) => participant.userId === userId)
+        .map((participant) => participant.gameId)
+    );
+    const games = await gameTable.getAll();
+
+    return (
+      games.find(
+        (game) => game.status !== 'finished' && playerGameIds.has(game.id)
+      ) ?? null
+    );
+  }
 
   async function findProcessedCommand(
     commandId: string
@@ -176,6 +196,12 @@ export function createFakeGameRepository(
         const processedCommands = transaction.table('processedCommands');
         const gameEvents = transaction.table('gameEvents');
 
+        await validateActiveGamePlayers(
+          games,
+          gameParticipants,
+          changes.game.id,
+          changes.participants ?? []
+        );
         await validateParticipantPositions(
           gameParticipants,
           changes.game.id,
@@ -212,6 +238,41 @@ export function createFakeGameRepository(
         }
       }
     );
+  }
+}
+
+async function validateActiveGamePlayers(
+  gameTable: SchemaTable<FakeDatabaseSchema, 'games'>,
+  gameParticipantTable: SchemaTable<FakeDatabaseSchema, 'gameParticipants'>,
+  gameId: string,
+  changedParticipants: readonly FakeGameParticipant[]
+): Promise<void> {
+  const storedParticipants = await gameParticipantTable.getAll();
+  const addedParticipants = changedParticipants.filter(
+    (participant) =>
+      !storedParticipants.some(
+        (storedParticipant) =>
+          storedParticipant.gameId === gameId &&
+          storedParticipant.userId === participant.userId
+      )
+  );
+
+  for (const participant of addedParticipants) {
+    const otherGameIds = storedParticipants
+      .filter(
+        (storedParticipant) =>
+          storedParticipant.userId === participant.userId &&
+          storedParticipant.gameId !== gameId
+      )
+      .map((storedParticipant) => storedParticipant.gameId);
+
+    for (const otherGameId of otherGameIds) {
+      const otherGame = await gameTable.get(otherGameId);
+
+      if (otherGame?.status !== 'finished') {
+        throw new Error('A fake player cannot join multiple active games.');
+      }
+    }
   }
 }
 
@@ -258,27 +319,6 @@ async function validateParticipantPositions(
   const occupiedPositions = new Set<string>();
 
   for (const participant of participants) {
-    const hasSeat = participant.seat !== null;
-    const hasTeam = participant.team !== null;
-
-    if (hasSeat !== hasTeam) {
-      throw new Error(
-        'A fake participant seat and team must be selected together.'
-      );
-    }
-
-    if (participant.role === 'spectator') {
-      if (hasSeat) {
-        throw new Error('A fake spectator cannot occupy a player position.');
-      }
-
-      continue;
-    }
-
-    if (participant.seat === null || participant.team === null) {
-      throw new Error('A fake player must select a team and seat.');
-    }
-
     if (participant.seat <= 0) {
       throw new Error('A fake player seat must be positive.');
     }

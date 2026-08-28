@@ -106,7 +106,12 @@ function persistOrder(order: Order) {
 
 ```ts
 // ❌ Плохо: назначение соседних аргументов приходится восстанавливать по сигнатуре
-function sendMessage(userId: string, text: string, channel: string, urgent: boolean) {}
+function sendMessage(
+  userId: string,
+  text: string,
+  channel: string,
+  urgent: boolean
+) {}
 
 // ✅ Хорошо: функция принимает один понятный аргумент-объект
 interface SendMessageInput {
@@ -574,6 +579,55 @@ describe('order calculation', () => {
   `package.json` и соответствующий файл в `.yarn/releases`. Если путь к bundled
   Node неизвестен, сначала получи его из workspace dependencies, а не переходи
   к системным Corepack или npx.
+
+### Ошибка `uv_os_get_passwd` при запуске `tsx`
+
+- В Codex на Windows bundled Node иногда завершается ещё до запуска проектного
+  TypeScript-файла с ошибкой
+  `SystemError [ERR_SYSTEM_ERROR]: uv_os_get_passwd returned ENOMEM`. Обычно
+  stack trace указывает на `tsx/dist/temporary-directory-*.mjs` или `.cjs`:
+  `tsx` пытается получить имя пользователя через `os.userInfo()` для временной
+  директории.
+- Не переходи из-за этой ошибки на системные Node, Corepack, глобальный Yarn,
+  `npx` или `npx.cmd` и не повторяй команду без изменений. Если stack trace
+  оборвался внутри `tsx/temporary-directory` до входа в проектный файл, сама
+  команда, например миграция или seed, ещё не начала выполняться. Если перед
+  ошибкой уже был вывод SQL или приложения, отдельно проверь состояние системы
+  и не делай вывод об отсутствии изменений только по этому правилу.
+- На этом Windows-хосте ошибка уже повторялась. Поэтому для package scripts,
+  которые запускают `tsx` (`db:migrate`, `db:seed` и подобные), сразу используй
+  проверенный CommonJS preload, не дожидаясь нового сбоя. Создай через
+  `apply_patch` временный файл в корне workspace, например
+  `.codex_tsx_windows_user.cjs`:
+
+```js
+if (process.geteuid === undefined) {
+  Object.defineProperty(process, 'geteuid', {
+    configurable: true,
+    value: getEffectiveUserId,
+  });
+}
+
+function getEffectiveUserId() {
+  return 0;
+}
+```
+
+- Этот preload нужен только для обхода выбора временной директории внутри
+  `tsx`. Не добавляй его к обычным `test`, `build`, `lint` и другим командам,
+  которые успешно работают без `tsx`.
+- Передай preload только текущему shell-вызову через `NODE_OPTIONS` и оставь
+  запуск закреплённого Yarn через bundled Node:
+
+```powershell
+$env:NODE_OPTIONS = '--require=C:\absolute\path\to\workspace\.codex_tsx_windows_user.cjs'
+& 'C:\Users\pikac\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' '.yarn\releases\yarn-4.17.1.cjs' db:migrate
+```
+
+- Используй абсолютный путь в `--require`. Не сохраняй `NODE_OPTIONS` в
+  конфигурационных файлах и не меняй файлы внутри `node_modules/tsx`. После
+  завершения команды удали временный preload через `apply_patch` и проверь
+  `git status`, чтобы служебный файл не остался в рабочем дереве.
 
 ## Линтер
 

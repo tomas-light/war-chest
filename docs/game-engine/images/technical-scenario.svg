@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1500" height="720" viewBox="0 0 1500 720" role="img" aria-labelledby="title description">
   <title id="title">Состояния технического игрового сценария</title>
-  <desc id="description">Отдельное создание первого события и переходы существующей игры между ожиданием игроков, активной партией и завершением. Недопустимая команда не создаёт событий.</desc>
+  <desc id="description">Отдельное создание первого события, выбор, смена или обмен местами игроков и переходы существующей игры между ожиданием игроков, активной партией и завершением. Недопустимая команда не создаёт событий.</desc>
 
   <defs>
     <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
@@ -57,8 +57,9 @@
   <text x="1165" y="237" class="small">GameFinished</text>
 
   <path d="M505 180 V130 H640 V180" class="loop"/>
-  <text x="572" y="84" class="text">JoinGame × 2</text>
-  <text x="572" y="107" class="small">PlayerJoined: white/1 и black/1</text>
+  <text x="572" y="74" class="text">JoinGame / SwapPlayerPositions</text>
+  <text x="572" y="98" class="small">PlayerJoined / PlayerPositionChanged</text>
+  <text x="572" y="119" class="small">PlayerPositionsSwapped</text>
 
   <path d="M900 310 C900 400 1035 400 1035 310" class="loop"/>
   <text x="967" y="397" class="text">TestMove</text>

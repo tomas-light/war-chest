@@ -7,6 +7,7 @@ export type {
   JoinGameCommandData,
   LifecycleCommandData,
   StartGameCommandData,
+  SwapPlayerPositionsCommandData,
 } from './command-data/LifecycleCommandData.js';
 export type {
   TestMoveCommandData,

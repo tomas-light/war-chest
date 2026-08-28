@@ -14,8 +14,8 @@ export function openFakeDatabase(
   const databaseName = options.name ?? DEFAULT_FAKE_DATABASE_NAME;
 
   return openDB<FakeDatabaseSchema>(databaseName, FAKE_DATABASE_VERSION, {
-    upgrade(database, oldVersion) {
-      migrateFakeDatabase(database, oldVersion);
+    upgrade(database, oldVersion, _newVersion, transaction) {
+      migrateFakeDatabase(database, oldVersion, transaction);
     },
   });
 }

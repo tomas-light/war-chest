@@ -10,7 +10,7 @@ import type { FastifyInstance } from 'fastify';
 import { type ExtendedError, type Socket, Server } from 'socket.io';
 import type { GameService } from '../games/GameService.js';
 import {
-  broadcastGameEvents,
+  broadcastGameUpdate,
   registerGameSocket,
 } from '../games/registerGameSocket.js';
 
@@ -48,7 +48,7 @@ export function createSocketServer(
     });
   });
   const unsubscribeFromGameUpdates = gameService.subscribe((update) =>
-    broadcastGameEvents(socketServer, gameService, update)
+    broadcastGameUpdate(socketServer, gameService, update)
   );
   app.addHook('preClose', closeSocketServer);
 

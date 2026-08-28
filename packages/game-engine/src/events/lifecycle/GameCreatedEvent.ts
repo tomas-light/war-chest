@@ -25,6 +25,7 @@ export class GameCreatedEvent implements ApplicableEvent<GameCreatedEventData> {
     }
 
     return {
+      creatorId: this.data.payload.creatorId,
       currentPlayerId: null,
       featureFlags: { ...this.data.payload.featureFlags },
       lastEventSequence: this.data.sequence,

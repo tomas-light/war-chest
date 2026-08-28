@@ -23,6 +23,7 @@ export interface GamePlayer {
 }
 
 export interface GameState {
+  creatorId: string;
   currentPlayerId: string | null;
   featureFlags: RuntimeFeatureFlags;
   lastEventSequence: number;
@@ -49,6 +50,7 @@ export interface PrivateMove {
 }
 
 export interface GameView {
+  creatorId: string;
   currentPlayerId: string | null;
   featureFlags: RuntimeFeatureFlags;
   lastEventSequence: number;

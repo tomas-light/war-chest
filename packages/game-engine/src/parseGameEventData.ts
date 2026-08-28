@@ -32,6 +32,7 @@ const gameEventDataSchema: z.ZodType<GameEventData> = z.discriminatedUnion(
       .extend({
         payload: z
           .object({
+            creatorId: z.string(),
             featureFlags: runtimeFeatureFlagsSchema,
             rulesVersion: z.literal(GAME_RULES_VERSION),
           })
@@ -49,6 +50,43 @@ const gameEventDataSchema: z.ZodType<GameEventData> = z.discriminatedUnion(
           })
           .strict(),
         type: z.literal('PlayerJoined'),
+      })
+      .strict(),
+    eventMetadataSchema
+      .extend({
+        payload: z
+          .object({
+            playerId: z.string(),
+            seat: z.number().int().positive(),
+            team: gameTeamSchema,
+          })
+          .strict(),
+        type: z.literal('PlayerPositionChanged'),
+      })
+      .strict(),
+    eventMetadataSchema
+      .extend({
+        payload: z
+          .object({
+            positions: z.tuple([
+              z
+                .object({
+                  playerId: z.string(),
+                  seat: z.number().int().positive(),
+                  team: gameTeamSchema,
+                })
+                .strict(),
+              z
+                .object({
+                  playerId: z.string(),
+                  seat: z.number().int().positive(),
+                  team: gameTeamSchema,
+                })
+                .strict(),
+            ]),
+          })
+          .strict(),
+        type: z.literal('PlayerPositionsSwapped'),
       })
       .strict(),
     eventMetadataSchema

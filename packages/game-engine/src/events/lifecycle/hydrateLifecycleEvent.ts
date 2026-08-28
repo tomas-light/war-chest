@@ -6,6 +6,8 @@ import { GameStartedEvent } from './GameStartedEvent.js';
 import { PlayerDefeatedEvent } from './PlayerDefeatedEvent.js';
 import { PlayerDisconnectedEvent } from './PlayerDisconnectedEvent.js';
 import { PlayerJoinedEvent } from './PlayerJoinedEvent.js';
+import { PlayerPositionChangedEvent } from './PlayerPositionChangedEvent.js';
+import { PlayerPositionsSwappedEvent } from './PlayerPositionsSwappedEvent.js';
 import { PlayerReconnectedEvent } from './PlayerReconnectedEvent.js';
 
 export function hydrateLifecycleEvent(
@@ -16,6 +18,10 @@ export function hydrateLifecycleEvent(
       return GameCreatedEvent.fromData(data);
     case 'PlayerJoined':
       return PlayerJoinedEvent.fromData(data);
+    case 'PlayerPositionChanged':
+      return PlayerPositionChangedEvent.fromData(data);
+    case 'PlayerPositionsSwapped':
+      return PlayerPositionsSwappedEvent.fromData(data);
     case 'PlayerDisconnected':
       return PlayerDisconnectedEvent.fromData(data);
     case 'PlayerReconnected':

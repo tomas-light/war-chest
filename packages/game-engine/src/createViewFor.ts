@@ -13,6 +13,7 @@ export function createViewFor(state: GameState, viewer: Viewer): GameView {
       : undefined;
 
   return {
+    creatorId: state.creatorId,
     currentPlayerId: state.currentPlayerId,
     featureFlags: { ...state.featureFlags },
     lastEventSequence: state.lastEventSequence,

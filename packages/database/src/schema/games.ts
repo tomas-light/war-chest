@@ -25,11 +25,6 @@ export const gameStatus = pgEnum('game_status', [
 
 export const gameTeam = pgEnum('game_team', ['black', 'white']);
 
-export const participantRole = pgEnum('participant_role', [
-  'player',
-  'spectator',
-]);
-
 export const games = pgTable(
   'games',
   {
@@ -61,9 +56,8 @@ export const gameParticipants = pgTable(
     userId: uuid('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'restrict' }),
-    role: participantRole('role').notNull(),
-    seat: integer('seat'),
-    team: gameTeam('team'),
+    seat: integer('seat').notNull(),
+    team: gameTeam('team').notNull(),
   },
   (table) => [
     primaryKey({
@@ -77,18 +71,23 @@ export const gameParticipants = pgTable(
     ),
     index('game_participants_user_history_index').on(
       table.userId,
-      table.role,
       table.gameId
     ),
-    check(
-      'game_participants_role_position_check',
-      sql`(${table.role} = 'player' AND ${table.seat} IS NOT NULL AND ${table.team} IS NOT NULL) OR (${table.role} = 'spectator' AND ${table.seat} IS NULL AND ${table.team} IS NULL)`
-    ),
-    check(
-      'game_participants_seat_positive',
-      sql`${table.seat} IS NULL OR ${table.seat} > 0`
-    ),
+    check('game_participants_seat_positive', sql`${table.seat} > 0`),
   ]
+);
+
+export const activeGamePlayers = pgTable(
+  'active_game_players',
+  {
+    userId: uuid('user_id')
+      .primaryKey()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    gameId: uuid('game_id')
+      .notNull()
+      .references(() => games.id, { onDelete: 'cascade' }),
+  },
+  (table) => [index('active_game_players_game_id_index').on(table.gameId)]
 );
 
 export const processedCommands = pgTable(
@@ -153,6 +152,8 @@ export type Game = typeof games.$inferSelect;
 export type NewGame = typeof games.$inferInsert;
 export type GameParticipant = typeof gameParticipants.$inferSelect;
 export type NewGameParticipant = typeof gameParticipants.$inferInsert;
+export type ActiveGamePlayer = typeof activeGamePlayers.$inferSelect;
+export type NewActiveGamePlayer = typeof activeGamePlayers.$inferInsert;
 export type ProcessedCommand = typeof processedCommands.$inferSelect;
 export type NewProcessedCommand = typeof processedCommands.$inferInsert;
 export type GameEvent = typeof gameEvents.$inferSelect;

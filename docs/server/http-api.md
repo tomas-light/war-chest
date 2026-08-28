@@ -5,25 +5,27 @@ JSON 404 и не попадает в SPA fallback.
 
 ## Реализованные endpoints
 
-| Метод  | URL                              | Авторизация | Поведение                             |
-| ------ | -------------------------------- | ----------- | ------------------------------------- |
-| `GET`  | `/api/health`                    | нет         | проверяет соединение с PostgreSQL     |
-| `POST` | `/api/auth/google`               | нет         | проверяет Google ID token             |
-| `GET`  | `/api/auth/telegram/start`       | нет         | начинает Telegram OAuth flow          |
-| `GET`  | `/api/auth/telegram/callback`    | state       | завершает Telegram OAuth flow         |
-| `GET`  | `/api/auth/yandex/start`         | нет         | начинает Yandex OAuth flow            |
-| `GET`  | `/api/auth/yandex/callback`      | state       | завершает Yandex OAuth flow           |
-| `GET`  | `/api/auth/session`              | session     | возвращает текущую сессию             |
-| `POST` | `/api/auth/logout`               | нестрогая   | отзывает сессию и очищает cookie      |
-| `POST` | `/api/games`                     | session     | создаёт игру                          |
-| `GET`  | `/api/games/:gameId`             | session     | возвращает безопасный snapshot        |
-| `POST` | `/api/games/:gameId/join`        | session     | добавляет игрока на выбранную позицию |
-| `POST` | `/api/games/:gameId/start`       | session     | запускает заполненную игру            |
-| `GET`  | `/api/games/:gameId/events`      | session     | возвращает безопасный хвост истории   |
-| `GET`  | `/api/users/:userId`             | session     | возвращает публичный профиль          |
-| `GET`  | `/api/users/:userId/avatar`      | session     | возвращает сохранённый avatar binary  |
-| `GET`  | `/api/users/:userId/games`       | session     | возвращает страницу завершённых игр   |
-| `GET`  | `/api/config/feature-flags.json` | нет         | возвращает текущие runtime flags      |
+| Метод  | URL                                 | Авторизация | Поведение                            |
+| ------ | ----------------------------------- | ----------- | ------------------------------------ |
+| `GET`  | `/api/health`                       | нет         | проверяет соединение с PostgreSQL    |
+| `POST` | `/api/auth/google`                  | нет         | проверяет Google ID token            |
+| `GET`  | `/api/auth/telegram/start`          | нет         | начинает Telegram OAuth flow         |
+| `GET`  | `/api/auth/telegram/callback`       | state       | завершает Telegram OAuth flow        |
+| `GET`  | `/api/auth/yandex/start`            | нет         | начинает Yandex OAuth flow           |
+| `GET`  | `/api/auth/yandex/callback`         | state       | завершает Yandex OAuth flow          |
+| `GET`  | `/api/auth/session`                 | session     | возвращает текущую сессию            |
+| `POST` | `/api/auth/logout`                  | нестрогая   | отзывает сессию и очищает cookie     |
+| `GET`  | `/api/games`                        | session     | возвращает активные игры для лобби   |
+| `POST` | `/api/games`                        | session     | создаёт игру                         |
+| `GET`  | `/api/games/:gameId`                | session     | возвращает безопасный snapshot       |
+| `POST` | `/api/games/:gameId/join`           | session     | занимает или меняет позицию игрока   |
+| `POST` | `/api/games/:gameId/start`          | session     | запускает заполненную игру           |
+| `POST` | `/api/games/:gameId/swap-positions` | session     | меняет местами двух игроков          |
+| `GET`  | `/api/games/:gameId/events`         | session     | возвращает безопасный хвост истории  |
+| `GET`  | `/api/users/:userId`                | session     | возвращает публичный профиль         |
+| `GET`  | `/api/users/:userId/avatar`         | session     | возвращает сохранённый avatar binary |
+| `GET`  | `/api/users/:userId/games`          | session     | возвращает страницу завершённых игр  |
+| `GET`  | `/api/config/feature-flags.json`    | нет         | возвращает текущие runtime flags     |
 
 ## Игровой API
 
@@ -32,20 +34,62 @@ JSON 404 и не попадает в SPA fallback.
 `commandId` должны быть UUID, версии и `afterSequence` — неотрицательными
 целыми числами.
 
-`POST /api/games` принимает `{ "commandId": "uuid" }`. Новая игра отвечает
-`201`, exact duplicate — `200` с тем же `gameId` и актуальным безопасным view.
-Server сначала проверяет, не был ли `commandId` уже обработан. Exact duplicate
-возвращается без чтения runtime feature flags, поэтому повтор успешного запроса
-не зависит от текущей доступности файла. Только новая команда читает flags и
-сохраняет их snapshot первым событием.
+`POST /api/games` принимает только `commandId`. Он создаёт пустую игру без
+участников: создатель выбирает место отдельной командой после перехода на
+страницу игры и до этого остаётся зрителем. Новая игра отвечает `201`, exact
+duplicate — `200` с тем же `gameId` и актуальным безопасным view. Server сначала
+проверяет, не был ли `commandId` уже обработан. Exact duplicate возвращается без
+чтения runtime feature flags, поэтому повтор успешного запроса не зависит от
+текущей доступности файла. Только новая команда читает flags и сохраняет их
+snapshot в единственном событии `GameCreated`.
+
+`GET /api/games` возвращает незавершённые игры для лобби от новых к старым:
+
+```json
+{
+  "currentPlayerGameId": null,
+  "items": [
+    {
+      "createdAt": "2026-08-28T10:00:00.000Z",
+      "id": "00000000-0000-4000-8000-000000000001",
+      "players": [
+        {
+          "avatarVersion": null,
+          "displayName": "Player",
+          "id": "00000000-0000-4000-8000-000000000002",
+          "seat": 1,
+          "team": "white"
+        }
+      ],
+      "startedAt": null,
+      "status": "waiting"
+    }
+  ]
+}
+```
+
+`currentPlayerGameId` содержит незавершённую игру, в которой текущий
+пользователь занимает место, либо `null`. Пока значение не `null`, создание
+новой игры и `JoinGame` в другой игре отклоняются; наблюдение за любым числом
+параллельных матчей остаётся доступным.
+
+Ожидающую игру со свободным местом можно открыть двумя отдельными действиями:
+для наблюдения или для выбора места. Если оба места заняты, до старта доступно
+только наблюдение. Активная игра всегда открывается постороннему пользователю
+как зрителю. Зритель не становится участником и не получает приватную часть
+состояния.
 
 `POST /api/games/:gameId/join` принимает `commandId`, `expectedVersion`, `seat`
-и `team`. Повторный join на уже занятую тем же пользователем позицию возвращает
-текущее view без смены места. Попытка перейти на другую позицию отклоняется, а
-позиция считается совпадающей только при одинаковых `team` и `seat`. Пользователь
-без участия может выполнить `JoinGame`; остальные игровые команды доступны
-только игрокам, а не зрителям. `POST /api/games/:gameId/start` принимает
-`commandId` и `expectedVersion`.
+и `team`. Для зрителя команда занимает свободное место и создаёт
+`PlayerJoined`. Участник может той же командой перейти на другую свободную
+позицию до заполнения игры; тогда создаётся `PlayerPositionChanged`, а SQL-
+проекция участника обновляется. Повторный join на текущую позицию возвращает
+актуальное view без нового события. Чужая занятая позиция возвращает
+`game_position_occupied`. Остальные игровые команды доступны только игрокам, а
+не зрителям. `POST /api/games/:gameId/start` принимает `commandId` и
+`expectedVersion`; выполнить его может только создатель. Тот же body принимает
+`POST /api/games/:gameId/swap-positions`: до старта создатель одной командой
+обменивает позиции двух уже присоединившихся игроков.
 
 `GET /api/games/:gameId` возвращает полный персональный snapshot.
 `GET /api/games/:gameId/events?afterSequence=N` возвращает безопасные события
@@ -63,6 +107,7 @@ Presence-события доступны в том же безопасном eve
 | `game_command_forbidden`    | 403  | пользователь не может выполнить команду        |
 | `game_not_found`            | 404  | игра с корректным UUID не найдена              |
 | `game_position_occupied`    | 409  | выбранная позиция уже занята                   |
+| `player_already_in_game`    | 409  | пользователь уже играет в другой партии        |
 | `game_version_conflict`     | 409  | клиентская версия устарела                     |
 | `command_id_conflict`       | 409  | UUID команды принадлежит другому запросу       |
 | `game_command_rejected`     | 422  | команда отклонена игровыми правилами           |

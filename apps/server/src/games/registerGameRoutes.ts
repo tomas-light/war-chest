@@ -1,9 +1,11 @@
 import {
+  type LobbyGamesResponse,
   createGameRequestSchema,
   gameEventsQuerySchema,
   gameParamsSchema,
   joinGameRequestSchema,
   startGameRequestSchema,
+  swapPlayerPositionsRequestSchema,
 } from '@war-chest/api-contracts';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { ExecuteGameCommandResult, GameService } from './GameService.js';
@@ -27,11 +29,21 @@ export function registerGameRoutes(app: FastifyInstance): void {
   const { gameService } = app.serverDependencies;
   const protectedRoute = { preHandler: app.requireAuthSession };
 
+  app.get('/games', protectedRoute, listGames);
   app.post('/games', protectedRoute, createGame);
   app.get('/games/:gameId', protectedRoute, getGame);
   app.post('/games/:gameId/join', protectedRoute, joinGame);
   app.post('/games/:gameId/start', protectedRoute, startGame);
+  app.post('/games/:gameId/swap-positions', protectedRoute, swapPositions);
   app.get('/games/:gameId/events', protectedRoute, getGameEvents);
+
+  async function listGames(
+    request: FastifyRequest
+  ): Promise<LobbyGamesResponse> {
+    return gameService.listLobbyGames({
+      userId: getAuthenticatedUserId(request),
+    });
+  }
 
   async function createGame(
     request: FastifyRequest,
@@ -59,6 +71,10 @@ export function registerGameRoutes(app: FastifyInstance): void {
 
     if (result.status === 'commandIdConflict') {
       return sendCommandIdConflict(reply);
+    }
+
+    if (result.status === 'playerAlreadyInGame') {
+      return sendPlayerAlreadyInGame(reply);
     }
 
     return reply
@@ -136,6 +152,29 @@ export function registerGameRoutes(app: FastifyInstance): void {
     return sendMutationResult({ gameId, gameService, reply, result, userId });
   }
 
+  async function swapPositions(
+    request: FastifyRequest,
+    reply: FastifyReply
+  ): Promise<FastifyReply> {
+    const gameId = parseGameId(request, reply);
+    const body = swapPlayerPositionsRequestSchema.safeParse(request.body);
+
+    if (gameId === null || !body.success) {
+      return gameId === null ? reply : sendInvalidRequest(reply);
+    }
+
+    const userId = getAuthenticatedUserId(request);
+    const result = await gameService.executeCommand({
+      command: { type: 'SwapPlayerPositions' },
+      commandId: body.data.commandId,
+      expectedVersion: body.data.expectedVersion,
+      gameId,
+      userId,
+    });
+
+    return sendMutationResult({ gameId, gameService, reply, result, userId });
+  }
+
   async function getGameEvents(
     request: FastifyRequest,
     reply: FastifyReply
@@ -200,6 +239,10 @@ async function sendMutationResult(
       reply: input.reply,
       statusCode: 409,
     });
+  }
+
+  if (input.result.status === 'playerAlreadyInGame') {
+    return sendPlayerAlreadyInGame(input.reply);
   }
 
   if (input.result.status === 'versionConflict') {
@@ -269,6 +312,15 @@ function sendCommandIdConflict(reply: FastifyReply): FastifyReply {
   return sendError({
     code: 'command_id_conflict',
     message: 'Command id was already used by another request.',
+    reply,
+    statusCode: 409,
+  });
+}
+
+function sendPlayerAlreadyInGame(reply: FastifyReply): FastifyReply {
+  return sendError({
+    code: 'player_already_in_game',
+    message: 'The authenticated user is already playing another game.',
     reply,
     statusCode: 409,
   });

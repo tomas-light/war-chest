@@ -48,9 +48,11 @@ const SECOND_CREATE_REQUEST_HASH = 'b'.repeat(64);
 const GAME_REQUEST_HASH = 'c'.repeat(64);
 const SECOND_GAME_REQUEST_HASH = 'd'.repeat(64);
 const DEFAULT_CREATE_GAME_COMMAND = {
+  creatorId: FIRST_USER_ID,
   featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
   type: 'CreateGame',
 } as const;
+const DEFAULT_CREATE_GAME_EVENT = createGame(DEFAULT_CREATE_GAME_COMMAND);
 
 const describeWithPostgreSql =
   TEST_DATABASE_URL === undefined ? describe.skip : describe;
@@ -86,18 +88,17 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
     await driver.end();
   });
 
-  test('creates the game, command, and first event atomically', async () => {
-    const event = createGame(DEFAULT_CREATE_GAME_COMMAND);
-
+  test('creates an empty game, command, and first event atomically', async () => {
     const result = await repository.createGame({
       commandId: CREATE_COMMAND_ID,
       creatorUserId: FIRST_USER_ID,
-      event,
+      event: DEFAULT_CREATE_GAME_EVENT,
       requestHash: CREATE_REQUEST_HASH,
     });
     const storedGames = await database.select().from(games);
     const storedCommands = await database.select().from(processedCommands);
     const storedEvents = await database.select().from(gameEvents);
+    const storedParticipants = await database.select().from(gameParticipants);
 
     expect(result.status).toBe('created');
     expect(storedGames).toHaveLength(1);
@@ -122,21 +123,21 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
         type: 'GameCreated',
       }),
     ]);
+    expect(storedParticipants).toEqual([]);
   });
 
   test('returns the stored game for an exact duplicate create command', async () => {
-    const event = createGame(DEFAULT_CREATE_GAME_COMMAND);
     const firstResult = await repository.createGame({
       commandId: CREATE_COMMAND_ID,
       creatorUserId: FIRST_USER_ID,
-      event,
+      event: DEFAULT_CREATE_GAME_EVENT,
       requestHash: CREATE_REQUEST_HASH,
     });
 
     const duplicateResult = await repository.createGame({
       commandId: CREATE_COMMAND_ID,
       creatorUserId: FIRST_USER_ID,
-      event,
+      event: DEFAULT_CREATE_GAME_EVENT,
       requestHash: CREATE_REQUEST_HASH,
     });
 
@@ -151,18 +152,17 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
   });
 
   test('rejects a create command id reused by another user', async () => {
-    const event = createGame(DEFAULT_CREATE_GAME_COMMAND);
     await repository.createGame({
       commandId: CREATE_COMMAND_ID,
       creatorUserId: FIRST_USER_ID,
-      event,
+      event: DEFAULT_CREATE_GAME_EVENT,
       requestHash: CREATE_REQUEST_HASH,
     });
 
     const result = await repository.createGame({
       commandId: CREATE_COMMAND_ID,
       creatorUserId: SECOND_USER_ID,
-      event,
+      event: DEFAULT_CREATE_GAME_EVENT,
       requestHash: CREATE_REQUEST_HASH,
     });
 
@@ -171,19 +171,17 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
   });
 
   test('classifies concurrent create requests as created and duplicate', async () => {
-    const event = createGame(DEFAULT_CREATE_GAME_COMMAND);
-
     const results = await Promise.all([
       repository.createGame({
         commandId: CREATE_COMMAND_ID,
         creatorUserId: FIRST_USER_ID,
-        event,
+        event: DEFAULT_CREATE_GAME_EVENT,
         requestHash: CREATE_REQUEST_HASH,
       }),
       repository.createGame({
         commandId: CREATE_COMMAND_ID,
         creatorUserId: FIRST_USER_ID,
-        event,
+        event: DEFAULT_CREATE_GAME_EVENT,
         requestHash: CREATE_REQUEST_HASH,
       }),
     ]);
@@ -200,14 +198,14 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
     const created = await repository.createGame({
       commandId: CREATE_COMMAND_ID,
       creatorUserId: FIRST_USER_ID,
-      event: createGame(DEFAULT_CREATE_GAME_COMMAND),
+      event: DEFAULT_CREATE_GAME_EVENT,
       requestHash: CREATE_REQUEST_HASH,
     });
     const gameId = requireCreatedGameId(created);
     const startedAt = new Date('2026-08-16T12:00:00.000Z');
     const events: readonly GameEventData[] = [
       {
-        payload: { playerId: FIRST_USER_ID, seat: 1, team: 'white' },
+        payload: { playerId: SECOND_USER_ID, seat: 1, team: 'black' },
         sequence: 2,
         type: 'PlayerJoined',
         version: GAME_EVENT_VERSION,
@@ -231,8 +229,8 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
         {
           operation: 'addPlayer',
           seat: 1,
-          team: 'white',
-          userId: FIRST_USER_ID,
+          team: 'black',
+          userId: SECOND_USER_ID,
         },
       ],
       requestHash: GAME_REQUEST_HASH,
@@ -241,7 +239,7 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
     const storedGame = await repository.findGame(gameId);
     const storedParticipant = await repository.findParticipant(
       gameId,
-      FIRST_USER_ID
+      SECOND_USER_ID
     );
     const storedEvents = await repository.loadEvents(gameId);
 
@@ -253,22 +251,18 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
     });
     expect(storedParticipant).toEqual({
       gameId,
-      role: 'player',
       seat: 1,
-      team: 'white',
-      userId: FIRST_USER_ID,
+      team: 'black',
+      userId: SECOND_USER_ID,
     });
-    expect(storedEvents).toEqual([
-      createGame(DEFAULT_CREATE_GAME_COMMAND),
-      ...events,
-    ]);
+    expect(storedEvents).toEqual([DEFAULT_CREATE_GAME_EVENT, ...events]);
   });
 
   test('returns duplicate before checking an outdated expected version', async () => {
     const created = await repository.createGame({
       commandId: CREATE_COMMAND_ID,
       creatorUserId: FIRST_USER_ID,
-      event: createGame(DEFAULT_CREATE_GAME_COMMAND),
+      event: DEFAULT_CREATE_GAME_EVENT,
       requestHash: CREATE_REQUEST_HASH,
     });
     const gameId = requireCreatedGameId(created);
@@ -301,13 +295,13 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
     const firstCreated = await repository.createGame({
       commandId: CREATE_COMMAND_ID,
       creatorUserId: FIRST_USER_ID,
-      event: createGame(DEFAULT_CREATE_GAME_COMMAND),
+      event: DEFAULT_CREATE_GAME_EVENT,
       requestHash: CREATE_REQUEST_HASH,
     });
     const secondCreated = await repository.createGame({
       commandId: SECOND_CREATE_COMMAND_ID,
-      creatorUserId: FIRST_USER_ID,
-      event: createGame(DEFAULT_CREATE_GAME_COMMAND),
+      creatorUserId: SECOND_USER_ID,
+      event: DEFAULT_CREATE_GAME_EVENT,
       requestHash: SECOND_CREATE_REQUEST_HASH,
     });
     const firstGameId = requireCreatedGameId(firstCreated);
@@ -348,13 +342,13 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
     const firstCreated = await repository.createGame({
       commandId: CREATE_COMMAND_ID,
       creatorUserId: FIRST_USER_ID,
-      event: createGame(DEFAULT_CREATE_GAME_COMMAND),
+      event: DEFAULT_CREATE_GAME_EVENT,
       requestHash: CREATE_REQUEST_HASH,
     });
     const secondCreated = await repository.createGame({
       commandId: SECOND_CREATE_COMMAND_ID,
-      creatorUserId: FIRST_USER_ID,
-      event: createGame(DEFAULT_CREATE_GAME_COMMAND),
+      creatorUserId: SECOND_USER_ID,
+      event: DEFAULT_CREATE_GAME_EVENT,
       requestHash: SECOND_CREATE_REQUEST_HASH,
     });
     const firstGameId = requireCreatedGameId(firstCreated);
@@ -405,7 +399,7 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
     const created = await repository.createGame({
       commandId: CREATE_COMMAND_ID,
       creatorUserId: FIRST_USER_ID,
-      event: createGame(DEFAULT_CREATE_GAME_COMMAND),
+      event: DEFAULT_CREATE_GAME_EVENT,
       requestHash: CREATE_REQUEST_HASH,
     });
     const gameId = requireCreatedGameId(created);
@@ -436,7 +430,7 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
     const created = await repository.createGame({
       commandId: CREATE_COMMAND_ID,
       creatorUserId: FIRST_USER_ID,
-      event: createGame(DEFAULT_CREATE_GAME_COMMAND),
+      event: DEFAULT_CREATE_GAME_EVENT,
       requestHash: CREATE_REQUEST_HASH,
     });
     const gameId = requireCreatedGameId(created);
@@ -476,11 +470,221 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
     });
   });
 
+  test('rejects the same player in two unfinished games', async () => {
+    const firstCreated = await repository.createGame({
+      commandId: CREATE_COMMAND_ID,
+      creatorUserId: FIRST_USER_ID,
+      event: DEFAULT_CREATE_GAME_EVENT,
+      requestHash: CREATE_REQUEST_HASH,
+    });
+    const secondCreated = await repository.createGame({
+      commandId: SECOND_CREATE_COMMAND_ID,
+      creatorUserId: SECOND_USER_ID,
+      event: DEFAULT_CREATE_GAME_EVENT,
+      requestHash: SECOND_CREATE_REQUEST_HASH,
+    });
+    const firstGameId = requireCreatedGameId(firstCreated);
+    const secondGameId = requireCreatedGameId(secondCreated);
+    await repository.saveCommand({
+      commandId: GAME_COMMAND_ID,
+      commandType: 'JoinGame',
+      events: [
+        {
+          payload: { playerId: FIRST_USER_ID, seat: 1, team: 'white' },
+          sequence: 2,
+          type: 'PlayerJoined',
+          version: GAME_EVENT_VERSION,
+        },
+      ],
+      expectedVersion: 1,
+      gameId: firstGameId,
+      participantChanges: [
+        {
+          operation: 'addPlayer',
+          seat: 1,
+          team: 'white',
+          userId: FIRST_USER_ID,
+        },
+      ],
+      requestHash: GAME_REQUEST_HASH,
+      userId: FIRST_USER_ID,
+    });
+
+    const result = await repository.saveCommand({
+      commandId: SECOND_GAME_COMMAND_ID,
+      commandType: 'JoinGame',
+      events: [
+        {
+          payload: { playerId: FIRST_USER_ID, seat: 1, team: 'black' },
+          sequence: 2,
+          type: 'PlayerJoined',
+          version: GAME_EVENT_VERSION,
+        },
+      ],
+      expectedVersion: 1,
+      gameId: secondGameId,
+      participantChanges: [
+        {
+          operation: 'addPlayer',
+          seat: 1,
+          team: 'black',
+          userId: FIRST_USER_ID,
+        },
+      ],
+      requestHash: SECOND_GAME_REQUEST_HASH,
+      userId: FIRST_USER_ID,
+    });
+
+    expect(result).toEqual({ status: 'playerAlreadyInGame' });
+    expect(await repository.findCurrentPlayerGame(FIRST_USER_ID)).toBe(
+      firstGameId
+    );
+  });
+
+  test('releases the player assignment after a game finishes', async () => {
+    const created = await repository.createGame({
+      commandId: CREATE_COMMAND_ID,
+      creatorUserId: FIRST_USER_ID,
+      event: DEFAULT_CREATE_GAME_EVENT,
+      requestHash: CREATE_REQUEST_HASH,
+    });
+    const gameId = requireCreatedGameId(created);
+    await repository.saveCommand({
+      commandId: GAME_COMMAND_ID,
+      commandType: 'JoinGame',
+      events: [
+        {
+          payload: { playerId: FIRST_USER_ID, seat: 1, team: 'white' },
+          sequence: 2,
+          type: 'PlayerJoined',
+          version: GAME_EVENT_VERSION,
+        },
+      ],
+      expectedVersion: 1,
+      gameId,
+      participantChanges: [
+        {
+          operation: 'addPlayer',
+          seat: 1,
+          team: 'white',
+          userId: FIRST_USER_ID,
+        },
+      ],
+      requestHash: GAME_REQUEST_HASH,
+      userId: FIRST_USER_ID,
+    });
+
+    await repository.saveSystemEvents({
+      events: [
+        {
+          payload: { winnerTeam: 'white' },
+          sequence: 3,
+          type: 'GameFinished',
+          version: GAME_EVENT_VERSION,
+        },
+      ],
+      expectedVersion: 2,
+      gameChanges: {
+        finishedAt: new Date('2026-08-28T12:00:00.000Z'),
+        status: 'finished',
+        winnerTeam: 'white',
+      },
+      gameId,
+    });
+
+    expect(await repository.findCurrentPlayerGame(FIRST_USER_ID)).toBeNull();
+  });
+
+  test('swaps two persisted player positions atomically', async () => {
+    const created = await repository.createGame({
+      commandId: CREATE_COMMAND_ID,
+      creatorUserId: FIRST_USER_ID,
+      event: DEFAULT_CREATE_GAME_EVENT,
+      requestHash: CREATE_REQUEST_HASH,
+    });
+    const gameId = requireCreatedGameId(created);
+    await repository.saveCommand({
+      commandId: GAME_COMMAND_ID,
+      commandType: 'JoinPlayersForTest',
+      events: [
+        {
+          payload: { playerId: FIRST_USER_ID, seat: 1, team: 'white' },
+          sequence: 2,
+          type: 'PlayerJoined',
+          version: GAME_EVENT_VERSION,
+        },
+        {
+          payload: { playerId: SECOND_USER_ID, seat: 1, team: 'black' },
+          sequence: 3,
+          type: 'PlayerJoined',
+          version: GAME_EVENT_VERSION,
+        },
+      ],
+      expectedVersion: 1,
+      gameId,
+      participantChanges: [
+        {
+          operation: 'addPlayer',
+          seat: 1,
+          team: 'white',
+          userId: FIRST_USER_ID,
+        },
+        {
+          operation: 'addPlayer',
+          seat: 1,
+          team: 'black',
+          userId: SECOND_USER_ID,
+        },
+      ],
+      requestHash: GAME_REQUEST_HASH,
+      userId: FIRST_USER_ID,
+    });
+
+    const result = await repository.saveCommand({
+      commandId: SECOND_GAME_COMMAND_ID,
+      commandType: 'SwapPlayerPositions',
+      events: [
+        {
+          payload: {
+            positions: [
+              { playerId: FIRST_USER_ID, seat: 1, team: 'black' },
+              { playerId: SECOND_USER_ID, seat: 1, team: 'white' },
+            ],
+          },
+          sequence: 4,
+          type: 'PlayerPositionsSwapped',
+          version: GAME_EVENT_VERSION,
+        },
+      ],
+      expectedVersion: 3,
+      gameId,
+      participantChanges: [
+        {
+          operation: 'swapPlayers',
+          positions: [
+            { seat: 1, team: 'black', userId: FIRST_USER_ID },
+            { seat: 1, team: 'white', userId: SECOND_USER_ID },
+          ],
+        },
+      ],
+      requestHash: SECOND_GAME_REQUEST_HASH,
+      userId: FIRST_USER_ID,
+    });
+
+    expect(result).toEqual({ currentVersion: 4, status: 'saved' });
+    await expect(
+      repository.findParticipant(gameId, FIRST_USER_ID)
+    ).resolves.toMatchObject({ team: 'black' });
+    await expect(
+      repository.findParticipant(gameId, SECOND_USER_ID)
+    ).resolves.toMatchObject({ team: 'white' });
+  });
+
   test('allows only one concurrent command for the same expected version', async () => {
     const created = await repository.createGame({
       commandId: CREATE_COMMAND_ID,
       creatorUserId: FIRST_USER_ID,
-      event: createGame(DEFAULT_CREATE_GAME_COMMAND),
+      event: DEFAULT_CREATE_GAME_EVENT,
       requestHash: CREATE_REQUEST_HASH,
     });
     const gameId = requireCreatedGameId(created);
@@ -534,7 +738,7 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
     const created = await repository.createGame({
       commandId: CREATE_COMMAND_ID,
       creatorUserId: FIRST_USER_ID,
-      event: createGame(DEFAULT_CREATE_GAME_COMMAND),
+      event: DEFAULT_CREATE_GAME_EVENT,
       requestHash: CREATE_REQUEST_HASH,
     });
     const gameId = requireCreatedGameId(created);
@@ -543,7 +747,7 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
       commandType: 'MultipleEventsForTest',
       events: [
         {
-          payload: { playerId: FIRST_USER_ID, seat: 1, team: 'white' },
+          payload: { playerId: SECOND_USER_ID, seat: 1, team: 'black' },
           sequence: 2,
           type: 'PlayerJoined',
           version: GAME_EVENT_VERSION,
@@ -570,7 +774,7 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
     const created = await repository.createGame({
       commandId: CREATE_COMMAND_ID,
       creatorUserId: FIRST_USER_ID,
-      event: createGame(DEFAULT_CREATE_GAME_COMMAND),
+      event: DEFAULT_CREATE_GAME_EVENT,
       requestHash: CREATE_REQUEST_HASH,
     });
     const gameId = requireCreatedGameId(created);
@@ -601,7 +805,7 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
     const created = await repository.createGame({
       commandId: CREATE_COMMAND_ID,
       creatorUserId: FIRST_USER_ID,
-      event: createGame(DEFAULT_CREATE_GAME_COMMAND),
+      event: DEFAULT_CREATE_GAME_EVENT,
       requestHash: CREATE_REQUEST_HASH,
     });
     const gameId = requireCreatedGameId(created);
@@ -627,21 +831,37 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
     const created = await repository.createGame({
       commandId: CREATE_COMMAND_ID,
       creatorUserId: FIRST_USER_ID,
-      event: createGame(DEFAULT_CREATE_GAME_COMMAND),
+      event: DEFAULT_CREATE_GAME_EVENT,
       requestHash: CREATE_REQUEST_HASH,
     });
     const gameId = requireCreatedGameId(created);
-    await database.insert(gameParticipants).values({
+    await repository.saveCommand({
+      commandId: GAME_COMMAND_ID,
+      commandType: 'JoinGame',
+      events: [
+        {
+          payload: { playerId: FIRST_USER_ID, seat: 1, team: 'white' },
+          sequence: 2,
+          type: 'PlayerJoined',
+          version: GAME_EVENT_VERSION,
+        },
+      ],
+      expectedVersion: 1,
       gameId,
-      role: 'player',
-      seat: 1,
-      team: 'white',
+      participantChanges: [
+        {
+          operation: 'addPlayer',
+          seat: 1,
+          team: 'white',
+          userId: FIRST_USER_ID,
+        },
+      ],
+      requestHash: GAME_REQUEST_HASH,
       userId: FIRST_USER_ID,
     });
 
     expect(await repository.findParticipant(gameId, FIRST_USER_ID)).toEqual({
       gameId,
-      role: 'player',
       seat: 1,
       team: 'white',
       userId: FIRST_USER_ID,
@@ -649,11 +869,187 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
     expect(await repository.findParticipant(gameId, SECOND_USER_ID)).toBeNull();
   });
 
+  test('moves an existing participant to the remaining free position', async () => {
+    const created = await repository.createGame({
+      commandId: CREATE_COMMAND_ID,
+      creatorUserId: FIRST_USER_ID,
+      event: DEFAULT_CREATE_GAME_EVENT,
+      requestHash: CREATE_REQUEST_HASH,
+    });
+    const gameId = requireCreatedGameId(created);
+    await repository.saveCommand({
+      commandId: GAME_COMMAND_ID,
+      commandType: 'JoinGame',
+      events: [
+        {
+          payload: { playerId: FIRST_USER_ID, seat: 1, team: 'white' },
+          sequence: 2,
+          type: 'PlayerJoined',
+          version: GAME_EVENT_VERSION,
+        },
+      ],
+      expectedVersion: 1,
+      gameId,
+      participantChanges: [
+        {
+          operation: 'addPlayer',
+          seat: 1,
+          team: 'white',
+          userId: FIRST_USER_ID,
+        },
+      ],
+      requestHash: GAME_REQUEST_HASH,
+      userId: FIRST_USER_ID,
+    });
+
+    const result = await repository.saveCommand({
+      commandId: SECOND_GAME_COMMAND_ID,
+      commandType: 'JoinGame',
+      events: [
+        {
+          payload: { playerId: FIRST_USER_ID, seat: 1, team: 'black' },
+          sequence: 3,
+          type: 'PlayerPositionChanged',
+          version: GAME_EVENT_VERSION,
+        },
+      ],
+      expectedVersion: 2,
+      gameId,
+      participantChanges: [
+        {
+          operation: 'movePlayer',
+          seat: 1,
+          team: 'black',
+          userId: FIRST_USER_ID,
+        },
+      ],
+      requestHash: SECOND_GAME_REQUEST_HASH,
+      userId: FIRST_USER_ID,
+    });
+
+    expect(result).toEqual({ currentVersion: 3, status: 'saved' });
+    expect(await repository.findParticipant(gameId, FIRST_USER_ID)).toEqual({
+      gameId,
+      seat: 1,
+      team: 'black',
+      userId: FIRST_USER_ID,
+    });
+    expect(await repository.loadEvents(gameId)).toHaveLength(3);
+  });
+
+  test('lists waiting and active games with their players', async () => {
+    const activeCreated = await repository.createGame({
+      commandId: CREATE_COMMAND_ID,
+      creatorUserId: FIRST_USER_ID,
+      event: DEFAULT_CREATE_GAME_EVENT,
+      requestHash: CREATE_REQUEST_HASH,
+    });
+    const waitingCreated = await repository.createGame({
+      commandId: SECOND_CREATE_COMMAND_ID,
+      creatorUserId: SECOND_USER_ID,
+      event: DEFAULT_CREATE_GAME_EVENT,
+      requestHash: SECOND_CREATE_REQUEST_HASH,
+    });
+    const activeGameId = requireCreatedGameId(activeCreated);
+    const waitingGameId = requireCreatedGameId(waitingCreated);
+    const startedAt = new Date('2026-08-16T12:00:00.000Z');
+    await repository.saveCommand({
+      commandId: GAME_COMMAND_ID,
+      commandType: 'JoinAndStartForTest',
+      events: [
+        {
+          payload: { playerId: FIRST_USER_ID, seat: 1, team: 'white' },
+          sequence: 2,
+          type: 'PlayerJoined',
+          version: GAME_EVENT_VERSION,
+        },
+        {
+          payload: { firstPlayerId: FIRST_USER_ID },
+          sequence: 3,
+          type: 'GameStarted',
+          version: GAME_EVENT_VERSION,
+        },
+      ],
+      expectedVersion: 1,
+      gameChanges: { startedAt, status: 'active' },
+      gameId: activeGameId,
+      participantChanges: [
+        {
+          operation: 'addPlayer',
+          seat: 1,
+          team: 'white',
+          userId: FIRST_USER_ID,
+        },
+      ],
+      requestHash: GAME_REQUEST_HASH,
+      userId: FIRST_USER_ID,
+    });
+    await repository.saveCommand({
+      commandId: SECOND_GAME_COMMAND_ID,
+      commandType: 'JoinGame',
+      events: [
+        {
+          payload: { playerId: SECOND_USER_ID, seat: 1, team: 'black' },
+          sequence: 2,
+          type: 'PlayerJoined',
+          version: GAME_EVENT_VERSION,
+        },
+      ],
+      expectedVersion: 1,
+      gameId: waitingGameId,
+      participantChanges: [
+        {
+          operation: 'addPlayer',
+          seat: 1,
+          team: 'black',
+          userId: SECOND_USER_ID,
+        },
+      ],
+      requestHash: SECOND_GAME_REQUEST_HASH,
+      userId: SECOND_USER_ID,
+    });
+
+    const lobbyGames = await repository.listLobbyGames();
+
+    expect(lobbyGames).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: activeGameId,
+          players: [
+            {
+              avatarHash: null,
+              displayName: 'Ada',
+              id: FIRST_USER_ID,
+              seat: 1,
+              team: 'white',
+            },
+          ],
+          startedAt,
+          status: 'active',
+        }),
+        expect.objectContaining({
+          id: waitingGameId,
+          players: [
+            {
+              avatarHash: null,
+              displayName: 'Grace',
+              id: SECOND_USER_ID,
+              seat: 1,
+              team: 'black',
+            },
+          ],
+          startedAt: null,
+          status: 'waiting',
+        }),
+      ])
+    );
+  });
+
   test('stores system events without a processed command', async () => {
     const created = await repository.createGame({
       commandId: CREATE_COMMAND_ID,
       creatorUserId: FIRST_USER_ID,
-      event: createGame(DEFAULT_CREATE_GAME_COMMAND),
+      event: DEFAULT_CREATE_GAME_EVENT,
       requestHash: CREATE_REQUEST_HASH,
     });
     const gameId = requireCreatedGameId(created);
@@ -692,7 +1088,7 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
     const created = await repository.createGame({
       commandId: CREATE_COMMAND_ID,
       creatorUserId: FIRST_USER_ID,
-      event: createGame(DEFAULT_CREATE_GAME_COMMAND),
+      event: DEFAULT_CREATE_GAME_EVENT,
       requestHash: CREATE_REQUEST_HASH,
     });
     const gameId = requireCreatedGameId(created);
@@ -750,6 +1146,8 @@ function requireCreatedGameId(result: {
   return result.gameId;
 }
 
-function readResultGameId(result: { gameId?: string }): string[] {
-  return result.gameId === undefined ? [] : [result.gameId];
+function readResultGameId(
+  result: { gameId: string } | { status: string }
+): string[] {
+  return 'gameId' in result ? [result.gameId] : [];
 }

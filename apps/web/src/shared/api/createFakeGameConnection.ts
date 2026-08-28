@@ -1,33 +1,65 @@
-import { DEFAULT_RUNTIME_FEATURE_FLAGS } from '@war-chest/feature-flags';
-import { GAME_RULES_VERSION } from '@war-chest/game-engine';
+import { createFakeGameApi } from './createFakeGameApi';
+import { subscribeToFakeLobbyUpdates } from './fakeLobbyUpdates';
 import type { GameConnection, GameConnectionHandlers } from './gameConnection';
 
 export function createFakeGameConnection(
-  handlers: GameConnectionHandlers
+  handlers: GameConnectionHandlers,
+  userId: string
 ): GameConnection {
+  const gameApi = createFakeGameApi(userId);
+  const joinedGameIds = new Set<string>();
+  let unsubscribe: (() => void) | null = null;
+
   return {
-    connect() {},
-    disconnect() {},
-    join(gameId) {
-      queueMicrotask(() => {
-        handlers.onSnapshot({
+    connect,
+    disconnect,
+    join,
+    leave,
+    synchronize,
+  };
+
+  function connect(): void {
+    unsubscribe ??= subscribeToFakeLobbyUpdates((message) => {
+      if (joinedGameIds.has(message.gameId)) {
+        refreshGame(message.gameId);
+      }
+    });
+  }
+
+  function disconnect(): void {
+    unsubscribe?.();
+    unsubscribe = null;
+    joinedGameIds.clear();
+  }
+
+  function join(gameId: string): void {
+    joinedGameIds.add(gameId);
+    refreshGame(gameId);
+  }
+
+  function leave(gameId: string): void {
+    joinedGameIds.delete(gameId);
+  }
+
+  function synchronize(gameId: string): void {
+    if (joinedGameIds.has(gameId)) {
+      refreshGame(gameId);
+    }
+  }
+
+  function refreshGame(gameId: string): void {
+    void gameApi
+      .getGame(gameId)
+      .then((game) => handlers.onSnapshot(game))
+      .catch((error: unknown) => {
+        handlers.onError({
+          code: 'fake_game_error',
           gameId,
-          view: {
-            currentPlayerId: null,
-            featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
-            lastEventSequence: 1,
-            moveCount: 0,
-            players: [],
-            privateMoves: [],
-            rulesVersion: GAME_RULES_VERSION,
-            status: 'waiting',
-            teams: { black: [], white: [] },
-            winnerTeam: null,
-          },
+          message:
+            error instanceof Error
+              ? error.message
+              : 'Не удалось открыть fake-игру.',
         });
       });
-    },
-    leave() {},
-    synchronize() {},
-  };
+  }
 }
