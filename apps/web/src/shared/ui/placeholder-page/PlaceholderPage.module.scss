@@ -146,6 +146,11 @@
   place-items: center;
 }
 
+a.logoFrame:focus-visible {
+  outline: 2px solid var(--wc-color-cyan);
+  outline-offset: 5px;
+}
+
 .logoFrame:before {
   position: absolute;
   border: 1px solid rgb(21 217 237 / 44%);

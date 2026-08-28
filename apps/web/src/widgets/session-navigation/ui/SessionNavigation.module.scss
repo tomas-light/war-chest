@@ -147,7 +147,7 @@
   font-size: 14px;
 }
 
-.session span {
+.sessionName {
   min-width: 112px;
   display: flex;
   gap: 9px;
@@ -155,7 +155,11 @@
   justify-content: flex-end;
 }
 
-.session span:before {
+.session > [role='img'] + .sessionName {
+  min-width: 0;
+}
+
+.sessionName:before {
   width: 7px;
   height: 7px;
   border: 1px solid var(--wc-color-cyan-soft);
@@ -204,7 +208,7 @@
     margin-left: 0;
   }
 
-  .session span {
+  .sessionName {
     justify-content: flex-start;
   }
 

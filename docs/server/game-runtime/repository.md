@@ -1,7 +1,8 @@
 # Repository и хранение игры
 
 `apps/server/src/games/GameRepository.ts` — единственная прикладная граница над
-таблицами `games`, `game_participants`, `processed_commands` и `game_events`.
+таблицами `games`, `game_participants`, `active_game_players`,
+`processed_commands` и `game_events`.
 Repository не интерпретирует доменные события: application service заранее
 вычисляет изменения проекций, а repository проверяет версии и сохраняет
 полученные данные атомарно.
@@ -14,13 +15,13 @@ Repository не интерпретирует доменные события: ap
 Ключи объектов сортируются рекурсивно, поэтому порядок полей JSON не меняет
 hash.
 
-Для `CreateGame` hash строится по операции и `userId`, потому что новый
-`gameId` ещё не известен клиенту; exact duplicate сравнивает сохранённые
-`userId`, тип `CreateGame` и `requestHash`. Для остальных команд hash включает
-`gameId`, `userId`, `expectedVersion` и payload команды, а exact duplicate
-дополнительно сравнивает `gameId`, пользователя и тип. Любое несовпадение при
-повторном UUID возвращает `commandIdConflict` и не раскрывает метаданные
-исходной команды.
+Для `CreateGame` hash строится по операции и `userId`, потому что новый `gameId`
+ещё не известен клиенту, а позиция при создании не выбирается; exact duplicate
+сравнивает сохранённые `userId`, тип `CreateGame` и `requestHash`. Для остальных
+команд hash включает `gameId`, `userId`, `expectedVersion` и payload команды, а
+exact duplicate дополнительно сравнивает `gameId`, пользователя и тип. Любое
+несовпадение при повторном UUID возвращает `commandIdConflict` и не раскрывает
+метаданные исходной команды.
 
 Repository повторяет эту проверку внутри транзакции. Если два запроса с одним
 UUID одновременно дошли до вставки, PostgreSQL SQLSTATE `23505` для primary key
@@ -28,17 +29,27 @@ UUID одновременно дошли до вставки, PostgreSQL SQLSTAT
 
 ## Транзакции
 
-Создание игры одной транзакцией добавляет:
+Создание пустой игры одной транзакцией добавляет:
 
 1. строку `games` с `currentVersion = 1`;
 2. строку `processed_commands` для `CreateGame`;
-3. первое событие `GameCreated` с `sequence = 1`.
+3. событие `GameCreated` с `sequence = 1`.
 
 Обычная команда блокирует строку игры через `FOR UPDATE`, затем повторно
 проверяет существующий `commandId` и `expectedVersion`. После проверок одна
 транзакция сохраняет `processed_commands`, все события команды, изменения
 `game_participants` и проекции статуса игры. `currentVersion` устанавливается
-в `sequence` последнего события. Пустой набор событий repository не принимает.
+в `sequence` последнего события. Первое присоединение добавляет участника, а
+`PlayerPositionChanged` обновляет его команду и место. Пустой набор событий
+repository не принимает.
+
+Первый `PlayerJoined` в той же транзакции добавляет пользователя в
+`active_game_players`. Первичный ключ по `user_id` закрывает конкурентную
+попытку занять место в другой незавершённой игре; repository переводит её в
+`playerAlreadyInGame`. При `GameFinished` активная проекция удаляется, а
+исторический участник остаётся. `PlayerPositionsSwapped` получает две конечные
+позиции и обновляет обе записи внутри одной транзакции через временно свободное
+место, не нарушая уникальность `team + seat`.
 
 Presence и deadline-события сохраняются через отдельную операцию
 `saveSystemEvents`. Она также блокирует игру, проверяет версию и обновляет

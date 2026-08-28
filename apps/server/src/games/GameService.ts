@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import type { LobbyGame, LobbyGamesResponse } from '@war-chest/api-contracts';
 import type { RuntimeFeatureFlags } from '@war-chest/feature-flags';
 import {
   type GameCommandData,
@@ -18,6 +19,7 @@ import {
   restoreGame,
 } from '@war-chest/game-engine';
 import type { FeatureFlagsService } from '../featureFlags/FeatureFlagsService.js';
+import { createPublicUser } from '../users/PublicUser.js';
 import type { ActiveGame, ActiveGames } from './ActiveGames.js';
 import type { GameRepository, StoredParticipant } from './GameRepository.js';
 
@@ -33,7 +35,8 @@ type CreateGameResult =
   | { gameId: string; status: 'created'; view: GameView }
   | { gameId: string; status: 'duplicateCommand'; view: GameView }
   | { status: 'commandIdConflict' }
-  | { status: 'featureFlagsUnavailable' };
+  | { status: 'featureFlagsUnavailable' }
+  | { gameId: string; status: 'playerAlreadyInGame' };
 
 type DuplicateCreateGameResult = Extract<
   CreateGameResult,
@@ -94,6 +97,13 @@ interface CheckJoinGamePreconditionsInput {
   userId: string;
 }
 
+interface CheckCommandAccessInput {
+  command: GameCommandData;
+  participant: StoredParticipant | null;
+  state: GameState;
+  userId: string;
+}
+
 interface SavedCommandResult {
   currentVersion: number;
   events: readonly GameViewEventData[];
@@ -115,7 +125,8 @@ export type ExecuteGameCommandResult =
   | { status: 'commandRejected' }
   | { status: 'gameCommandForbidden' }
   | { status: 'gameNotFound' }
-  | { status: 'gamePositionOccupied' };
+  | { status: 'gamePositionOccupied' }
+  | { gameId: string; status: 'playerAlreadyInGame' };
 
 type CommandAccessResult = Extract<
   ExecuteGameCommandResult,
@@ -222,6 +233,10 @@ interface CreateGameServiceOptions {
   gameRepository: GameRepository;
 }
 
+interface ListLobbyGamesInput {
+  userId: string;
+}
+
 interface ProjectionChanges {
   gameChanges?: {
     finishedAt?: Date;
@@ -229,12 +244,27 @@ interface ProjectionChanges {
     status?: 'active' | 'finished';
     winnerTeam?: 'black' | 'white';
   };
-  participantChanges?: readonly {
-    operation: 'addPlayer';
-    seat: number;
-    team: 'black' | 'white';
-    userId: string;
-  }[];
+  participantChanges?: readonly (
+    | {
+        operation: 'addPlayer';
+        seat: number;
+        team: 'black' | 'white';
+        userId: string;
+      }
+    | {
+        operation: 'movePlayer';
+        seat: number;
+        team: 'black' | 'white';
+        userId: string;
+      }
+    | {
+        operation: 'swapPlayers';
+        positions: [
+          { seat: number; team: 'black' | 'white'; userId: string },
+          { seat: number; team: 'black' | 'white'; userId: string },
+        ];
+      }
+  )[];
 }
 
 export interface GameService {
@@ -257,6 +287,10 @@ export interface GameService {
     this: void,
     input: GetGameSnapshotInput
   ): Promise<GetGameSnapshotResult>;
+  listLobbyGames(
+    this: void,
+    input: ListLobbyGamesInput
+  ): Promise<LobbyGamesResponse>;
   recoverActiveGames(this: void): Promise<void>;
   subscribe(this: void, listener: GameUpdateListener): () => void;
   synchronize(
@@ -280,6 +314,7 @@ export function createGameService(
     executeCommand,
     getEvents,
     getSnapshot,
+    listLobbyGames,
     recoverActiveGames,
     subscribe,
     synchronize,
@@ -378,7 +413,17 @@ export function createGameService(
         return { status: 'commandIdConflict' };
       }
 
-      return loadDuplicateCreatedGame(existingCommand.gameId);
+      return loadDuplicateCreatedGame(existingCommand.gameId, input.userId);
+    }
+
+    const currentPlayerGameId =
+      await options.gameRepository.findCurrentPlayerGame(input.userId);
+
+    if (currentPlayerGameId !== null) {
+      return {
+        gameId: currentPlayerGameId,
+        status: 'playerAlreadyInGame',
+      };
     }
 
     let featureFlags: RuntimeFeatureFlags;
@@ -389,14 +434,15 @@ export function createGameService(
       return { status: 'featureFlagsUnavailable' };
     }
 
-    const event = createGameEvent({
+    const gameCreatedEvent = createGameEvent({
+      creatorId: input.userId,
       featureFlags,
       type: 'CreateGame',
     });
     const result = await options.gameRepository.createGame({
       commandId: input.commandId,
       creatorUserId: input.userId,
-      event,
+      event: gameCreatedEvent,
       requestHash,
     });
 
@@ -405,11 +451,12 @@ export function createGameService(
     }
 
     if (result.status === 'duplicateCommand') {
-      return loadDuplicateCreatedGame(result.gameId);
+      return loadDuplicateCreatedGame(result.gameId, input.userId);
     }
 
-    const state = applyEvent(null, event);
+    const state = applyEvent(null, gameCreatedEvent);
     options.activeGames.store(result.gameId, state);
+    notifyUpdate({ gameId: result.gameId, previousVersion: 0 });
 
     return {
       gameId: result.gameId,
@@ -419,7 +466,8 @@ export function createGameService(
   }
 
   async function loadDuplicateCreatedGame(
-    gameId: string
+    gameId: string,
+    userId: string
   ): Promise<DuplicateCreateGameResult> {
     const loadedGame = await loadGame(gameId);
 
@@ -427,11 +475,40 @@ export function createGameService(
       throw new Error(`Created game ${gameId} does not exist.`);
     }
 
+    const viewer = await resolveViewer(gameId, userId, loadedGame.state);
+
     return {
       gameId,
       status: 'duplicateCommand',
-      view: createViewFor(loadedGame.state, { role: 'spectator' }),
+      view: createViewFor(loadedGame.state, viewer),
     };
+  }
+
+  async function listLobbyGames(
+    input: ListLobbyGamesInput
+  ): Promise<LobbyGamesResponse> {
+    const storedGames = await options.gameRepository.listLobbyGames();
+    const currentPlayerGameId =
+      await options.gameRepository.findCurrentPlayerGame(input.userId);
+
+    return {
+      currentPlayerGameId,
+      items: storedGames.map(createLobbyGame),
+    };
+
+    function createLobbyGame(game: (typeof storedGames)[number]): LobbyGame {
+      return {
+        createdAt: game.createdAt.toISOString(),
+        id: game.id,
+        players: game.players.map((player) => ({
+          ...createPublicUser(player),
+          seat: player.seat,
+          team: player.team,
+        })),
+        startedAt: game.startedAt?.toISOString() ?? null,
+        status: game.status,
+      };
+    }
   }
 
   async function disconnect(
@@ -549,16 +626,31 @@ export function createGameService(
         input.gameId,
         input.userId
       );
-      const commandAccessResult = checkCommandAccess(
-        input.command,
-        participant
-      );
+      const commandAccessResult = checkCommandAccess({
+        command: input.command,
+        participant,
+        state: activeGame.state,
+        userId: input.userId,
+      });
 
       if (commandAccessResult !== null) {
         return commandAccessResult;
       }
 
       if (input.command.type === 'JoinGame') {
+        const currentPlayerGameId =
+          await options.gameRepository.findCurrentPlayerGame(input.userId);
+
+        if (
+          currentPlayerGameId !== null &&
+          currentPlayerGameId !== input.gameId
+        ) {
+          return {
+            gameId: currentPlayerGameId,
+            status: 'playerAlreadyInGame',
+          };
+        }
+
         const joinGamePreconditionResult = checkJoinGamePreconditions({
           command: input.command,
           participant,
@@ -598,6 +690,16 @@ export function createGameService(
         return saveResult;
       }
 
+      if (saveResult.status === 'playerAlreadyInGame') {
+        const currentPlayerGameId =
+          await options.gameRepository.findCurrentPlayerGame(input.userId);
+
+        return {
+          gameId: currentPlayerGameId ?? input.gameId,
+          status: 'playerAlreadyInGame',
+        };
+      }
+
       if (saveResult.status === 'versionConflict') {
         await reloadGame(input.gameId);
         return saveResult;
@@ -630,7 +732,10 @@ export function createGameService(
 
       const nextState = events.reduce(applyEvent, activeGame.state);
       activeGame.state = nextState;
-      const viewer = getPlayerViewer(input.userId);
+      const viewer: Viewer =
+        input.command.type === 'JoinGame' || participant !== null
+          ? getPlayerViewer(input.userId)
+          : { role: 'spectator' };
       const result: SavedCommandResult = {
         currentVersion: nextState.lastEventSequence,
         events: events.map((event) => createViewEventFor(event, viewer)),
@@ -807,7 +912,7 @@ export function createGameService(
       userId
     );
     const isPlayer =
-      participant?.role === 'player' &&
+      participant !== null &&
       state.players.some((player) => player.id === userId);
 
     return isPlayer
@@ -1043,42 +1148,60 @@ export function createGameService(
 }
 
 function checkCommandAccess(
-  command: GameCommandData,
-  participant: StoredParticipant | null
+  input: CheckCommandAccessInput
 ): CommandAccessResult | null {
-  return command.type === 'JoinGame' || participant?.role === 'player'
-    ? null
-    : { status: 'gameCommandForbidden' };
+  if (input.command.type === 'JoinGame') {
+    return null;
+  }
+
+  if (
+    input.command.type === 'StartGame' ||
+    input.command.type === 'SwapPlayerPositions'
+  ) {
+    return input.state.creatorId === input.userId
+      ? null
+      : { status: 'gameCommandForbidden' };
+  }
+
+  return input.participant === null ? { status: 'gameCommandForbidden' } : null;
 }
 
 function checkJoinGamePreconditions(
   input: CheckJoinGamePreconditionsInput
 ): JoinGamePreconditionResult | null {
-  if (input.participant?.role === 'player') {
-    const existingPlayer = input.state.players.find(
-      (player) => player.id === input.userId
-    );
-    const hasRequestedPosition =
-      existingPlayer?.seat === input.command.seat &&
-      existingPlayer.team === input.command.team;
-
-    return hasRequestedPosition
-      ? {
-          status: 'alreadyJoined',
-          view: createViewFor(input.state, {
-            playerId: input.userId,
-            role: 'player',
-          }),
-        }
-      : { status: 'commandRejected' };
-  }
-
   const isPositionOccupied = input.state.players.some(
     (player) =>
-      player.seat === input.command.seat && player.team === input.command.team
+      player.id !== input.userId &&
+      player.seat === input.command.seat &&
+      player.team === input.command.team
   );
 
-  return isPositionOccupied ? { status: 'gamePositionOccupied' } : null;
+  if (isPositionOccupied) {
+    return { status: 'gamePositionOccupied' };
+  }
+
+  if (input.participant === null) {
+    return null;
+  }
+
+  const existingPlayer = input.state.players.find(
+    (player) => player.id === input.userId
+  );
+
+  if (existingPlayer === undefined) {
+    return { status: 'commandRejected' };
+  }
+
+  const hasRequestedPosition =
+    existingPlayer.seat === input.command.seat &&
+    existingPlayer.team === input.command.team;
+
+  return hasRequestedPosition
+    ? {
+        status: 'alreadyJoined',
+        view: createViewFor(input.state, getPlayerViewer(input.userId)),
+      }
+    : null;
 }
 
 function createProjectionChanges(
@@ -1086,12 +1209,9 @@ function createProjectionChanges(
   occurredAt: Date
 ): ProjectionChanges {
   const gameChanges: NonNullable<ProjectionChanges['gameChanges']> = {};
-  const participantChanges: {
-    operation: 'addPlayer';
-    seat: number;
-    team: 'black' | 'white';
-    userId: string;
-  }[] = [];
+  const participantChanges: NonNullable<
+    ProjectionChanges['participantChanges']
+  >[number][] = [];
 
   for (const event of events) {
     if (event.type === 'PlayerJoined') {
@@ -1100,6 +1220,35 @@ function createProjectionChanges(
         seat: event.payload.seat,
         team: event.payload.team,
         userId: event.payload.playerId,
+      });
+    }
+
+    if (event.type === 'PlayerPositionChanged') {
+      participantChanges.push({
+        operation: 'movePlayer',
+        seat: event.payload.seat,
+        team: event.payload.team,
+        userId: event.payload.playerId,
+      });
+    }
+
+    if (event.type === 'PlayerPositionsSwapped') {
+      const [firstPosition, secondPosition] = event.payload.positions;
+
+      participantChanges.push({
+        operation: 'swapPlayers',
+        positions: [
+          {
+            seat: firstPosition.seat,
+            team: firstPosition.team,
+            userId: firstPosition.playerId,
+          },
+          {
+            seat: secondPosition.seat,
+            team: secondPosition.team,
+            userId: secondPosition.playerId,
+          },
+        ],
       });
     }
 

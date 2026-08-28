@@ -73,7 +73,8 @@ export function createGameConnection(
 }
 
 export async function createSelectedGameConnection(
-  handlers: GameConnectionHandlers
+  handlers: GameConnectionHandlers,
+  userId: string
 ): Promise<GameConnection> {
   if (import.meta.env.DEV) {
     const { readDevBackend } = await import('../config/backendKind');
@@ -82,7 +83,7 @@ export async function createSelectedGameConnection(
       const { createFakeGameConnection } =
         await import('./createFakeGameConnection');
 
-      return createFakeGameConnection(handlers);
+      return createFakeGameConnection(handlers, userId);
     }
   }
 

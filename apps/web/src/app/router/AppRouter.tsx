@@ -8,17 +8,19 @@ import {
   useNavigate,
 } from 'react-router';
 import { useAuthSession } from '#/entities/auth-session';
+import { ActiveGamePage } from '#/pages/active-game';
 import { GamePage } from '#/pages/game';
 import { GameHistoryPage } from '#/pages/game-history';
 import { LobbyPage } from '#/pages/lobby';
 import { LoginPage } from '#/pages/login';
 import { NewGamePage } from '#/pages/new-game';
 import { UserProfilePage } from '#/pages/user-profile';
+import { appRoutes } from '#/shared/config';
 import { Button } from '#/shared/ui/button';
 import { LoadingIndicator } from '#/shared/ui/loading-indicator';
 import { PlaceholderPage } from '#/shared/ui/placeholder-page';
+import { GameRuntimeProvider } from '#/widgets/game-runtime';
 import { SessionNavigation } from '#/widgets/session-navigation';
-import { appRoutes } from './appRoutes';
 import classes from './AppRouter.module.scss';
 
 const ROUTE_FADE_DURATION_MS = 200;
@@ -37,7 +39,16 @@ export function AppRouter() {
           />
           <Route path={appRoutes.lobby.url()} element={<LobbyPage />} />
           <Route path={appRoutes.games.new.url()} element={<NewGamePage />} />
-          <Route path={appRoutes.games.gameId().url()} element={<GamePage />} />
+          <Route element={<GameRuntimeProvider />}>
+            <Route
+              path={appRoutes.games.gameId().url()}
+              element={<GamePage />}
+            />
+            <Route
+              path={appRoutes.games.play.gameId().url()}
+              element={<ActiveGamePage />}
+            />
+          </Route>
           <Route path={appRoutes.profile.url()} element={<UserProfilePage />} />
           <Route
             path={appRoutes.users.userId().url()}
@@ -195,6 +206,7 @@ function SessionErrorPage(props: SessionErrorPageProps) {
   return (
     <PlaceholderPage
       description="Не удалось связаться с сервером и проверить сессию."
+      logoHref="/"
       title="Нет соединения"
     >
       <Button onClick={onRetry}>Повторить</Button>

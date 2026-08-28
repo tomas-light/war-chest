@@ -22,6 +22,7 @@ describe('player presence', () => {
 
   beforeEach(() => {
     const gameCreated = createGame({
+      creatorId: FIRST_PLAYER_ID,
       featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
       type: 'CreateGame',
     });

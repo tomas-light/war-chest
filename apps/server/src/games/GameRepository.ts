@@ -2,20 +2,24 @@ import {
   type Database,
   type Game,
   type GameParticipant,
+  activeGamePlayers,
   gameEvents,
   gameParticipants,
   games,
   processedCommands,
+  userAvatars,
+  users,
 } from '@war-chest/database';
 import {
   type GameCreatedEventData,
   type GameEventData,
   parseGameEventData,
 } from '@war-chest/game-engine';
-import { and, asc, eq, gt } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, inArray, or } from 'drizzle-orm';
 
 const CREATE_GAME_COMMAND_TYPE = 'CreateGame';
 const FIRST_EVENT_SEQUENCE = 1;
+const ACTIVE_GAME_PLAYERS_PRIMARY_KEY_CONSTRAINT = 'active_game_players_pkey';
 const POSTGRESQL_UNIQUE_VIOLATION_SQLSTATE = '23505';
 const PROCESSED_COMMAND_PRIMARY_KEY_CONSTRAINT = 'processed_commands_pkey';
 const REQUEST_HASH_PATTERN = /^[0-9a-f]{64}$/;
@@ -34,10 +38,25 @@ interface StoredGame {
 
 export interface StoredParticipant {
   gameId: string;
-  role: GameParticipant['role'];
-  seat: number | null;
+  seat: number;
   team: GameParticipant['team'];
   userId: string;
+}
+
+interface StoredLobbyPlayer {
+  avatarHash: string | null;
+  displayName: string;
+  id: string;
+  seat: number;
+  team: GameTeam;
+}
+
+export interface StoredLobbyGame {
+  createdAt: Date;
+  id: string;
+  players: readonly StoredLobbyPlayer[];
+  startedAt: Date | null;
+  status: 'active' | 'waiting';
 }
 
 interface ProcessedCommandIdentity {
@@ -54,12 +73,26 @@ interface GameProjectionChanges {
   winnerTeam?: Game['winnerTeam'];
 }
 
-interface ParticipantProjectionChange {
-  operation: 'addPlayer';
-  seat: number;
-  team: GameTeam;
-  userId: string;
-}
+type ParticipantProjectionChange =
+  | {
+      operation: 'addPlayer';
+      seat: number;
+      team: GameTeam;
+      userId: string;
+    }
+  | {
+      operation: 'movePlayer';
+      seat: number;
+      team: GameTeam;
+      userId: string;
+    }
+  | {
+      operation: 'swapPlayers';
+      positions: [
+        { seat: number; team: GameTeam; userId: string },
+        { seat: number; team: GameTeam; userId: string },
+      ];
+    };
 
 interface CreateStoredGameInput {
   commandId: string;
@@ -89,7 +122,8 @@ type SaveGameCommandResult =
   | { currentVersion: number; status: 'saved' }
   | { currentVersion: number; status: 'duplicateCommand' }
   | { currentVersion: number; status: 'versionConflict' }
-  | { status: 'commandIdConflict' };
+  | { status: 'commandIdConflict' }
+  | { status: 'playerAlreadyInGame' };
 
 interface SaveSystemEventsInput {
   events: readonly GameEventData[];
@@ -108,7 +142,9 @@ export interface GameRepository {
     input: CreateStoredGameInput
   ): Promise<CreateStoredGameResult>;
   findGame(this: void, gameId: string): Promise<StoredGame | null>;
+  findCurrentPlayerGame(this: void, userId: string): Promise<string | null>;
   findActiveGameIds(this: void): Promise<readonly string[]>;
+  listLobbyGames(this: void): Promise<readonly StoredLobbyGame[]>;
   findParticipant(
     this: void,
     gameId: string,
@@ -136,10 +172,12 @@ export interface GameRepository {
 export function createGameRepository(database: Database): GameRepository {
   return {
     createGame,
+    findCurrentPlayerGame,
     findActiveGameIds,
     findGame,
     findParticipant,
     findProcessedCommand,
+    listLobbyGames,
     loadEvents,
     saveCommand,
     saveSystemEvents,
@@ -172,7 +210,7 @@ export function createGameRepository(database: Database): GameRepository {
         const [createdGame] = await transaction
           .insert(games)
           .values({
-            currentVersion: FIRST_EVENT_SEQUENCE,
+            currentVersion: input.event.sequence,
             status: 'waiting',
           })
           .returning({ id: games.id });
@@ -224,6 +262,16 @@ export function createGameRepository(database: Database): GameRepository {
     return game ?? null;
   }
 
+  async function findCurrentPlayerGame(userId: string): Promise<string | null> {
+    const [activeGame] = await database
+      .select({ gameId: activeGamePlayers.gameId })
+      .from(activeGamePlayers)
+      .where(eq(activeGamePlayers.userId, userId))
+      .limit(1);
+
+    return activeGame?.gameId ?? null;
+  }
+
   async function findActiveGameIds(): Promise<readonly string[]> {
     const activeGames = await database
       .select({ id: games.id })
@@ -231,6 +279,58 @@ export function createGameRepository(database: Database): GameRepository {
       .where(eq(games.status, 'active'));
 
     return activeGames.map((game) => game.id);
+  }
+
+  async function listLobbyGames(): Promise<readonly StoredLobbyGame[]> {
+    const gameRows = await database
+      .select({
+        createdAt: games.createdAt,
+        id: games.id,
+        startedAt: games.startedAt,
+        status: games.status,
+      })
+      .from(games)
+      .where(or(eq(games.status, 'waiting'), eq(games.status, 'active')))
+      .orderBy(desc(games.createdAt));
+    const gameIds = gameRows.map((game) => game.id);
+
+    if (gameIds.length === 0) {
+      return [];
+    }
+
+    const playerRows = await database
+      .select({
+        avatarHash: userAvatars.contentHash,
+        displayName: users.displayName,
+        gameId: gameParticipants.gameId,
+        id: users.id,
+        seat: gameParticipants.seat,
+        team: gameParticipants.team,
+      })
+      .from(gameParticipants)
+      .innerJoin(users, eq(users.id, gameParticipants.userId))
+      .leftJoin(userAvatars, eq(userAvatars.userId, users.id))
+      .where(inArray(gameParticipants.gameId, gameIds))
+      .orderBy(
+        asc(gameParticipants.gameId),
+        asc(gameParticipants.team),
+        asc(gameParticipants.seat)
+      );
+    const playersByGameId = new Map<string, StoredLobbyPlayer[]>();
+
+    for (const player of playerRows) {
+      const players = playersByGameId.get(player.gameId) ?? [];
+      const { gameId, ...storedPlayer } = player;
+
+      players.push(storedPlayer);
+      playersByGameId.set(gameId, players);
+    }
+
+    return gameRows.map((game) => ({
+      ...game,
+      players: playersByGameId.get(game.id) ?? [],
+      status: requireLobbyGameStatus(game.status, game.id),
+    }));
   }
 
   async function findParticipant(
@@ -365,16 +465,63 @@ export function createGameRepository(database: Database): GameRepository {
 
         const participantChanges = input.participantChanges ?? [];
 
-        if (participantChanges.length > 0) {
-          await transaction.insert(gameParticipants).values(
-            participantChanges.map((change) => ({
+        for (const change of participantChanges) {
+          if (change.operation === 'addPlayer') {
+            await transaction.insert(activeGamePlayers).values({
               gameId: input.gameId,
-              role: 'player' as const,
+              userId: change.userId,
+            });
+            await transaction.insert(gameParticipants).values({
+              gameId: input.gameId,
               seat: change.seat,
               team: change.team,
               userId: change.userId,
-            }))
-          );
+            });
+          } else if (change.operation === 'movePlayer') {
+            await transaction
+              .update(gameParticipants)
+              .set({ seat: change.seat, team: change.team })
+              .where(
+                and(
+                  eq(gameParticipants.gameId, input.gameId),
+                  eq(gameParticipants.userId, change.userId)
+                )
+              );
+          } else {
+            const [firstPosition, secondPosition] = change.positions;
+            const temporarySeat = 2_147_483_647;
+
+            await transaction
+              .update(gameParticipants)
+              .set({ seat: temporarySeat })
+              .where(
+                and(
+                  eq(gameParticipants.gameId, input.gameId),
+                  eq(gameParticipants.userId, firstPosition.userId)
+                )
+              );
+            await transaction
+              .update(gameParticipants)
+              .set({
+                seat: secondPosition.seat,
+                team: secondPosition.team,
+              })
+              .where(
+                and(
+                  eq(gameParticipants.gameId, input.gameId),
+                  eq(gameParticipants.userId, secondPosition.userId)
+                )
+              );
+            await transaction
+              .update(gameParticipants)
+              .set({ seat: firstPosition.seat, team: firstPosition.team })
+              .where(
+                and(
+                  eq(gameParticipants.gameId, input.gameId),
+                  eq(gameParticipants.userId, firstPosition.userId)
+                )
+              );
+          }
         }
 
         const lastEvent = input.events.at(-1);
@@ -391,9 +538,19 @@ export function createGameRepository(database: Database): GameRepository {
           })
           .where(eq(games.id, input.gameId));
 
+        if (input.gameChanges?.status === 'finished') {
+          await transaction
+            .delete(activeGamePlayers)
+            .where(eq(activeGamePlayers.gameId, input.gameId));
+        }
+
         return { currentVersion: lastEvent.sequence, status: 'saved' };
       });
     } catch (error) {
+      if (isActiveGamePlayerUniqueViolation(error)) {
+        return { status: 'playerAlreadyInGame' };
+      }
+
       if (!isProcessedCommandUniqueViolation(error)) {
         throw error;
       }
@@ -471,6 +628,12 @@ export function createGameRepository(database: Database): GameRepository {
         })
         .where(eq(games.id, input.gameId));
 
+      if (input.gameChanges?.status === 'finished') {
+        await transaction
+          .delete(activeGamePlayers)
+          .where(eq(activeGamePlayers.gameId, input.gameId));
+      }
+
       return { currentVersion: lastEvent.sequence, status: 'saved' };
     });
   }
@@ -533,6 +696,17 @@ function validateCreatedEvent(event: GameCreatedEventData): void {
   parseGameEventData(event);
 }
 
+function requireLobbyGameStatus(
+  status: Game['status'],
+  gameId: string
+): StoredLobbyGame['status'] {
+  if (status === 'finished') {
+    throw new Error(`Finished game ${gameId} cannot appear in the lobby.`);
+  }
+
+  return status;
+}
+
 function validateEventSequence(
   events: readonly GameEventData[],
   currentVersion: number
@@ -573,6 +747,23 @@ function validateExpectedVersion(expectedVersion: number): void {
 }
 
 function isProcessedCommandUniqueViolation(error: unknown): boolean {
+  return hasPostgreSqlConstraintViolation(
+    error,
+    PROCESSED_COMMAND_PRIMARY_KEY_CONSTRAINT
+  );
+}
+
+function isActiveGamePlayerUniqueViolation(error: unknown): boolean {
+  return hasPostgreSqlConstraintViolation(
+    error,
+    ACTIVE_GAME_PLAYERS_PRIMARY_KEY_CONSTRAINT
+  );
+}
+
+function hasPostgreSqlConstraintViolation(
+  error: unknown,
+  constraintName: string
+): boolean {
   const checkedErrors = new Set<unknown>();
   let currentError = error;
 
@@ -581,7 +772,12 @@ function isProcessedCommandUniqueViolation(error: unknown): boolean {
     typeof currentError === 'object' &&
     !checkedErrors.has(currentError)
   ) {
-    if (isProcessedCommandPrimaryKeyViolation(currentError)) {
+    if (
+      'code' in currentError &&
+      currentError.code === POSTGRESQL_UNIQUE_VIOLATION_SQLSTATE &&
+      'constraint_name' in currentError &&
+      currentError.constraint_name === constraintName
+    ) {
       return true;
     }
 
@@ -590,15 +786,6 @@ function isProcessedCommandUniqueViolation(error: unknown): boolean {
   }
 
   return false;
-}
-
-function isProcessedCommandPrimaryKeyViolation(error: object): boolean {
-  return (
-    'code' in error &&
-    error.code === POSTGRESQL_UNIQUE_VIOLATION_SQLSTATE &&
-    'constraint_name' in error &&
-    error.constraint_name === PROCESSED_COMMAND_PRIMARY_KEY_CONSTRAINT
-  );
 }
 
 class CorruptedGameHistoryError extends Error {

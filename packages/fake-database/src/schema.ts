@@ -23,8 +23,6 @@ export const FAKE_DATABASE_STORE_NAMES = [
 
 export type FakeAuthProvider = UserIdentity['provider'];
 export type FakeGameStatus = Game['status'];
-export type FakeParticipantRole = GameParticipant['role'];
-
 export type FakeUser = User;
 export type FakeUserIdentity = UserIdentity;
 export type FakeAuthSession = Omit<AuthSession, 'tokenHash'>;

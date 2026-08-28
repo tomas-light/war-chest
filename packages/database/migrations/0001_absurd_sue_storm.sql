@@ -1,3 +1,4 @@
+TRUNCATE TABLE "games" CASCADE;--> statement-breakpoint
 ALTER TABLE "game_events" DROP CONSTRAINT "game_events_command_id_processed_commands_id_fk";--> statement-breakpoint
 DROP TABLE "processed_commands";--> statement-breakpoint
 CREATE TABLE "processed_commands" (

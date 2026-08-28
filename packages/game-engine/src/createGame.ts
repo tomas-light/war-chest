@@ -10,6 +10,7 @@ export function createGame(
 ): GameCreatedEventData {
   return {
     payload: {
+      creatorId: command.creatorId,
       featureFlags: { ...command.featureFlags },
       rulesVersion: GAME_RULES_VERSION,
     },

@@ -17,6 +17,7 @@ import {
 } from '../src/games/GameService.js';
 
 const GAME_ID = '20000000-0000-4000-8000-000000000001';
+const OTHER_GAME_ID = '20000000-0000-4000-8000-000000000002';
 const COMMAND_ID = '30000000-0000-4000-8000-000000000001';
 const SECOND_COMMAND_ID = '30000000-0000-4000-8000-000000000002';
 const FIRST_USER_ID = '10000000-0000-4000-8000-000000000001';
@@ -28,7 +29,11 @@ const CURRENT_TIME = new Date('2026-08-16T12:00:00.000Z');
 const CREATE_REQUEST_HASH =
   'bdea43dc54d89791fa249a3ef1786b10e6cfe2be12570ab18fbb1a77b5161e02';
 const GAME_CREATED_EVENT: GameEventData = {
-  payload: { featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS, rulesVersion: 1 },
+  payload: {
+    creatorId: FIRST_USER_ID,
+    featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+    rulesVersion: 1,
+  },
   sequence: 1,
   type: 'GameCreated',
   version: 1,
@@ -77,9 +82,11 @@ describe('GameService', () => {
     gameRepository = {
       createGame: vi.fn(),
       findActiveGameIds: vi.fn(),
+      findCurrentPlayerGame: vi.fn(),
       findGame: vi.fn(),
       findParticipant: vi.fn(),
       findProcessedCommand: vi.fn(),
+      listLobbyGames: vi.fn(),
       loadEvents: vi.fn(),
       saveCommand: vi.fn(),
       saveSystemEvents: vi.fn(),
@@ -92,7 +99,9 @@ describe('GameService', () => {
     });
     vi.mocked(gameRepository.findProcessedCommand).mockResolvedValue(null);
     vi.mocked(gameRepository.findActiveGameIds).mockResolvedValue([]);
+    vi.mocked(gameRepository.findCurrentPlayerGame).mockResolvedValue(null);
     vi.mocked(gameRepository.findParticipant).mockResolvedValue(null);
+    vi.mocked(gameRepository.listLobbyGames).mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -123,7 +132,11 @@ describe('GameService', () => {
     expect(result).toMatchObject({
       gameId: GAME_ID,
       status: 'created',
-      view: { featureFlags: { spectatorMode: true } },
+      view: {
+        featureFlags: { spectatorMode: true },
+        lastEventSequence: 1,
+        players: [],
+      },
     });
   });
 
@@ -148,6 +161,30 @@ describe('GameService', () => {
     });
 
     expect(featureFlagsService.read).toHaveBeenCalledTimes(2);
+  });
+
+  test('publishes a lobby update after creating a game', async () => {
+    vi.mocked(featureFlagsService.read).mockResolvedValue(
+      DEFAULT_RUNTIME_FEATURE_FLAGS
+    );
+    vi.mocked(gameRepository.createGame).mockResolvedValue({
+      gameId: GAME_ID,
+      status: 'created',
+    });
+    const listener = vi.fn();
+    gameService.subscribe(listener);
+
+    await gameService.createGame({
+      commandId: COMMAND_ID,
+      userId: FIRST_USER_ID,
+    });
+
+    await vi.waitFor(() => {
+      expect(listener).toHaveBeenCalledWith({
+        gameId: GAME_ID,
+        previousVersion: 0,
+      });
+    });
   });
 
   test('returns a duplicate create result without reading unavailable runtime flags', async () => {
@@ -192,6 +229,67 @@ describe('GameService', () => {
     expect(result).toEqual({ status: 'commandIdConflict' });
     expect(featureFlagsService.read).not.toHaveBeenCalled();
     expect(gameRepository.createGame).not.toHaveBeenCalled();
+  });
+
+  test('does not create another game for a current player', async () => {
+    vi.mocked(gameRepository.findCurrentPlayerGame).mockResolvedValue(
+      OTHER_GAME_ID
+    );
+
+    const result = await gameService.createGame({
+      commandId: COMMAND_ID,
+      userId: FIRST_USER_ID,
+    });
+
+    expect(result).toEqual({
+      gameId: OTHER_GAME_ID,
+      status: 'playerAlreadyInGame',
+    });
+    expect(featureFlagsService.read).not.toHaveBeenCalled();
+    expect(gameRepository.createGame).not.toHaveBeenCalled();
+  });
+
+  test('maps stored unfinished games to the public lobby contract', async () => {
+    vi.mocked(gameRepository.listLobbyGames).mockResolvedValue([
+      {
+        createdAt: CURRENT_TIME,
+        id: GAME_ID,
+        players: [
+          {
+            avatarHash: 'avatar-hash',
+            displayName: 'Ada',
+            id: FIRST_USER_ID,
+            seat: 1,
+            team: 'white',
+          },
+        ],
+        startedAt: null,
+        status: 'waiting',
+      },
+    ]);
+
+    const result = await gameService.listLobbyGames({ userId: FIRST_USER_ID });
+
+    expect(result).toEqual({
+      currentPlayerGameId: null,
+      items: [
+        {
+          createdAt: CURRENT_TIME.toISOString(),
+          id: GAME_ID,
+          players: [
+            {
+              avatarVersion: 'avatar-hash',
+              displayName: 'Ada',
+              id: FIRST_USER_ID,
+              seat: 1,
+              team: 'white',
+            },
+          ],
+          startedAt: null,
+          status: 'waiting',
+        },
+      ],
+    });
   });
 
   test('does not read runtime flags when restoring an existing game', async () => {
@@ -320,6 +418,162 @@ describe('GameService', () => {
     expect(result).toEqual({ status: 'gameCommandForbidden' });
   });
 
+  test('forbids a joined non-creator from starting the game', async () => {
+    const state = restoreGame([
+      GAME_CREATED_EVENT,
+      FIRST_PLAYER_JOINED_EVENT,
+      SECOND_PLAYER_JOINED_EVENT,
+    ]);
+
+    if (state === null) {
+      throw new Error('Expected a restored waiting state.');
+    }
+
+    activeGames.store(GAME_ID, state);
+    vi.mocked(gameRepository.findParticipant).mockResolvedValue({
+      gameId: GAME_ID,
+      seat: 1,
+      team: 'black',
+      userId: SECOND_USER_ID,
+    });
+
+    const result = await gameService.executeCommand({
+      command: { type: 'StartGame' },
+      commandId: COMMAND_ID,
+      expectedVersion: 3,
+      gameId: GAME_ID,
+      userId: SECOND_USER_ID,
+    });
+
+    expect(result).toEqual({ status: 'gameCommandForbidden' });
+    expect(gameRepository.saveCommand).not.toHaveBeenCalled();
+  });
+
+  test('allows the creator to start without occupying a position', async () => {
+    const creatorOnlyGameCreatedEvent: GameEventData = {
+      ...GAME_CREATED_EVENT,
+      payload: {
+        ...GAME_CREATED_EVENT.payload,
+        creatorId: SPECTATOR_USER_ID,
+      },
+    };
+    const state = restoreGame([
+      creatorOnlyGameCreatedEvent,
+      FIRST_PLAYER_JOINED_EVENT,
+      SECOND_PLAYER_JOINED_EVENT,
+    ]);
+
+    if (state === null) {
+      throw new Error('Expected a restored waiting state.');
+    }
+
+    activeGames.store(GAME_ID, state);
+    vi.mocked(gameRepository.findParticipant).mockResolvedValue(null);
+    vi.mocked(gameRepository.saveCommand).mockResolvedValue({
+      currentVersion: 4,
+      status: 'saved',
+    });
+
+    const result = await gameService.executeCommand({
+      command: { type: 'StartGame' },
+      commandId: COMMAND_ID,
+      expectedVersion: 3,
+      gameId: GAME_ID,
+      userId: SPECTATOR_USER_ID,
+    });
+
+    expect(result).toMatchObject({
+      status: 'saved',
+      view: { privateMoves: [], status: 'active' },
+    });
+  });
+
+  test('persists a creator swap for both occupied positions', async () => {
+    const state = restoreGame([
+      GAME_CREATED_EVENT,
+      FIRST_PLAYER_JOINED_EVENT,
+      SECOND_PLAYER_JOINED_EVENT,
+    ]);
+
+    if (state === null) {
+      throw new Error('Expected a restored waiting state.');
+    }
+
+    activeGames.store(GAME_ID, state);
+    vi.mocked(gameRepository.findParticipant).mockResolvedValue({
+      gameId: GAME_ID,
+      seat: 1,
+      team: 'white',
+      userId: FIRST_USER_ID,
+    });
+    vi.mocked(gameRepository.saveCommand).mockResolvedValue({
+      currentVersion: 4,
+      status: 'saved',
+    });
+
+    const result = await gameService.executeCommand({
+      command: { type: 'SwapPlayerPositions' },
+      commandId: COMMAND_ID,
+      expectedVersion: 3,
+      gameId: GAME_ID,
+      userId: FIRST_USER_ID,
+    });
+
+    expect(gameRepository.saveCommand).toHaveBeenCalledWith(
+      expect.objectContaining({
+        participantChanges: [
+          {
+            operation: 'swapPlayers',
+            positions: [
+              { seat: 1, team: 'black', userId: FIRST_USER_ID },
+              { seat: 1, team: 'white', userId: SECOND_USER_ID },
+            ],
+          },
+        ],
+      })
+    );
+    expect(result).toMatchObject({
+      status: 'saved',
+      view: {
+        players: [
+          expect.objectContaining({ id: FIRST_USER_ID, team: 'black' }),
+          expect.objectContaining({ id: SECOND_USER_ID, team: 'white' }),
+        ],
+      },
+    });
+  });
+
+  test('forbids a joined non-creator from swapping positions', async () => {
+    const state = restoreGame([
+      GAME_CREATED_EVENT,
+      FIRST_PLAYER_JOINED_EVENT,
+      SECOND_PLAYER_JOINED_EVENT,
+    ]);
+
+    if (state === null) {
+      throw new Error('Expected a restored waiting state.');
+    }
+
+    activeGames.store(GAME_ID, state);
+    vi.mocked(gameRepository.findParticipant).mockResolvedValue({
+      gameId: GAME_ID,
+      seat: 1,
+      team: 'black',
+      userId: SECOND_USER_ID,
+    });
+
+    const result = await gameService.executeCommand({
+      command: { type: 'SwapPlayerPositions' },
+      commandId: COMMAND_ID,
+      expectedVersion: 3,
+      gameId: GAME_ID,
+      userId: SECOND_USER_ID,
+    });
+
+    expect(result).toEqual({ status: 'gameCommandForbidden' });
+    expect(gameRepository.saveCommand).not.toHaveBeenCalled();
+  });
+
   test('reports an occupied position for a joining spectator', async () => {
     const state = restoreGame([GAME_CREATED_EVENT, FIRST_PLAYER_JOINED_EVENT]);
 
@@ -340,11 +594,31 @@ describe('GameService', () => {
     expect(result).toEqual({ status: 'gamePositionOccupied' });
   });
 
+  test('prevents a player from joining a second unfinished game', async () => {
+    activeGames.store(GAME_ID, applyEvent(null, GAME_CREATED_EVENT));
+    vi.mocked(gameRepository.findCurrentPlayerGame).mockResolvedValue(
+      OTHER_GAME_ID
+    );
+
+    const result = await gameService.executeCommand({
+      command: { seat: 1, team: 'white', type: 'JoinGame' },
+      commandId: COMMAND_ID,
+      expectedVersion: 1,
+      gameId: GAME_ID,
+      userId: FIRST_USER_ID,
+    });
+
+    expect(result).toEqual({
+      gameId: OTHER_GAME_ID,
+      status: 'playerAlreadyInGame',
+    });
+    expect(gameRepository.saveCommand).not.toHaveBeenCalled();
+  });
+
   test('does not persist a command rejected by the engine', async () => {
     activeGames.store(GAME_ID, applyEvent(null, GAME_CREATED_EVENT));
     vi.mocked(gameRepository.findParticipant).mockResolvedValue({
       gameId: GAME_ID,
-      role: 'player',
       seat: 1,
       team: 'white',
       userId: FIRST_USER_ID,
@@ -376,7 +650,6 @@ describe('GameService', () => {
     activeGames.store(GAME_ID, waitingState);
     vi.mocked(gameRepository.findParticipant).mockResolvedValue({
       gameId: GAME_ID,
-      role: 'player',
       seat: 1,
       team: 'white',
       userId: FIRST_USER_ID,
@@ -461,6 +734,57 @@ describe('GameService', () => {
     );
   });
 
+  test('persists a position change for an already joined player', async () => {
+    const waitingState = restoreGame([
+      GAME_CREATED_EVENT,
+      FIRST_PLAYER_JOINED_EVENT,
+    ]);
+
+    if (waitingState === null) {
+      throw new Error('Expected a restored waiting state.');
+    }
+
+    activeGames.store(GAME_ID, waitingState);
+    vi.mocked(gameRepository.findParticipant).mockResolvedValue({
+      gameId: GAME_ID,
+      seat: 1,
+      team: 'white',
+      userId: FIRST_USER_ID,
+    });
+    vi.mocked(gameRepository.saveCommand).mockResolvedValue({
+      currentVersion: 3,
+      status: 'saved',
+    });
+
+    const result = await gameService.executeCommand({
+      command: { seat: 1, team: 'black', type: 'JoinGame' },
+      commandId: COMMAND_ID,
+      expectedVersion: 2,
+      gameId: GAME_ID,
+      userId: FIRST_USER_ID,
+    });
+
+    expect(gameRepository.saveCommand).toHaveBeenCalledWith(
+      expect.objectContaining({
+        participantChanges: [
+          {
+            operation: 'movePlayer',
+            seat: 1,
+            team: 'black',
+            userId: FIRST_USER_ID,
+          },
+        ],
+      })
+    );
+    expect(result).toMatchObject({
+      events: [expect.objectContaining({ type: 'PlayerPositionChanged' })],
+      view: {
+        players: [expect.objectContaining({ team: 'black' })],
+        teams: { black: [FIRST_USER_ID], white: [] },
+      },
+    });
+  });
+
   test('does not execute an exact duplicate command again', async () => {
     activeGames.store(GAME_ID, applyEvent(null, GAME_CREATED_EVENT));
     vi.mocked(gameRepository.saveCommand).mockResolvedValue({
@@ -506,7 +830,6 @@ describe('GameService', () => {
     );
     vi.mocked(gameRepository.findParticipant).mockResolvedValue({
       gameId: GAME_ID,
-      role: 'player',
       seat: 1,
       team: 'white',
       userId: FIRST_USER_ID,
@@ -583,7 +906,6 @@ describe('GameService', () => {
     activeGames.store(GAME_ID, activeState);
     vi.mocked(gameRepository.findParticipant).mockResolvedValue({
       gameId: GAME_ID,
-      role: 'player',
       seat: 1,
       team: 'white',
       userId: FIRST_USER_ID,
@@ -666,7 +988,6 @@ describe('GameService', () => {
           userId === FIRST_USER_ID
             ? {
                 gameId: GAME_ID,
-                role: 'player',
                 seat: 1,
                 team: 'white',
                 userId,
@@ -823,7 +1144,6 @@ describe('GameService', () => {
     });
     vi.mocked(gameRepository.findParticipant).mockResolvedValue({
       gameId: GAME_ID,
-      role: 'player',
       seat: 1,
       team: 'white',
       userId: FIRST_USER_ID,

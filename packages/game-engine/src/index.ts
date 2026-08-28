@@ -7,6 +7,7 @@ export type {
   JoinGameCommandData,
   LifecycleCommandData,
   StartGameCommandData,
+  SwapPlayerPositionsCommandData,
   TestMoveCommandData,
   TestScenarioCommandData,
 } from './commands.js';
@@ -32,6 +33,8 @@ export type {
   PlayerDefeatedEventData,
   PlayerDisconnectedEventData,
   PlayerJoinedEventData,
+  PlayerPositionChangedEventData,
+  PlayerPositionsSwappedEventData,
   PlayerReconnectedEventData,
   TestMovePerformedEventData,
 } from './events.js';
@@ -65,6 +68,8 @@ export type {
   PlayerDefeatedViewEventData,
   PlayerDisconnectedViewEventData,
   PlayerJoinedViewEventData,
+  PlayerPositionChangedViewEventData,
+  PlayerPositionsSwappedViewEventData,
   PlayerReconnectedViewEventData,
   PrivateTestMovePerformedViewEventData,
   PublicTestMovePerformedViewEventData,

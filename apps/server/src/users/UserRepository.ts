@@ -88,7 +88,6 @@ export function createUserRepository(database: Database): UserRepository {
       .where(
         and(
           eq(gameParticipants.userId, userId),
-          eq(gameParticipants.role, 'player'),
           eq(games.status, 'finished'),
           isNotNull(gameParticipants.team),
           isNotNull(games.finishedAt),
@@ -155,7 +154,6 @@ export function createUserRepository(database: Database): UserRepository {
       .where(
         and(
           inArray(gameParticipants.gameId, [...gameIds]),
-          eq(gameParticipants.role, 'player'),
           isNotNull(gameParticipants.seat),
           isNotNull(gameParticipants.team)
         )
@@ -199,7 +197,10 @@ function requireSeat(seat: number | null, gameId: string): number {
   return seat;
 }
 
-function requireTeam(team: GameParticipant['team'], gameId: string): GameTeam {
+function requireTeam(
+  team: GameParticipant['team'] | null,
+  gameId: string
+): GameTeam {
   if (team === null) {
     throw new Error(`Finished game ${gameId} has an incomplete team result.`);
   }

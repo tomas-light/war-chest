@@ -45,7 +45,6 @@ export type {
   FakeGameEvent,
   FakeGameParticipant,
   FakeGameStatus,
-  FakeParticipantRole,
   FakeProcessedCommand,
   FakeRuntimeFeatureFlags,
   FakeUser,

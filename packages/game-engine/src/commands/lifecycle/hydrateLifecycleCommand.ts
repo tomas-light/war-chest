@@ -3,6 +3,7 @@ import type { DecidableCommand } from '../DecidableCommand.js';
 import { FinishGameCommand } from './FinishGameCommand.js';
 import { JoinGameCommand } from './JoinGameCommand.js';
 import { StartGameCommand } from './StartGameCommand.js';
+import { SwapPlayerPositionsCommand } from './SwapPlayerPositionsCommand.js';
 
 export function hydrateLifecycleCommand(
   data: GameCommandData
@@ -12,6 +13,8 @@ export function hydrateLifecycleCommand(
       return JoinGameCommand.fromData(data);
     case 'StartGame':
       return StartGameCommand.fromData(data);
+    case 'SwapPlayerPositions':
+      return SwapPlayerPositionsCommand.fromData(data);
     case 'FinishGame':
       return FinishGameCommand.fromData(data);
     default:

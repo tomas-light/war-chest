@@ -3,6 +3,7 @@ import type {
   GameErrorMessage,
   GameEventsMessage,
   GameSnapshotMessage,
+  LobbyUpdatedMessage,
   ServerToClientEvents,
 } from '@war-chest/api-contracts';
 import type { Auth, AuthSession } from '@war-chest/auth';
@@ -29,6 +30,7 @@ const SECOND_USER_ID = '10000000-0000-4000-8000-000000000002';
 const GAME_ID = '20000000-0000-4000-8000-000000000001';
 const COMMAND_ID = '30000000-0000-4000-8000-000000000001';
 const WAITING_VIEW: GameView = {
+  creatorId: FIRST_USER_ID,
   currentPlayerId: null,
   featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
   lastEventSequence: 1,
@@ -98,6 +100,7 @@ describe('game Socket.IO adapter', () => {
       executeCommand,
       getEvents: vi.fn(),
       getSnapshot: vi.fn(),
+      listLobbyGames: vi.fn(),
       recoverActiveGames: vi.fn(),
       subscribe,
       synchronize,
@@ -284,6 +287,22 @@ describe('game Socket.IO adapter', () => {
     });
     expect(secondMessage.events[0]).not.toHaveProperty('payload.privateData');
     expect(synchronize).toHaveBeenCalledTimes(2);
+  });
+
+  test('notifies a subscribed lobby client about a changed game', async () => {
+    const client = await connectClient(serverUrl, 'first-session');
+    clients.push(client);
+    await subscribeToLobby(client);
+    const lobbyUpdate = waitForLobbyUpdate(client);
+
+    if (gameUpdateListener === undefined) {
+      throw new Error('Expected a game update subscription.');
+    }
+
+    await gameUpdateListener({ gameId: GAME_ID, previousVersion: 1 });
+
+    await expect(lobbyUpdate).resolves.toEqual({ gameId: GAME_ID });
+    expect(synchronize).not.toHaveBeenCalled();
   });
 
   test('sends saved events directly to a command sender outside the room', async () => {
@@ -517,5 +536,19 @@ function waitForGameSnapshot(
 ): Promise<GameSnapshotMessage> {
   return new Promise((resolve) => {
     client.once('game:snapshot', resolve);
+  });
+}
+
+function subscribeToLobby(client: GameClientSocket): Promise<void> {
+  return new Promise((resolve) => {
+    client.emit('lobby:subscribe', resolve);
+  });
+}
+
+function waitForLobbyUpdate(
+  client: GameClientSocket
+): Promise<LobbyUpdatedMessage> {
+  return new Promise((resolve) => {
+    client.once('lobby:updated', resolve);
   });
 }

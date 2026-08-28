@@ -31,6 +31,7 @@ type GameSocket = Socket<
 >;
 
 type TrackSocketOperation = (operation: Promise<void>) => void;
+const LOBBY_ROOM = 'lobby';
 
 interface RegisterGameSocketInput {
   gameService: GameService;
@@ -46,7 +47,16 @@ export function registerGameSocket(input: RegisterGameSocketInput): void {
   socket.on('game:join', joinGame);
   socket.on('game:leave', leaveGame);
   socket.on('game:sync', synchronizeGame);
+  socket.on('lobby:subscribe', subscribeToLobby);
   socket.on('disconnect', disconnectFromGames);
+
+  function subscribeToLobby(acknowledge: () => void): void {
+    const operation = Promise.resolve(socket.join(LOBBY_ROOM)).then(
+      acknowledge
+    );
+
+    trackSocketOperation(operation);
+  }
 
   function receiveGameCommand(message: unknown): void {
     const result = gameCommandMessageSchema.safeParse(message);
@@ -219,6 +229,10 @@ export function registerGameSocket(input: RegisterGameSocketInput): void {
         code: 'game_position_occupied',
         message: 'The requested game position is occupied.',
       },
+      playerAlreadyInGame: {
+        code: 'player_already_in_game',
+        message: 'The authenticated user is already playing another game.',
+      },
     } as const;
     const error = errors[result.status];
 
@@ -253,11 +267,14 @@ export function registerGameSocket(input: RegisterGameSocketInput): void {
   }
 }
 
-export async function broadcastGameEvents(
+export async function broadcastGameUpdate(
   socketServer: GameSocketServer,
   gameService: GameService,
   update: GameUpdate
 ): Promise<void> {
+  socketServer.to(LOBBY_ROOM).emit('lobby:updated', {
+    gameId: update.gameId,
+  });
   const roomSockets = await socketServer
     .in(getGameRoom(update.gameId))
     .fetchSockets();

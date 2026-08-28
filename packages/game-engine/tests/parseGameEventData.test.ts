@@ -10,6 +10,7 @@ import {
 const SUPPORTED_EVENTS: readonly GameEventData[] = [
   {
     payload: {
+      creatorId: 'player-one',
       featureFlags: {
         ...DEFAULT_RUNTIME_FEATURE_FLAGS,
         spectatorMode: false,
@@ -27,29 +28,46 @@ const SUPPORTED_EVENTS: readonly GameEventData[] = [
     version: GAME_EVENT_VERSION,
   },
   {
+    payload: { playerId: 'player-one', seat: 1, team: 'black' },
+    sequence: 3,
+    type: 'PlayerPositionChanged',
+    version: GAME_EVENT_VERSION,
+  },
+  {
+    payload: {
+      positions: [
+        { playerId: 'player-one', seat: 1, team: 'black' },
+        { playerId: 'player-two', seat: 1, team: 'white' },
+      ],
+    },
+    sequence: 4,
+    type: 'PlayerPositionsSwapped',
+    version: GAME_EVENT_VERSION,
+  },
+  {
     payload: {
       playerId: 'player-one',
       reconnectDeadline: '2026-08-16T12:15:00.000Z',
     },
-    sequence: 3,
+    sequence: 5,
     type: 'PlayerDisconnected',
     version: GAME_EVENT_VERSION,
   },
   {
     payload: { playerId: 'player-one' },
-    sequence: 4,
+    sequence: 6,
     type: 'PlayerReconnected',
     version: GAME_EVENT_VERSION,
   },
   {
     payload: { playerId: 'player-one', reason: 'disconnectTimeout' },
-    sequence: 5,
+    sequence: 7,
     type: 'PlayerDefeated',
     version: GAME_EVENT_VERSION,
   },
   {
     payload: { firstPlayerId: 'player-one' },
-    sequence: 6,
+    sequence: 8,
     type: 'GameStarted',
     version: GAME_EVENT_VERSION,
   },
@@ -60,13 +78,13 @@ const SUPPORTED_EVENTS: readonly GameEventData[] = [
       playerId: 'player-one',
       privateData: { cards: [1, 'two', true, null] },
     },
-    sequence: 7,
+    sequence: 9,
     type: 'TestMovePerformed',
     version: GAME_EVENT_VERSION,
   },
   {
     payload: { winnerTeam: 'white' },
-    sequence: 8,
+    sequence: 10,
     type: 'GameFinished',
     version: GAME_EVENT_VERSION,
   },
@@ -139,10 +157,25 @@ describe('parseGameEventData', () => {
     expect(() =>
       parseGameEventData({
         payload: {
+          creatorId: 'player-one',
           featureFlags: {
             ...DEFAULT_RUNTIME_FEATURE_FLAGS,
             spectatorMode: 'enabled',
           },
+          rulesVersion: GAME_RULES_VERSION,
+        },
+        sequence: 1,
+        type: 'GameCreated',
+        version: GAME_EVENT_VERSION,
+      })
+    ).toThrow();
+  });
+
+  test('rejects a created game without its creator', () => {
+    expect(() =>
+      parseGameEventData({
+        payload: {
+          featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
           rulesVersion: GAME_RULES_VERSION,
         },
         sequence: 1,

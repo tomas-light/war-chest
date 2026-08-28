@@ -93,15 +93,12 @@ function createGame(command: CreateGameCommandData): GameCreatedEventData;
 function decide(
   state: GameState,
   playerId: string,
-  command: GameCommandData,
+  command: GameCommandData
 ): GameEventData[];
 
 function hydrateCommand(command: GameCommandData): DecidableCommand;
 
-function applyEvent(
-  state: GameState | null,
-  event: GameEventData,
-): GameState;
+function applyEvent(state: GameState | null, event: GameEventData): GameState;
 
 function hydrateEvent(event: GameEventData): ApplicableEvent;
 
@@ -109,24 +106,19 @@ function parseGameEventData(value: unknown): GameEventData;
 
 function restoreGame(events: GameEventData[]): GameState | null;
 
-function createViewFor(
-  state: GameState,
-  viewer: Viewer,
-): GameView;
+function createViewFor(state: GameState, viewer: Viewer): GameView;
 
 function createViewEventFor(
   event: GameEventData,
-  viewer: Viewer,
+  viewer: Viewer
 ): GameViewEventData;
 
 function applyViewEvent(
   view: GameView | null,
-  event: GameViewEventData,
+  event: GameViewEventData
 ): GameView;
 
-function hydrateViewEvent(
-  event: GameViewEventData,
-): ApplicableViewEvent;
+function hydrateViewEvent(event: GameViewEventData): ApplicableViewEvent;
 
 function restoreView(events: GameViewEventData[]): GameView | null;
 ```
@@ -188,10 +180,12 @@ sequence, первый `GameCreated` и совпадение последнег�
 связанные поля `team` и `seat`. Событие `PlayerJoined` сразу добавляет игрока в
 выбранную команду, поэтому состав доступен уже в состоянии `waiting` и
 детерминированно восстанавливается без отдельного snapshot в `GameStarted`.
-Текущий сценарий предоставляет позиции `white/1` и `black/1`; порядок
-присоединения на команду и право первого хода не влияет. `GameFinished` хранит
-`winnerTeam`, поэтому при переходе к формату два на два контракт завершения
-партии и история профиля не зависят от числа игроков в команде.
+Пока остаётся свободная позиция, тот же `JoinGame` может перенести участника на
+неё через `PlayerPositionChanged`. Текущий сценарий предоставляет позиции
+`white/1` и `black/1`; порядок присоединения на команду и право первого хода не
+влияет. `GameFinished` хранит `winnerTeam`, поэтому при переходе к формату два на
+два контракт завершения партии и история профиля не зависят от числа игроков в
+команде.
 
 Для replay `applyEvent` должен быть детерминированным: случайность вычисляется до создания события, а в событии сохраняется уже получившийся результат.
 

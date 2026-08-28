@@ -8,6 +8,8 @@ import {
   gameJoinMessageSchema,
   googleLoginRequestSchema,
   joinGameRequestSchema,
+  lobbyGamesResponseSchema,
+  lobbyUpdatedMessageSchema,
   sessionResponseSchema,
 } from '../src/index.js';
 
@@ -44,6 +46,22 @@ describe('Google login request contract', () => {
 });
 
 describe('game events contract', () => {
+  test('accepts an event that moves a player to a free position', () => {
+    const result = gameEventsMessageSchema.safeParse({
+      events: [
+        {
+          payload: { playerId: 'user-1', seat: 1, team: 'black' },
+          sequence: 3,
+          type: 'PlayerPositionChanged',
+          version: 1,
+        },
+      ],
+      gameId: GAME_ID,
+    });
+
+    expect(result.success).toBe(true);
+  });
+
   test('accepts a player presence event with an ISO reconnect deadline', () => {
     const result = gameEventsMessageSchema.safeParse({
       events: [
@@ -68,6 +86,7 @@ describe('game events contract', () => {
       events: [
         {
           payload: {
+            creatorId: 'user-1',
             featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
             rulesVersion: 1,
           },
@@ -87,6 +106,7 @@ describe('game events contract', () => {
       events: [
         {
           payload: {
+            creatorId: 'user-1',
             featureFlags: {
               ...DEFAULT_RUNTIME_FEATURE_FLAGS,
               spectatorMode: 2,
@@ -111,6 +131,17 @@ describe('game client message contracts', () => {
       command: { type: 'StartGame' },
       commandId: COMMAND_ID,
       expectedVersion: 2,
+      gameId: GAME_ID,
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  test('accepts the creator position swap command', () => {
+    const result = gameCommandMessageSchema.safeParse({
+      command: { type: 'SwapPlayerPositions' },
+      commandId: COMMAND_ID,
+      expectedVersion: 3,
       gameId: GAME_ID,
     });
 
@@ -171,5 +202,63 @@ describe('game HTTP request contracts', () => {
       data: { afterSequence: 2 },
       success: true,
     });
+  });
+});
+
+describe('lobby games response contract', () => {
+  test('accepts unfinished games with public player positions', () => {
+    const result = lobbyGamesResponseSchema.safeParse({
+      currentPlayerGameId: null,
+      items: [
+        {
+          createdAt: '2026-08-28T10:00:00.000Z',
+          id: GAME_ID,
+          players: [
+            {
+              avatarVersion: null,
+              displayName: 'Ada',
+              id: '10000000-0000-4000-8000-000000000001',
+              seat: 1,
+              team: 'white',
+            },
+          ],
+          startedAt: null,
+          status: 'waiting',
+        },
+      ],
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  test('rejects finished games from the active lobby', () => {
+    const result = lobbyGamesResponseSchema.safeParse({
+      currentPlayerGameId: null,
+      items: [
+        {
+          createdAt: '2026-08-28T10:00:00.000Z',
+          id: GAME_ID,
+          players: [],
+          startedAt: '2026-08-28T10:01:00.000Z',
+          status: 'finished',
+        },
+      ],
+    });
+
+    expect(result.success).toBe(false);
+  });
+});
+
+describe('lobby Socket.IO contract', () => {
+  test('accepts an update with a game UUID', () => {
+    const result = lobbyUpdatedMessageSchema.safeParse({ gameId: GAME_ID });
+
+    expect(result.success).toBe(true);
+  });
+
+  test('rejects an update with an invalid game identifier', () => {
+    const result = lobbyUpdatedMessageSchema.safeParse({ gameId: 'game-1' });
+
+    expect(result.success).toBe(false);
   });
 });

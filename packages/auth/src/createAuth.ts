@@ -152,6 +152,7 @@ export function createAuth(options: CreateAuthOptions): Auth {
       config,
       database: options.database,
       existingAvatarHash: user.avatarHash,
+      provider: identity.provider,
       userId: user.id,
     });
 

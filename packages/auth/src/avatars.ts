@@ -6,6 +6,7 @@ import { userAvatars } from '@war-chest/database';
 import { eq } from 'drizzle-orm';
 import sharp from 'sharp';
 import type { AuthConfig } from './config/index.js';
+import type { ProviderIdentity } from './providers/types.js';
 
 const MAXIMUM_REDIRECTS = 3;
 const MAXIMUM_AVATAR_INPUT_PIXELS = 512 * 512;
@@ -36,26 +37,50 @@ interface UpdateProviderAvatarInput {
   config: AuthConfig;
   database: Database;
   existingAvatarHash: null | string;
+  provider: ProviderIdentity['provider'];
   userId: string;
+}
+
+interface AvatarRefreshFailureInput {
+  error: unknown;
+  input: UpdateProviderAvatarInput;
+  stage: 'download_and_normalize' | 'storage';
+}
+
+interface SafeErrorDetails {
+  causeCode: null | string;
+  code: null | string;
+  message: string;
+  name: string;
 }
 
 export async function updateProviderAvatar(
   input: UpdateProviderAvatarInput
 ): Promise<string | null> {
   if (input.avatarUrl === undefined) {
+    logAvatarRefreshSkipped(input);
     return null;
   }
 
+  // Avatar refresh is best-effort and must never prevent a successful login.
+  let avatar: NormalizedAvatar;
+
   try {
-    const avatar = await downloadAndNormalizeAvatar(
-      input.avatarUrl,
-      input.config
-    );
+    avatar = await downloadAndNormalizeAvatar(input.avatarUrl, input.config);
+  } catch (error) {
+    logAvatarRefreshFailure({
+      error,
+      input,
+      stage: 'download_and_normalize',
+    });
+    return null;
+  }
 
-    if (avatar.contentHash === input.existingAvatarHash) {
-      return avatar.contentHash;
-    }
+  if (avatar.contentHash === input.existingAvatarHash) {
+    return avatar.contentHash;
+  }
 
+  try {
     await input.database
       .insert(userAvatars)
       .values({
@@ -75,10 +100,59 @@ export async function updateProviderAvatar(
       });
 
     return avatar.contentHash;
-  } catch {
-    // Avatar refresh is best-effort and must never prevent a successful login.
+  } catch (error) {
+    logAvatarRefreshFailure({ error, input, stage: 'storage' });
     return null;
   }
+}
+
+function logAvatarRefreshSkipped(input: UpdateProviderAvatarInput): void {
+  // eslint-disable-next-line no-console
+  console.warn('Avatar refresh skipped: provider returned no avatar URL.', {
+    provider: input.provider,
+    userId: input.userId,
+  });
+}
+
+function logAvatarRefreshFailure(input: AvatarRefreshFailureInput): void {
+  // eslint-disable-next-line no-console
+  console.error('Avatar refresh failed.', {
+    error: createSafeErrorDetails(input.error),
+    provider: input.input.provider,
+    stage: input.stage,
+    userId: input.input.userId,
+  });
+}
+
+function createSafeErrorDetails(error: unknown): SafeErrorDetails {
+  if (!(error instanceof Error)) {
+    return {
+      causeCode: null,
+      code: null,
+      message: 'Unknown non-Error value',
+      name: 'UnknownError',
+    };
+  }
+
+  return {
+    causeCode: getErrorCode(error.cause),
+    code: getErrorCode(error),
+    message: error.message,
+    name: error.name,
+  };
+}
+
+function getErrorCode(value: unknown): null | string {
+  if (
+    typeof value !== 'object' ||
+    value === null ||
+    !('code' in value) ||
+    typeof value.code !== 'string'
+  ) {
+    return null;
+  }
+
+  return value.code;
 }
 
 export async function findAvatar(
@@ -273,7 +347,8 @@ function createBlockedAddresses(): BlockList {
   blockList.addSubnet('240.0.0.0', 4, 'ipv4');
   blockList.addAddress('::', 'ipv6');
   blockList.addAddress('::1', 'ipv6');
-  blockList.addSubnet('::ffff:0:0', 96, 'ipv6');
+  // BlockList applies the IPv4 rules above to IPv4-mapped IPv6 addresses too.
+  // Blocking the complete ::ffff:0:0/96 subnet would also block public IPv4.
   blockList.addSubnet('fc00::', 7, 'ipv6');
   blockList.addSubnet('fe80::', 10, 'ipv6');
   blockList.addSubnet('ff00::', 8, 'ipv6');

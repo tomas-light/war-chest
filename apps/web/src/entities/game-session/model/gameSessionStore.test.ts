@@ -8,6 +8,7 @@ describe('game session event synchronization', () => {
     const store = createGameSessionStore();
 
     store.getState().hydrate({
+      creatorId: 'creator-1',
       currentPlayerId: null,
       featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
       lastEventSequence: 1,
@@ -35,6 +36,7 @@ describe('game session event synchronization', () => {
     const store = createGameSessionStore();
 
     store.getState().hydrate({
+      creatorId: 'creator-1',
       currentPlayerId: null,
       featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
       lastEventSequence: 1,

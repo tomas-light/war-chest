@@ -89,14 +89,12 @@ async function seedDatabase(): Promise<void> {
           {
             gameId: SEED_IDENTIFIERS.game,
             userId: SEED_IDENTIFIERS.firstUser,
-            role: 'player',
             seat: 1,
             team: 'white',
           },
           {
             gameId: SEED_IDENTIFIERS.game,
             userId: SEED_IDENTIFIERS.secondUser,
-            role: 'player',
             seat: 1,
             team: 'black',
           },
@@ -124,6 +122,7 @@ async function seedDatabase(): Promise<void> {
           type: 'GameCreated',
           version: 1,
           payload: {
+            creatorId: SEED_IDENTIFIERS.firstUser,
             featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
             rulesVersion: 1,
           },

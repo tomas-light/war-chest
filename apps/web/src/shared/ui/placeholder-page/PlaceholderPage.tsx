@@ -11,19 +11,30 @@ import classes from './PlaceholderPage.module.scss';
 interface PlaceholderPageProps {
   children?: ReactNode;
   description: string;
+  logoHref?: string;
   title: string;
 }
 
 export function PlaceholderPage(props: PlaceholderPageProps) {
-  const { children, description, title } = props;
+  const { children, description, logoHref, title } = props;
 
   return (
     <main className={classes.page}>
       <section className={classes.content}>
         <div className={classes.brand}>
-          <div className={classes.logoFrame}>
-            <WarChestLogo className={classes.logo} />
-          </div>
+          {logoHref === undefined ? (
+            <div className={classes.logoFrame}>
+              <WarChestLogo className={classes.logo} />
+            </div>
+          ) : (
+            <a
+              aria-label="Перейти на главную страницу"
+              className={classes.logoFrame}
+              href={logoHref}
+            >
+              <WarChestLogo className={classes.logo} />
+            </a>
+          )}
           <p className={classes.eyebrow}>War Chest</p>
         </div>
         <div className={classes.body}>
