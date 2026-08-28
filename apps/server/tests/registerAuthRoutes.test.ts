@@ -199,7 +199,7 @@ describe('auth session routes', () => {
     expect(setCookieHeader).toContain('war_chest_session_yandex_oauth_state=;');
   });
 
-  test('maps a disabled provider to a service unavailable response', async () => {
+  test('redirects a disabled provider to the localized login page', async () => {
     beginYandexLogin.mockImplementation(() => {
       throw new AuthError('provider_disabled', 'Yandex is not configured.');
     });
@@ -209,29 +209,42 @@ describe('auth session routes', () => {
       url: '/api/auth/yandex/start',
     });
 
-    expect(response.statusCode).toBe(503);
-    expect(response.json()).toEqual({
-      error: {
-        code: 'provider_disabled',
-        message: 'The selected login provider is not configured.',
-      },
-    });
+    expect(response.statusCode).toBe(302);
+    expect(response.headers.location).toBe(
+      'http://localhost:5173/login?authError=provider_disabled'
+    );
   });
 
-  test('rejects an OAuth callback without the required query parameters', async () => {
+  test('redirects an invalid OAuth callback to the localized login page', async () => {
     const response = await app.inject({
       method: 'GET',
       url: '/api/auth/telegram/callback',
     });
 
     expect(completeTelegramLogin).not.toHaveBeenCalled();
-    expect(response.statusCode).toBe(400);
-    expect(response.json()).toEqual({
-      error: {
-        code: 'invalid_request',
-        message: 'OAuth callback parameters are invalid.',
+    expect(response.statusCode).toBe(302);
+    expect(response.headers.location).toBe(
+      'http://localhost:5173/login?authError=invalid_request'
+    );
+  });
+
+  test('redirects an expired OAuth state to the localized login page', async () => {
+    completeTelegramLogin.mockRejectedValue(
+      new AuthError('invalid_oauth_state', 'OAuth state expired.')
+    );
+
+    const response = await app.inject({
+      headers: {
+        cookie: 'war_chest_session_telegram_oauth_state=oauth-state',
       },
+      method: 'GET',
+      url: '/api/auth/telegram/callback?code=oauth-code&state=oauth-state',
     });
+
+    expect(response.statusCode).toBe(302);
+    expect(response.headers.location).toBe(
+      'http://localhost:5173/login?authError=invalid_oauth_state'
+    );
   });
 
   test('returns the active session from the configured cookie', async () => {

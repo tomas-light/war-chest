@@ -5,10 +5,14 @@ import {
   type LobbyGamesResponse,
   type StartGameRequest,
   type SwapPlayerPositionsRequest,
-  apiErrorSchema,
   gameResponseSchema,
   lobbyGamesResponseSchema,
 } from '@war-chest/api-contracts';
+import {
+  ApiClientError,
+  createResponseError,
+  requestApi,
+} from './ApiClientError';
 
 const GAMES_API_URL = '/api/games';
 
@@ -60,7 +64,7 @@ export function createRealGameApi(): GameApi {
   function createGame(request: CreateGameRequest): Promise<GameResponse> {
     return requestJson({
       body: request,
-      invalidResponseMessage: 'Сервер вернул некорректную созданную игру.',
+      invalidResponseMessage: 'The server returned an invalid created game.',
       method: 'POST',
       schema: gameResponseSchema,
       url: GAMES_API_URL,
@@ -69,7 +73,7 @@ export function createRealGameApi(): GameApi {
 
   function getGame(gameId: string): Promise<GameResponse> {
     return requestJson({
-      invalidResponseMessage: 'Сервер вернул некорректное состояние игры.',
+      invalidResponseMessage: 'The server returned an invalid game state.',
       schema: gameResponseSchema,
       url: `${GAMES_API_URL}/${gameId}`,
     });
@@ -81,7 +85,7 @@ export function createRealGameApi(): GameApi {
   ): Promise<GameResponse> {
     return requestJson({
       body: request,
-      invalidResponseMessage: 'Сервер вернул некорректное состояние игры.',
+      invalidResponseMessage: 'The server returned an invalid game state.',
       method: 'POST',
       schema: gameResponseSchema,
       url: `${GAMES_API_URL}/${gameId}/join`,
@@ -90,7 +94,7 @@ export function createRealGameApi(): GameApi {
 
   function listLobbyGames(): Promise<LobbyGamesResponse> {
     return requestJson({
-      invalidResponseMessage: 'Сервер вернул некорректный список игр.',
+      invalidResponseMessage: 'The server returned an invalid game list.',
       schema: lobbyGamesResponseSchema,
       url: GAMES_API_URL,
     });
@@ -102,7 +106,7 @@ export function createRealGameApi(): GameApi {
   ): Promise<GameResponse> {
     return requestJson({
       body: request,
-      invalidResponseMessage: 'Сервер вернул некорректное состояние игры.',
+      invalidResponseMessage: 'The server returned an invalid game state.',
       method: 'POST',
       schema: gameResponseSchema,
       url: `${GAMES_API_URL}/${gameId}/start`,
@@ -115,7 +119,7 @@ export function createRealGameApi(): GameApi {
   ): Promise<GameResponse> {
     return requestJson({
       body: request,
-      invalidResponseMessage: 'Сервер вернул некорректное состояние игры.',
+      invalidResponseMessage: 'The server returned an invalid game state.',
       method: 'POST',
       schema: gameResponseSchema,
       url: `${GAMES_API_URL}/${gameId}/swap-positions`,
@@ -126,7 +130,7 @@ export function createRealGameApi(): GameApi {
 async function requestJson<Result>(
   input: JsonRequest<Result>
 ): Promise<Result> {
-  const response = await fetch(input.url, {
+  const response = await requestApi(input.url, {
     body: input.body === undefined ? undefined : JSON.stringify(input.body),
     credentials: 'same-origin',
     headers: {
@@ -139,30 +143,29 @@ async function requestJson<Result>(
   });
 
   if (!response.ok) {
-    throw await createApiError(response);
+    throw await createResponseError(response);
   }
 
-  const responseBody: unknown = await response.json();
+  let responseBody: unknown;
+
+  try {
+    responseBody = await response.json();
+  } catch (error) {
+    throw new ApiClientError({
+      cause: error,
+      code: 'invalid_response',
+      diagnosticMessage: input.invalidResponseMessage,
+    });
+  }
+
   const result = input.schema.safeParse(responseBody);
 
   if (!result.success) {
-    throw new Error(input.invalidResponseMessage);
+    throw new ApiClientError({
+      code: 'invalid_response',
+      diagnosticMessage: input.invalidResponseMessage,
+    });
   }
 
   return result.data;
-}
-
-async function createApiError(response: Response): Promise<Error> {
-  try {
-    const responseBody: unknown = await response.json();
-    const result = apiErrorSchema.safeParse(responseBody);
-
-    if (result.success) {
-      return new Error(result.data.error.message);
-    }
-  } catch {
-    // The status fallback also covers an empty or non-JSON response.
-  }
-
-  return new Error(`Игровой запрос завершился с кодом ${response.status}.`);
 }

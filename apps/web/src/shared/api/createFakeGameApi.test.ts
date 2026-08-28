@@ -168,7 +168,7 @@ describe('fake game API lifecycle', () => {
         commandId: START_COMMAND_ID,
         expectedVersion: secondPlayerJoinedGame.view.lastEventSequence,
       })
-    ).rejects.toThrow('Только создатель может запустить игру.');
+    ).rejects.toMatchObject({ code: 'game_command_forbidden' });
   });
 
   test('lets the creator swap both occupied positions', async () => {
@@ -229,7 +229,7 @@ describe('fake game API lifecycle', () => {
 
     await expect(
       gameApi.createGame({ commandId: SECOND_CREATE_COMMAND_ID })
-    ).rejects.toThrow('Сначала завершите текущую игру.');
+    ).rejects.toMatchObject({ code: 'player_already_in_game' });
   });
 
   test('does not join a second game for a current player', async () => {
@@ -255,7 +255,7 @@ describe('fake game API lifecycle', () => {
         seat: 1,
         team: 'black',
       })
-    ).rejects.toThrow('Другие партии можно только смотреть.');
+    ).rejects.toMatchObject({ code: 'player_already_in_game' });
   });
 
   test('reports the current player game in the lobby', async () => {

@@ -2,6 +2,9 @@ import { type ReactNode, lazy, Suspense, useState } from 'react';
 import { Link, Outlet } from 'react-router';
 import { useAuthSession } from '#/entities/auth-session';
 import { UserAvatar } from '#/entities/user';
+import { LanguageSelector } from '#/features/change-language';
+import { useApiErrorMessage } from '#/shared/api';
+import { useTranslation } from '#/shared/i18n/useTranslation';
 import { Button } from '#/shared/ui/button';
 import { WarChestLogo } from '#/shared/ui/war-chest-logo';
 import classes from './SessionNavigation.module.scss';
@@ -22,6 +25,10 @@ interface Props {
 
 export function SessionNavigation(props: Props) {
   const { children, isSessionPending = false } = props;
+  const { t } = useTranslation('widgets/session-navigation', {
+    keyPrefix: 'SessionNavigation',
+  });
+  const getApiErrorMessage = useApiErrorMessage();
   const { logout, session } = useAuthSession();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isDeveloperPanelOpen, setIsDeveloperPanelOpen] = useState(false);
@@ -34,9 +41,11 @@ export function SessionNavigation(props: Props) {
           <WarChestLogo className={classes.brandLogo} />
           <span className={classes.brandText}>War Chest</span>
         </Link>
-        <nav aria-label="Основная навигация" className={classes.navigation}>
-          <Link to="/lobby">Лобби</Link>
-          <Link to="/profile">Профиль</Link>
+
+        <nav aria-label={t('mainNavigation')} className={classes.navigation}>
+          <Link to="/lobby">{t('lobby')}</Link>
+          <Link to="/profile">{t('profile')}</Link>
+
           {DeveloperPanel === null ? null : (
             <button
               aria-controls="developer-panel"
@@ -45,14 +54,18 @@ export function SessionNavigation(props: Props) {
               onClick={openDeveloperPanel}
               type="button"
             >
-              Dev
+              {t('devTools')}
             </button>
           )}
         </nav>
+
         <div className={classes.session}>
+          <LanguageSelector className={classes.languageSelector} />
+
           {session === null || session === undefined ? null : (
             <UserAvatar size="small" user={session.user} />
           )}
+
           <span
             className={[
               classes.sessionName,
@@ -61,26 +74,30 @@ export function SessionNavigation(props: Props) {
               .filter(Boolean)
               .join(' ')}
           >
-            {isSessionPending ? 'Проверяем сессию' : session?.user.displayName}
+            {isSessionPending ? t('sessionPending') : session?.user.displayName}
           </span>
+
           <Button
             disabled={isSessionPending || isLoggingOut}
             onClick={() => void handleLogout()}
           >
-            Выйти
+            {t('logout')}
           </Button>
         </div>
       </header>
+
       {errorMessage === null ? null : (
         <p className={classes.error} role="alert">
           {errorMessage}
         </p>
       )}
+
       {DeveloperPanel === null || !isDeveloperPanelOpen ? null : (
         <Suspense>
           <DeveloperPanel onClose={closeDeveloperPanel} />
         </Suspense>
       )}
+
       {children === undefined ? <Outlet /> : children}
     </div>
   );
@@ -100,9 +117,7 @@ export function SessionNavigation(props: Props) {
     try {
       await logout();
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : 'Не удалось завершить сессию.'
-      );
+      setErrorMessage(getApiErrorMessage(error));
     } finally {
       setIsLoggingOut(false);
     }

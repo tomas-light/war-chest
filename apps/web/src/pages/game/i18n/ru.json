@@ -1,0 +1,52 @@
+{
+  "GamePage": {
+    "backToLobby": "Вернуться в лобби",
+    "blackTeam": "Чёрная команда",
+    "connecting": "Подключаемся к игре…",
+    "creatorReadyNotice": "Все места заняты. Ожидаем, пока создатель запустит игру.",
+    "gameLabel": "Игра {{gameId}}",
+    "gameUnavailable": "Состояние игры недоступно.",
+    "notSelected": "Игра не выбрана.",
+    "ownGameDescription": "Пока текущая партия не завершена, занять место в другой игре нельзя.",
+    "ownGameTitle": "Вы смотрите как зритель",
+    "returnToOwnGame": "Вернуться в свою игру",
+    "role": {
+      "creator": "Вы создали игру",
+      "participant": "Вы участвуете в игре",
+      "select": "Выберите режим",
+      "spectator": "Режим зрителя"
+    },
+    "roleChoiceDescription": "Можно наблюдать за подготовкой или занять свободное место.",
+    "roleChoiceFullDescription": "Все места заняты, поэтому игра доступна только для наблюдения.",
+    "roleChoiceTitle": "Как открыть игру?",
+    "selectSeat": "Занять место",
+    "spectatorReadyNotice": "Все места заняты. Вы наблюдаете за подготовкой, а игру запустит её создатель.",
+    "spectatorWaitingNotice": "Вы наблюдаете за подготовкой. Пока есть свободное место, к игре можно присоединиться.",
+    "status": {
+      "active": "Активная игра",
+      "finished": "Игра завершена",
+      "waiting": "Подготовка партии"
+    },
+    "synchronization": {
+      "desynchronized": "Восстанавливаем синхронизацию…",
+      "pending": "Ожидаем состояние…",
+      "ready": "Состояние синхронизировано"
+    },
+    "watch": "Смотреть",
+    "whiteTeam": "Белая команда"
+  },
+  "GameError": {
+    "backToLobby": "Вернуться в лобби",
+    "title": "Не удалось открыть игру"
+  },
+  "PlayerPosition": {
+    "available": "Свободно",
+    "connected": "В сети · место 1",
+    "disconnected": "Соединение потеряно",
+    "left": "Покинул игру",
+    "playerFallback": "Игрок {{playerId}}",
+    "seat": "Место 1",
+    "you": "Вы",
+    "youLabel": "{{playerName}} · Вы"
+  }
+}

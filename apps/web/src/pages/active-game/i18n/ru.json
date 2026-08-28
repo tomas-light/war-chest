@@ -1,0 +1,49 @@
+{
+  "ActiveGamePage": {
+    "actionsDescriptionOpponent": "Ожидаем ход оппонента.",
+    "actionsDescriptionSpectator": "Действия недоступны в режиме зрителя.",
+    "actionsDescriptionYou": "Сейчас ваш ход.",
+    "actionsTitle": "Доступные действия",
+    "backToLobby": "Вернуться в лобби",
+    "boardDescription": "Здесь будет размещено поле War Chest.",
+    "boardLabel": "Игровое поле",
+    "chooseSquad": "Выбрать отряд",
+    "connecting": "Подключаемся к игровому столу…",
+    "finishAction": "Завершить действие",
+    "finishedTitle": "Партия завершена",
+    "gameLabel": "Игра {{gameId}}",
+    "gameTitle": "Игра",
+    "gameUnavailable": "Состояние игры недоступно.",
+    "historyDescription": "Панель истории появится здесь после реализации игровых ходов.",
+    "historyEyebrow": "Журнал",
+    "historyTitle": "История ходов",
+    "notSelected": "Игра не выбрана.",
+    "openHistory": "Открыть историю",
+    "playerBottom": "Игрок снизу",
+    "playerTop": "Игрок сверху",
+    "spectator": "Режим зрителя",
+    "synchronization": {
+      "desynchronized": "Восстанавливаем синхронизацию…",
+      "pending": "Ожидаем состояние…",
+      "ready": "Состояние синхронизировано"
+    },
+    "table": "Игровой стол",
+    "tableArea": "Игровое поле",
+    "turnEyebrow": "Ход",
+    "you": "Вы",
+    "opponent": "Оппонент"
+  },
+  "GameError": {
+    "backToLobby": "Вернуться в лобби",
+    "title": "Не удалось открыть игровой стол"
+  },
+  "PlayerPanel": {
+    "blackTeam": "Чёрная команда",
+    "disconnected": "Соединение потеряно",
+    "empty": "Место свободно",
+    "left": "Покинул игру",
+    "noPlayer": "Нет игрока",
+    "playerFallback": "Игрок {{playerId}}",
+    "whiteTeam": "Белая команда"
+  }
+}

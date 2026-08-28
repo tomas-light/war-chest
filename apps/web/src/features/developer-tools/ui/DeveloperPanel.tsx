@@ -1,26 +1,32 @@
+import { useTranslation } from '#/shared/i18n/useTranslation';
 import { Button } from '#/shared/ui/button';
 import { DeveloperBackendSelector } from './DeveloperBackendSelector';
 import classes from './DeveloperPanel.module.scss';
 
-interface DeveloperPanelProps {
+interface Props {
   onClose(this: void): void;
 }
 
-export function DeveloperPanel({ onClose }: DeveloperPanelProps) {
+export function DeveloperPanel(props: Props) {
+  const { onClose } = props;
+  const { t } = useTranslation('features/developer-tools', {
+    keyPrefix: 'DeveloperPanel',
+  });
+
   if (!import.meta.env.DEV) {
     return null;
   }
 
   return (
     <aside
-      aria-label="Инструменты разработчика"
+      aria-label={t('label')}
       className={classes.panel}
       id="developer-panel"
     >
       <header className={classes.header}>
-        <h2 className={classes.title}>Dev-панель</h2>
+        <h2 className={classes.title}>{t('title')}</h2>
         <Button className={classes.closeButton} onClick={onClose}>
-          Закрыть
+          {t('close')}
         </Button>
       </header>
       <DeveloperBackendSelector />

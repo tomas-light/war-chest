@@ -1,6 +1,6 @@
 import { type UseQueryResult, useQuery } from '@tanstack/react-query';
 import type { RuntimeFeatureFlags } from '@war-chest/feature-flags';
-import type { BackendKind } from '#/shared/config';
+import type { BackendKind } from '../config';
 import { readFeatureFlags } from './readFeatureFlags';
 
 export function useFeatureFlags(

@@ -1,0 +1,52 @@
+{
+  "GamePage": {
+    "backToLobby": "Back to lobby",
+    "blackTeam": "Black team",
+    "connecting": "Connecting to the game…",
+    "creatorReadyNotice": "All seats are taken. Waiting for the creator to start the game.",
+    "gameLabel": "Game {{gameId}}",
+    "gameUnavailable": "The game state is unavailable.",
+    "notSelected": "No game was selected.",
+    "ownGameDescription": "You cannot take a seat in another game until your current match is over.",
+    "ownGameTitle": "You are watching as a spectator",
+    "returnToOwnGame": "Return to your game",
+    "role": {
+      "creator": "You created this game",
+      "participant": "You are playing",
+      "select": "Choose a mode",
+      "spectator": "Spectator mode"
+    },
+    "roleChoiceDescription": "You can watch the preparation or take an available seat.",
+    "roleChoiceFullDescription": "All seats are taken, so the game is available for watching only.",
+    "roleChoiceTitle": "How would you like to open the game?",
+    "selectSeat": "Take a seat",
+    "spectatorReadyNotice": "All seats are taken. You are watching the preparation, and the creator will start the game.",
+    "spectatorWaitingNotice": "You are watching the preparation. You can still join while a seat is available.",
+    "status": {
+      "active": "Active game",
+      "finished": "Game finished",
+      "waiting": "Match preparation"
+    },
+    "synchronization": {
+      "desynchronized": "Restoring synchronization…",
+      "pending": "Waiting for state…",
+      "ready": "State synchronized"
+    },
+    "watch": "Watch",
+    "whiteTeam": "White team"
+  },
+  "GameError": {
+    "backToLobby": "Back to lobby",
+    "title": "Could not open the game"
+  },
+  "PlayerPosition": {
+    "available": "Available",
+    "connected": "Online · seat 1",
+    "disconnected": "Connection lost",
+    "left": "Left the game",
+    "playerFallback": "Player {{playerId}}",
+    "seat": "Seat 1",
+    "you": "You",
+    "youLabel": "{{playerName}} · You"
+  }
+}

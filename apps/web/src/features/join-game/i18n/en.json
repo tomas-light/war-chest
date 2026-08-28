@@ -1,0 +1,11 @@
+{
+  "JoinGamePanel": {
+    "changeDescription": "While the other seat is available, you can move to the opposite side.",
+    "changePosition": "Change seat",
+    "changingPosition": "Changing seat…",
+    "join": "Join as a player",
+    "joinDescription": "The game has not started yet. Choose an available side.",
+    "joinTitle": "Take a seat",
+    "joining": "Joining…"
+  }
+}

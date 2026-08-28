@@ -1,4 +1,5 @@
 import {
+  type ApiErrorCode,
   type LobbyGamesResponse,
   createGameRequestSchema,
   gameEventsQuerySchema,
@@ -19,7 +20,7 @@ interface SendMutationResultInput {
 }
 
 interface SendErrorInput {
-  code: string;
+  code: ApiErrorCode;
   message: string;
   reply: FastifyReply;
   statusCode: number;

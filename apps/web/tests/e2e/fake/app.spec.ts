@@ -5,7 +5,7 @@ test('keeps backend selection available when the real API is unavailable', async
 }) => {
   await page.goto('/login');
 
-  await expect(page.getByRole('combobox', { name: 'Backend' })).toHaveValue(
+  await expect(page.getByRole('combobox', { name: 'Бэкенд' })).toHaveValue(
     'real'
   );
   await expect(
@@ -24,7 +24,7 @@ test('signs in, restores the fake session and signs out', async ({ page }) => {
   await page.goto('/');
 
   await expect(page).toHaveURL(/\/login$/);
-  await expect(page.getByRole('combobox', { name: 'Backend' })).toHaveValue(
+  await expect(page.getByRole('combobox', { name: 'Бэкенд' })).toHaveValue(
     'fake'
   );
   await expect(
@@ -50,7 +50,7 @@ test('signs in, restores the fake session and signs out', async ({ page }) => {
 
   await expect(developerPanel).toBeVisible();
   await expect(
-    developerPanel.getByRole('combobox', { name: 'Backend' })
+    developerPanel.getByRole('combobox', { name: 'Бэкенд' })
   ).toHaveValue('fake');
   await developerPanel.getByRole('button', { name: 'Закрыть' }).click();
   await expect(developerPanel).toBeHidden();

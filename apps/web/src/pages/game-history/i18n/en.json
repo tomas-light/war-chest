@@ -1,0 +1,7 @@
+{
+  "GameHistoryPage": {
+    "description": "Replay of completed game {{gameId}}.",
+    "missingGame": "not selected",
+    "title": "Game history"
+  }
+}

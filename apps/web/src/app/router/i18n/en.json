@@ -1,0 +1,10 @@
+{
+  "AppRouter": {
+    "loadingDescription": "Checking the current War Chest session.",
+    "loadingLabel": "Checking the current session…",
+    "loadingTitle": "Loading",
+    "sessionErrorDescription": "Could not connect to the server and check the session.",
+    "sessionErrorTitle": "No connection",
+    "retry": "Try again"
+  }
+}

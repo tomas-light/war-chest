@@ -1,0 +1,10 @@
+{
+  "GameSeatSelector": {
+    "blackTeam": "Чёрная команда",
+    "freeSeat": "Свободно",
+    "legend": "Выберите сторону",
+    "seat": "Место 1",
+    "takenSeat": "Занято",
+    "whiteTeam": "Белая команда"
+  }
+}

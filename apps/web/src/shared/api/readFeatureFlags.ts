@@ -2,7 +2,12 @@ import {
   type RuntimeFeatureFlags,
   runtimeFeatureFlagsSchema,
 } from '@war-chest/feature-flags';
-import type { BackendKind } from '#/shared/config';
+import type { BackendKind } from '../config';
+import {
+  ApiClientError,
+  createResponseError,
+  requestApi,
+} from './ApiClientError';
 
 export function readFeatureFlags(
   backend: BackendKind
@@ -22,22 +27,34 @@ async function readFakeFeatureFlags(): Promise<RuntimeFeatureFlags> {
 }
 
 async function readRealFeatureFlags() {
-  const response = await fetch('/api/config/feature-flags.json', {
+  const response = await requestApi('/api/config/feature-flags.json', {
     credentials: 'same-origin',
     headers: { Accept: 'application/json' },
   });
 
   if (!response.ok) {
-    throw new Error(
-      `Feature flags request failed with status ${response.status}.`
-    );
+    throw await createResponseError(response);
   }
 
-  const responseBody: unknown = await response.json();
+  let responseBody: unknown;
+
+  try {
+    responseBody = await response.json();
+  } catch (error) {
+    throw new ApiClientError({
+      cause: error,
+      code: 'invalid_response',
+      diagnosticMessage: 'The server returned invalid feature flags.',
+    });
+  }
+
   const result = runtimeFeatureFlagsSchema.safeParse(responseBody);
 
   if (!result.success) {
-    throw new Error('The server returned invalid feature flags.');
+    throw new ApiClientError({
+      code: 'invalid_response',
+      diagnosticMessage: 'The server returned invalid feature flags.',
+    });
   }
 
   return result.data;

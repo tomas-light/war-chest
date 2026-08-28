@@ -25,6 +25,7 @@ import {
   parseGameEventData,
   restoreGame,
 } from '@war-chest/game-engine';
+import { type ApiClientErrorCode, ApiClientError } from './ApiClientError';
 import { publishFakeLobbyUpdate } from './fakeLobbyUpdates';
 import type { GameApi } from './GameApi';
 import { getFakeDatabase } from './getFakeDatabase';
@@ -69,7 +70,10 @@ export function createFakeGameApi(userId: string): GameApi {
         existingCommand.requestHash !== requestHash ||
         existingCommand.userId !== userId
       ) {
-        throw new Error('Идентификатор команды уже использован.');
+        throw createFakeApiError(
+          'command_id_conflict',
+          'Command id was already used by another request.'
+        );
       }
 
       return getGame(existingCommand.gameId);
@@ -79,7 +83,10 @@ export function createFakeGameApi(userId: string): GameApi {
       await database.games.findCurrentPlayerGame(userId);
 
     if (currentPlayerGame !== null) {
-      throw new Error('Сначала завершите текущую игру.');
+      throw createFakeApiError(
+        'player_already_in_game',
+        'The user is already playing another game.'
+      );
     }
 
     const gameCreatedEvent = createGameEvent({
@@ -133,7 +140,7 @@ export function createFakeGameApi(userId: string): GameApi {
     const game = await database.games.getById(gameId);
 
     if (game === null) {
-      throw new Error('Игра не найдена.');
+      throw createFakeApiError('game_not_found', 'Game was not found.');
     }
 
     const state = await loadGameState(gameId);
@@ -181,7 +188,10 @@ export function createFakeGameApi(userId: string): GameApi {
           const user = await database.users.getById(participant.userId);
 
           if (user === null) {
-            throw new Error(`Участник ${participant.userId} не найден.`);
+            throw createFakeApiError(
+              'invalid_response',
+              `Participant ${participant.userId} was not found.`
+            );
           }
 
           return {
@@ -249,7 +259,10 @@ export function createFakeGameApi(userId: string): GameApi {
         existingCommand.requestHash !== requestHash ||
         existingCommand.userId !== userId
       ) {
-        throw new Error('Идентификатор команды уже использован.');
+        throw createFakeApiError(
+          'command_id_conflict',
+          'Command id was already used by another request.'
+        );
       }
 
       return getGame(input.gameId);
@@ -258,13 +271,16 @@ export function createFakeGameApi(userId: string): GameApi {
     const game = await database.games.getById(input.gameId);
 
     if (game === null) {
-      throw new Error('Игра не найдена.');
+      throw createFakeApiError('game_not_found', 'Game was not found.');
     }
 
     const state = await loadGameState(input.gameId);
 
     if (state.lastEventSequence !== input.expectedVersion) {
-      throw new Error('Игра уже изменилась. Обновите состояние и повторите.');
+      throw createFakeApiError(
+        'game_version_conflict',
+        'The game has changed since the requested version.'
+      );
     }
 
     const participant = await database.games.getParticipant(
@@ -277,21 +293,28 @@ export function createFakeGameApi(userId: string): GameApi {
         await database.games.findCurrentPlayerGame(userId);
 
       if (currentPlayerGame !== null && currentPlayerGame.id !== input.gameId) {
-        throw new Error(
-          'Сначала завершите текущую игру. Другие партии можно только смотреть.'
+        throw createFakeApiError(
+          'player_already_in_game',
+          'The user is already playing another game.'
         );
       }
     }
 
     if (input.command.type === 'StartGame' && state.creatorId !== userId) {
-      throw new Error('Только создатель может запустить игру.');
+      throw createFakeApiError(
+        'game_command_forbidden',
+        'Only the creator can start the game.'
+      );
     }
 
     if (
       input.command.type === 'SwapPlayerPositions' &&
       state.creatorId !== userId
     ) {
-      throw new Error('Только создатель может поменять игроков местами.');
+      throw createFakeApiError(
+        'game_command_forbidden',
+        'Only the creator can swap player positions.'
+      );
     }
 
     if (
@@ -300,13 +323,19 @@ export function createFakeGameApi(userId: string): GameApi {
       input.command.type !== 'SwapPlayerPositions' &&
       participant === null
     ) {
-      throw new Error('Зритель не может выполнить эту команду.');
+      throw createFakeApiError(
+        'game_command_forbidden',
+        'A spectator cannot perform this command.'
+      );
     }
 
     const events = decide(state, userId, input.command);
 
     if (events.length === 0) {
-      throw new Error('Команда отклонена правилами игры.');
+      throw createFakeApiError(
+        'game_command_rejected',
+        'The game command was rejected.'
+      );
     }
 
     const occurredAt = new Date();
@@ -398,7 +427,10 @@ export function createFakeGameApi(userId: string): GameApi {
     );
 
     if (state === null) {
-      throw new Error(`Игра ${gameId} не содержит событий.`);
+      throw createFakeApiError(
+        'invalid_response',
+        `Game ${gameId} does not contain events.`
+      );
     }
 
     return state;
@@ -429,4 +461,11 @@ async function createRequestHash(value: unknown): Promise<string> {
   return Array.from(new Uint8Array(hash), (byte) =>
     byte.toString(16).padStart(2, '0')
   ).join('');
+}
+
+function createFakeApiError(
+  code: ApiClientErrorCode,
+  diagnosticMessage: string
+): ApiClientError {
+  return new ApiClientError({ code, diagnosticMessage });
 }

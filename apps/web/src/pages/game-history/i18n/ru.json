@@ -1,0 +1,7 @@
+{
+  "GameHistoryPage": {
+    "description": "Replay завершённой партии {{gameId}}.",
+    "missingGame": "не выбран",
+    "title": "История игры"
+  }
+}

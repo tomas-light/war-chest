@@ -1,0 +1,10 @@
+{
+  "AppRouter": {
+    "loadingDescription": "Проверяем действующую сессию War Chest.",
+    "loadingLabel": "Проверяем действующую сессию…",
+    "loadingTitle": "Загрузка",
+    "sessionErrorDescription": "Не удалось связаться с сервером и проверить сессию.",
+    "sessionErrorTitle": "Нет соединения",
+    "retry": "Повторить"
+  }
+}

@@ -27,6 +27,7 @@ export {
 } from './schemas.js';
 export type {
   ApiError,
+  ApiErrorCode,
   ClientToServerEvents,
   CreateGameRequest,
   GameCommandMessage,
@@ -52,3 +53,4 @@ export type {
   StartGameRequest,
   SwapPlayerPositionsRequest,
 } from './types.js';
+export { API_ERROR_CODES } from './types.js';

@@ -1,26 +1,29 @@
 import { useQueryClient } from '@tanstack/react-query';
 import type { LobbyGame, LobbyGamePlayer } from '@war-chest/api-contracts';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuthSession } from '#/entities/auth-session';
 import { LOBBY_GAMES_QUERY_KEY, useLobbyGamesQuery } from '#/entities/game';
 import { UserAvatar } from '#/entities/user';
-import { createSelectedLobbyConnection } from '#/shared/api';
+import {
+  createSelectedLobbyConnection,
+  useApiErrorMessage,
+} from '#/shared/api';
 import {
   appRoutes,
   getActiveGamePageUrl,
   getGamePageUrl,
 } from '#/shared/config';
+import { useTranslation } from '#/shared/i18n/useTranslation';
 import { Button } from '#/shared/ui/button';
 import { LoadingIndicator } from '#/shared/ui/loading-indicator';
 import classes from './LobbyPage.module.scss';
 
-const DATE_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
-  dateStyle: 'medium',
-  timeStyle: 'short',
-});
-
 export function LobbyPage() {
+  const { t } = useTranslation('pages/lobby', {
+    keyPrefix: 'LobbyPage',
+  });
+  const getApiErrorMessage = useApiErrorMessage();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { session } = useAuthSession();
@@ -73,16 +76,13 @@ export function LobbyPage() {
     <main className={classes.page}>
       <section className={classes.hero}>
         <div>
-          <p className={classes.eyebrow}>Командный терминал</p>
-          <h1>Лобби</h1>
-          <p>
-            Займите свободное место в ожидающей партии или наблюдайте за уже
-            запущенной игрой.
-          </p>
+          <p className={classes.eyebrow}>{t('eyebrow')}</p>
+          <h1>{t('title')}</h1>
+          <p>{t('description')}</p>
         </div>
         {currentPlayerGameId === null ? (
           <Button onClick={() => void navigate(appRoutes.games.new.url())}>
-            Новая игра
+            {t('newGame')}
           </Button>
         ) : (
           <Button
@@ -94,24 +94,24 @@ export function LobbyPage() {
               )
             }
           >
-            Вернуться в игру
+            {t('returnToGame')}
           </Button>
         )}
       </section>
 
       {lobbyGamesQuery.isPending ? (
         <section className={classes.state}>
-          <LoadingIndicator label="Загружаем активные игры…" />
+          <LoadingIndicator label={t('loading')} />
         </section>
       ) : null}
 
       {lobbyGamesQuery.isError ? (
         <section className={classes.state}>
           <p className={classes.error} role="alert">
-            {lobbyGamesQuery.error.message}
+            {getApiErrorMessage(lobbyGamesQuery.error)}
           </p>
           <Button onClick={() => void lobbyGamesQuery.refetch()}>
-            Повторить
+            {t('retry')}
           </Button>
         </section>
       ) : null}
@@ -119,11 +119,11 @@ export function LobbyPage() {
       {!lobbyGamesQuery.isPending && !lobbyGamesQuery.isError ? (
         games.length === 0 ? (
           <section className={classes.state}>
-            <h2>Активных игр пока нет</h2>
-            <p>Создайте первую партию и выберите сторону.</p>
+            <h2>{t('emptyTitle')}</h2>
+            <p>{t('emptyDescription')}</p>
           </section>
         ) : (
-          <section aria-label="Активные игры" className={classes.games}>
+          <section aria-label={t('activeGames')} className={classes.games}>
             {games.map((game) => (
               <GameCard
                 game={game}
@@ -151,6 +151,17 @@ interface GameCardProps {
 
 function GameCard(props: GameCardProps) {
   const { game, onOpen } = props;
+  const { i18n, t } = useTranslation('pages/lobby', {
+    keyPrefix: 'GameCard',
+  });
+  const dateFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(i18n.resolvedLanguage, {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      }),
+    [i18n.resolvedLanguage]
+  );
   const whitePlayer = game.players.find((player) => player.team === 'white');
   const blackPlayer = game.players.find((player) => player.team === 'black');
 
@@ -158,17 +169,17 @@ function GameCard(props: GameCardProps) {
     <article className={classes.gameCard}>
       <div className={classes.gameHeader}>
         <span className={classes.status} data-status={game.status}>
-          {game.status === 'waiting' ? 'Ожидает игроков' : 'Идёт игра'}
+          {game.status === 'waiting' ? t('statusWaiting') : t('statusActive')}
         </span>
         <div className={classes.gameHeaderActions}>
           <time dateTime={game.createdAt}>
-            {DATE_FORMATTER.format(new Date(game.createdAt))}
+            {dateFormatter.format(new Date(game.createdAt))}
           </time>
           <Button
-            aria-label="Открыть игру"
+            aria-label={t('openGame')}
             className={classes.openGameButton}
             onClick={onOpen}
-            title="Открыть игру"
+            title={t('openGame')}
             variant="secondary"
           >
             <svg
@@ -182,11 +193,11 @@ function GameCard(props: GameCardProps) {
         </div>
       </div>
       <div className={classes.teams}>
-        <TeamSlot name="Белая команда" player={whitePlayer} />
+        <TeamSlot name={t('whiteTeam')} player={whitePlayer} />
         <span aria-hidden="true" className={classes.versus}>
           VS
         </span>
-        <TeamSlot name="Чёрная команда" player={blackPlayer} />
+        <TeamSlot name={t('blackTeam')} player={blackPlayer} />
       </div>
     </article>
   );
@@ -199,6 +210,9 @@ interface TeamSlotProps {
 
 function TeamSlot(props: TeamSlotProps) {
   const { name, player } = props;
+  const { t } = useTranslation('pages/lobby', {
+    keyPrefix: 'TeamSlot',
+  });
 
   return (
     <div className={classes.teamSlot}>
@@ -207,7 +221,7 @@ function TeamSlot(props: TeamSlotProps) {
         {player === undefined ? null : (
           <UserAvatar size="small" user={player} />
         )}
-        <strong>{player?.displayName ?? 'Свободно'}</strong>
+        <strong>{player?.displayName ?? t('available')}</strong>
       </div>
     </div>
   );

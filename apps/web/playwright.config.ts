@@ -17,7 +17,11 @@ export default defineConfig({
       name: 'e2e-fake',
       testDir: './tests/e2e/fake',
       testMatch: '**/*.spec.ts',
-      use: { ...devices['Desktop Chrome'], baseURL: WEB_BASE_URL },
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: WEB_BASE_URL,
+        locale: 'ru-RU',
+      },
     },
   ],
   reporter: process.env.CI ? 'github' : 'list',

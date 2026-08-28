@@ -1,0 +1,11 @@
+{
+  "SessionNavigation": {
+    "devTools": "Dev",
+    "lobby": "Lobby",
+    "logout": "Sign out",
+    "loggingOutFallback": "Could not end the session.",
+    "mainNavigation": "Main navigation",
+    "profile": "Profile",
+    "sessionPending": "Checking session"
+  }
+}

@@ -1,3 +1,4 @@
+import { useTranslation } from '#/shared/i18n/useTranslation';
 import classes from './GameSeatSelector.module.scss';
 
 export type GameTeam = 'black' | 'white';
@@ -18,16 +19,18 @@ export function GameSeatSelector(props: Props) {
     onSelect,
     selectedTeam,
   } = props;
+  const { t } = useTranslation('entities/game', {
+    keyPrefix: 'GameSeatSelector',
+  });
 
   return (
     <fieldset className={classes.selector} disabled={disabled}>
-      <legend>Выберите сторону</legend>
+      <legend>{t('legend')}</legend>
       <div className={classes.seats}>
         {GAME_TEAMS.map((team) => {
           const isOccupied = occupiedTeams.includes(team);
           const isSelected = selectedTeam === team;
-          const teamName =
-            team === 'white' ? 'Белая команда' : 'Чёрная команда';
+          const teamName = team === 'white' ? t('whiteTeam') : t('blackTeam');
 
           return (
             <label
@@ -43,9 +46,9 @@ export function GameSeatSelector(props: Props) {
                 value={team}
               />
               <span className={classes.team}>{teamName}</span>
-              <span className={classes.position}>Место 1</span>
+              <span className={classes.position}>{t('seat')}</span>
               <span className={classes.availability}>
-                {isOccupied ? 'Занято' : 'Свободно'}
+                {isOccupied ? t('takenSeat') : t('freeSeat')}
               </span>
             </label>
           );

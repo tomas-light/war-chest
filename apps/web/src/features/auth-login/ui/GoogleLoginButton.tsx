@@ -1,4 +1,6 @@
 import { useEffect, useRef } from 'react';
+import { ApiClientError } from '#/shared/api';
+import { useTranslation } from '#/shared/i18n/useTranslation';
 import classes from './LoginOptions.module.scss';
 
 const GOOGLE_IDENTITY_SCRIPT_ID = 'google-identity-services';
@@ -18,6 +20,7 @@ interface GoogleIdentityServices {
       renderButton(
         parent: HTMLElement,
         options: {
+          locale: string;
           shape: 'rectangular';
           size: 'large';
           text: 'continue_with';
@@ -37,6 +40,10 @@ interface Props {
 
 export function GoogleLoginButton(props: Props) {
   const { clientId, onCredential, onError } = props;
+  const { i18n, t } = useTranslation('features/auth-login', {
+    keyPrefix: 'GoogleLoginButton',
+  });
+  const language = i18n.resolvedLanguage === 'en' ? 'en' : 'ru';
 
   const buttonContainerRef = useRef<HTMLDivElement>(null);
   const onCredentialRef = useRef(onCredential);
@@ -74,6 +81,7 @@ export function GoogleLoginButton(props: Props) {
         });
         buttonContainerRef.current.replaceChildren();
         google.accounts.id.renderButton(buttonContainerRef.current, {
+          locale: language,
           shape: 'rectangular',
           size: 'large',
           text: 'continue_with',
@@ -83,19 +91,17 @@ export function GoogleLoginButton(props: Props) {
       } catch (error) {
         if (!isDisposed) {
           onErrorRef.current(
-            error instanceof Error
-              ? error
-              : new Error('Google Identity Services could not be loaded.')
+            error instanceof Error ? error : createGoogleIdentityError(error)
           );
         }
       }
     }
-  }, [clientId]);
+  }, [clientId, language]);
 
   return (
     <div
       ref={buttonContainerRef}
-      aria-label="Загрузка входа через Google"
+      aria-label={t('loadingLabel')}
       className={classes.googleButton}
     />
   );
@@ -139,7 +145,7 @@ function waitForGoogleScript(script: HTMLScriptElement): Promise<void> {
     }
 
     function handleError(): void {
-      reject(new Error('Google Identity Services could not be loaded.'));
+      reject(createGoogleIdentityError());
     }
   });
 }
@@ -148,7 +154,7 @@ function getGoogleIdentityServices(): GoogleIdentityServices {
   const google = getOptionalGoogleIdentityServices();
 
   if (google === null) {
-    throw new Error('Google Identity Services are unavailable.');
+    throw createGoogleIdentityError();
   }
 
   return google;
@@ -160,4 +166,12 @@ function getOptionalGoogleIdentityServices(): GoogleIdentityServices | null {
   };
 
   return browserWindow.google ?? null;
+}
+
+function createGoogleIdentityError(cause?: unknown): ApiClientError {
+  return new ApiClientError({
+    cause,
+    code: 'external_provider_unavailable',
+    diagnosticMessage: 'Google Identity Services are unavailable.',
+  });
 }

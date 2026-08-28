@@ -1,0 +1,12 @@
+{
+  "GoogleLoginButton": {
+    "loadingLabel": "Loading Google sign-in"
+  },
+  "LoginOptions": {
+    "continueWithGoogle": "Continue with Google",
+    "continueWithTelegram": "Continue with Telegram",
+    "continueWithYandex": "Continue with Yandex ID",
+    "fakeModeHint": "Fake mode creates a separate test player for each sign-in method in this tab.",
+    "googleNotConfigured": "Google is not configured"
+  }
+}

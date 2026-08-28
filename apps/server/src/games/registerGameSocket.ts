@@ -1,4 +1,5 @@
 import {
+  type ApiErrorCode,
   type ClientToServerEvents,
   type InterServerEvents,
   type ServerToClientEvents,
@@ -259,7 +260,7 @@ export function registerGameSocket(input: RegisterGameSocketInput): void {
   }
 
   function emitGameError(
-    code: string,
+    code: ApiErrorCode,
     gameId: string | null,
     message: string
   ): void {

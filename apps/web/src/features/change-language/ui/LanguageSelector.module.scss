@@ -1,0 +1,41 @@
+.selector {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--wc-color-text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.selector select {
+  min-height: 34px;
+  padding: 5px 28px 5px 9px;
+  border: 1px solid rgb(199 150 53 / 48%);
+  border-radius: 2px 8px;
+  background: var(--wc-color-ink);
+  color: var(--wc-color-text);
+  cursor: pointer;
+  font: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.selector select:focus-visible {
+  outline: 2px solid var(--wc-color-cyan);
+  outline-offset: 2px;
+}
+
+@media (width <= 480px) {
+  .selector span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    padding: 0;
+    border: 0;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}

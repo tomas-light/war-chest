@@ -7,7 +7,8 @@ import {
   getGameQueryKey,
   LOBBY_GAMES_QUERY_KEY,
 } from '#/entities/game';
-import { createSelectedGameApi } from '#/shared/api';
+import { createSelectedGameApi, useApiErrorMessage } from '#/shared/api';
+import { useTranslation } from '#/shared/i18n/useTranslation';
 import { Button } from '#/shared/ui/button';
 import classes from './JoinGamePanel.module.scss';
 
@@ -20,6 +21,10 @@ interface Props {
 
 export function JoinGamePanel(props: Props) {
   const { gameId, onJoined, userId, view } = props;
+  const { t } = useTranslation('features/join-game', {
+    keyPrefix: 'JoinGamePanel',
+  });
+  const getApiErrorMessage = useApiErrorMessage();
   const queryClient = useQueryClient();
   const occupiedTeams = view.players.map((player) => player.team);
   const currentPlayer = view.players.find((player) => player.id === userId);
@@ -48,14 +53,19 @@ export function JoinGamePanel(props: Props) {
       await queryClient.invalidateQueries({ queryKey: LOBBY_GAMES_QUERY_KEY });
     },
   });
+  const actionLabel = joinGameMutation.isPending
+    ? isChangingPosition
+      ? t('changingPosition')
+      : t('joining')
+    : isChangingPosition
+      ? t('changePosition')
+      : t('join');
 
   return (
     <section className={classes.panel}>
-      <h2>{isChangingPosition ? 'Сменить место' : 'Занять место'}</h2>
+      <h2>{isChangingPosition ? t('changePosition') : t('joinTitle')}</h2>
       <p>
-        {isChangingPosition
-          ? 'Пока второе место свободно, вы можете перейти на другую сторону.'
-          : 'Игра ещё не началась. Выберите свободную сторону.'}
+        {isChangingPosition ? t('changeDescription') : t('joinDescription')}
       </p>
       <GameSeatSelector
         disabled={joinGameMutation.isPending}
@@ -65,14 +75,14 @@ export function JoinGamePanel(props: Props) {
       />
       {joinGameMutation.error === null ? null : (
         <p className={classes.error} role="alert">
-          {joinGameMutation.error.message}
+          {getApiErrorMessage(joinGameMutation.error)}
         </p>
       )}
       <Button
         disabled={selectedTeam === null || joinGameMutation.isPending}
         onClick={joinSelectedTeam}
       >
-        {getActionLabel(isChangingPosition, joinGameMutation.isPending)}
+        {actionLabel}
       </Button>
     </section>
   );
@@ -82,17 +92,6 @@ export function JoinGamePanel(props: Props) {
       joinGameMutation.mutate(selectedTeam);
     }
   }
-}
-
-function getActionLabel(
-  isChangingPosition: boolean,
-  isPending: boolean
-): string {
-  if (isPending) {
-    return isChangingPosition ? 'Меняем место…' : 'Подключаем…';
-  }
-
-  return isChangingPosition ? 'Сменить место' : 'Присоединиться как игрок';
 }
 
 function getFirstAvailableTeam(

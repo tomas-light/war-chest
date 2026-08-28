@@ -1,0 +1,49 @@
+{
+  "ActiveGamePage": {
+    "actionsDescriptionOpponent": "Waiting for the opponent's turn.",
+    "actionsDescriptionSpectator": "Actions are unavailable in spectator mode.",
+    "actionsDescriptionYou": "It is your turn.",
+    "actionsTitle": "Available actions",
+    "backToLobby": "Back to lobby",
+    "boardDescription": "The War Chest board will be placed here.",
+    "boardLabel": "Game board",
+    "chooseSquad": "Choose a unit",
+    "connecting": "Connecting to the game table…",
+    "finishAction": "Finish action",
+    "finishedTitle": "Game finished",
+    "gameLabel": "Game {{gameId}}",
+    "gameTitle": "Game",
+    "gameUnavailable": "The game state is unavailable.",
+    "historyDescription": "The move history panel will appear here after game moves are implemented.",
+    "historyEyebrow": "Log",
+    "historyTitle": "Move history",
+    "notSelected": "No game was selected.",
+    "openHistory": "Open history",
+    "playerBottom": "Bottom player",
+    "playerTop": "Top player",
+    "spectator": "Spectator mode",
+    "synchronization": {
+      "desynchronized": "Restoring synchronization…",
+      "pending": "Waiting for state…",
+      "ready": "State synchronized"
+    },
+    "table": "Game table",
+    "tableArea": "Game board",
+    "turnEyebrow": "Turn",
+    "you": "You",
+    "opponent": "Opponent"
+  },
+  "GameError": {
+    "backToLobby": "Back to lobby",
+    "title": "Could not open the game table"
+  },
+  "PlayerPanel": {
+    "blackTeam": "Black team",
+    "disconnected": "Connection lost",
+    "empty": "Seat available",
+    "left": "Left the game",
+    "noPlayer": "No player",
+    "playerFallback": "Player {{playerId}}",
+    "whiteTeam": "White team"
+  }
+}

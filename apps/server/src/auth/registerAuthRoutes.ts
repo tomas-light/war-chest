@@ -1,4 +1,5 @@
 import {
+  type ApiErrorCode,
   type SessionResponse,
   API_PREFIX,
   googleLoginRequestSchema,
@@ -11,7 +12,7 @@ import { createPublicUser } from '../users/PublicUser.js';
 type RedirectProvider = 'telegram' | 'yandex';
 
 interface SendErrorInput {
-  code: string;
+  code: ApiErrorCode;
   message: string;
   reply: FastifyReply;
   statusCode: number;
@@ -92,7 +93,7 @@ export function registerAuthRoutes(app: FastifyInstance): void {
       return reply.code(302).header('Location', authorization.url).send();
     } catch (error) {
       request.log.warn({ error, provider }, 'OAuth login could not be started');
-      return handleAuthError(error, reply);
+      return handleRedirectAuthError(error, reply, auth.successRedirectUrl);
     }
   }
 
@@ -119,12 +120,11 @@ export function registerAuthRoutes(app: FastifyInstance): void {
     const queryResult = oauthCallbackQuerySchema.safeParse(request.query);
 
     if (!queryResult.success) {
-      return sendError({
-        code: 'invalid_request',
-        message: 'OAuth callback parameters are invalid.',
+      return redirectAuthError(
+        'invalid_request',
         reply,
-        statusCode: 400,
-      });
+        auth.successRedirectUrl
+      );
     }
 
     const stateCookieName = `${auth.sessionCookieName}_${provider}_oauth_state`;
@@ -148,7 +148,7 @@ export function registerAuthRoutes(app: FastifyInstance): void {
         { error, provider },
         'OAuth callback could not be completed'
       );
-      return handleAuthError(error, reply);
+      return handleRedirectAuthError(error, reply, auth.successRedirectUrl);
     }
   }
 
@@ -223,6 +223,33 @@ function handleAuthError(error: unknown, reply: FastifyReply): FastifyReply {
         statusCode: 502,
       });
   }
+}
+
+function handleRedirectAuthError(
+  error: unknown,
+  reply: FastifyReply,
+  successRedirectUrl: string
+): FastifyReply {
+  if (!(error instanceof AuthError)) {
+    throw error;
+  }
+
+  return redirectAuthError(error.code, reply, successRedirectUrl);
+}
+
+function redirectAuthError(
+  code: ApiErrorCode,
+  reply: FastifyReply,
+  successRedirectUrl: string
+): FastifyReply {
+  const redirectUrl = new URL(successRedirectUrl);
+
+  redirectUrl.pathname = '/login';
+  redirectUrl.search = '';
+  redirectUrl.searchParams.set('authError', code);
+  redirectUrl.hash = '';
+
+  return reply.code(302).header('Location', redirectUrl.toString()).send();
 }
 
 function sendError(input: SendErrorInput): FastifyReply {

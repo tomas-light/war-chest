@@ -1,0 +1,7 @@
+{
+  "UserProfilePage": {
+    "currentUserDescription": "Профиль текущего пользователя и его завершённые партии.",
+    "publicUserDescription": "Публичный профиль пользователя {{userId}}.",
+    "title": "Профиль"
+  }
+}

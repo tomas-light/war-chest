@@ -1,12 +1,16 @@
 import { useParams } from 'react-router';
+import { useTranslation } from '#/shared/i18n/useTranslation';
 import { PlaceholderPage } from '#/shared/ui/placeholder-page';
 
 export function UserProfilePage() {
+  const { t } = useTranslation('pages/user-profile', {
+    keyPrefix: 'UserProfilePage',
+  });
   const { userId } = useParams();
   const description =
     userId === undefined
-      ? 'Профиль текущего пользователя и его завершённые партии.'
-      : `Публичный профиль пользователя ${userId}.`;
+      ? t('currentUserDescription')
+      : t('publicUserDescription', { userId });
 
-  return <PlaceholderPage description={description} title="Профиль" />;
+  return <PlaceholderPage description={description} title={t('title')} />;
 }
