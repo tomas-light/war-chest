@@ -7,6 +7,7 @@ War Chest — Yarn Workspaces-монорепозиторий браузерно�
 Актуальная документация начинается с [docs/README.md](./docs/README.md):
 
 - [фактическое поведение web-клиента](./docs/client/README.md);
+- [визуальный стиль UI](./docs/ui/README.md);
 - [фактическое поведение server](./docs/server/README.md);
 - [план дальнейшей разработки](./docs/development-plan/README.md).
 

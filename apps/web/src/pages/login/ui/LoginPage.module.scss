@@ -1,14 +1,26 @@
 .developerTools {
-  max-width: 320px;
+  width: min(100%, 340px);
   margin-top: 32px;
 }
 
 .connectionError {
   max-width: 420px;
+  padding: 14px 16px;
+  border-left: 2px solid var(--wc-color-error);
   margin-top: 32px;
+  background: rgb(255 157 136 / 5%);
 
   p {
-    color: #ffb4a6;
+    margin-top: 0;
+    color: var(--wc-color-error);
     line-height: 1.5;
+  }
+}
+
+@media (width <= 720px) {
+  .connectionError,
+  .developerTools {
+    margin-right: auto;
+    margin-left: auto;
   }
 }

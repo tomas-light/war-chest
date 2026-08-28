@@ -1,7 +1,7 @@
 .options {
-  max-width: 320px;
+  width: min(100%, 340px);
   display: grid;
-  gap: 14px;
+  gap: 12px;
   margin-top: 32px;
 }
 
@@ -12,17 +12,30 @@
 
 .googleButton {
   min-height: 44px;
+  overflow: hidden;
+  border-radius: 2px 12px;
+  box-shadow: 0 5px 18px rgb(0 0 0 / 24%);
 }
 
 .error {
   margin: 4px 0 0;
-  color: #ffb4a6;
+  color: var(--wc-color-error);
   line-height: 1.5;
 }
 
 .hint {
-  margin: 6px 0 0;
-  color: #9f927e;
-  font-size: 14px;
+  padding: 10px 12px;
+  border-left: 2px solid var(--wc-color-cyan);
+  margin: 8px 0 0;
+  background: rgb(21 217 237 / 5%);
+  color: var(--wc-color-text-muted);
+  font-size: 13px;
   line-height: 1.5;
+}
+
+@media (width <= 720px) {
+  .options {
+    margin-right: auto;
+    margin-left: auto;
+  }
 }

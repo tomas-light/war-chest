@@ -1,7 +1,8 @@
-import { lazy, Suspense, useState } from 'react';
+import { type ReactNode, lazy, Suspense, useState } from 'react';
 import { Link, Outlet } from 'react-router';
 import { useAuthSession } from '#/entities/auth-session';
 import { Button } from '#/shared/ui/button';
+import { WarChestLogo } from '#/shared/ui/war-chest-logo';
 import classes from './SessionNavigation.module.scss';
 
 const DeveloperPanel = import.meta.env.DEV
@@ -13,7 +14,13 @@ const DeveloperPanel = import.meta.env.DEV
     })
   : null;
 
-export function SessionNavigation() {
+interface Props {
+  children?: ReactNode;
+  isSessionPending?: boolean;
+}
+
+export function SessionNavigation(props: Props) {
+  const { children, isSessionPending = false } = props;
   const { logout, session } = useAuthSession();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isDeveloperPanelOpen, setIsDeveloperPanelOpen] = useState(false);
@@ -23,7 +30,8 @@ export function SessionNavigation() {
     <div className={classes.layout}>
       <header className={classes.header}>
         <Link className={classes.brand} to="/lobby">
-          War Chest
+          <WarChestLogo className={classes.brandLogo} />
+          <span className={classes.brandText}>War Chest</span>
         </Link>
         <nav aria-label="Основная навигация" className={classes.navigation}>
           <Link to="/lobby">Лобби</Link>
@@ -41,8 +49,15 @@ export function SessionNavigation() {
           )}
         </nav>
         <div className={classes.session}>
-          <span>{session?.user.displayName}</span>
-          <Button disabled={isLoggingOut} onClick={() => void handleLogout()}>
+          <span
+            className={isSessionPending ? classes.sessionLoading : undefined}
+          >
+            {isSessionPending ? 'Проверяем сессию' : session?.user.displayName}
+          </span>
+          <Button
+            disabled={isSessionPending || isLoggingOut}
+            onClick={() => void handleLogout()}
+          >
             Выйти
           </Button>
         </div>
@@ -57,7 +72,7 @@ export function SessionNavigation() {
           <DeveloperPanel onClose={closeDeveloperPanel} />
         </Suspense>
       )}
-      <Outlet />
+      {children === undefined ? <Outlet /> : children}
     </div>
   );
 

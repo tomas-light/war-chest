@@ -1,4 +1,11 @@
-import type { ReactNode } from 'react';
+import {
+  type CSSProperties,
+  type ReactNode,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
+import { WarChestLogo } from '#/shared/ui/war-chest-logo';
 import classes from './PlaceholderPage.module.scss';
 
 interface PlaceholderPageProps {
@@ -7,19 +14,62 @@ interface PlaceholderPageProps {
   title: string;
 }
 
-export function PlaceholderPage({
-  children,
-  description,
-  title,
-}: PlaceholderPageProps) {
+export function PlaceholderPage(props: PlaceholderPageProps) {
+  const { children, description, title } = props;
+
   return (
     <main className={classes.page}>
       <section className={classes.content}>
-        <p className={classes.eyebrow}>War Chest</p>
-        <h1 className={classes.title}>{title}</h1>
-        <p className={classes.description}>{description}</p>
-        {children}
+        <div className={classes.brand}>
+          <div className={classes.logoFrame}>
+            <WarChestLogo className={classes.logo} />
+          </div>
+          <p className={classes.eyebrow}>War Chest</p>
+        </div>
+        <div className={classes.body}>
+          <h1 className={classes.title}>{title}</h1>
+          <p className={classes.description}>{description}</p>
+          <AnimatedContent>{children}</AnimatedContent>
+        </div>
       </section>
     </main>
+  );
+}
+
+interface AnimatedContentProps {
+  children?: ReactNode;
+}
+
+function AnimatedContent(props: AnimatedContentProps) {
+  const { children } = props;
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [contentHeight, setContentHeight] = useState<number>();
+  const animatedStyle: CSSProperties | undefined =
+    contentHeight === undefined ? undefined : { height: contentHeight };
+
+  useEffect(() => {
+    const contentElement = contentRef.current;
+
+    if (contentElement === null) {
+      return;
+    }
+
+    const resizeObserver = new ResizeObserver(([entry]) => {
+      if (entry !== undefined) {
+        setContentHeight(Math.ceil(entry.contentRect.height));
+      }
+    });
+
+    resizeObserver.observe(contentElement);
+
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  return (
+    <div className={classes.animatedContent} style={animatedStyle}>
+      <div ref={contentRef} className={classes.animatedContentInner}>
+        {children}
+      </div>
+    </div>
   );
 }
