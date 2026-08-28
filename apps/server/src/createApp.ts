@@ -35,6 +35,7 @@ interface CreateAppOptions {
   auth: Auth;
   databaseConnection: DatabaseConnection;
   disconnectedPlayerTimeoutMinutes: number;
+  emptyWaitingGameTimeoutMinutes: number;
   featureFlagsService: FeatureFlagsService;
   webAssetsRoot?: string;
 }
@@ -60,6 +61,8 @@ export function createApp(options: CreateAppOptions): FastifyInstance {
       activeGames: createActiveGames(),
       disconnectedPlayerTimeoutMs:
         options.disconnectedPlayerTimeoutMinutes * 60 * 1000,
+      emptyWaitingGameTimeoutMs:
+        options.emptyWaitingGameTimeoutMinutes * 60 * 1000,
       featureFlagsService: options.featureFlagsService,
       gameRepository,
     }),

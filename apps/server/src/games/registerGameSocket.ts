@@ -290,7 +290,14 @@ export async function broadcastGameUpdate(
 
       if (result.status === 'found') {
         emitSynchronization(roomSocket, update.gameId, result.synchronization);
+        return;
       }
+
+      roomSocket.emit('game:error', {
+        code: 'game_not_found',
+        gameId: update.gameId,
+        message: 'Game was not found.',
+      });
     })
   );
 }

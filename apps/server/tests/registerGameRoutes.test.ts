@@ -80,7 +80,7 @@ describe('game HTTP routes', () => {
       getEvents,
       getSnapshot,
       listLobbyGames,
-      recoverActiveGames: vi.fn(),
+      recoverGames: vi.fn(),
       subscribe: vi.fn<GameService['subscribe']>().mockReturnValue(vi.fn()),
       synchronize: vi.fn(),
     };
@@ -98,6 +98,7 @@ describe('game HTTP routes', () => {
       auth,
       databaseConnection,
       disconnectedPlayerTimeoutMinutes: 15,
+      emptyWaitingGameTimeoutMinutes: 10,
       featureFlagsService: { read: vi.fn() },
     });
   });

@@ -15,7 +15,7 @@ import {
   type GameEventData,
   parseGameEventData,
 } from '@war-chest/game-engine';
-import { and, asc, desc, eq, gt, inArray, or } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, inArray, isNull, or } from 'drizzle-orm';
 
 const CREATE_GAME_COMMAND_TYPE = 'CreateGame';
 const FIRST_EVENT_SEQUENCE = 1;
@@ -102,9 +102,26 @@ interface CreateStoredGameInput {
 }
 
 type CreateStoredGameResult =
-  | { gameId: string; status: 'created' }
+  | { createdAt: Date; gameId: string; status: 'created' }
   | { gameId: string; status: 'duplicateCommand' }
   | { status: 'commandIdConflict' };
+
+interface DeleteExpiredWaitingGameInput {
+  expiredBefore: Date;
+  gameId: string;
+}
+
+type DeleteExpiredWaitingGameResult =
+  | { status: 'deleted' }
+  | { status: 'notEmpty' }
+  | { createdAt: Date; status: 'notExpired' }
+  | { status: 'notFound' }
+  | { status: 'notWaiting' };
+
+interface StoredEmptyWaitingGame {
+  createdAt: Date;
+  id: string;
+}
 
 interface SaveGameCommandInput {
   commandId: string;
@@ -141,9 +158,14 @@ export interface GameRepository {
     this: void,
     input: CreateStoredGameInput
   ): Promise<CreateStoredGameResult>;
+  deleteExpiredWaitingGame(
+    this: void,
+    input: DeleteExpiredWaitingGameInput
+  ): Promise<DeleteExpiredWaitingGameResult>;
   findGame(this: void, gameId: string): Promise<StoredGame | null>;
   findCurrentPlayerGame(this: void, userId: string): Promise<string | null>;
   findActiveGameIds(this: void): Promise<readonly string[]>;
+  listEmptyWaitingGames(this: void): Promise<readonly StoredEmptyWaitingGame[]>;
   listLobbyGames(this: void): Promise<readonly StoredLobbyGame[]>;
   findParticipant(
     this: void,
@@ -172,11 +194,13 @@ export interface GameRepository {
 export function createGameRepository(database: Database): GameRepository {
   return {
     createGame,
+    deleteExpiredWaitingGame,
     findCurrentPlayerGame,
     findActiveGameIds,
     findGame,
     findParticipant,
     findProcessedCommand,
+    listEmptyWaitingGames,
     listLobbyGames,
     loadEvents,
     saveCommand,
@@ -213,7 +237,7 @@ export function createGameRepository(database: Database): GameRepository {
             currentVersion: input.event.sequence,
             status: 'waiting',
           })
-          .returning({ id: games.id });
+          .returning({ createdAt: games.createdAt, id: games.id });
 
         if (createdGame === undefined) {
           throw new Error('Created game id was not returned.');
@@ -235,7 +259,11 @@ export function createGameRepository(database: Database): GameRepository {
           version: input.event.version,
         });
 
-        return { gameId: createdGame.id, status: 'created' };
+        return {
+          createdAt: createdGame.createdAt,
+          gameId: createdGame.id,
+          status: 'created',
+        };
       });
     } catch (error) {
       if (!isProcessedCommandUniqueViolation(error)) {
@@ -250,6 +278,60 @@ export function createGameRepository(database: Database): GameRepository {
 
       return classifyCreateCommand(existingCommand, input);
     }
+  }
+
+  async function deleteExpiredWaitingGame(
+    input: DeleteExpiredWaitingGameInput
+  ): Promise<DeleteExpiredWaitingGameResult> {
+    return database.transaction(async (transaction) => {
+      const [storedGame] = await transaction
+        .select({ createdAt: games.createdAt, status: games.status })
+        .from(games)
+        .where(eq(games.id, input.gameId))
+        .limit(1)
+        .for('update');
+
+      if (storedGame === undefined) {
+        return { status: 'notFound' };
+      }
+
+      if (storedGame.status !== 'waiting') {
+        return { status: 'notWaiting' };
+      }
+
+      if (storedGame.createdAt.getTime() > input.expiredBefore.getTime()) {
+        return { createdAt: storedGame.createdAt, status: 'notExpired' };
+      }
+
+      const [storedParticipant] = await transaction
+        .select({ gameId: gameParticipants.gameId })
+        .from(gameParticipants)
+        .where(eq(gameParticipants.gameId, input.gameId))
+        .limit(1);
+
+      if (storedParticipant !== undefined) {
+        return { status: 'notEmpty' };
+      }
+
+      await transaction
+        .delete(gameEvents)
+        .where(eq(gameEvents.gameId, input.gameId));
+      await transaction
+        .delete(processedCommands)
+        .where(eq(processedCommands.gameId, input.gameId));
+      const [deletedGame] = await transaction
+        .delete(games)
+        .where(eq(games.id, input.gameId))
+        .returning({ id: games.id });
+
+      if (deletedGame === undefined) {
+        throw new Error(
+          `Expired waiting game ${input.gameId} was not deleted.`
+        );
+      }
+
+      return { status: 'deleted' };
+    });
   }
 
   async function findGame(gameId: string): Promise<StoredGame | null> {
@@ -279,6 +361,16 @@ export function createGameRepository(database: Database): GameRepository {
       .where(eq(games.status, 'active'));
 
     return activeGames.map((game) => game.id);
+  }
+
+  async function listEmptyWaitingGames(): Promise<
+    readonly StoredEmptyWaitingGame[]
+  > {
+    return database
+      .select({ createdAt: games.createdAt, id: games.id })
+      .from(games)
+      .leftJoin(gameParticipants, eq(gameParticipants.gameId, games.id))
+      .where(and(eq(games.status, 'waiting'), isNull(gameParticipants.gameId)));
   }
 
   async function listLobbyGames(): Promise<readonly StoredLobbyGame[]> {

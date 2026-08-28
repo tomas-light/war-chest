@@ -52,6 +52,7 @@ describe('auth session routes', () => {
       auth,
       databaseConnection,
       disconnectedPlayerTimeoutMinutes: 15,
+      emptyWaitingGameTimeoutMinutes: 10,
       featureFlagsService: { read: vi.fn() },
     });
   });

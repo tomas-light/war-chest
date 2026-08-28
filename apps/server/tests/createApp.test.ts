@@ -20,6 +20,7 @@ test('reports ready when the database connection is healthy', async () => {
     auth: {} as Auth,
     databaseConnection,
     disconnectedPlayerTimeoutMinutes: 15,
+    emptyWaitingGameTimeoutMinutes: 10,
     featureFlagsService: { read: vi.fn() },
   });
 
@@ -52,6 +53,7 @@ test('reports unavailable when the database health check fails', async () => {
     auth: {} as Auth,
     databaseConnection,
     disconnectedPlayerTimeoutMinutes: 15,
+    emptyWaitingGameTimeoutMinutes: 10,
     featureFlagsService: { read: vi.fn() },
   });
 
@@ -84,6 +86,7 @@ test('closes the database connection with the application', async () => {
     auth: {} as Auth,
     databaseConnection,
     disconnectedPlayerTimeoutMinutes: 15,
+    emptyWaitingGameTimeoutMinutes: 10,
     featureFlagsService: { read: vi.fn() },
   });
 

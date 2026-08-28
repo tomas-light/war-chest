@@ -101,7 +101,7 @@ describe('game Socket.IO adapter', () => {
       getEvents: vi.fn(),
       getSnapshot: vi.fn(),
       listLobbyGames: vi.fn(),
-      recoverActiveGames: vi.fn(),
+      recoverGames: vi.fn(),
       subscribe,
       synchronize,
     };
@@ -119,6 +119,7 @@ describe('game Socket.IO adapter', () => {
       auth,
       databaseConnection,
       disconnectedPlayerTimeoutMinutes: 15,
+      emptyWaitingGameTimeoutMinutes: 10,
       featureFlagsService: { read: vi.fn() },
     });
     serverUrl = await app.listen({ host: '127.0.0.1', port: 0 });
@@ -303,6 +304,33 @@ describe('game Socket.IO adapter', () => {
 
     await expect(lobbyUpdate).resolves.toEqual({ gameId: GAME_ID });
     expect(synchronize).not.toHaveBeenCalled();
+  });
+
+  test('reports a removed game to clients in its game room', async () => {
+    connect.mockResolvedValue({
+      gameId: GAME_ID,
+      status: 'connected',
+      view: WAITING_VIEW,
+    });
+    synchronize.mockResolvedValue({ status: 'gameNotFound' });
+    const client = await connectClient(serverUrl, 'first-session');
+    clients.push(client);
+    const snapshot = waitForGameSnapshot(client);
+    client.emit('game:join', { gameId: GAME_ID });
+    await snapshot;
+    const gameError = waitForGameError(client);
+
+    if (gameUpdateListener === undefined) {
+      throw new Error('Expected a game update subscription.');
+    }
+
+    await gameUpdateListener({ gameId: GAME_ID, previousVersion: 1 });
+
+    await expect(gameError).resolves.toEqual({
+      code: 'game_not_found',
+      gameId: GAME_ID,
+      message: 'Game was not found.',
+    });
   });
 
   test('sends saved events directly to a command sender outside the room', async () => {

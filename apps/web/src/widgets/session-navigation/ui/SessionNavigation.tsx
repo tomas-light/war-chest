@@ -92,9 +92,12 @@ export function SessionNavigation(props: Props) {
         </p>
       )}
 
-      {DeveloperPanel === null || !isDeveloperPanelOpen ? null : (
+      {DeveloperPanel === null ? null : (
         <Suspense>
-          <DeveloperPanel onClose={closeDeveloperPanel} />
+          <DeveloperPanel
+            isOpen={isDeveloperPanelOpen}
+            onClose={closeDeveloperPanel}
+          />
         </Suspense>
       )}
 

@@ -23,8 +23,9 @@ import { createPublicUser } from '../users/PublicUser.js';
 import type { ActiveGame, ActiveGames } from './ActiveGames.js';
 import type { GameRepository, StoredParticipant } from './GameRepository.js';
 
-const RECONNECT_DEADLINE_RETRY_BASE_DELAY_MS = 1_000;
-const RECONNECT_DEADLINE_RETRY_MAX_DELAY_MS = 60_000;
+const BACKGROUND_TASK_RETRY_BASE_DELAY_MS = 1_000;
+const BACKGROUND_TASK_RETRY_MAX_DELAY_MS = 60_000;
+const EMPTY_WAITING_GAME_VERSION = 1;
 
 interface CreateGameInput {
   commandId: string;
@@ -219,6 +220,17 @@ interface DeadlineTimer {
   handle: NodeJS.Timeout;
 }
 
+interface EmptyWaitingGameExpirationInput {
+  expiresAt: string;
+  gameId: string;
+  retryAttempt: number;
+}
+
+interface EmptyWaitingGameExpirationTimer {
+  expiresAt: string;
+  handle: NodeJS.Timeout;
+}
+
 interface ReconnectDeadlineInput {
   gameId: string;
   playerId: string;
@@ -229,6 +241,7 @@ interface ReconnectDeadlineInput {
 interface CreateGameServiceOptions {
   activeGames: ActiveGames;
   disconnectedPlayerTimeoutMs: number;
+  emptyWaitingGameTimeoutMs: number;
   featureFlagsService: FeatureFlagsService;
   gameRepository: GameRepository;
 }
@@ -291,7 +304,7 @@ export interface GameService {
     this: void,
     input: ListLobbyGamesInput
   ): Promise<LobbyGamesResponse>;
-  recoverActiveGames(this: void): Promise<void>;
+  recoverGames(this: void): Promise<void>;
   subscribe(this: void, listener: GameUpdateListener): () => void;
   synchronize(
     this: void,
@@ -303,6 +316,10 @@ export function createGameService(
   options: CreateGameServiceOptions
 ): GameService {
   const deadlineTimers = new Map<string, DeadlineTimer>();
+  const emptyWaitingGameExpirationTimers = new Map<
+    string,
+    EmptyWaitingGameExpirationTimer
+  >();
   const updateListeners = new Set<GameUpdateListener>();
   let isClosed = false;
 
@@ -315,7 +332,7 @@ export function createGameService(
     getEvents,
     getSnapshot,
     listLobbyGames,
-    recoverActiveGames,
+    recoverGames,
     subscribe,
     synchronize,
   };
@@ -327,7 +344,12 @@ export function createGameService(
       clearTimeout(timer.handle);
     }
 
+    for (const timer of emptyWaitingGameExpirationTimers.values()) {
+      clearTimeout(timer.handle);
+    }
+
     deadlineTimers.clear();
+    emptyWaitingGameExpirationTimers.clear();
     updateListeners.clear();
   }
 
@@ -456,6 +478,11 @@ export function createGameService(
 
     const state = applyEvent(null, gameCreatedEvent);
     options.activeGames.store(result.gameId, state);
+    scheduleEmptyWaitingGameExpiration({
+      expiresAt: createEmptyWaitingGameExpiresAt(result.createdAt),
+      gameId: result.gameId,
+      retryAttempt: 0,
+    });
     notifyUpdate({ gameId: result.gameId, previousVersion: 0 });
 
     return {
@@ -732,6 +759,11 @@ export function createGameService(
 
       const nextState = events.reduce(applyEvent, activeGame.state);
       activeGame.state = nextState;
+
+      if (nextState.status !== 'waiting' || nextState.players.length > 0) {
+        clearEmptyWaitingGameExpiration(input.gameId);
+      }
+
       const viewer: Viewer =
         input.command.type === 'JoinGame' || participant !== null
           ? getPlayerViewer(input.userId)
@@ -837,16 +869,37 @@ export function createGameService(
     });
   }
 
-  async function recoverActiveGames(): Promise<void> {
-    const gameIds = await options.gameRepository.findActiveGameIds();
+  async function recoverGames(): Promise<void> {
+    const [activeGameIds, emptyWaitingGames] = await Promise.all([
+      options.gameRepository.findActiveGameIds(),
+      options.gameRepository.listEmptyWaitingGames(),
+    ]);
 
-    await Promise.all(
-      gameIds.map((gameId) =>
+    await Promise.all([
+      ...activeGameIds.map((gameId) =>
         options.activeGames.runExclusive(gameId, async () => {
           await loadGame(gameId);
         })
-      )
-    );
+      ),
+      ...emptyWaitingGames.map(recoverEmptyWaitingGame),
+    ]);
+
+    async function recoverEmptyWaitingGame(
+      game: (typeof emptyWaitingGames)[number]
+    ): Promise<void> {
+      const input: EmptyWaitingGameExpirationInput = {
+        expiresAt: createEmptyWaitingGameExpiresAt(game.createdAt),
+        gameId: game.id,
+        retryAttempt: 0,
+      };
+
+      if (new Date(input.expiresAt).getTime() <= getCurrentDate().getTime()) {
+        await processEmptyWaitingGameExpiration(input);
+        return;
+      }
+
+      scheduleEmptyWaitingGameExpiration(input);
+    }
   }
 
   function subscribe(listener: GameUpdateListener): () => void {
@@ -889,6 +942,7 @@ export function createGameService(
     }
 
     if (state.status === 'finished') {
+      clearEmptyWaitingGameExpiration(gameId);
       options.activeGames.delete(gameId);
       return {
         connectionsByUserId: new Map<string, Set<string>>(),
@@ -897,6 +951,7 @@ export function createGameService(
     }
 
     const activeGame = options.activeGames.store(gameId, state);
+    updateEmptyWaitingGameExpiration(gameId, storedGame.createdAt, state);
     restoreDeadlineTimers(gameId, state);
 
     return activeGame;
@@ -987,6 +1042,125 @@ export function createGameService(
     return { gameId, previousVersion };
   }
 
+  function updateEmptyWaitingGameExpiration(
+    gameId: string,
+    createdAt: Date,
+    state: GameState
+  ): void {
+    clearEmptyWaitingGameExpiration(gameId);
+
+    if (state.status !== 'waiting' || state.players.length > 0) {
+      return;
+    }
+
+    scheduleEmptyWaitingGameExpiration({
+      expiresAt: createEmptyWaitingGameExpiresAt(createdAt),
+      gameId,
+      retryAttempt: 0,
+    });
+  }
+
+  function createEmptyWaitingGameExpiresAt(createdAt: Date): string {
+    return new Date(
+      createdAt.getTime() + options.emptyWaitingGameTimeoutMs
+    ).toISOString();
+  }
+
+  function scheduleEmptyWaitingGameExpiration(
+    input: EmptyWaitingGameExpirationInput
+  ): void {
+    if (isClosed) {
+      return;
+    }
+
+    clearEmptyWaitingGameExpiration(input.gameId);
+    const delayMs =
+      input.retryAttempt === 0
+        ? Math.max(
+            0,
+            new Date(input.expiresAt).getTime() - getCurrentDate().getTime()
+          )
+        : calculateBackgroundTaskRetryDelay(input.retryAttempt);
+    const handle = setTimeout(handleExpiration, delayMs);
+
+    emptyWaitingGameExpirationTimers.set(input.gameId, {
+      expiresAt: input.expiresAt,
+      handle,
+    });
+
+    function handleExpiration(): void {
+      const currentTimer = emptyWaitingGameExpirationTimers.get(input.gameId);
+
+      if (
+        currentTimer?.expiresAt !== input.expiresAt ||
+        currentTimer.handle !== handle
+      ) {
+        return;
+      }
+
+      emptyWaitingGameExpirationTimers.delete(input.gameId);
+      void processEmptyWaitingGameExpiration(input);
+    }
+  }
+
+  function clearEmptyWaitingGameExpiration(gameId: string): void {
+    const timer = emptyWaitingGameExpirationTimers.get(gameId);
+
+    if (timer === undefined) {
+      return;
+    }
+
+    clearTimeout(timer.handle);
+    emptyWaitingGameExpirationTimers.delete(gameId);
+  }
+
+  async function processEmptyWaitingGameExpiration(
+    input: EmptyWaitingGameExpirationInput
+  ): Promise<void> {
+    await options.activeGames.runExclusive(input.gameId, expireWaitingGame);
+
+    async function expireWaitingGame(): Promise<void> {
+      try {
+        const result = await options.gameRepository.deleteExpiredWaitingGame({
+          expiredBefore: new Date(
+            getCurrentDate().getTime() - options.emptyWaitingGameTimeoutMs
+          ),
+          gameId: input.gameId,
+        });
+
+        if (result.status === 'notExpired') {
+          scheduleEmptyWaitingGameExpiration({
+            expiresAt: createEmptyWaitingGameExpiresAt(result.createdAt),
+            gameId: input.gameId,
+            retryAttempt: 0,
+          });
+          return;
+        }
+
+        if (result.status === 'notFound') {
+          options.activeGames.delete(input.gameId);
+          return;
+        }
+
+        if (result.status !== 'deleted') {
+          return;
+        }
+
+        const previousVersion =
+          options.activeGames.get(input.gameId)?.state.lastEventSequence ??
+          EMPTY_WAITING_GAME_VERSION;
+
+        options.activeGames.delete(input.gameId);
+        notifyUpdate({ gameId: input.gameId, previousVersion });
+      } catch {
+        scheduleEmptyWaitingGameExpiration({
+          ...input,
+          retryAttempt: input.retryAttempt + 1,
+        });
+      }
+    }
+  }
+
   function restoreDeadlineTimers(gameId: string, state: GameState): void {
     for (const player of state.players) {
       clearReconnectDeadline(gameId, player.id);
@@ -1065,10 +1239,7 @@ export function createGameService(
       );
     }
 
-    return Math.min(
-      RECONNECT_DEADLINE_RETRY_BASE_DELAY_MS * 2 ** (input.retryAttempt - 1),
-      RECONNECT_DEADLINE_RETRY_MAX_DELAY_MS
-    );
+    return calculateBackgroundTaskRetryDelay(input.retryAttempt);
   }
 
   function clearReconnectDeadline(gameId: string, playerId: string): void {
@@ -1316,6 +1487,13 @@ function createRequestHash(requestIdentity: RequestIdentity): string {
 
 function createDeadlineTimerKey(gameId: string, playerId: string): string {
   return `${gameId}:${playerId}`;
+}
+
+function calculateBackgroundTaskRetryDelay(retryAttempt: number): number {
+  return Math.min(
+    BACKGROUND_TASK_RETRY_BASE_DELAY_MS * 2 ** (retryAttempt - 1),
+    BACKGROUND_TASK_RETRY_MAX_DELAY_MS
+  );
 }
 
 function canonicalize(requestIdentity: RequestIdentity): string {

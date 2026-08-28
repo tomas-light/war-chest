@@ -52,6 +52,23 @@ test('signs in, restores the fake session and signs out', async ({ page }) => {
   await expect(
     developerPanel.getByRole('combobox', { name: 'Бэкенд' })
   ).toHaveValue('fake');
+  const featureFlags = developerPanel.getByRole('list');
+
+  await expect(
+    featureFlags.getByRole('listitem').filter({ hasText: 'game history' })
+  ).toContainText('Включён');
+  await expect(
+    featureFlags.getByRole('listitem').filter({ hasText: 'optimistic moves' })
+  ).toContainText('Выключен');
+  await expect(
+    featureFlags.getByRole('listitem').filter({ hasText: 'spectator mode' })
+  ).toContainText('Включён');
+
+  await page.mouse.click(16, 220);
+  await expect(developerPanel).toBeHidden();
+
+  await page.getByRole('button', { name: 'Dev' }).click();
+  await expect(developerPanel).toBeVisible();
   await developerPanel.getByRole('button', { name: 'Закрыть' }).click();
   await expect(developerPanel).toBeHidden();
 

@@ -13,6 +13,7 @@ import {
   createGame,
   GAME_EVENT_VERSION,
 } from '@war-chest/game-engine';
+import { eq } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import postgres, { type Sql } from 'postgres';
@@ -124,6 +125,103 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
       }),
     ]);
     expect(storedParticipants).toEqual([]);
+  });
+
+  test('deletes an expired empty waiting game with its command and event', async () => {
+    const created = await repository.createGame({
+      commandId: CREATE_COMMAND_ID,
+      creatorUserId: FIRST_USER_ID,
+      event: DEFAULT_CREATE_GAME_EVENT,
+      requestHash: CREATE_REQUEST_HASH,
+    });
+    const gameId = requireCreatedGameId(created);
+    const createdAt = new Date('2026-08-16T12:00:00.000Z');
+    await database.update(games).set({ createdAt }).where(eq(games.id, gameId));
+
+    const result = await repository.deleteExpiredWaitingGame({
+      expiredBefore: createdAt,
+      gameId,
+    });
+
+    expect(result).toEqual({ status: 'deleted' });
+    expect(await database.select().from(games)).toEqual([]);
+    expect(await database.select().from(processedCommands)).toEqual([]);
+    expect(await database.select().from(gameEvents)).toEqual([]);
+  });
+
+  test('keeps an empty waiting game before its timeout', async () => {
+    const created = await repository.createGame({
+      commandId: CREATE_COMMAND_ID,
+      creatorUserId: FIRST_USER_ID,
+      event: DEFAULT_CREATE_GAME_EVENT,
+      requestHash: CREATE_REQUEST_HASH,
+    });
+    const gameId = requireCreatedGameId(created);
+    const createdAt = new Date('2026-08-16T12:00:00.000Z');
+    await database.update(games).set({ createdAt }).where(eq(games.id, gameId));
+
+    const result = await repository.deleteExpiredWaitingGame({
+      expiredBefore: new Date(createdAt.getTime() - 1),
+      gameId,
+    });
+
+    expect(result).toEqual({ createdAt, status: 'notExpired' });
+    expect(await database.select().from(games)).toHaveLength(1);
+  });
+
+  test('keeps an expired waiting game when a player occupies a seat', async () => {
+    const created = await repository.createGame({
+      commandId: CREATE_COMMAND_ID,
+      creatorUserId: FIRST_USER_ID,
+      event: DEFAULT_CREATE_GAME_EVENT,
+      requestHash: CREATE_REQUEST_HASH,
+    });
+    const gameId = requireCreatedGameId(created);
+    const createdAt = new Date('2026-08-16T12:00:00.000Z');
+    await database.update(games).set({ createdAt }).where(eq(games.id, gameId));
+    await database.insert(gameParticipants).values({
+      gameId,
+      seat: 1,
+      team: 'white',
+      userId: FIRST_USER_ID,
+    });
+
+    const result = await repository.deleteExpiredWaitingGame({
+      expiredBefore: createdAt,
+      gameId,
+    });
+
+    expect(result).toEqual({ status: 'notEmpty' });
+    expect(await database.select().from(games)).toHaveLength(1);
+  });
+
+  test('lists only waiting games without persisted players for recovery', async () => {
+    const emptyCreated = await repository.createGame({
+      commandId: CREATE_COMMAND_ID,
+      creatorUserId: FIRST_USER_ID,
+      event: DEFAULT_CREATE_GAME_EVENT,
+      requestHash: CREATE_REQUEST_HASH,
+    });
+    const occupiedCreated = await repository.createGame({
+      commandId: SECOND_CREATE_COMMAND_ID,
+      creatorUserId: SECOND_USER_ID,
+      event: DEFAULT_CREATE_GAME_EVENT,
+      requestHash: SECOND_CREATE_REQUEST_HASH,
+    });
+    const emptyGameId = requireCreatedGameId(emptyCreated);
+    const occupiedGameId = requireCreatedGameId(occupiedCreated);
+    await database.insert(gameParticipants).values({
+      gameId: occupiedGameId,
+      seat: 1,
+      team: 'black',
+      userId: SECOND_USER_ID,
+    });
+
+    const emptyWaitingGames = await repository.listEmptyWaitingGames();
+
+    expect(emptyWaitingGames).toEqual([
+      expect.objectContaining({ id: emptyGameId }),
+    ]);
   });
 
   test('returns the stored game for an exact duplicate create command', async () => {

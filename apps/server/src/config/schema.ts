@@ -11,6 +11,7 @@ export const serverConfigSchema = z
     APP_PORT: z.coerce.number().int().min(1).max(65_535),
     APP_SERVE_WEB: booleanConfigSchema,
     DISCONNECTED_PLAYER_TIMEOUT_MINUTES: z.coerce.number().int().positive(),
+    EMPTY_WAITING_GAME_TIMEOUT_MINUTES: z.coerce.number().int().positive(),
     FEATURE_FLAGS_RUNTIME_FILE: z.string().trim().min(1),
     WEB_ASSETS_ROOT: z.string().trim().min(1),
   })
@@ -23,6 +24,7 @@ export const SERVER_CONFIG_KEYS = [
   'APP_PORT',
   'APP_SERVE_WEB',
   'DISCONNECTED_PLAYER_TIMEOUT_MINUTES',
+  'EMPTY_WAITING_GAME_TIMEOUT_MINUTES',
   'FEATURE_FLAGS_RUNTIME_FILE',
   'WEB_ASSETS_ROOT',
 ] as const satisfies readonly (keyof ServerConfig)[];

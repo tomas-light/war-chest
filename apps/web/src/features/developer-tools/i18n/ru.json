@@ -6,6 +6,11 @@
   },
   "DeveloperPanel": {
     "close": "Закрыть",
+    "featureFlagDisabled": "Выключен",
+    "featureFlagEnabled": "Включён",
+    "featureFlags": "Фича-флаги",
+    "featureFlagsError": "Не удалось загрузить текущие фича-флаги.",
+    "featureFlagsLoading": "Загружаем текущие фича-флаги…",
     "label": "Инструменты разработчика",
     "title": "Dev-панель"
   }

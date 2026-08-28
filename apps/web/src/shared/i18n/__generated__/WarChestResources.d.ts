@@ -61,6 +61,11 @@ export interface WarChestResources {
     };
     DeveloperPanel: {
       close: '';
+      featureFlagDisabled: '';
+      featureFlagEnabled: '';
+      featureFlags: '';
+      featureFlagsError: '';
+      featureFlagsLoading: '';
       label: '';
       title: '';
     };
@@ -319,6 +324,11 @@ export interface WarChestTranslationParameters {
   'features/developer-tools.DeveloperBackendSelector.fakeApi': null;
   'features/developer-tools.DeveloperBackendSelector.realApi': null;
   'features/developer-tools.DeveloperPanel.close': null;
+  'features/developer-tools.DeveloperPanel.featureFlagDisabled': null;
+  'features/developer-tools.DeveloperPanel.featureFlagEnabled': null;
+  'features/developer-tools.DeveloperPanel.featureFlags': null;
+  'features/developer-tools.DeveloperPanel.featureFlagsError': null;
+  'features/developer-tools.DeveloperPanel.featureFlagsLoading': null;
   'features/developer-tools.DeveloperPanel.label': null;
   'features/developer-tools.DeveloperPanel.title': null;
   'features/join-game.JoinGamePanel.changeDescription': null;

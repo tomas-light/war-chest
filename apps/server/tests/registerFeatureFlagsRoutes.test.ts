@@ -21,6 +21,7 @@ describe('runtime feature flags route', () => {
       auth: {} as Auth,
       databaseConnection,
       disconnectedPlayerTimeoutMinutes: 15,
+      emptyWaitingGameTimeoutMinutes: 10,
       featureFlagsService: { read },
     });
   });
