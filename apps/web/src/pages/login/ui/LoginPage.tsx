@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router';
 import { useAuthSession } from '#/entities/auth-session';
 import { LoginOptions } from '#/features/auth-login';
 import { Button } from '#/shared/ui/button';
+import { LoadingIndicator } from '#/shared/ui/loading-indicator';
 import { PlaceholderPage } from '#/shared/ui/placeholder-page';
 import classes from './LoginPage.module.scss';
 
@@ -15,16 +16,25 @@ const DeveloperBackendSelector = import.meta.env.DEV
     })
   : null;
 
-export function LoginPage() {
+interface Props {
+  returnTo?: string;
+}
+
+export function LoginPage(props: Props) {
+  const { returnTo } = props;
   const location = useLocation();
   const navigate = useNavigate();
   const { refetch, status } = useAuthSession();
-  const returnTo = getReturnTo(location.state);
+  const resolvedReturnTo = returnTo ?? getReturnTo(location.state);
 
   return (
     <PlaceholderPage
-      description="Войдите через привычного провайдера. После проверки сервер создаст отдельную сессию War Chest."
-      title="Вход"
+      description={
+        status === 'pending'
+          ? 'Проверяем действующую сессию War Chest.'
+          : 'Войдите через привычного провайдера. После проверки сервер создаст отдельную сессию War Chest.'
+      }
+      title={status === 'pending' ? 'Загрузка' : 'Вход'}
     >
       {DeveloperBackendSelector === null ? null : (
         <div className={classes.developerTools}>
@@ -33,7 +43,9 @@ export function LoginPage() {
           </Suspense>
         </div>
       )}
-      {status === 'error' ? (
+      {status === 'pending' ? (
+        <LoadingIndicator label="Проверяем действующую сессию…" />
+      ) : status === 'error' ? (
         <div className={classes.connectionError}>
           <p role="alert">
             Не удалось связаться с сервером и проверить сессию.
@@ -47,7 +59,7 @@ export function LoginPage() {
   );
 
   function handleAuthenticated(): void {
-    void navigate(returnTo, { replace: true });
+    void navigate(resolvedReturnTo, { replace: true });
   }
 }
 

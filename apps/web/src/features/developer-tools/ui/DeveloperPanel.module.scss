@@ -1,14 +1,18 @@
 .panel {
   position: fixed;
-  z-index: 10;
-  top: 72px;
+  z-index: 20;
+  top: 78px;
   right: 0;
   bottom: 0;
   width: min(100%, 360px);
   padding: 24px;
-  border-left: 1px solid rgb(214 175 108 / 35%);
-  background: #1f1b14;
-  box-shadow: -20px 0 48px rgb(0 0 0 / 32%);
+  border-left: 1px solid rgb(199 150 53 / 45%);
+  background:
+    linear-gradient(155deg, rgb(23 32 35 / 98%), rgb(8 13 16 / 99%)),
+    var(--wc-color-ink);
+  box-shadow:
+    -24px 0 60px rgb(0 0 0 / 48%),
+    -1px 0 0 rgb(21 217 237 / 12%);
 }
 
 .header {
@@ -21,10 +25,11 @@
 
 .title {
   margin: 0;
-  color: #f4ead7;
-  font-family: Georgia, 'Times New Roman', serif;
+  color: var(--wc-color-text);
+  font-family: var(--wc-font-display);
   font-size: 24px;
-  font-weight: 500;
+  font-weight: 600;
+  letter-spacing: 0.04em;
 }
 
 .closeButton {

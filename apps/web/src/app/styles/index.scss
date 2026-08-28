@@ -1,7 +1,20 @@
 :root {
-  background: #17140f;
-  color: #f4ead7;
-  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  --wc-color-void: #05090b;
+  --wc-color-ink: #080d10;
+  --wc-color-surface-raised: #172023;
+  --wc-color-brass: #c79635;
+  --wc-color-brass-bright: #efc75e;
+  --wc-color-cyan: #15d9ed;
+  --wc-color-cyan-soft: #82edf4;
+  --wc-color-text: #eee5d2;
+  --wc-color-text-muted: #aaa18f;
+  --wc-color-error: #ff9d88;
+  --wc-font-display: copperplate, 'Copperplate Gothic Light', georgia, serif;
+
+  background: var(--wc-color-void);
+  color: var(--wc-color-text);
+  color-scheme: dark;
+  font-family: Inter, 'Segoe UI', ui-sans-serif, system-ui, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
@@ -11,12 +24,50 @@
 }
 
 body {
+  position: relative;
   min-width: 320px;
   min-height: 100vh;
+  overflow-x: hidden;
   margin: 0;
+  background:
+    radial-gradient(circle at 12% 15%, rgb(21 217 237 / 9%), transparent 29rem),
+    radial-gradient(circle at 88% 8%, rgb(199 150 53 / 14%), transparent 32rem),
+    linear-gradient(145deg, #0b1114 0%, var(--wc-color-void) 52%, #0e0c08 100%);
+}
+
+body:before {
+  position: fixed;
+  z-index: -1;
+  background-image:
+    linear-gradient(rgb(21 217 237 / 4%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(21 217 237 / 4%) 1px, transparent 1px);
+  background-size: 64px 64px;
+  content: '';
+  inset: 0;
+  mask-image: linear-gradient(to bottom, black, transparent 78%);
+  pointer-events: none;
+}
+
+body:after {
+  position: fixed;
+  z-index: -1;
+  background: radial-gradient(circle, transparent 35%, rgb(0 0 0 / 48%) 115%);
+  content: '';
+  inset: 0;
+  pointer-events: none;
+}
+
+#root {
+  min-height: 100vh;
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
+}
+
+::selection {
+  background: rgb(21 217 237 / 26%);
+  color: #fff;
 }

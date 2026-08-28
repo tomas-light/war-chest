@@ -1,0 +1,79 @@
+.transition {
+  --session-header-height: 78px;
+
+  min-height: 100vh;
+}
+
+.loadingPageEntering {
+  animation: route-fade-in 200ms ease-out both;
+}
+
+.pageEntering {
+  animation: page-fade-in 200ms ease-out both;
+}
+
+.pageEnteringWithHeader main {
+  animation: page-fade-in 200ms ease-out both;
+}
+
+.loadingPageLeaving,
+.loadingPageLeavingWithHeader {
+  position: fixed;
+  z-index: 50;
+  animation: loading-fade-out 200ms ease-in both;
+  inset: 0;
+  pointer-events: none;
+}
+
+.loadingPageLeavingWithHeader {
+  top: var(--session-header-height);
+  overflow: hidden;
+}
+
+.loadingPageLeavingWithHeader main {
+  min-height: 100%;
+}
+
+@keyframes route-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes page-fade-in {
+  0%,
+  50% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes loading-fade-out {
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pageEntering,
+  .pageEnteringWithHeader main,
+  .loadingPageEntering {
+    animation: none;
+  }
+
+  .loadingPageLeaving,
+  .loadingPageLeavingWithHeader {
+    display: none;
+    animation: none;
+  }
+}
+
+@media (width <= 680px) {
+  .transition {
+    --session-header-height: 127px;
+  }
+}

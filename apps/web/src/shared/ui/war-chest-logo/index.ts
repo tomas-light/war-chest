@@ -1,0 +1,1 @@
+export { WarChestLogo } from './WarChestLogo';
