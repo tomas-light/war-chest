@@ -8,6 +8,7 @@ import {
   useNavigate,
 } from 'react-router';
 import { useAuthSession } from '#/entities/auth-session';
+import { LanguageSelector } from '#/features/change-language';
 import { ActiveGamePage } from '#/pages/active-game';
 import { GamePage } from '#/pages/game';
 import { GameHistoryPage } from '#/pages/game-history';
@@ -16,6 +17,7 @@ import { LoginPage } from '#/pages/login';
 import { NewGamePage } from '#/pages/new-game';
 import { UserProfilePage } from '#/pages/user-profile';
 import { appRoutes } from '#/shared/config';
+import { useTranslation } from '#/shared/i18n/useTranslation';
 import { Button } from '#/shared/ui/button';
 import { LoadingIndicator } from '#/shared/ui/loading-indicator';
 import { PlaceholderPage } from '#/shared/ui/placeholder-page';
@@ -182,15 +184,18 @@ interface SessionLoadingPageProps {
 
 function SessionLoadingPage(props: SessionLoadingPageProps = {}) {
   const { isLeaving = false, preserveHeader = false } = props;
+  const { t } = useTranslation('app/router', {
+    keyPrefix: 'AppRouter',
+  });
   const className = getLoadingPageClassName({ isLeaving, preserveHeader });
 
   return (
     <div aria-hidden={isLeaving || undefined} className={className}>
       <PlaceholderPage
-        description="Проверяем действующую сессию War Chest."
-        title="Загрузка"
+        description={t('loadingDescription')}
+        title={t('loadingTitle')}
       >
-        <LoadingIndicator label="Проверяем действующую сессию…" />
+        <LoadingIndicator label={t('loadingLabel')} />
       </PlaceholderPage>
     </div>
   );
@@ -202,14 +207,20 @@ interface SessionErrorPageProps {
 
 function SessionErrorPage(props: SessionErrorPageProps) {
   const { onRetry } = props;
+  const { t } = useTranslation('app/router', {
+    keyPrefix: 'AppRouter',
+  });
 
   return (
     <PlaceholderPage
-      description="Не удалось связаться с сервером и проверить сессию."
+      description={t('sessionErrorDescription')}
       logoHref="/"
-      title="Нет соединения"
+      title={t('sessionErrorTitle')}
     >
-      <Button onClick={onRetry}>Повторить</Button>
+      <div className={classes.sessionErrorActions}>
+        <LanguageSelector />
+        <Button onClick={onRetry}>{t('retry')}</Button>
+      </div>
     </PlaceholderPage>
   );
 }

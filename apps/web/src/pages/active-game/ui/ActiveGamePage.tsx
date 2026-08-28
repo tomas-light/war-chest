@@ -2,13 +2,19 @@ import type { LobbyGamePlayer } from '@war-chest/api-contracts';
 import type { GameViewPlayer } from '@war-chest/game-engine';
 import { Navigate, useNavigate } from 'react-router';
 import { UserAvatar } from '#/entities/user';
+import { useApiErrorMessage } from '#/shared/api';
 import { appRoutes, getGamePageUrl } from '#/shared/config';
+import { useTranslation } from '#/shared/i18n/useTranslation';
 import { Button } from '#/shared/ui/button';
 import { LoadingIndicator } from '#/shared/ui/loading-indicator';
 import { useGameRuntime } from '#/widgets/game-runtime';
 import classes from './ActiveGamePage.module.scss';
 
 export function ActiveGamePage() {
+  const { t } = useTranslation('pages/active-game', {
+    keyPrefix: 'ActiveGamePage',
+  });
+  const getApiErrorMessage = useApiErrorMessage();
   const navigate = useNavigate();
   const {
     connectionError,
@@ -21,27 +27,30 @@ export function ActiveGamePage() {
   } = useGameRuntime();
 
   if (gameId === '') {
-    return <GameError message="Игра не выбрана." onBack={openLobby} />;
+    return <GameError message={t('notSelected')} onBack={openLobby} />;
   }
 
   if (liveState === null && gameQuery.isPending) {
     return (
       <main className={classes.page}>
         <section className={classes.state}>
-          <LoadingIndicator label="Подключаемся к игровому столу…" />
+          <LoadingIndicator label={t('connecting')} />
         </section>
       </main>
     );
   }
 
   if (liveState === null && gameQuery.isError) {
-    return <GameError message={gameQuery.error.message} onBack={openLobby} />;
+    return (
+      <GameError
+        message={getApiErrorMessage(gameQuery.error)}
+        onBack={openLobby}
+      />
+    );
   }
 
   if (liveState === null) {
-    return (
-      <GameError message="Состояние игры недоступно." onBack={openLobby} />
-    );
+    return <GameError message={t('gameUnavailable')} onBack={openLobby} />;
   }
 
   if (liveState.status === 'waiting') {
@@ -67,41 +76,43 @@ export function ActiveGamePage() {
       <header className={classes.header}>
         <div>
           <p className={classes.eyebrow}>
-            {isSpectator ? 'Режим зрителя' : 'Игровой стол'}
+            {isSpectator ? t('spectator') : t('table')}
           </p>
           <h1>
-            {liveState.status === 'finished' ? 'Партия завершена' : 'Игра'}
+            {liveState.status === 'finished'
+              ? t('finishedTitle')
+              : t('gameTitle')}
           </h1>
-          <p className={classes.gameId}>Игра {gameId}</p>
+          <p className={classes.gameId}>{t('gameLabel', { gameId })}</p>
         </div>
-        <Button onClick={openLobby}>Вернуться в лобби</Button>
+        <Button onClick={openLobby}>{t('backToLobby')}</Button>
       </header>
 
       <div className={classes.runtimeStatus}>
         <span data-ready={synchronizationStatus === 'ready'}>
-          {getSynchronizationLabel(synchronizationStatus)}
+          {t(getSynchronizationLabelKey(synchronizationStatus))}
         </span>
         {connectionError === null ? null : (
-          <p role="alert">{connectionError}</p>
+          <p role="alert">{getApiErrorMessage(connectionError)}</p>
         )}
       </div>
 
       <div className={classes.layout}>
-        <section aria-label="Игровое поле" className={classes.tableArea}>
+        <section aria-label={t('tableArea')} className={classes.tableArea}>
           <PlayerPanel
-            label={isSpectator ? 'Игрок сверху' : 'Оппонент'}
+            label={isSpectator ? t('playerTop') : t('opponent')}
             player={topPlayer}
             profile={findProfile(topPlayer)}
           />
 
           <div className={classes.boardPlaceholder}>
-            <span>Игровое поле</span>
-            <p>Здесь будет размещено поле War Chest.</p>
+            <span>{t('boardLabel')}</span>
+            <p>{t('boardDescription')}</p>
           </div>
 
           <PlayerPanel
             isCurrent={!isSpectator}
-            label={isSpectator ? 'Игрок снизу' : 'Вы'}
+            label={isSpectator ? t('playerBottom') : t('you')}
             player={bottomPlayer}
             profile={findProfile(bottomPlayer)}
           />
@@ -109,29 +120,31 @@ export function ActiveGamePage() {
 
         <aside className={classes.sidebar}>
           <section className={classes.sidebarSection}>
-            <p className={classes.sidebarEyebrow}>Ход</p>
-            <h2>Доступные действия</h2>
+            <p className={classes.sidebarEyebrow}>{t('turnEyebrow')}</p>
+            <h2>{t('actionsTitle')}</h2>
             <p>
-              {getTurnDescription(
-                liveState.currentPlayerId,
-                userId,
-                isSpectator
+              {t(
+                getTurnDescriptionKey({
+                  currentPlayerId: liveState.currentPlayerId,
+                  isSpectator,
+                  userId,
+                })
               )}
             </p>
             <div className={classes.placeholderActions}>
-              <Button disabled>Выбрать отряд</Button>
+              <Button disabled>{t('chooseSquad')}</Button>
               <Button disabled variant="secondary">
-                Завершить действие
+                {t('finishAction')}
               </Button>
             </div>
           </section>
 
           <section className={classes.sidebarSection}>
-            <p className={classes.sidebarEyebrow}>Журнал</p>
-            <h2>История ходов</h2>
-            <p>Панель истории появится здесь после реализации игровых ходов.</p>
+            <p className={classes.sidebarEyebrow}>{t('historyEyebrow')}</p>
+            <h2>{t('historyTitle')}</h2>
+            <p>{t('historyDescription')}</p>
             <Button disabled variant="secondary">
-              Открыть историю
+              {t('openHistory')}
             </Button>
           </section>
         </aside>
@@ -159,6 +172,9 @@ interface PlayerPanelProps {
 
 function PlayerPanel(props: PlayerPanelProps) {
   const { isCurrent = false, label, player, profile } = props;
+  const { t } = useTranslation('pages/active-game', {
+    keyPrefix: 'PlayerPanel',
+  });
 
   return (
     <article className={classes.playerPanel} data-current={isCurrent}>
@@ -172,11 +188,13 @@ function PlayerPanel(props: PlayerPanelProps) {
         <strong>
           {profile?.displayName ??
             (player === undefined
-              ? 'Место свободно'
-              : `Игрок ${player.id.slice(0, 8)}`)}
+              ? t('empty')
+              : t('playerFallback', { playerId: player.id.slice(0, 8) }))}
         </strong>
         <small>
-          {player === undefined ? 'Нет игрока' : getPresenceLabel(player)}
+          {player === undefined
+            ? t('noPlayer')
+            : t(getPresenceLabelKey(player))}
         </small>
       </div>
     </article>
@@ -190,48 +208,55 @@ interface GameErrorProps {
 
 function GameError(props: GameErrorProps) {
   const { message, onBack } = props;
+  const { t } = useTranslation('pages/active-game', {
+    keyPrefix: 'GameError',
+  });
 
   return (
     <main className={classes.page}>
       <section className={classes.state}>
-        <h1>Не удалось открыть игровой стол</h1>
+        <h1>{t('title')}</h1>
         <p role="alert">{message}</p>
-        <Button onClick={onBack}>Вернуться в лобби</Button>
+        <Button onClick={onBack}>{t('backToLobby')}</Button>
       </section>
     </main>
   );
 }
 
-function getSynchronizationLabel(status: string): string {
+function getSynchronizationLabelKey(status: string) {
   if (status === 'ready') {
-    return 'Состояние синхронизировано';
+    return 'synchronization.ready' as const;
   }
 
   return status === 'desynchronized'
-    ? 'Восстанавливаем синхронизацию…'
-    : 'Ожидаем состояние…';
+    ? ('synchronization.desynchronized' as const)
+    : ('synchronization.pending' as const);
 }
 
-function getPresenceLabel(player: GameViewPlayer): string {
+function getPresenceLabelKey(player: GameViewPlayer) {
   if (player.presence === 'connected') {
-    return player.team === 'white' ? 'Белая команда' : 'Чёрная команда';
+    return player.team === 'white'
+      ? ('whiteTeam' as const)
+      : ('blackTeam' as const);
   }
 
   return player.presence === 'disconnected'
-    ? 'Соединение потеряно'
-    : 'Покинул игру';
+    ? ('disconnected' as const)
+    : ('left' as const);
 }
 
-function getTurnDescription(
-  currentPlayerId: string | null,
-  userId: string,
-  isSpectator: boolean
-): string {
-  if (isSpectator) {
-    return 'Действия недоступны в режиме зрителя.';
+interface TurnDescriptionInput {
+  currentPlayerId: string | null;
+  isSpectator: boolean;
+  userId: string;
+}
+
+function getTurnDescriptionKey(input: TurnDescriptionInput) {
+  if (input.isSpectator) {
+    return 'actionsDescriptionSpectator' as const;
   }
 
-  return currentPlayerId === userId
-    ? 'Сейчас ваш ход.'
-    : 'Ожидаем ход оппонента.';
+  return input.currentPlayerId === input.userId
+    ? ('actionsDescriptionYou' as const)
+    : ('actionsDescriptionOpponent' as const);
 }

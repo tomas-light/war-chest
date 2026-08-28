@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { GameView } from '@war-chest/game-engine';
 import { getGameQueryKey, LOBBY_GAMES_QUERY_KEY } from '#/entities/game';
-import { createSelectedGameApi } from '#/shared/api';
+import { createSelectedGameApi, useApiErrorMessage } from '#/shared/api';
+import { useTranslation } from '#/shared/i18n/useTranslation';
 import { Button } from '#/shared/ui/button';
 import classes from './SwapPlayerPositionsButton.module.scss';
 
@@ -14,6 +15,10 @@ interface Props {
 
 export function SwapPlayerPositionsButton(props: Props) {
   const { gameId, onSwapped, userId, view } = props;
+  const { t } = useTranslation('features/swap-player-positions', {
+    keyPrefix: 'SwapPlayerPositionsButton',
+  });
+  const getApiErrorMessage = useApiErrorMessage();
   const queryClient = useQueryClient();
   const swapMutation = useMutation({
     mutationFn: async () => {
@@ -34,11 +39,11 @@ export function SwapPlayerPositionsButton(props: Props) {
   return (
     <div className={classes.action}>
       <Button
-        aria-label="Поменять игроков местами"
+        aria-label={t('label')}
         className={classes.button}
         disabled={swapMutation.isPending}
         onClick={() => swapMutation.mutate()}
-        title="Поменять игроков местами"
+        title={t('label')}
         variant="secondary"
       >
         <svg aria-hidden="true" viewBox="0 0 24 24">
@@ -46,7 +51,7 @@ export function SwapPlayerPositionsButton(props: Props) {
         </svg>
       </Button>
       {swapMutation.error === null ? null : (
-        <p role="alert">{swapMutation.error.message}</p>
+        <p role="alert">{getApiErrorMessage(swapMutation.error)}</p>
       )}
     </div>
   );

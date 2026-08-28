@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { type FormEvent } from 'react';
 import { LOBBY_GAMES_QUERY_KEY } from '#/entities/game';
-import { createSelectedGameApi } from '#/shared/api';
+import { createSelectedGameApi, useApiErrorMessage } from '#/shared/api';
+import { useTranslation } from '#/shared/i18n/useTranslation';
 import { Button } from '#/shared/ui/button';
 import classes from './CreateGameForm.module.scss';
 
@@ -12,6 +13,10 @@ interface Props {
 
 export function CreateGameForm(props: Props) {
   const { onCreated, userId } = props;
+  const { t } = useTranslation('features/create-game', {
+    keyPrefix: 'CreateGameForm',
+  });
+  const getApiErrorMessage = useApiErrorMessage();
   const queryClient = useQueryClient();
   const createGameMutation = useMutation({
     mutationFn: async () => {
@@ -33,17 +38,14 @@ export function CreateGameForm(props: Props) {
       className={classes.form}
       onSubmit={handleSubmit}
     >
-      <p className={classes.description}>
-        Игра появится в лобби без занятых мест. Вы сможете выбрать сторону на
-        следующем экране.
-      </p>
+      <p className={classes.description}>{t('description')}</p>
       {createGameMutation.error === null ? null : (
         <p className={classes.error} role="alert">
-          {createGameMutation.error.message}
+          {getApiErrorMessage(createGameMutation.error)}
         </p>
       )}
       <Button disabled={createGameMutation.isPending} type="submit">
-        {createGameMutation.isPending ? 'Создаём игру…' : 'Создать игру'}
+        {createGameMutation.isPending ? t('creating') : t('create')}
       </Button>
     </form>
   );

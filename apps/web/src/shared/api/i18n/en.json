@@ -1,0 +1,28 @@
+{
+  "ApiErrors": {
+    "avatar_not_found": "Avatar was not found.",
+    "command_id_conflict": "The command identifier has already been used.",
+    "external_provider_unavailable": "The external sign-in service is unavailable.",
+    "feature_flags_unavailable": "Feature settings are temporarily unavailable.",
+    "game_command_forbidden": "You are not allowed to perform this game command.",
+    "game_command_rejected": "The command was rejected by the game rules.",
+    "game_not_found": "Game was not found.",
+    "game_position_occupied": "The selected seat is already taken.",
+    "game_version_conflict": "The game has changed. Refresh its state and try again.",
+    "internal_error": "The operation failed because of an internal error.",
+    "invalid_credentials": "The provider did not accept the sign-in credentials.",
+    "invalid_cursor": "Could not continue loading the list.",
+    "invalid_message": "The server received an invalid game message.",
+    "invalid_oauth_state": "The sign-in attempt is invalid or has expired.",
+    "invalid_request": "The request contains invalid data.",
+    "invalid_response": "The server returned an invalid response.",
+    "network_error": "Could not connect to the server.",
+    "not_found": "The requested resource was not found.",
+    "player_already_in_game": "Finish your current game first.",
+    "provider_disabled": "The selected sign-in method is not configured.",
+    "provider_request_failed": "Could not get a response from the sign-in service.",
+    "unauthorized": "The session is missing or has ended.",
+    "unknown": "The operation could not be completed.",
+    "user_not_found": "User was not found."
+  }
+}

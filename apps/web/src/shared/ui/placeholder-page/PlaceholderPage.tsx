@@ -5,7 +5,8 @@ import {
   useRef,
   useState,
 } from 'react';
-import { WarChestLogo } from '#/shared/ui/war-chest-logo';
+import { useTranslation } from '../../i18n/useTranslation';
+import { WarChestLogo } from '../war-chest-logo';
 import classes from './PlaceholderPage.module.scss';
 
 interface PlaceholderPageProps {
@@ -17,6 +18,9 @@ interface PlaceholderPageProps {
 
 export function PlaceholderPage(props: PlaceholderPageProps) {
   const { children, description, logoHref, title } = props;
+  const { t } = useTranslation('shared/ui', {
+    keyPrefix: 'PlaceholderPage',
+  });
 
   return (
     <main className={classes.page}>
@@ -28,7 +32,7 @@ export function PlaceholderPage(props: PlaceholderPageProps) {
             </div>
           ) : (
             <a
-              aria-label="Перейти на главную страницу"
+              aria-label={t('homeLinkLabel')}
               className={classes.logoFrame}
               href={logoHref}
             >

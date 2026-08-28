@@ -10,7 +10,9 @@ import {
 } from '#/entities/game';
 import { createGameSessionStore } from '#/entities/game-session';
 import {
+  type ApiClientError,
   type GameConnection,
+  createApiClientError,
   createSelectedGameConnection,
 } from '#/shared/api';
 
@@ -36,7 +38,9 @@ export function useGameRuntimeState(input: Input) {
     gameSessionStore,
     (state) => state.synchronizationStatus
   );
-  const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [connectionError, setConnectionError] = useState<ApiClientError | null>(
+    null
+  );
   const lobbyGame = lobbyGamesQuery.data?.items.find(
     (game) => game.id === input.gameId
   );
@@ -68,7 +72,12 @@ export function useGameRuntimeState(input: Input) {
       const connection = await createSelectedGameConnection(
         {
           onError(message) {
-            setConnectionError(message.message);
+            setConnectionError(
+              createApiClientError({
+                code: message.code,
+                diagnosticMessage: message.message,
+              })
+            );
           },
           onEvents(message) {
             if (message.gameId === currentGameId) {

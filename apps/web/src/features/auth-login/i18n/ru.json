@@ -1,0 +1,12 @@
+{
+  "GoogleLoginButton": {
+    "loadingLabel": "Загрузка входа через Google"
+  },
+  "LoginOptions": {
+    "continueWithGoogle": "Продолжить с Google",
+    "continueWithTelegram": "Продолжить с Telegram",
+    "continueWithYandex": "Продолжить с Yandex ID",
+    "fakeModeHint": "Fake-режим создаёт отдельного тестового игрока для каждого способа входа в этой вкладке.",
+    "googleNotConfigured": "Google не настроен"
+  }
+}

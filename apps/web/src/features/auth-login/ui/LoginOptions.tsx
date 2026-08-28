@@ -1,15 +1,22 @@
 import { useState } from 'react';
 import { type AuthProvider, useAuthSession } from '#/entities/auth-session';
+import { useApiErrorMessage } from '#/shared/api';
 import { webConfig } from '#/shared/config/webConfig';
+import { useTranslation } from '#/shared/i18n/useTranslation';
 import { Button } from '#/shared/ui/button';
 import { GoogleLoginButton } from './GoogleLoginButton';
 import classes from './LoginOptions.module.scss';
 
-interface LoginOptionsProps {
+interface Props {
   onAuthenticated(this: void): void;
 }
 
-export function LoginOptions({ onAuthenticated }: LoginOptionsProps) {
+export function LoginOptions(props: Props) {
+  const { onAuthenticated } = props;
+  const { t } = useTranslation('features/auth-login', {
+    keyPrefix: 'LoginOptions',
+  });
+  const getApiErrorMessage = useApiErrorMessage();
   const { backend, login } = useAuthSession();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [pendingProvider, setPendingProvider] = useState<AuthProvider | null>(
@@ -26,7 +33,7 @@ export function LoginOptions({ onAuthenticated }: LoginOptionsProps) {
         disabled={isProviderPending}
         onClick={() => void handleLogin('telegram')}
       >
-        Продолжить с Telegram
+        {t('continueWithTelegram')}
       </Button>
 
       <Button
@@ -34,7 +41,7 @@ export function LoginOptions({ onAuthenticated }: LoginOptionsProps) {
         disabled={isProviderPending}
         onClick={() => void handleLogin('yandex')}
       >
-        Продолжить с Yandex ID
+        {t('continueWithYandex')}
       </Button>
 
       {errorMessage === null ? null : (
@@ -44,10 +51,7 @@ export function LoginOptions({ onAuthenticated }: LoginOptionsProps) {
       )}
 
       {backend === 'fake' ? (
-        <p className={classes.hint}>
-          Fake-режим создаёт отдельного тестового игрока для каждого способа
-          входа в этой вкладке.
-        </p>
+        <p className={classes.hint}>{t('fakeModeHint')}</p>
       ) : null}
     </div>
   );
@@ -69,7 +73,9 @@ export function LoginOptions({ onAuthenticated }: LoginOptionsProps) {
         disabled={isProviderPending || backend === 'real'}
         onClick={() => void handleLogin('google')}
       >
-        {backend === 'real' ? 'Google не настроен' : 'Продолжить с Google'}
+        {backend === 'real'
+          ? t('googleNotConfigured')
+          : t('continueWithGoogle')}
       </Button>
     );
   }
@@ -92,11 +98,7 @@ export function LoginOptions({ onAuthenticated }: LoginOptionsProps) {
         onAuthenticated();
       }
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : 'Не удалось выполнить вход. Попробуйте ещё раз.'
-      );
+      setErrorMessage(getApiErrorMessage(error));
     } finally {
       setPendingProvider(null);
     }
@@ -107,6 +109,6 @@ export function LoginOptions({ onAuthenticated }: LoginOptionsProps) {
   }
 
   function handleGoogleError(error: Error): void {
-    setErrorMessage(error.message);
+    setErrorMessage(getApiErrorMessage(error));
   }
 }

@@ -1,3 +1,4 @@
+import { ApiClientError } from './ApiClientError';
 import { createFakeGameApi } from './createFakeGameApi';
 import { subscribeToFakeLobbyUpdates } from './fakeLobbyUpdates';
 import type { GameConnection, GameConnectionHandlers } from './gameConnection';
@@ -53,12 +54,12 @@ export function createFakeGameConnection(
       .then((game) => handlers.onSnapshot(game))
       .catch((error: unknown) => {
         handlers.onError({
-          code: 'fake_game_error',
+          code: error instanceof ApiClientError ? error.code : 'internal_error',
           gameId,
           message:
             error instanceof Error
               ? error.message
-              : 'Не удалось открыть fake-игру.',
+              : 'Fake game state could not be refreshed.',
         });
       });
   }

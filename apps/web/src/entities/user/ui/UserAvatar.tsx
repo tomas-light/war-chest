@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from '#/shared/i18n/useTranslation';
 import classes from './UserAvatar.module.scss';
 
 interface AvatarUser {
@@ -15,13 +16,16 @@ interface Props {
 
 export function UserAvatar(props: Props) {
   const { className, size = 'medium', user } = props;
+  const { i18n, t } = useTranslation('entities/user', {
+    keyPrefix: 'UserAvatar',
+  });
   const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);
   const avatarUrl = getAvatarUrl(user);
   const shouldShowImage = avatarUrl !== null && avatarUrl !== failedAvatarUrl;
 
   return (
     <span
-      aria-label={`Аватар пользователя ${user.displayName}`}
+      aria-label={t('label', { userName: user.displayName })}
       className={[classes.avatar, className].filter(Boolean).join(' ')}
       data-size={size}
       role="img"
@@ -33,7 +37,9 @@ export function UserAvatar(props: Props) {
           src={avatarUrl}
         />
       ) : (
-        <span aria-hidden="true">{getInitials(user.displayName)}</span>
+        <span aria-hidden="true">
+          {getInitials(user.displayName, i18n.resolvedLanguage)}
+        </span>
       )}
     </span>
   );
@@ -45,12 +51,15 @@ function getAvatarUrl(user: AvatarUser): string | null {
     : `/api/users/${encodeURIComponent(user.id)}/avatar?v=${encodeURIComponent(user.avatarVersion)}`;
 }
 
-function getInitials(displayName: string): string {
+function getInitials(
+  displayName: string,
+  language: string | undefined
+): string {
   const initials = displayName
     .trim()
     .split(/\s+/u)
     .slice(0, 2)
-    .map((part) => part.at(0)?.toLocaleUpperCase('ru-RU') ?? '')
+    .map((part) => part.at(0)?.toLocaleUpperCase(language) ?? '')
     .join('');
 
   return initials === '' ? '?' : initials;

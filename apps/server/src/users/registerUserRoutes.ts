@@ -1,3 +1,4 @@
+import type { ApiErrorCode } from '@war-chest/api-contracts';
 import type { StoredAvatar } from '@war-chest/auth';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
@@ -8,7 +9,7 @@ const DEFAULT_HISTORY_LIMIT = 20;
 const MAXIMUM_HISTORY_LIMIT = 100;
 
 interface SendErrorInput {
-  code: string;
+  code: ApiErrorCode;
   message: string;
   reply: FastifyReply;
   statusCode: number;

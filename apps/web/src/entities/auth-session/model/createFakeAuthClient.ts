@@ -4,6 +4,7 @@ import {
   type FakeUser,
   FAKE_PROVIDER_SUBJECTS,
 } from '@war-chest/fake-database';
+import { ApiClientError } from '#/shared/api';
 import { getFakeDatabase } from '#/shared/api/getFakeDatabase';
 import type { AuthClient, AuthProvider } from './AuthClient';
 
@@ -38,9 +39,10 @@ export async function createFakeAuthClient(): Promise<AuthClient> {
     const user = await database.users.getById(session.userId);
 
     if (user === null) {
-      throw new Error(
-        `Fake session ${session.id} references a missing user ${session.userId}.`
-      );
+      throw new ApiClientError({
+        code: 'invalid_response',
+        diagnosticMessage: `Fake session ${session.id} references a missing user ${session.userId}.`,
+      });
     }
 
     return createSessionResponse(session, user);
@@ -53,7 +55,10 @@ export async function createFakeAuthClient(): Promise<AuthClient> {
     );
 
     if (identity === null) {
-      throw new Error(`Seeded fake ${provider} identity was not found.`);
+      throw new ApiClientError({
+        code: 'invalid_response',
+        diagnosticMessage: `Seeded fake ${provider} identity was not found.`,
+      });
     }
 
     const createdAt = new Date();

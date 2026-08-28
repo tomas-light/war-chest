@@ -4,6 +4,31 @@ import type {
   GameViewEventData,
 } from '@war-chest/game-engine';
 
+export const API_ERROR_CODES = [
+  'avatar_not_found',
+  'command_id_conflict',
+  'feature_flags_unavailable',
+  'game_command_forbidden',
+  'game_command_rejected',
+  'game_not_found',
+  'game_position_occupied',
+  'game_version_conflict',
+  'internal_error',
+  'invalid_credentials',
+  'invalid_cursor',
+  'invalid_message',
+  'invalid_oauth_state',
+  'invalid_request',
+  'not_found',
+  'player_already_in_game',
+  'provider_disabled',
+  'provider_request_failed',
+  'unauthorized',
+  'user_not_found',
+] as const;
+
+export type ApiErrorCode = (typeof API_ERROR_CODES)[number];
+
 export interface PublicUser {
   avatarVersion: string | null;
   displayName: string;

@@ -19,7 +19,6 @@ export function createFsdImportLinterConfigs(sourcePath) {
     createFsdLayerImportConfig({
       layer: 'shared',
       prohibitedGroups: ['entities', 'features', 'widgets', 'pages', 'app'],
-      sameLayerProhibited: false,
       sourcePath,
     }),
     createFsdLayerImportConfig({
@@ -42,6 +41,10 @@ export function createFsdImportLinterConfigs(sourcePath) {
       prohibitedGroups: ['app'],
       sourcePath,
     }),
+    createFsdLayerImportConfig({
+      layer: 'app',
+      sourcePath,
+    }),
   ];
 }
 
@@ -61,7 +64,6 @@ function createFsdLayerImportConfig({
   sourcePath,
   layer,
   prohibitedGroups = [],
-  sameLayerProhibited = true,
 }) {
   const prohibitedGroupsPattern = {
     message: `Importing '${prohibitedGroups.join(
@@ -70,10 +72,11 @@ function createFsdLayerImportConfig({
     regex: `#/(${prohibitedGroups.join('|')})`,
   };
 
-  const sameLayerPattern = {
-    message: `If you need to import within the same layer, export the required functionality from '${layer}/slice-name/crossExports.ts'.`,
-    regex: `#/${layer}/(?!.*crossExports).*`,
-  };
+  const sameLayerPattern = createSameLayerImportPattern(layer);
+  const restrictedPatterns =
+    prohibitedGroups.length === 0
+      ? [sameLayerPattern]
+      : [prohibitedGroupsPattern, sameLayerPattern];
 
   return {
     files: [`${sourcePath}/${layer}/**/*.{ts,tsx}`],
@@ -81,12 +84,24 @@ function createFsdLayerImportConfig({
       'no-restricted-imports': [
         'error',
         {
-          patterns: sameLayerProhibited
-            ? [prohibitedGroupsPattern, sameLayerPattern]
-            : [prohibitedGroupsPattern],
+          patterns: restrictedPatterns,
         },
       ],
     },
+  };
+}
+
+function createSameLayerImportPattern(layer) {
+  if (layer === 'shared' || layer === 'app') {
+    return {
+      message: `Absolute imports within the '${layer}' layer are not allowed. Use a relative import instead.`,
+      regex: `#/${layer}/.*`,
+    };
+  }
+
+  return {
+    message: `If you need to import within the same layer, export the required functionality from '${layer}/slice-name/crossExports.ts'.`,
+    regex: `#/${layer}/(?!.*crossExports).*`,
   };
 }
 
@@ -103,8 +118,7 @@ function createNoFsdTranslationsRule() {
         CallExpression(node) {
           if (
             node.callee.type !== 'Identifier' ||
-            node.callee.name !== 'useTranslation' ||
-            node.arguments.length < 1
+            node.callee.name !== 'useTranslation'
           ) {
             return;
           }
@@ -114,6 +128,11 @@ function createNoFsdTranslationsRule() {
           );
 
           if (!staticNamespace) {
+            context.report({
+              message:
+                'FSD translations: useTranslation requires a static namespace in layer/slice format.',
+              node,
+            });
             return;
           }
 

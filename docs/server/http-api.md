@@ -164,14 +164,18 @@ OAuth state из `@war-chest/auth`, устанавливает подготов�
 cookie, устанавливает session cookie и перенаправляет браузер на
 `AUTH_SUCCESS_REDIRECT_URL`.
 
-Ожидаемые ошибки пакета переводятся в единый API envelope:
+Ошибки `POST /api/auth/google` возвращаются в едином API envelope. Ошибка
+redirect flow перенаправляет браузер на `/login?authError=<code>` относительно
+origin из `AUTH_SUCCESS_REDIRECT_URL`: клиент переводит стабильный код и не
+показывает техническое сообщение сервера.
 
-| Код                       | HTTP | Ситуация                                    |
-| ------------------------- | ---- | ------------------------------------------- |
-| `invalid_credentials`     | 401  | провайдер не подтвердил credentials         |
-| `invalid_oauth_state`     | 400  | OAuth state недействителен или истёк        |
-| `provider_disabled`       | 503  | credentials провайдера не настроены         |
-| `provider_request_failed` | 502  | запрос внешнего провайдера завершился сбоем |
+| Код                       | Google HTTP | Redirect flow | Ситуация                                    |
+| ------------------------- | ----------- | ------------- | ------------------------------------------- |
+| `invalid_request`         | 400         | `302 /login`  | callback не содержит обязательные параметры |
+| `invalid_credentials`     | 401         | `302 /login`  | провайдер не подтвердил credentials         |
+| `invalid_oauth_state`     | 400         | `302 /login`  | OAuth state недействителен или истёк        |
+| `provider_disabled`       | 503         | `302 /login`  | credentials провайдера не настроены         |
+| `provider_request_failed` | 502         | `302 /login`  | запрос внешнего провайдера завершился сбоем |
 
 Все ответы auth endpoints используют `Cache-Control: no-store`.
 

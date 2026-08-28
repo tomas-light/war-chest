@@ -147,6 +147,10 @@
   font-size: 14px;
 }
 
+.languageSelector {
+  flex: 0 0 auto;
+}
+
 .sessionName {
   min-width: 112px;
   display: flex;
@@ -204,12 +208,17 @@
 
   .session {
     width: 100%;
+    flex-wrap: wrap;
     justify-content: space-between;
     margin-left: 0;
   }
 
   .sessionName {
     justify-content: flex-start;
+  }
+
+  .languageSelector {
+    order: 3;
   }
 
   .layout main {

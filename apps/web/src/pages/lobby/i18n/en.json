@@ -1,0 +1,24 @@
+{
+  "LobbyPage": {
+    "activeGames": "Active games",
+    "description": "Take an available seat in a waiting match or watch a game that has already started.",
+    "emptyDescription": "Create the first match and choose a side.",
+    "emptyTitle": "There are no active games yet",
+    "eyebrow": "Command terminal",
+    "loading": "Loading active games…",
+    "newGame": "New game",
+    "retry": "Try again",
+    "returnToGame": "Return to game",
+    "title": "Lobby"
+  },
+  "GameCard": {
+    "blackTeam": "Black team",
+    "openGame": "Open game",
+    "statusActive": "In progress",
+    "statusWaiting": "Waiting for players",
+    "whiteTeam": "White team"
+  },
+  "TeamSlot": {
+    "available": "Available"
+  }
+}

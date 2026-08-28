@@ -4,6 +4,13 @@
   min-height: 100vh;
 }
 
+.sessionErrorActions {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-top: 28px;
+}
+
 .loadingPageEntering {
   animation: route-fade-in 200ms ease-out both;
 }
@@ -75,5 +82,9 @@
 @media (width <= 680px) {
   .transition {
     --session-header-height: 127px;
+  }
+
+  .sessionErrorActions {
+    justify-content: center;
   }
 }

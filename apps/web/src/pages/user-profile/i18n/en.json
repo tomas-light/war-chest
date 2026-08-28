@@ -1,0 +1,7 @@
+{
+  "UserProfilePage": {
+    "currentUserDescription": "The current user's profile and completed games.",
+    "publicUserDescription": "Public profile of user {{userId}}.",
+    "title": "Profile"
+  }
+}

@@ -10,5 +10,13 @@ export {
   createLobbyConnection,
   createSelectedLobbyConnection,
 } from './lobbyConnection';
+export {
+  type ApiClientErrorCode,
+  ApiClientError,
+  createApiClientError,
+  createResponseError,
+  requestApi,
+} from './ApiClientError';
 export { readFeatureFlags } from './readFeatureFlags';
+export { useApiErrorMessage } from './useApiErrorMessage';
 export { useFeatureFlags } from './useFeatureFlags';

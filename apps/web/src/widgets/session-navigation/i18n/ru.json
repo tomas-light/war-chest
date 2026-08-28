@@ -1,0 +1,11 @@
+{
+  "SessionNavigation": {
+    "devTools": "Dev",
+    "lobby": "Лобби",
+    "logout": "Выйти",
+    "loggingOutFallback": "Не удалось завершить сессию.",
+    "mainNavigation": "Основная навигация",
+    "profile": "Профиль",
+    "sessionPending": "Проверяем сессию"
+  }
+}

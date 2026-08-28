@@ -1,0 +1,10 @@
+{
+  "GameSeatSelector": {
+    "blackTeam": "Black team",
+    "freeSeat": "Available",
+    "legend": "Choose a side",
+    "seat": "Seat 1",
+    "takenSeat": "Taken",
+    "whiteTeam": "White team"
+  }
+}

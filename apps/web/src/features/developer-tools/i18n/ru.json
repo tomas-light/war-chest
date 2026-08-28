@@ -1,0 +1,12 @@
+{
+  "DeveloperBackendSelector": {
+    "backend": "Бэкенд",
+    "fakeApi": "Fake API",
+    "realApi": "Real API"
+  },
+  "DeveloperPanel": {
+    "close": "Закрыть",
+    "label": "Инструменты разработчика",
+    "title": "Dev-панель"
+  }
+}

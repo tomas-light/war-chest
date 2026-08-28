@@ -1,5 +1,6 @@
-import { type ComponentType, StrictMode } from 'react';
+import { type ComponentType, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
+import { initializeI18n } from '../../src/app/i18n/initializeI18n';
 import '../../src/app/styles/index.scss';
 
 type StoryModule = Record<string, ComponentType>;
@@ -17,9 +18,13 @@ const story = findStory(
   new URLSearchParams(window.location.search).get('story')
 );
 
+await initializeI18n();
+
 createRoot(rootElement).render(
   <StrictMode>
-    <story.Component />
+    <Suspense fallback={null}>
+      <story.Component />
+    </Suspense>
   </StrictMode>
 );
 

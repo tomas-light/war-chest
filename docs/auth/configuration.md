@@ -24,6 +24,10 @@ Git.
 | `AUTH_COOKIE_SAME_SITE`        | `SameSite` только у session cookie                                 |
 | `AUTH_SUCCESS_REDIRECT_URL`    | Адрес, на который HTTP-адаптер направляет пользователя после входа |
 
+При ошибке Telegram или Yandex redirect flow сервер сохраняет origin этого
+адреса, но направляет браузер на `/login?authError=<code>`. Страница входа
+переводит стабильный код ошибки на выбранный пользователем язык.
+
 `AUTH_COOKIE_SAME_SITE: none` допустим только вместе с
 `AUTH_COOKIE_SECURE: true`. Пакет подготавливает cookie, но устанавливает её в
 HTTP-ответ сервер.

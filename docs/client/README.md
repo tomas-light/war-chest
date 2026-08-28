@@ -37,6 +37,7 @@ development и preview эти пути проксирует Vite, а в producti
 - real Socket.IO connection и минимальная fake-реализация;
 - development-панель с persisted-переключателем backend;
 - SCSS и SCSS Modules;
+- локализация интерфейса на русский и английский с выбором языка;
 - unit-, component-, fake E2E- и real E2E-тесты.
 
 ## Что пока не работает
@@ -56,6 +57,8 @@ development и preview эти пути проксирует Vite, а в producti
 - [Сборка и способы запуска](./build-and-hosting.md) — Vite development,
   preview и размещение SPA на Fastify.
 - [Тестирование](./testing.md) — именование тестов и Docker-контуры Playwright.
+- [Локализация](./localization/README.md) — ресурсы слайсов, типизация, выбор
+  языка и отображение ошибок API.
 
 Целевая архитектура и оставшиеся этапы описаны в
 [плане разработки клиента](../development-plan/client.md).

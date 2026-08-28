@@ -1,0 +1,7 @@
+{
+  "CreateGameForm": {
+    "create": "Create game",
+    "creating": "Creating game…",
+    "description": "The game will appear in the lobby with no occupied seats. You can choose a side on the next screen."
+  }
+}

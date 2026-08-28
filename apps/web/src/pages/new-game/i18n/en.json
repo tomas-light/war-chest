@@ -1,0 +1,6 @@
+{
+  "NewGamePage": {
+    "description": "First create an empty game. Each player can then choose an available seat separately.",
+    "title": "New game"
+  }
+}

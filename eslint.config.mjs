@@ -199,6 +199,7 @@ export default tsEslint.config(
           tabWidth: 2,
         },
       ],
+      quotes: [1, 'single', 'avoid-escape'],
       'spaced-comment': ['error', 'always'],
     },
   }
