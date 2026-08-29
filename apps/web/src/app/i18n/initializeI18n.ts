@@ -10,7 +10,7 @@ import {
 const DEFAULT_LANGUAGE: SupportedLanguage = 'ru';
 const LANGUAGE_STORAGE_KEY = 'war-chest-language';
 const TRANSLATION_MODULES = import.meta.glob<ResourceKey>(
-  '../../**/i18n/{en,ru}.json',
+  '/src/**/i18n/{en,ru}.json',
   { import: 'default' }
 );
 
@@ -51,7 +51,7 @@ async function loadTranslationResources(
   language: string,
   namespace: string
 ): Promise<ResourceKey> {
-  const modulePath = `../../${namespace}/i18n/${language}.json`;
+  const modulePath = `/src/${namespace}/i18n/${language}.json`;
   const loadModule = TRANSLATION_MODULES[modulePath];
 
   if (loadModule === undefined) {

@@ -20,10 +20,9 @@ export function readFeatureFlags(
 }
 
 async function readFakeFeatureFlags(): Promise<RuntimeFeatureFlags> {
-  const { getFakeDatabase } = await import('./getFakeDatabase');
-  const database = await getFakeDatabase();
+  const { getFakeBackendClient } = await import('./getFakeBackendClient');
 
-  return database.featureFlags.getApplication();
+  return getFakeBackendClient().readFeatureFlags();
 }
 
 async function readRealFeatureFlags() {

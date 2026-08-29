@@ -1,5 +1,5 @@
 import type { LobbyGamePlayer } from '@war-chest/api-contracts';
-import type { GameViewPlayer } from '@war-chest/game-engine';
+import type { GameStatus, GameViewPlayer } from '@war-chest/game-engine';
 import { Navigate, useNavigate } from 'react-router';
 import { UserAvatar } from '#/entities/user';
 import { SurrenderGameButton } from '#/features/surrender-game';
@@ -23,7 +23,7 @@ export function ActiveGamePage() {
     gameQuery,
     hydrateGame,
     liveState,
-    lobbyGame,
+    playerProfiles,
     synchronizationStatus,
     userId,
   } = useGameRuntime();
@@ -72,6 +72,25 @@ export function ActiveGamePage() {
   const topPlayer = currentPlayer === undefined ? whitePlayer : opponent;
   const bottomPlayer = currentPlayer ?? blackPlayer;
   const isSpectator = currentPlayer === undefined;
+  const winnerPlayer = liveState.players.find(
+    (player) => player.team === liveState.winnerTeam
+  );
+  const winnerProfile = findProfile(winnerPlayer);
+  const gameTitleKey = getGameTitleKey({
+    currentPlayer,
+    hasWinner: winnerPlayer !== undefined,
+    isSpectator,
+    opponent,
+    status: liveState.status,
+  });
+  const gameTitle =
+    gameTitleKey === 'spectatorWinnerTitle' && winnerPlayer !== undefined
+      ? t(gameTitleKey, {
+          winner:
+            winnerProfile?.displayName ??
+            t('winnerFallback', { playerId: winnerPlayer.id.slice(0, 8) }),
+        })
+      : t(gameTitleKey);
 
   return (
     <main className={classes.page}>
@@ -80,11 +99,7 @@ export function ActiveGamePage() {
           <p className={classes.eyebrow}>
             {isSpectator ? t('spectator') : t('table')}
           </p>
-          <h1>
-            {liveState.status === 'finished'
-              ? t('finishedTitle')
-              : t('gameTitle')}
-          </h1>
+          <h1>{gameTitle}</h1>
           <p className={classes.gameId}>{t('gameLabel', { gameId })}</p>
         </div>
         <Button onClick={openLobby}>{t('backToLobby')}</Button>
@@ -121,33 +136,34 @@ export function ActiveGamePage() {
         </section>
 
         <aside className={classes.sidebar}>
-          <section className={classes.sidebarSection}>
-            <p className={classes.sidebarEyebrow}>{t('turnEyebrow')}</p>
-            <h2>{t('actionsTitle')}</h2>
-            <p>
-              {t(
-                getTurnDescriptionKey({
-                  currentPlayerId: liveState.currentPlayerId,
-                  isSpectator,
-                  userId,
-                })
-              )}
-            </p>
-            <div className={classes.placeholderActions}>
-              <Button disabled>{t('chooseSquad')}</Button>
-              <Button disabled variant="secondary">
-                {t('finishAction')}
-              </Button>
-              {liveState.status === 'active' && currentPlayer !== undefined ? (
-                <SurrenderGameButton
-                  gameId={gameId}
-                  onSurrendered={hydrateGame}
-                  userId={userId}
-                  view={liveState}
-                />
-              ) : null}
-            </div>
-          </section>
+          {liveState.status === 'active' ? (
+            <section className={classes.sidebarSection}>
+              <p className={classes.sidebarEyebrow}>{t('turnEyebrow')}</p>
+              <h2>{t('actionsTitle')}</h2>
+              <p>
+                {t(
+                  getTurnDescriptionKey({
+                    currentPlayerId: liveState.currentPlayerId,
+                    isSpectator,
+                    userId,
+                  })
+                )}
+              </p>
+              <div className={classes.placeholderActions}>
+                <Button disabled>{t('chooseSquad')}</Button>
+                <Button disabled variant="secondary">
+                  {t('finishAction')}
+                </Button>
+                {currentPlayer === undefined ? null : (
+                  <SurrenderGameButton
+                    gameId={gameId}
+                    onSurrendered={hydrateGame}
+                    view={liveState}
+                  />
+                )}
+              </div>
+            </section>
+          ) : null}
 
           <section className={classes.sidebarSection}>
             <p className={classes.sidebarEyebrow}>{t('historyEyebrow')}</p>
@@ -165,12 +181,40 @@ export function ActiveGamePage() {
   function findProfile(
     player: GameViewPlayer | undefined
   ): LobbyGamePlayer | undefined {
-    return lobbyGame?.players.find((profile) => profile.id === player?.id);
+    return playerProfiles.find((profile) => profile.id === player?.id);
   }
 
   function openLobby(): void {
     void navigate(appRoutes.lobby.url());
   }
+}
+
+interface GameTitleInput {
+  currentPlayer: GameViewPlayer | undefined;
+  hasWinner: boolean;
+  isSpectator: boolean;
+  opponent: GameViewPlayer | undefined;
+  status: GameStatus;
+}
+
+function getGameTitleKey(input: GameTitleInput) {
+  if (input.status !== 'finished') {
+    return 'gameTitle' as const;
+  }
+
+  if (input.isSpectator && input.hasWinner) {
+    return 'spectatorWinnerTitle' as const;
+  }
+
+  if (input.currentPlayer?.defeatReason === 'surrender') {
+    return 'surrenderedTitle' as const;
+  }
+
+  if (!input.isSpectator && input.opponent?.defeatReason === 'surrender') {
+    return 'opponentSurrenderedTitle' as const;
+  }
+
+  return 'finishedTitle' as const;
 }
 
 interface PlayerPanelProps {

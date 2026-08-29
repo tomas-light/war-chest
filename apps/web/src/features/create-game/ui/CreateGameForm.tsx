@@ -8,11 +8,10 @@ import classes from './CreateGameForm.module.scss';
 
 interface Props {
   onCreated(this: void, gameId: string): void;
-  userId: string;
 }
 
 export function CreateGameForm(props: Props) {
-  const { onCreated, userId } = props;
+  const { onCreated } = props;
   const { t } = useTranslation('features/create-game', {
     keyPrefix: 'CreateGameForm',
   });
@@ -20,14 +19,16 @@ export function CreateGameForm(props: Props) {
   const queryClient = useQueryClient();
   const createGameMutation = useMutation({
     mutationFn: async () => {
-      const gameApi = await createSelectedGameApi({ userId });
+      const gameApi = await createSelectedGameApi();
 
       return gameApi.createGame({
         commandId: crypto.randomUUID(),
       });
     },
     onSuccess: async (game) => {
-      await queryClient.invalidateQueries({ queryKey: LOBBY_GAMES_QUERY_KEY });
+      await queryClient.invalidateQueries({
+        queryKey: LOBBY_GAMES_QUERY_KEY,
+      });
       onCreated(game.gameId);
     },
   });

@@ -103,7 +103,11 @@ snapshot в единственном событии `GameCreated`.
 `GameResponse` со статусом `finished`, поражением отправителя и победой команды
 оппонента.
 
-`GET /api/games/:gameId` возвращает полный персональный snapshot.
+`GameResponse` содержит `gameId`, персональный `view` и публичные `players` с
+именем, версией аватара, командой и местом каждого участника. Профили читаются
+из persisted-участников и остаются доступны после завершения игры, когда она
+уже исключена из ответа лобби. `GET /api/games/:gameId` возвращает этот полный
+персональный snapshot.
 `GET /api/games/:gameId/events?afterSequence=N` возвращает безопасные события
 со строго большим sequence; без query история начинается с первого события.
 Игрок в snapshot содержит `presence` и nullable ISO `reconnectDeadline`.

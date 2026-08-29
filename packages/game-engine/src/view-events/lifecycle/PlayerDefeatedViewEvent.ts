@@ -28,7 +28,12 @@ export class PlayerDefeatedViewEvent implements ApplicableViewEvent<PlayerDefeat
       lastEventSequence: this.data.sequence,
       players: view.players.map((player) =>
         player.id === this.data.payload.playerId
-          ? { ...player, presence: 'defeated', reconnectDeadline: null }
+          ? {
+              ...player,
+              defeatReason: this.data.payload.reason,
+              presence: 'defeated',
+              reconnectDeadline: null,
+            }
           : player
       ),
     };

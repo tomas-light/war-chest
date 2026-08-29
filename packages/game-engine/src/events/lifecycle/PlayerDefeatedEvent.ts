@@ -29,7 +29,12 @@ export class PlayerDefeatedEvent implements ApplicableEvent<PlayerDefeatedEventD
       lastEventSequence: this.data.sequence,
       players: state.players.map((player) =>
         player.id === this.data.payload.playerId
-          ? { ...player, presence: 'defeated', reconnectDeadline: null }
+          ? {
+              ...player,
+              defeatReason: this.data.payload.reason,
+              presence: 'defeated',
+              reconnectDeadline: null,
+            }
           : player
       ),
     };

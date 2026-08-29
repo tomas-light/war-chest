@@ -19,6 +19,7 @@ export function createViewFor(state: GameState, viewer: Viewer): GameView {
     lastEventSequence: state.lastEventSequence,
     moveCount: state.moveCount,
     players: state.players.map((player) => ({
+      defeatReason: player.defeatReason,
       id: player.id,
       moveCount: player.moveCount,
       presence: player.presence,

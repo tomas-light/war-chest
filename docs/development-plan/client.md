@@ -314,16 +314,15 @@ reconnect он получает актуальное состояние игры
    backend selector и real Socket.IO adapter. API профиля и истории ещё нужны.
 4. ✅ Добавить persisted-переключатель real/fake в `/login` и открываемую после
    входа dev-панель.
-5. 🟡 Реализован IndexedDB fake adapter для жизненного цикла игры через
-   `packages/fake-database`. Сигнал обновления лобби между вкладками передаётся
-   через `BroadcastChannel`; общий `SharedWorker` и live-broadcast игрового
-   состояния ещё нужны.
+5. ✅ Реализован IndexedDB fake adapter и общий `SharedWorker`. Worker владеет
+   fake database, последовательно обрабатывает RPC вкладок и адресно рассылает
+   обновления лобби и безопасные игровые snapshots.
 6. Загрузить application feature flags при инициализации.
 7. ✅ Реализовать real-вход через Google, Telegram и Yandex ID, auth guard,
    session restore и logout. Fake-вход использует seeded identities,
    пользователей и сессии из `@war-chest/fake-database`; в `sessionStorage`
-   остаётся только ID сессии текущей вкладки. Перенос владения базой в
-   SharedWorker остаётся частью этапа 5.
+   остаётся только ID сессии текущей вкладки, а worker связывает её со своим
+   `MessagePort`.
 8. ✅ Реализовать создание пустой игры, одну кнопку открытия в лобби, выбор
    режима зрителя или свободного места внутри ожидающей игры, смену места и
    присоединение второго игрока. Активная игра сразу открывается зрителю.

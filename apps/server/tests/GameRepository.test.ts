@@ -738,6 +738,67 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
     expect(await repository.findCurrentPlayerGame(FIRST_USER_ID)).toBeNull();
   });
 
+  test('retains public player profiles after a game finishes', async () => {
+    const created = await repository.createGame({
+      commandId: CREATE_COMMAND_ID,
+      creatorUserId: FIRST_USER_ID,
+      event: DEFAULT_CREATE_GAME_EVENT,
+      requestHash: CREATE_REQUEST_HASH,
+    });
+    const gameId = requireCreatedGameId(created);
+    await repository.saveCommand({
+      commandId: GAME_COMMAND_ID,
+      commandType: 'JoinGame',
+      events: [
+        {
+          payload: { playerId: FIRST_USER_ID, seat: 1, team: 'white' },
+          sequence: 2,
+          type: 'PlayerJoined',
+          version: GAME_EVENT_VERSION,
+        },
+      ],
+      expectedVersion: 1,
+      gameId,
+      participantChanges: [
+        {
+          operation: 'addPlayer',
+          seat: 1,
+          team: 'white',
+          userId: FIRST_USER_ID,
+        },
+      ],
+      requestHash: GAME_REQUEST_HASH,
+      userId: FIRST_USER_ID,
+    });
+    await repository.saveSystemEvents({
+      events: [
+        {
+          payload: { winnerTeam: 'white' },
+          sequence: 3,
+          type: 'GameFinished',
+          version: GAME_EVENT_VERSION,
+        },
+      ],
+      expectedVersion: 2,
+      gameChanges: {
+        finishedAt: new Date('2026-08-28T12:00:00.000Z'),
+        status: 'finished',
+        winnerTeam: 'white',
+      },
+      gameId,
+    });
+
+    expect(await repository.listGamePlayers(gameId)).toEqual([
+      {
+        avatarHash: null,
+        displayName: 'Ada',
+        id: FIRST_USER_ID,
+        seat: 1,
+        team: 'white',
+      },
+    ]);
+  });
+
   test('removes a player from waiting projections without deleting the game', async () => {
     const created = await repository.createGame({
       commandId: CREATE_COMMAND_ID,

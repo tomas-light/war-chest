@@ -35,7 +35,7 @@ export function JoinGamePanel(props: Props) {
   );
   const joinGameMutation = useMutation({
     mutationFn: async (team: GameTeam) => {
-      const gameApi = await createSelectedGameApi({ userId });
+      const gameApi = await createSelectedGameApi();
 
       return gameApi.joinGame(gameId, {
         commandId: crypto.randomUUID(),
@@ -50,7 +50,9 @@ export function JoinGamePanel(props: Props) {
       );
       onJoined(game.view);
       queryClient.setQueryData(getGameQueryKey(gameId), game);
-      await queryClient.invalidateQueries({ queryKey: LOBBY_GAMES_QUERY_KEY });
+      await queryClient.invalidateQueries({
+        queryKey: LOBBY_GAMES_QUERY_KEY,
+      });
     },
   });
   const actionLabel = joinGameMutation.isPending

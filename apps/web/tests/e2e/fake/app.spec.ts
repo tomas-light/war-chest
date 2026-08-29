@@ -3,8 +3,9 @@ import { expect, test } from '@playwright/test';
 test('keeps backend selection available when the real API is unavailable', async ({
   page,
 }) => {
-  await page.goto('/login');
+  await page.goto('/');
 
+  await expect(page).toHaveURL(/\/login$/);
   await expect(page.getByRole('combobox', { name: 'Бэкенд' })).toHaveValue(
     'real'
   );
@@ -254,13 +255,31 @@ test('updates the lobby and moves role selection inside a waiting game', async (
   expect(hasReturnedToPreparation).toBe(false);
 
   await page.getByRole('button', { name: 'Сдаться' }).click();
+  await expect(page.getByRole('heading', { name: 'Вы сдались' })).toBeVisible();
   await expect(
-    page.getByRole('heading', { name: 'Партия завершена' })
+    secondPage.getByRole('heading', { name: 'Оппонент сдался' })
   ).toBeVisible();
   await expect(
-    secondPage.getByRole('heading', { name: 'Партия завершена' })
+    page.getByRole('heading', { name: 'Доступные действия' })
+  ).toHaveCount(0);
+  await expect(
+    secondPage.getByRole('heading', { name: 'Доступные действия' })
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole('heading', { name: 'История ходов' })
+  ).toBeVisible();
+  await expect(
+    secondPage.getByRole('heading', { name: 'История ходов' })
+  ).toBeVisible();
+  await Promise.all([page.reload(), secondPage.reload()]);
+  await expect(page.getByRole('heading', { name: 'Вы сдались' })).toBeVisible();
+  await expect(
+    secondPage.getByRole('heading', { name: 'Оппонент сдался' })
   ).toBeVisible();
   const finishedGameTable = page.getByRole('region', {
+    name: 'Игровое поле',
+  });
+  const secondFinishedGameTable = secondPage.getByRole('region', {
     name: 'Игровое поле',
   });
 
@@ -275,6 +294,39 @@ test('updates the lobby and moves role selection inside a waiting game', async (
     finishedGameTable.getByRole('img', {
       name: 'Аватар пользователя G User',
     })
+  ).toBeVisible();
+  await expect(secondFinishedGameTable.getByText('T User')).toBeVisible();
+  await expect(secondFinishedGameTable.getByText('G User')).toBeVisible();
+  await expect(
+    secondFinishedGameTable.getByRole('img', {
+      name: 'Аватар пользователя T User',
+    })
+  ).toBeVisible();
+  await expect(
+    secondFinishedGameTable.getByRole('img', {
+      name: 'Аватар пользователя G User',
+    })
+  ).toBeVisible();
+
+  const finishedGameUrl = page.url();
+  const spectatorPage = await context.newPage();
+
+  await spectatorPage.goto('/');
+  await spectatorPage
+    .getByRole('button', { name: 'Продолжить с Yandex ID' })
+    .click();
+  await expect(
+    spectatorPage.getByRole('heading', { name: 'Лобби' })
+  ).toBeVisible();
+  await spectatorPage.goto(finishedGameUrl);
+  await expect(
+    spectatorPage.getByRole('heading', { name: 'Победитель: G User' })
+  ).toBeVisible();
+  await expect(
+    spectatorPage.getByRole('heading', { name: 'Доступные действия' })
+  ).toHaveCount(0);
+  await expect(
+    spectatorPage.getByRole('heading', { name: 'История ходов' })
   ).toBeVisible();
 
   await page.setViewportSize({ height: 844, width: 390 });

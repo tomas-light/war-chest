@@ -5,6 +5,7 @@ export type JsonValue =
 
 export type GameStatus = 'waiting' | 'active' | 'finished';
 export type GameTeam = 'black' | 'white';
+export type PlayerDefeatReason = 'disconnectTimeout' | 'surrender';
 export type PlayerPresence = 'connected' | 'defeated' | 'disconnected';
 
 export interface GameTeams {
@@ -13,6 +14,7 @@ export interface GameTeams {
 }
 
 export interface GamePlayer {
+  defeatReason: PlayerDefeatReason | null;
   id: string;
   moveCount: number;
   presence: PlayerPresence;
@@ -36,6 +38,7 @@ export interface GameState {
 }
 
 export interface GameViewPlayer {
+  defeatReason: PlayerDefeatReason | null;
   id: string;
   moveCount: number;
   presence: PlayerPresence;

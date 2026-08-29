@@ -57,11 +57,10 @@ fakeDatabase.close();
 ## Граница пакета
 
 Пакет не содержит React, HTTP-адаптер, игровое соединение или `SharedWorker`.
-Текущие auth и game adapters `apps/web` используют фасад напрямую для seeded
-пользователей, auth sessions и игрового lifecycle. В целевой архитектуре полного
-fake backend именно `SharedWorker` владеет одним экземпляром фасада, благодаря
-чему вкладки одного origin последовательно изменяют общую IndexedDB; перенос
-вызовов в worker не изменит API самого пакета.
+Fake backend в `apps/web` открывает фасад только внутри `SharedWorker`. Auth,
+feature flags и game adapters вкладки обращаются к worker через RPC, поэтому
+вкладки одного origin последовательно изменяют общую IndexedDB. API самого
+пакета при переносе владельца не изменился.
 
 Подробности:
 

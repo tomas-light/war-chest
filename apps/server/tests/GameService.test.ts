@@ -91,6 +91,7 @@ describe('GameService', () => {
       findParticipant: vi.fn(),
       findProcessedCommand: vi.fn(),
       listEmptyWaitingGames: vi.fn(),
+      listGamePlayers: vi.fn(),
       listLobbyGames: vi.fn(),
       loadEvents: vi.fn(),
       saveCommand: vi.fn(),
@@ -111,6 +112,7 @@ describe('GameService', () => {
     vi.mocked(gameRepository.findCurrentPlayerGame).mockResolvedValue(null);
     vi.mocked(gameRepository.findParticipant).mockResolvedValue(null);
     vi.mocked(gameRepository.listEmptyWaitingGames).mockResolvedValue([]);
+    vi.mocked(gameRepository.listGamePlayers).mockResolvedValue([]);
     vi.mocked(gameRepository.listLobbyGames).mockResolvedValue([]);
   });
 
@@ -443,6 +445,37 @@ describe('GameService', () => {
     expect(activeGames.get(GAME_ID)?.connectionsByUserId).toEqual(
       new Map([[SPECTATOR_USER_ID, new Set(['socket-one'])]])
     );
+  });
+
+  test('returns public player profiles with a game snapshot', async () => {
+    activeGames.store(GAME_ID, applyEvent(null, GAME_CREATED_EVENT));
+    vi.mocked(gameRepository.listGamePlayers).mockResolvedValue([
+      {
+        avatarHash: 'avatar-hash',
+        displayName: 'Ada',
+        id: FIRST_USER_ID,
+        seat: 1,
+        team: 'white',
+      },
+    ]);
+
+    const result = await gameService.getSnapshot({
+      gameId: GAME_ID,
+      userId: SPECTATOR_USER_ID,
+    });
+
+    expect(result).toMatchObject({
+      players: [
+        {
+          avatarVersion: 'avatar-hash',
+          displayName: 'Ada',
+          id: FIRST_USER_ID,
+          seat: 1,
+          team: 'white',
+        },
+      ],
+      status: 'found',
+    });
   });
 
   test('removes a runtime connection without changing game state', async () => {

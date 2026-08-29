@@ -3,12 +3,11 @@ import { createSelectedGameApi } from '#/shared/api';
 
 export const LOBBY_GAMES_QUERY_KEY = ['games', 'lobby'] as const;
 
-export function useLobbyGamesQuery(userId: string) {
+export function useLobbyGamesQuery() {
   return useQuery(
     queryOptions({
-      enabled: userId !== '',
       queryFn: async () => {
-        const gameApi = await createSelectedGameApi({ userId });
+        const gameApi = await createSelectedGameApi();
 
         return gameApi.listLobbyGames();
       },
@@ -17,12 +16,12 @@ export function useLobbyGamesQuery(userId: string) {
   );
 }
 
-export function useGameQuery(gameId: string, userId: string) {
+export function useGameQuery(gameId: string) {
   return useQuery(
     queryOptions({
-      enabled: gameId !== '' && userId !== '',
+      enabled: gameId !== '',
       queryFn: async () => {
-        const gameApi = await createSelectedGameApi({ userId });
+        const gameApi = await createSelectedGameApi();
 
         return gameApi.getGame(gameId);
       },

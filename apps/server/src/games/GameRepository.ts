@@ -43,7 +43,7 @@ export interface StoredParticipant {
   userId: string;
 }
 
-interface StoredLobbyPlayer {
+export interface StoredGamePlayer {
   avatarHash: string | null;
   displayName: string;
   id: string;
@@ -54,7 +54,7 @@ interface StoredLobbyPlayer {
 export interface StoredLobbyGame {
   createdAt: Date;
   id: string;
-  players: readonly StoredLobbyPlayer[];
+  players: readonly StoredGamePlayer[];
   startedAt: Date | null;
   status: 'active' | 'waiting';
 }
@@ -182,6 +182,10 @@ export interface GameRepository {
     input: DeleteWaitingGameInput
   ): Promise<DeleteWaitingGameResult>;
   findGame(this: void, gameId: string): Promise<StoredGame | null>;
+  listGamePlayers(
+    this: void,
+    gameId: string
+  ): Promise<readonly StoredGamePlayer[]>;
   findCurrentPlayerGame(this: void, userId: string): Promise<string | null>;
   findActiveGameIds(this: void): Promise<readonly string[]>;
   listEmptyWaitingGames(this: void): Promise<readonly StoredEmptyWaitingGame[]>;
@@ -221,6 +225,7 @@ export function createGameRepository(database: Database): GameRepository {
     findParticipant,
     findProcessedCommand,
     listEmptyWaitingGames,
+    listGamePlayers,
     listLobbyGames,
     loadEvents,
     saveCommand,
@@ -473,7 +478,7 @@ export function createGameRepository(database: Database): GameRepository {
         asc(gameParticipants.team),
         asc(gameParticipants.seat)
       );
-    const playersByGameId = new Map<string, StoredLobbyPlayer[]>();
+    const playersByGameId = new Map<string, StoredGamePlayer[]>();
 
     for (const player of playerRows) {
       const players = playersByGameId.get(player.gameId) ?? [];
@@ -488,6 +493,24 @@ export function createGameRepository(database: Database): GameRepository {
       players: playersByGameId.get(game.id) ?? [],
       status: requireLobbyGameStatus(game.status, game.id),
     }));
+  }
+
+  async function listGamePlayers(
+    gameId: string
+  ): Promise<readonly StoredGamePlayer[]> {
+    return database
+      .select({
+        avatarHash: userAvatars.contentHash,
+        displayName: users.displayName,
+        id: users.id,
+        seat: gameParticipants.seat,
+        team: gameParticipants.team,
+      })
+      .from(gameParticipants)
+      .innerJoin(users, eq(users.id, gameParticipants.userId))
+      .leftJoin(userAvatars, eq(userAvatars.userId, users.id))
+      .where(eq(gameParticipants.gameId, gameId))
+      .orderBy(asc(gameParticipants.team), asc(gameParticipants.seat));
   }
 
   async function findParticipant(

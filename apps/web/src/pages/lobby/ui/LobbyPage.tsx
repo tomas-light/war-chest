@@ -28,7 +28,7 @@ export function LobbyPage() {
   const queryClient = useQueryClient();
   const { session } = useAuthSession();
   const userId = session?.user.id ?? '';
-  const lobbyGamesQuery = useLobbyGamesQuery(userId);
+  const lobbyGamesQuery = useLobbyGamesQuery();
   const games = lobbyGamesQuery.data?.items ?? [];
   const currentPlayerGameId = lobbyGamesQuery.data?.currentPlayerGameId ?? null;
   const currentPlayerGame = games.find(

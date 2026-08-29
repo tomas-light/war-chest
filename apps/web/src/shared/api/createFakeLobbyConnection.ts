@@ -1,4 +1,4 @@
-import { subscribeToFakeLobbyUpdates } from './fakeLobbyUpdates';
+import { getFakeBackendClient } from './getFakeBackendClient';
 import {
   type LobbyConnection,
   type LobbyConnectionHandlers,
@@ -7,17 +7,43 @@ import {
 export function createFakeLobbyConnection(
   handlers: LobbyConnectionHandlers
 ): LobbyConnection {
-  let unsubscribe: (() => void) | null = null;
+  const backendClient = getFakeBackendClient();
+  const subscriptionId = crypto.randomUUID();
+  let isConnected = false;
+  let unsubscribeFromEvents: (() => void) | null = null;
 
   return { connect, disconnect };
 
   function connect(): void {
-    unsubscribe ??= subscribeToFakeLobbyUpdates(handlers.onUpdated);
-    handlers.onSubscribed();
+    if (isConnected) {
+      return;
+    }
+
+    isConnected = true;
+    unsubscribeFromEvents = backendClient.subscribe((event) => {
+      if (
+        event.name === 'lobby.updated' &&
+        event.subscriptionId === subscriptionId
+      ) {
+        handlers.onUpdated(event.message);
+      }
+    });
+    void backendClient
+      .subscribeToLobby(subscriptionId)
+      .then(() => {
+        if (isConnected) {
+          handlers.onSubscribed();
+        }
+      })
+      .catch(() => undefined);
   }
 
   function disconnect(): void {
-    unsubscribe?.();
-    unsubscribe = null;
+    isConnected = false;
+    unsubscribeFromEvents?.();
+    unsubscribeFromEvents = null;
+    void backendClient
+      .unsubscribeFromLobby(subscriptionId)
+      .catch(() => undefined);
   }
 }

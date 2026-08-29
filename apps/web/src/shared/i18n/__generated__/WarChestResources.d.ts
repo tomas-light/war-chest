@@ -128,9 +128,12 @@ export interface WarChestResources {
       notSelected: '';
       openHistory: '';
       opponent: '';
+      opponentSurrenderedTitle: '';
       playerBottom: '';
       playerTop: '';
       spectator: '';
+      spectatorWinnerTitle: '{{winner}}';
+      surrenderedTitle: '';
       synchronization: {
         desynchronized: '';
         pending: '';
@@ -139,6 +142,7 @@ export interface WarChestResources {
       table: '';
       tableArea: '';
       turnEyebrow: '';
+      winnerFallback: '{{playerId}}';
       you: '';
     };
     GameError: {
@@ -381,15 +385,19 @@ export interface WarChestTranslationParameters {
   'pages/active-game.ActiveGamePage.notSelected': null;
   'pages/active-game.ActiveGamePage.openHistory': null;
   'pages/active-game.ActiveGamePage.opponent': null;
+  'pages/active-game.ActiveGamePage.opponentSurrenderedTitle': null;
   'pages/active-game.ActiveGamePage.playerBottom': null;
   'pages/active-game.ActiveGamePage.playerTop': null;
   'pages/active-game.ActiveGamePage.spectator': null;
+  'pages/active-game.ActiveGamePage.spectatorWinnerTitle': { winner: unknown };
+  'pages/active-game.ActiveGamePage.surrenderedTitle': null;
   'pages/active-game.ActiveGamePage.synchronization.desynchronized': null;
   'pages/active-game.ActiveGamePage.synchronization.pending': null;
   'pages/active-game.ActiveGamePage.synchronization.ready': null;
   'pages/active-game.ActiveGamePage.table': null;
   'pages/active-game.ActiveGamePage.tableArea': null;
   'pages/active-game.ActiveGamePage.turnEyebrow': null;
+  'pages/active-game.ActiveGamePage.winnerFallback': { playerId: unknown };
   'pages/active-game.ActiveGamePage.you': null;
   'pages/active-game.GameError.backToLobby': null;
   'pages/active-game.GameError.title': null;

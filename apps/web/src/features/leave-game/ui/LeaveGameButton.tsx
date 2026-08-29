@@ -16,13 +16,11 @@ interface Props {
   onLeaving(this: void): void;
   onLeaveFailed(this: void): void;
   onLeft(this: void): void;
-  userId: string;
   view: GameView;
 }
 
 export function LeaveGameButton(props: Props) {
-  const { gameId, isCreator, onLeaving, onLeaveFailed, onLeft, userId, view } =
-    props;
+  const { gameId, isCreator, onLeaving, onLeaveFailed, onLeft, view } = props;
   const { t } = useTranslation('features/leave-game', {
     keyPrefix: 'LeaveGameButton',
   });
@@ -34,7 +32,9 @@ export function LeaveGameButton(props: Props) {
     onMutate: onLeaving,
     onSuccess: async () => {
       queryClient.removeQueries({ queryKey: getGameQueryKey(gameId) });
-      await queryClient.invalidateQueries({ queryKey: LOBBY_GAMES_QUERY_KEY });
+      await queryClient.invalidateQueries({
+        queryKey: LOBBY_GAMES_QUERY_KEY,
+      });
       onLeft();
     },
   });
@@ -57,7 +57,7 @@ export function LeaveGameButton(props: Props) {
   );
 
   async function leaveGame(): Promise<void> {
-    const gameApi = await createSelectedGameApi({ userId });
+    const gameApi = await createSelectedGameApi();
 
     try {
       await gameApi.leaveGame(gameId, {

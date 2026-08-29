@@ -31,9 +31,10 @@ PostgreSQL-схема, клиент, конфигурация, миграции 
 нормализованные аватары. Game engine проверяет временные команды, ведёт очередь
 двух игроков, восстанавливает состояние из событий и строит безопасные
 представления. Fake database содержит IndexedDB-схему, типизированный табличный
-слой, репозитории, транзакции, seed и reset; его подключение к `SharedWorker`
-остаётся частью клиентского этапа. Fastify предоставляет health, auth, user и
-game endpoints, Socket.IO transport, reconnect recovery и SPA hosting.
+слой, репозитории, транзакции, seed и reset; клиентский `SharedWorker` владеет
+этим фасадом и последовательно обслуживает fake RPC из вкладок одного origin.
+Fastify предоставляет health, auth, user и game endpoints, Socket.IO transport,
+reconnect recovery и SPA hosting.
 Технический `packages/config`
 используется пакетами `database` и `auth`, но не владеет их ключами или схемами
 валидации.

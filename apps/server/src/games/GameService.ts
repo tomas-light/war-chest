@@ -1,5 +1,9 @@
 import { createHash } from 'node:crypto';
-import type { LobbyGame, LobbyGamesResponse } from '@war-chest/api-contracts';
+import type {
+  LobbyGame,
+  LobbyGamePlayer,
+  LobbyGamesResponse,
+} from '@war-chest/api-contracts';
 import type { RuntimeFeatureFlags } from '@war-chest/feature-flags';
 import {
   type GameCommandData,
@@ -21,7 +25,11 @@ import {
 import type { FeatureFlagsService } from '../featureFlags/FeatureFlagsService.js';
 import { createPublicUser } from '../users/PublicUser.js';
 import type { ActiveGame, ActiveGames } from './ActiveGames.js';
-import type { GameRepository, StoredParticipant } from './GameRepository.js';
+import type {
+  GameRepository,
+  StoredGamePlayer,
+  StoredParticipant,
+} from './GameRepository.js';
 
 const BACKGROUND_TASK_RETRY_BASE_DELAY_MS = 1_000;
 const BACKGROUND_TASK_RETRY_MAX_DELAY_MS = 60_000;
@@ -143,7 +151,12 @@ type JoinGamePreconditionResult = Extract<
 >;
 
 type GetGameSnapshotResult =
-  | { gameId: string; status: 'found'; view: GameView }
+  | {
+      gameId: string;
+      players: readonly LobbyGamePlayer[];
+      status: 'found';
+      view: GameView;
+    }
   | { status: 'gameNotFound' };
 
 type GetGameEventsResult =
@@ -532,11 +545,7 @@ export function createGameService(
       return {
         createdAt: game.createdAt.toISOString(),
         id: game.id,
-        players: game.players.map((player) => ({
-          ...createPublicUser(player),
-          seat: player.seat,
-          team: player.team,
-        })),
+        players: createGamePlayers(game.players),
         startedAt: game.startedAt?.toISOString() ?? null,
         status: game.status,
       };
@@ -849,9 +858,13 @@ export function createGameService(
         input.userId,
         activeGame.state
       );
+      const players = await options.gameRepository.listGamePlayers(
+        input.gameId
+      );
 
       return {
         gameId: input.gameId,
+        players: createGamePlayers(players),
         status: 'found',
         view: createViewFor(activeGame.state, viewer),
       };
@@ -1383,6 +1396,16 @@ export function createGameService(
         .catch(() => undefined);
     }
   }
+}
+
+function createGamePlayers(
+  players: readonly StoredGamePlayer[]
+): readonly LobbyGamePlayer[] {
+  return players.map((player) => ({
+    ...createPublicUser(player),
+    seat: player.seat,
+    team: player.team,
+  }));
 }
 
 function checkCommandAccess(
