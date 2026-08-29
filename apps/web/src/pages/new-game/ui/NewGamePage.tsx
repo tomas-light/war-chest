@@ -1,5 +1,4 @@
 import { useNavigate } from 'react-router';
-import { useAuthSession } from '#/entities/auth-session';
 import { CreateGameForm } from '#/features/create-game';
 import { getGamePageUrl } from '#/shared/config';
 import { useTranslation } from '#/shared/i18n/useTranslation';
@@ -10,12 +9,10 @@ export function NewGamePage() {
     keyPrefix: 'NewGamePage',
   });
   const navigate = useNavigate();
-  const { session } = useAuthSession();
-  const userId = session?.user.id ?? '';
 
   return (
     <PlaceholderPage description={t('description')} title={t('title')}>
-      <CreateGameForm onCreated={openCreatedGame} userId={userId} />
+      <CreateGameForm onCreated={openCreatedGame} />
     </PlaceholderPage>
   );
 

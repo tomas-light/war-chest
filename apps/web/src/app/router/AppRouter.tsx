@@ -106,6 +106,10 @@ function AuthenticatedRoute() {
   }
 
   if (status === 'error') {
+    if (import.meta.env.DEV) {
+      return <AnonymousLoginTransition returnTo={returnTo} />;
+    }
+
     return <SessionErrorPage onRetry={() => void refetch()} />;
   }
 

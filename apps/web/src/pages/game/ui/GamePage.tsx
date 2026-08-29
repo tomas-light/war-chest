@@ -138,7 +138,6 @@ export function GamePage() {
               <SwapPlayerPositionsButton
                 gameId={gameId}
                 onSwapped={hydrateGame}
-                userId={userId}
                 view={liveState}
               />
             ) : null}
@@ -228,7 +227,6 @@ export function GamePage() {
           <StartGameButton
             gameId={gameId}
             onStarted={hydrateGame}
-            userId={userId}
             view={liveState}
           />
         ) : null}
@@ -240,7 +238,6 @@ export function GamePage() {
             onLeaveFailed={stopLeavingGame}
             onLeaving={startLeavingGame}
             onLeft={openLobby}
-            userId={userId}
             view={liveState}
           />
         ) : null}

@@ -1,10 +1,10 @@
-import type { FakeDatabase } from '@war-chest/fake-database';
 import { DEFAULT_RUNTIME_FEATURE_FLAGS } from '@war-chest/feature-flags';
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { getFakeDatabase } from './getFakeDatabase';
+import type { FakeBackendClient } from './createFakeBackendClient';
+import { getFakeBackendClient } from './getFakeBackendClient';
 import { readFeatureFlags } from './readFeatureFlags';
 
-vi.mock('./getFakeDatabase', () => ({ getFakeDatabase: vi.fn() }));
+vi.mock('./getFakeBackendClient', () => ({ getFakeBackendClient: vi.fn() }));
 
 afterEach(() => {
   vi.clearAllMocks();
@@ -51,19 +51,18 @@ describe('real runtime feature flags', () => {
 });
 
 describe('fake runtime feature flags', () => {
-  test('reads feature flags from the fake database', async () => {
-    const getApplication =
-      vi.fn<FakeDatabase['featureFlags']['getApplication']>();
-    const database = {
-      featureFlags: { getApplication },
-    } as unknown as FakeDatabase;
+  test('reads feature flags from the fake backend client', async () => {
+    const readFakeFeatureFlags = vi.fn<FakeBackendClient['readFeatureFlags']>();
+    const backendClient = {
+      readFeatureFlags: readFakeFeatureFlags,
+    } as unknown as FakeBackendClient;
 
-    getApplication.mockResolvedValue(DEFAULT_RUNTIME_FEATURE_FLAGS);
-    vi.mocked(getFakeDatabase).mockResolvedValue(database);
+    readFakeFeatureFlags.mockResolvedValue(DEFAULT_RUNTIME_FEATURE_FLAGS);
+    vi.mocked(getFakeBackendClient).mockReturnValue(backendClient);
 
     await expect(readFeatureFlags('fake')).resolves.toEqual(
       DEFAULT_RUNTIME_FEATURE_FLAGS
     );
-    expect(getApplication).toHaveBeenCalledOnce();
+    expect(readFakeFeatureFlags).toHaveBeenCalledOnce();
   });
 });

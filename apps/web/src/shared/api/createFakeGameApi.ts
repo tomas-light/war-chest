@@ -29,7 +29,6 @@ import {
   restoreGame,
 } from '@war-chest/game-engine';
 import { type ApiClientErrorCode, ApiClientError } from './ApiClientError';
-import { publishFakeLobbyUpdate } from './fakeLobbyUpdates';
 import type { GameApi } from './GameApi';
 import { getFakeDatabase } from './getFakeDatabase';
 
@@ -132,7 +131,6 @@ export function createFakeGameApi(userId: string): GameApi {
       game,
       processedCommand,
     });
-    publishFakeLobbyUpdate({ gameId });
 
     return {
       gameId,
@@ -293,7 +291,6 @@ export function createFakeGameApi(userId: string): GameApi {
       );
     }
 
-    publishFakeLobbyUpdate({ gameId });
     return { gameId };
   }
 
@@ -501,7 +498,6 @@ export function createFakeGameApi(userId: string): GameApi {
         event.type === 'PlayerLeft' ? [event.payload.playerId] : []
       ),
     });
-    publishFakeLobbyUpdate({ gameId: input.gameId });
 
     const viewer: Viewer =
       input.command.type !== 'LeaveGame' &&

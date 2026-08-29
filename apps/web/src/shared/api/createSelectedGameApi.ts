@@ -1,17 +1,14 @@
 import { type GameApi, createRealGameApi } from './GameApi';
 
-interface Input {
-  userId: string;
-}
-
-export async function createSelectedGameApi(input: Input): Promise<GameApi> {
+export async function createSelectedGameApi(): Promise<GameApi> {
   if (import.meta.env.DEV) {
     const { readDevBackend } = await import('../config/backendKind');
 
     if (readDevBackend() === 'fake') {
-      const { createFakeGameApi } = await import('./createFakeGameApi');
+      const { createFakeGameApiClient } =
+        await import('./createFakeGameApiClient');
 
-      return createFakeGameApi(input.userId);
+      return createFakeGameApiClient();
     }
   }
 

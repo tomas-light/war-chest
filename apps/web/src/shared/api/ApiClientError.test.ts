@@ -1,5 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import { createApiClientError, createResponseError } from './ApiClientError';
+import {
+  ApiClientError,
+  createApiClientError,
+  createResponseError,
+  isUnauthorizedApiError,
+} from './ApiClientError';
 
 describe('API client errors', () => {
   test('keeps a known server error code for localization', () => {
@@ -52,5 +57,34 @@ describe('API client errors', () => {
         status: 502,
       })
     );
+  });
+
+  test('recognizes the fake API unauthorized code', () => {
+    const error = new ApiClientError({
+      code: 'unauthorized',
+      diagnosticMessage: 'The session has ended.',
+    });
+
+    expect(isUnauthorizedApiError(error)).toBe(true);
+  });
+
+  test('recognizes an HTTP 401 with an unknown server code', () => {
+    const error = new ApiClientError({
+      code: 'unknown',
+      diagnosticMessage: 'Authentication is required.',
+      status: 401,
+    });
+
+    expect(isUnauthorizedApiError(error)).toBe(true);
+  });
+
+  test('does not treat another API error as an expired session', () => {
+    const error = new ApiClientError({
+      code: 'game_not_found',
+      diagnosticMessage: 'Game was not found.',
+      status: 404,
+    });
+
+    expect(isUnauthorizedApiError(error)).toBe(false);
   });
 });

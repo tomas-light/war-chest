@@ -3,8 +3,9 @@ import { expect, test } from '@playwright/test';
 test('keeps backend selection available when the real API is unavailable', async ({
   page,
 }) => {
-  await page.goto('/login');
+  await page.goto('/');
 
+  await expect(page).toHaveURL(/\/login$/);
   await expect(page.getByRole('combobox', { name: 'Бэкенд' })).toHaveValue(
     'real'
   );

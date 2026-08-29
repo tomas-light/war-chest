@@ -43,6 +43,15 @@ export class ApiClientError extends Error {
   }
 }
 
+export function isUnauthorizedApiError(
+  error: unknown
+): error is ApiClientError {
+  return (
+    error instanceof ApiClientError &&
+    (error.code === 'unauthorized' || error.status === 401)
+  );
+}
+
 export function createApiClientError(
   input: CreateApiClientErrorInput
 ): ApiClientError {

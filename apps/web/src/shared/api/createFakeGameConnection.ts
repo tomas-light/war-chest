@@ -1,15 +1,14 @@
 import { ApiClientError } from './ApiClientError';
-import { createFakeGameApi } from './createFakeGameApi';
-import { subscribeToFakeLobbyUpdates } from './fakeLobbyUpdates';
 import type { GameConnection, GameConnectionHandlers } from './gameConnection';
+import { getFakeBackendClient } from './getFakeBackendClient';
 
 export function createFakeGameConnection(
-  handlers: GameConnectionHandlers,
-  userId: string
+  handlers: GameConnectionHandlers
 ): GameConnection {
-  const gameApi = createFakeGameApi(userId);
-  const joinedGameIds = new Set<string>();
-  let unsubscribe: (() => void) | null = null;
+  const backendClient = getFakeBackendClient();
+  const subscriptionId = crypto.randomUUID();
+  let isConnected = false;
+  let unsubscribeFromEvents: (() => void) | null = null;
 
   return {
     connect,
@@ -20,47 +19,79 @@ export function createFakeGameConnection(
   };
 
   function connect(): void {
-    unsubscribe ??= subscribeToFakeLobbyUpdates((message) => {
-      if (joinedGameIds.has(message.gameId)) {
-        refreshGame(message.gameId);
+    if (isConnected) {
+      return;
+    }
+
+    isConnected = true;
+    unsubscribeFromEvents = backendClient.subscribe((event) => {
+      if (event.subscriptionId !== subscriptionId) {
+        return;
+      }
+
+      if (event.name === 'game.error') {
+        handlers.onError(event.message);
+      } else if (event.name === 'game.snapshot') {
+        handlers.onSnapshot(event.message);
       }
     });
   }
 
   function disconnect(): void {
-    unsubscribe?.();
-    unsubscribe = null;
-    joinedGameIds.clear();
+    isConnected = false;
+    unsubscribeFromEvents?.();
+    unsubscribeFromEvents = null;
+    void backendClient
+      .disconnectGameConnection(subscriptionId)
+      .catch(() => undefined);
   }
 
   function join(gameId: string): void {
-    joinedGameIds.add(gameId);
-    refreshGame(gameId);
+    void backendClient
+      .joinGameConnection(gameId, subscriptionId)
+      .then((game) => {
+        if (isConnected) {
+          handlers.onSnapshot(game);
+        }
+      })
+      .catch((error: unknown) => {
+        handleError(error, gameId);
+      });
   }
 
   function leave(gameId: string): void {
-    joinedGameIds.delete(gameId);
-  }
-
-  function synchronize(gameId: string): void {
-    if (joinedGameIds.has(gameId)) {
-      refreshGame(gameId);
-    }
-  }
-
-  function refreshGame(gameId: string): void {
-    void gameApi
-      .getGame(gameId)
-      .then((game) => handlers.onSnapshot(game))
+    void backendClient
+      .leaveGameConnection(gameId, subscriptionId)
       .catch((error: unknown) => {
-        handlers.onError({
-          code: error instanceof ApiClientError ? error.code : 'internal_error',
-          gameId,
-          message:
-            error instanceof Error
-              ? error.message
-              : 'Fake game state could not be refreshed.',
-        });
+        handleError(error, gameId);
       });
+  }
+
+  function synchronize(gameId: string, afterSequence: number): void {
+    void backendClient
+      .synchronizeGameConnection(afterSequence, gameId, subscriptionId)
+      .then((game) => {
+        if (isConnected) {
+          handlers.onSnapshot(game);
+        }
+      })
+      .catch((error: unknown) => {
+        handleError(error, gameId);
+      });
+  }
+
+  function handleError(error: unknown, gameId: string): void {
+    if (!isConnected) {
+      return;
+    }
+
+    handlers.onError({
+      code: error instanceof ApiClientError ? error.code : 'internal_error',
+      gameId,
+      message:
+        error instanceof Error
+          ? error.message
+          : 'Fake game state could not be refreshed.',
+    });
   }
 }

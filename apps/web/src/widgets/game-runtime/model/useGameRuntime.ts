@@ -29,8 +29,8 @@ interface CacheGameInput {
 
 export function useGameRuntimeState(input: Input) {
   const queryClient = useQueryClient();
-  const gameQuery = useGameQuery(input.gameId, input.userId);
-  const lobbyGamesQuery = useLobbyGamesQuery(input.userId);
+  const gameQuery = useGameQuery(input.gameId);
+  const lobbyGamesQuery = useLobbyGamesQuery();
   const gameSessionStore = useMemo(() => createGameSessionStore(), []);
   const connectionRef = useRef<GameConnection | null>(null);
   const liveState = useStore(gameSessionStore, (state) => state.liveState);
@@ -82,47 +82,44 @@ export function useGameRuntimeState(input: Input) {
     };
 
     async function connectToGame(): Promise<void> {
-      const connection = await createSelectedGameConnection(
-        {
-          onError(message) {
-            setConnectionError(
-              createApiClientError({
-                code: message.code,
-                diagnosticMessage: message.message,
-              })
-            );
-          },
-          onEvents(message) {
-            if (message.gameId === currentGameId) {
-              gameSessionStore.getState().applyEvents(message.events);
-              const nextView = gameSessionStore.getState().liveState;
+      const connection = await createSelectedGameConnection({
+        onError(message) {
+          setConnectionError(
+            createApiClientError({
+              code: message.code,
+              diagnosticMessage: message.message,
+            })
+          );
+        },
+        onEvents(message) {
+          if (message.gameId === currentGameId) {
+            gameSessionStore.getState().applyEvents(message.events);
+            const nextView = gameSessionStore.getState().liveState;
 
-              if (nextView !== null) {
-                cacheGame({
-                  gameId: currentGameId,
-                  queryClient,
-                  view: nextView,
-                });
-              }
-
-              refreshLobby();
-            }
-          },
-          onSnapshot(message) {
-            if (message.gameId === currentGameId) {
-              setConnectionError(null);
-              gameSessionStore.getState().hydrate(message.view);
+            if (nextView !== null) {
               cacheGame({
                 gameId: currentGameId,
                 queryClient,
-                view: message.view,
+                view: nextView,
               });
-              refreshLobby();
             }
-          },
+
+            refreshLobby();
+          }
         },
-        input.userId
-      );
+        onSnapshot(message) {
+          if (message.gameId === currentGameId) {
+            setConnectionError(null);
+            gameSessionStore.getState().hydrate(message.view);
+            cacheGame({
+              gameId: currentGameId,
+              queryClient,
+              view: message.view,
+            });
+            refreshLobby();
+          }
+        },
+      });
 
       if (isCancelled) {
         connection.disconnect();
@@ -135,7 +132,9 @@ export function useGameRuntimeState(input: Input) {
     }
 
     function refreshLobby(): void {
-      void queryClient.invalidateQueries({ queryKey: LOBBY_GAMES_QUERY_KEY });
+      void queryClient.invalidateQueries({
+        queryKey: LOBBY_GAMES_QUERY_KEY,
+      });
     }
   }, [gameSessionStore, input.gameId, input.userId, queryClient]);
 
@@ -163,8 +162,14 @@ export function useGameRuntimeState(input: Input) {
 
   function hydrateGame(view: GameView): void {
     gameSessionStore.getState().hydrate(view);
-    cacheGame({ gameId: input.gameId, queryClient, view });
-    void queryClient.invalidateQueries({ queryKey: LOBBY_GAMES_QUERY_KEY });
+    cacheGame({
+      gameId: input.gameId,
+      queryClient,
+      view,
+    });
+    void queryClient.invalidateQueries({
+      queryKey: LOBBY_GAMES_QUERY_KEY,
+    });
   }
 }
 

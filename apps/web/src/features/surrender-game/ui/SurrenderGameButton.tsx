@@ -13,12 +13,11 @@ import classes from './SurrenderGameButton.module.scss';
 interface Props {
   gameId: string;
   onSurrendered(this: void, view: GameView): void;
-  userId: string;
   view: GameView;
 }
 
 export function SurrenderGameButton(props: Props) {
-  const { gameId, onSurrendered, userId, view } = props;
+  const { gameId, onSurrendered, view } = props;
   const { t } = useTranslation('features/surrender-game', {
     keyPrefix: 'SurrenderGameButton',
   });
@@ -29,7 +28,9 @@ export function SurrenderGameButton(props: Props) {
     onSuccess: async (game) => {
       onSurrendered(game.view);
       queryClient.setQueryData(getGameQueryKey(gameId), game);
-      await queryClient.invalidateQueries({ queryKey: LOBBY_GAMES_QUERY_KEY });
+      await queryClient.invalidateQueries({
+        queryKey: LOBBY_GAMES_QUERY_KEY,
+      });
     },
   });
 
@@ -49,7 +50,7 @@ export function SurrenderGameButton(props: Props) {
   );
 
   async function surrenderGame() {
-    const gameApi = await createSelectedGameApi({ userId });
+    const gameApi = await createSelectedGameApi();
 
     try {
       return await gameApi.surrenderGame(gameId, {

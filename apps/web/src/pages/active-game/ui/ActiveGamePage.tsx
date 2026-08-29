@@ -142,7 +142,6 @@ export function ActiveGamePage() {
                 <SurrenderGameButton
                   gameId={gameId}
                   onSurrendered={hydrateGame}
-                  userId={userId}
                   view={liveState}
                 />
               ) : null}

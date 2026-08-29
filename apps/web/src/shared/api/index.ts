@@ -15,6 +15,7 @@ export {
   ApiClientError,
   createApiClientError,
   createResponseError,
+  isUnauthorizedApiError,
   requestApi,
 } from './ApiClientError';
 export { readFeatureFlags } from './readFeatureFlags';

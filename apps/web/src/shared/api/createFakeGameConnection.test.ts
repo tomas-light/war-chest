@@ -1,9 +1,12 @@
 import type { GameResponse } from '@war-chest/api-contracts';
 import { DEFAULT_RUNTIME_FEATURE_FLAGS } from '@war-chest/feature-flags';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import type { FakeBackendClient } from './createFakeBackendClient';
 import { createFakeGameConnection } from './createFakeGameConnection';
-import { publishFakeLobbyUpdate } from './fakeLobbyUpdates';
 import type { GameConnection } from './gameConnection';
+import { getFakeBackendClient } from './getFakeBackendClient';
+
+vi.mock('./getFakeBackendClient', { spy: true });
 
 const GAME_ID = '20000000-0000-4000-8000-000000000001';
 const GAME_RESPONSE: GameResponse = {
@@ -22,37 +25,40 @@ const GAME_RESPONSE: GameResponse = {
     winnerTeam: null,
   },
 };
-const { getGame } = vi.hoisted(() => ({ getGame: vi.fn() }));
-
-vi.mock('./createFakeGameApi', () => ({
-  createFakeGameApi: () => ({ getGame }),
-}));
 
 describe('fake game connection', () => {
   let connection: GameConnection | undefined;
+  let joinGameConnection: ReturnType<
+    typeof vi.fn<FakeBackendClient['joinGameConnection']>
+  >;
+
+  beforeEach(() => {
+    joinGameConnection = vi.fn<FakeBackendClient['joinGameConnection']>();
+    vi.mocked(getFakeBackendClient).mockReturnValue({
+      disconnectGameConnection: vi.fn().mockResolvedValue(undefined),
+      joinGameConnection,
+      subscribe: vi.fn(() => vi.fn()),
+    } as unknown as FakeBackendClient);
+  });
 
   afterEach(() => {
     connection?.disconnect();
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
-  test('refreshes a joined game after another tab changes it', async () => {
-    getGame.mockResolvedValue(GAME_RESPONSE);
+  test('delivers the initial fake game snapshot', async () => {
+    joinGameConnection.mockResolvedValue(GAME_RESPONSE);
     const onSnapshot = vi.fn();
-    connection = createFakeGameConnection(
-      {
-        onError: vi.fn(),
-        onEvents: vi.fn(),
-        onSnapshot,
-      },
-      GAME_RESPONSE.view.creatorId
-    );
+    connection = createFakeGameConnection({
+      onError: vi.fn(),
+      onEvents: vi.fn(),
+      onSnapshot,
+    });
     connection.connect();
     connection.join(GAME_ID);
 
-    await vi.waitFor(() => expect(onSnapshot).toHaveBeenCalledTimes(1));
-    publishFakeLobbyUpdate({ gameId: GAME_ID });
-
-    await vi.waitFor(() => expect(onSnapshot).toHaveBeenCalledTimes(2));
+    await vi.waitFor(() => {
+      expect(onSnapshot).toHaveBeenCalledWith(GAME_RESPONSE);
+    });
   });
 });

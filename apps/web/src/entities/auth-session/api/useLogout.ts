@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import type { AuthClient } from '../model/AuthClient';
 import { useAuthClient } from '../model/AuthClientProvider';
+import { clearSessionScopedQueries } from './sessionQueryCache';
 import { sessionQueryOptions } from './sessionQueryOptions';
 
 export function useLogout(): AuthClient['logout'] {
@@ -16,6 +17,7 @@ export function useLogout(): AuthClient['logout'] {
     const authClient = await authClientPromise;
 
     await authClient.logout();
+    clearSessionScopedQueries(queryClient);
     queryClient.setQueryData(sessionQuery.queryKey, {
       backend: authClient.backend,
       session: null,

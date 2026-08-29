@@ -3,6 +3,7 @@ import type { SessionResponse } from '@war-chest/api-contracts';
 import { useCallback } from 'react';
 import type { AuthClient, AuthProvider } from '../model/AuthClient';
 import { useAuthClient } from '../model/AuthClientProvider';
+import { clearSessionScopedQueries } from './sessionQueryCache';
 import { sessionQueryOptions } from './sessionQueryOptions';
 
 interface LoginVariables {
@@ -21,14 +22,16 @@ export function useLogin(): AuthClient['login'] {
     [mutateAsync]
   );
 
-  async function login({
-    idToken,
-    provider,
-  }: LoginVariables): Promise<SessionResponse | null> {
+  async function login(
+    loginVariables: LoginVariables
+  ): Promise<SessionResponse | null> {
+    const { idToken, provider } = loginVariables;
+
     const authClient = await authClientPromise;
     const session = await authClient.login(provider, idToken);
 
     if (session !== null) {
+      clearSessionScopedQueries(queryClient);
       queryClient.setQueryData(sessionQuery.queryKey, {
         backend: authClient.backend,
         session,

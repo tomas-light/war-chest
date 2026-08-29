@@ -9,12 +9,11 @@ import classes from './SwapPlayerPositionsButton.module.scss';
 interface Props {
   gameId: string;
   onSwapped(this: void, view: GameView): void;
-  userId: string;
   view: GameView;
 }
 
 export function SwapPlayerPositionsButton(props: Props) {
-  const { gameId, onSwapped, userId, view } = props;
+  const { gameId, onSwapped, view } = props;
   const { t } = useTranslation('features/swap-player-positions', {
     keyPrefix: 'SwapPlayerPositionsButton',
   });
@@ -22,7 +21,7 @@ export function SwapPlayerPositionsButton(props: Props) {
   const queryClient = useQueryClient();
   const swapMutation = useMutation({
     mutationFn: async () => {
-      const gameApi = await createSelectedGameApi({ userId });
+      const gameApi = await createSelectedGameApi();
 
       return gameApi.swapPlayerPositions(gameId, {
         commandId: crypto.randomUUID(),
@@ -32,7 +31,9 @@ export function SwapPlayerPositionsButton(props: Props) {
     onSuccess: async (game) => {
       onSwapped(game.view);
       queryClient.setQueryData(getGameQueryKey(gameId), game);
-      await queryClient.invalidateQueries({ queryKey: LOBBY_GAMES_QUERY_KEY });
+      await queryClient.invalidateQueries({
+        queryKey: LOBBY_GAMES_QUERY_KEY,
+      });
     },
   });
 

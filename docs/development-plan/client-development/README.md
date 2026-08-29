@@ -64,19 +64,14 @@ Vite статически заменяет `import.meta.env.DEV` при сбор
 
 ```text
 apps/web/src/shared/api/
-  contracts/
-    api-client.ts
-    game-connection.ts
-    development-api.ts
-  gateway/
-    backend-provider.tsx
-    create-backend.ts
-  real/
-    real-api-client.ts
-    socket-io-game-connection.ts
-  fake/
-    create-fake-backend.ts
-    fake-backend.shared-worker.ts
+  FakeBackendProtocol.ts
+  createFakeBackendClient.ts
+  createFakeGameApiClient.ts
+  fakeBackendSharedWorker.ts
+  getFakeBackendClient.ts
+  GameApi.ts
+  gameConnection.ts
+  lobbyConnection.ts
 ```
 
 Страницы, widgets, features и entities зависят только от контрактов. Они не
@@ -85,15 +80,15 @@ Gateway предоставляет как обычные request/response-мет
 интерфейс игрового соединения с подпиской на события.
 
 Fake backend реализует те же ответы, ошибки, version checks и порядок игровых
-событий, что и real backend. Общий набор contract-тестов запускается против
-обеих реализаций.
+событий, что и real backend. RPC-клиент проверяет ответы теми же runtime-схемами
+из `@war-chest/api-contracts`, которые использует real adapter.
 
 ## Fake backend и IndexedDB
 
 Fake backend работает в `SharedWorker`. Все вкладки одного origin подключаются к
-нему через собственный `MessagePort`. Worker последовательно обрабатывает
-игровые команды, держит активные соединения и рассылает fake WebSocket-события
-подключённым вкладкам.
+нему через собственный `MessagePort`. Worker последовательно обрабатывает auth,
+feature flags и игровые RPC, держит активные подписки и рассылает lobby updates
+и безопасные игровые snapshots подключённым вкладкам.
 
 `SharedWorker` может обращаться к IndexedDB. База также привязана к origin,
 поэтому вкладки с одинаковыми протоколом, host и port используют одно постоянное
@@ -130,11 +125,10 @@ packages/fake-database/
 не импортируется real backend. Доменные сущности переиспользуются из
 `@war-chest/database` только на уровне типов.
 
-Сейчас auth-only адаптер `apps/web` открывает фасад напрямую: он читает seeded
-identity и пользователя, сохраняет сессию и отзывает её при logout. После
-реализации полного fake backend базу должен открывать и изменять только
-`SharedWorker`, чтобы команды из разных вкладок не создавали две конкурирующие
-копии серверного состояния. Сам worker в пакет не входит и пока не реализован.
+Фасад открывает и изменяет только `SharedWorker`. Auth, feature flags и игровой
+lifecycle вкладки вызывают через типизированный RPC. Поэтому команды из разных
+вкладок не создают конкурирующие копии серверного состояния. Сам worker остаётся
+частью `apps/web` и не входит в пакет fake database.
 
 Для всей работы с IndexedDB используем npm-пакет `idb`. Схема, транзакции,
 миграции и репозитории `packages/fake-database` работают через его promise-based
@@ -155,9 +149,9 @@ feature flags. Физическую PostgreSQL-схему она не копир
 
 Выбранный backend хранится в общем `localStorage`, а пользователи и auth sessions
 — в общей IndexedDB. В `sessionStorage` вкладки лежит только ID выбранной
-сессии. После появления worker он дополнительно свяжет эту сессию с её
-`MessagePort`, поэтому две вкладки смогут одновременно иметь разных fake
-пользователей и играть друг с другом.
+сессии. Worker проверяет её и связывает пользователя с `MessagePort`, поэтому
+две вкладки могут одновременно иметь разных fake-пользователей и играть друг с
+другом.
 
 ### Fake-авторизация
 
@@ -174,11 +168,10 @@ feature flags. Физическую PostgreSQL-схему она не копир
 стабильными идентификаторами.
 
 Кнопка вызывает общий контракт авторизации с именем provider. Real-адаптер
-запускает обычный Google, Telegram или Yandex flow. Текущий fake-адаптер находит
+запускает обычный Google, Telegram или Yandex flow. Fake RPC находит
 соответствующую seeded identity через `fakeDatabase.users`, создаёт запись через
-`fakeDatabase.sessions` и возвращает тот же профиль сессии, что ожидает
-остальной клиент. После реализации RPC этот сценарий переедет в `SharedWorker`
-без изменения контракта страницы.
+`fakeDatabase.sessions` внутри worker и возвращает тот же профиль сессии, что
+ожидает остальной клиент.
 
 Fake-вход не открывает popup, не выполняет redirect и не загружает SDK
 провайдера. Запись сессии переживает reload в IndexedDB, а её ID хранится в
@@ -248,15 +241,14 @@ IndexedDB. Seed и reset позволяют подготовить началь�
    dev-панель.
 4. ✅ Создан `packages/fake-database` на базе npm-пакета `idb`: добавлены схема
    IndexedDB, миграция, таблицы, репозитории, транзакции, seed и reset.
-5. Реализовать fake backend в `SharedWorker` и RPC через `MessagePort`.
+5. ✅ Реализовать fake backend в `SharedWorker` и RPC через `MessagePort`.
 6. ✅ Добавить три seeded fake-аккаунта и provider-specific авторизацию через
-   кнопки Google, Telegram и Yandex. Сейчас auth adapter обращается к базе
-   напрямую; перенос вызовов в worker входит в этап 5.
-7. 🟡 Добавлено минимальное fake игровое соединение с пустым snapshot; fake HTTP
-   и обработка команд ещё не реализованы.
+   кнопки Google, Telegram и Yandex. Auth adapter хранит указатель сессии во
+   вкладке, а данные читает и изменяет через worker.
+7. ✅ Реализованы fake game API жизненного цикла, lobby subscription и игровое
+   соединение с безопасными snapshots через worker.
 8. Добавить fake-only управление feature flags через `DevelopmentApi`.
-9. Запустить общий набор contract-тестов против real и fake реализаций.
-10. Проверить состав production bundle.
+9. Проверить состав production bundle.
 
 Критерии готовности:
 
@@ -278,7 +270,6 @@ IndexedDB. Seed и reset позволяют подготовить началь�
 - fake feature flags хранятся в IndexedDB, а не в Zustand overrides;
 - изменение fake-флагов пересобирает игру и синхронизирует вкладки;
 - real-режим не изменяет игровые feature flags через dev-панель;
-- contract-тесты подтверждают одинаковую форму ответов и ошибок.
 
 ## Полезные ссылки
 
