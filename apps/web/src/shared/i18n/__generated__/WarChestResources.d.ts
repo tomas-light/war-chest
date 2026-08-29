@@ -81,10 +81,24 @@ export interface WarChestResources {
       joinTitle: '';
     };
   };
+  'features/leave-game': {
+    LeaveGameButton: {
+      close: '';
+      closing: '';
+      leave: '';
+      leaving: '';
+    };
+  };
   'features/start-game': {
     StartGameButton: {
       start: '';
       starting: '';
+    };
+  };
+  'features/surrender-game': {
+    SurrenderGameButton: {
+      surrender: '';
+      surrendering: '';
     };
   };
   'features/swap-player-positions': {
@@ -338,8 +352,14 @@ export interface WarChestTranslationParameters {
   'features/join-game.JoinGamePanel.joinDescription': null;
   'features/join-game.JoinGamePanel.joining': null;
   'features/join-game.JoinGamePanel.joinTitle': null;
+  'features/leave-game.LeaveGameButton.close': null;
+  'features/leave-game.LeaveGameButton.closing': null;
+  'features/leave-game.LeaveGameButton.leave': null;
+  'features/leave-game.LeaveGameButton.leaving': null;
   'features/start-game.StartGameButton.start': null;
   'features/start-game.StartGameButton.starting': null;
+  'features/surrender-game.SurrenderGameButton.surrender': null;
+  'features/surrender-game.SurrenderGameButton.surrendering': null;
   'features/swap-player-positions.SwapPlayerPositionsButton.label': null;
   'pages/active-game.ActiveGamePage.actionsDescriptionOpponent': null;
   'pages/active-game.ActiveGamePage.actionsDescriptionSpectator': null;

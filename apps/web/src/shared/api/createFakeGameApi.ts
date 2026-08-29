@@ -2,9 +2,12 @@ import type {
   CreateGameRequest,
   GameResponse,
   JoinGameRequest,
+  LeaveGameRequest,
+  LeaveGameResponse,
   LobbyGame,
   LobbyGamesResponse,
   StartGameRequest,
+  SurrenderGameRequest,
   SwapPlayerPositionsRequest,
 } from '@war-chest/api-contracts';
 import type {
@@ -49,8 +52,10 @@ export function createFakeGameApi(userId: string): GameApi {
     createGame,
     getGame,
     joinGame,
+    leaveGame,
     listLobbyGames,
     startGame,
+    surrenderGame,
     swapPlayerPositions,
   };
 
@@ -214,6 +219,84 @@ export function createFakeGameApi(userId: string): GameApi {
     }
   }
 
+  async function leaveGame(
+    gameId: string,
+    request: LeaveGameRequest
+  ): Promise<LeaveGameResponse> {
+    const database = await getFakeDatabase();
+    const command = { type: 'LeaveGame' } as const;
+    const requestHash = await createRequestHash({
+      command,
+      expectedVersion: request.expectedVersion,
+      gameId,
+      userId,
+    });
+    const existingCommand = await database.games.findProcessedCommand(
+      request.commandId
+    );
+
+    if (existingCommand !== null) {
+      const isExactDuplicate =
+        existingCommand.commandType === command.type &&
+        existingCommand.gameId === gameId &&
+        existingCommand.requestHash === requestHash &&
+        existingCommand.userId === userId;
+
+      if (!isExactDuplicate) {
+        throw createFakeApiError(
+          'command_id_conflict',
+          'Command id was already used by another request.'
+        );
+      }
+
+      return { gameId };
+    }
+
+    const game = await database.games.getById(gameId);
+
+    if (game === null) {
+      throw createFakeApiError('game_not_found', 'Game was not found.');
+    }
+
+    const state = await loadGameState(gameId);
+
+    if (state.creatorId !== userId) {
+      await executeCommand({
+        command,
+        commandId: request.commandId,
+        expectedVersion: request.expectedVersion,
+        gameId,
+      });
+      return { gameId };
+    }
+
+    const deletionResult = await database.games.deleteWaitingGame(
+      gameId,
+      request.expectedVersion
+    );
+
+    if (deletionResult.status === 'versionConflict') {
+      throw createFakeApiError(
+        'game_version_conflict',
+        'The game has changed since the requested version.'
+      );
+    }
+
+    if (deletionResult.status === 'notFound') {
+      throw createFakeApiError('game_not_found', 'Game was not found.');
+    }
+
+    if (deletionResult.status === 'notWaiting') {
+      throw createFakeApiError(
+        'game_command_rejected',
+        'Only a waiting game can be closed.'
+      );
+    }
+
+    publishFakeLobbyUpdate({ gameId });
+    return { gameId };
+  }
+
   function startGame(
     gameId: string,
     request: StartGameRequest
@@ -232,6 +315,18 @@ export function createFakeGameApi(userId: string): GameApi {
   ): Promise<GameResponse> {
     return executeCommand({
       command: { type: 'SwapPlayerPositions' },
+      commandId: request.commandId,
+      expectedVersion: request.expectedVersion,
+      gameId,
+    });
+  }
+
+  function surrenderGame(
+    gameId: string,
+    request: SurrenderGameRequest
+  ): Promise<GameResponse> {
+    return executeCommand({
+      command: { type: 'SurrenderGame' },
       commandId: request.commandId,
       expectedVersion: request.expectedVersion,
       gameId,
@@ -343,6 +438,10 @@ export function createFakeGameApi(userId: string): GameApi {
     const nextGame: FakeGame = {
       ...game,
       currentVersion: nextState.lastEventSequence,
+      finishedAt:
+        nextState.status === 'finished' && game.finishedAt === null
+          ? occurredAt
+          : game.finishedAt,
       startedAt:
         nextState.status === 'active' && game.startedAt === null
           ? occurredAt
@@ -398,11 +497,15 @@ export function createFakeGameApi(userId: string): GameApi {
       game: nextGame,
       participants,
       processedCommand,
+      removedParticipantUserIds: events.flatMap((event) =>
+        event.type === 'PlayerLeft' ? [event.payload.playerId] : []
+      ),
     });
     publishFakeLobbyUpdate({ gameId: input.gameId });
 
     const viewer: Viewer =
-      input.command.type === 'JoinGame' || participant !== null
+      input.command.type !== 'LeaveGame' &&
+      (input.command.type === 'JoinGame' || participant !== null)
         ? getPlayerViewer(userId)
         : { role: 'spectator' };
 

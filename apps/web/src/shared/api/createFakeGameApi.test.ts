@@ -19,6 +19,8 @@ const START_COMMAND_ID = '30000000-0000-4000-8000-000000000005';
 const SWAP_COMMAND_ID = '30000000-0000-4000-8000-000000000006';
 const SECOND_CREATE_COMMAND_ID = '30000000-0000-4000-8000-000000000007';
 const THIRD_JOIN_COMMAND_ID = '30000000-0000-4000-8000-000000000008';
+const LEAVE_COMMAND_ID = '30000000-0000-4000-8000-000000000009';
+const SURRENDER_COMMAND_ID = '30000000-0000-4000-8000-000000000010';
 
 describe('fake game API lifecycle', () => {
   let database: FakeDatabase;
@@ -213,6 +215,110 @@ describe('fake game API lifecycle', () => {
         team: 'white',
       }),
     ]);
+  });
+
+  test('lets a joined player leave a waiting lobby', async () => {
+    const creatorApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.googleUser);
+    const secondPlayerApi = createFakeGameApi(
+      FAKE_SEED_IDENTIFIERS.telegramUser
+    );
+    const createdGame = await creatorApi.createGame({
+      commandId: CREATE_COMMAND_ID,
+    });
+    const joinedGame = await secondPlayerApi.joinGame(createdGame.gameId, {
+      commandId: FIRST_JOIN_COMMAND_ID,
+      expectedVersion: createdGame.view.lastEventSequence,
+      seat: 1,
+      team: 'black',
+    });
+
+    await secondPlayerApi.leaveGame(createdGame.gameId, {
+      commandId: LEAVE_COMMAND_ID,
+      expectedVersion: joinedGame.view.lastEventSequence,
+    });
+
+    await expect(creatorApi.getGame(createdGame.gameId)).resolves.toMatchObject(
+      {
+        view: { lastEventSequence: 3, players: [], status: 'waiting' },
+      }
+    );
+    await expect(secondPlayerApi.listLobbyGames()).resolves.toMatchObject({
+      currentPlayerGameId: null,
+    });
+  });
+
+  test('deletes a waiting lobby when its creator closes it', async () => {
+    const creatorApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.googleUser);
+    const secondPlayerApi = createFakeGameApi(
+      FAKE_SEED_IDENTIFIERS.telegramUser
+    );
+    const createdGame = await creatorApi.createGame({
+      commandId: CREATE_COMMAND_ID,
+    });
+    const joinedGame = await secondPlayerApi.joinGame(createdGame.gameId, {
+      commandId: FIRST_JOIN_COMMAND_ID,
+      expectedVersion: createdGame.view.lastEventSequence,
+      seat: 1,
+      team: 'black',
+    });
+
+    await creatorApi.leaveGame(createdGame.gameId, {
+      commandId: LEAVE_COMMAND_ID,
+      expectedVersion: joinedGame.view.lastEventSequence,
+    });
+
+    await expect(creatorApi.getGame(createdGame.gameId)).rejects.toMatchObject({
+      code: 'game_not_found',
+    });
+  });
+
+  test('lets a non-current player surrender and awards victory to the opponent', async () => {
+    const creatorApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.googleUser);
+    const secondPlayerApi = createFakeGameApi(
+      FAKE_SEED_IDENTIFIERS.telegramUser
+    );
+    const createdGame = await creatorApi.createGame({
+      commandId: CREATE_COMMAND_ID,
+    });
+    const creatorJoinedGame = await creatorApi.joinGame(createdGame.gameId, {
+      commandId: FIRST_JOIN_COMMAND_ID,
+      expectedVersion: createdGame.view.lastEventSequence,
+      seat: 1,
+      team: 'white',
+    });
+    const secondPlayerJoinedGame = await secondPlayerApi.joinGame(
+      createdGame.gameId,
+      {
+        commandId: SECOND_JOIN_COMMAND_ID,
+        expectedVersion: creatorJoinedGame.view.lastEventSequence,
+        seat: 1,
+        team: 'black',
+      }
+    );
+    const startedGame = await creatorApi.startGame(createdGame.gameId, {
+      commandId: START_COMMAND_ID,
+      expectedVersion: secondPlayerJoinedGame.view.lastEventSequence,
+    });
+
+    const finishedGame = await secondPlayerApi.surrenderGame(
+      createdGame.gameId,
+      {
+        commandId: SURRENDER_COMMAND_ID,
+        expectedVersion: startedGame.view.lastEventSequence,
+      }
+    );
+
+    expect(finishedGame.view).toMatchObject({
+      players: [
+        expect.objectContaining({ id: FAKE_SEED_IDENTIFIERS.googleUser }),
+        expect.objectContaining({
+          id: FAKE_SEED_IDENTIFIERS.telegramUser,
+          presence: 'defeated',
+        }),
+      ],
+      status: 'finished',
+      winnerTeam: 'white',
+    });
   });
 
   test('does not create another game for a current player', async () => {

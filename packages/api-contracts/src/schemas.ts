@@ -19,11 +19,14 @@ import type {
   GameSyncMessage,
   GoogleLoginRequest,
   JoinGameRequest,
+  LeaveGameRequest,
+  LeaveGameResponse,
   LobbyGamesResponse,
   LobbyUpdatedMessage,
   PublicUser,
   SessionResponse,
   StartGameRequest,
+  SurrenderGameRequest,
   SwapPlayerPositionsRequest,
 } from './types.js';
 
@@ -110,9 +113,27 @@ export const startGameRequestSchema: z.ZodType<StartGameRequest> = z
   })
   .strict();
 
+export const leaveGameRequestSchema: z.ZodType<LeaveGameRequest> = z
+  .object({
+    commandId: z.uuid(),
+    expectedVersion: z.number().int().nonnegative(),
+  })
+  .strict();
+
+export const leaveGameResponseSchema: z.ZodType<LeaveGameResponse> = z
+  .object({ gameId: gameIdSchema })
+  .strict();
+
 type SwapPlayerPositionsSchema = z.ZodType<SwapPlayerPositionsRequest>;
 
 export const swapPlayerPositionsRequestSchema: SwapPlayerPositionsSchema = z
+  .object({
+    commandId: z.uuid(),
+    expectedVersion: z.number().int().nonnegative(),
+  })
+  .strict();
+
+export const surrenderGameRequestSchema: z.ZodType<SurrenderGameRequest> = z
   .object({
     commandId: z.uuid(),
     expectedVersion: z.number().int().nonnegative(),
@@ -181,6 +202,12 @@ const playerJoinedViewEventSchema = eventMetadataSchema
     type: z.literal('PlayerJoined'),
   })
   .strict();
+const playerLeftViewEventSchema = eventMetadataSchema
+  .extend({
+    payload: z.object({ playerId: z.string() }).strict(),
+    type: z.literal('PlayerLeft'),
+  })
+  .strict();
 const playerPositionChangedViewEventSchema = eventMetadataSchema
   .extend({
     payload: z
@@ -240,7 +267,7 @@ const playerDefeatedViewEventSchema = eventMetadataSchema
     payload: z
       .object({
         playerId: z.string(),
-        reason: z.literal('disconnectTimeout'),
+        reason: z.enum(['disconnectTimeout', 'surrender']),
       })
       .strict(),
     type: z.literal('PlayerDefeated'),
@@ -278,6 +305,7 @@ const viewSequenceAdvancedEventSchema = eventMetadataSchema
 export const gameViewEventSchema = z.discriminatedUnion('type', [
   gameCreatedViewEventSchema,
   playerJoinedViewEventSchema,
+  playerLeftViewEventSchema,
   playerPositionChangedViewEventSchema,
   playerPositionsSwappedViewEventSchema,
   playerDisconnectedViewEventSchema,
@@ -345,7 +373,9 @@ const gameCommandSchema = z.discriminatedUnion('type', [
       type: z.literal('JoinGame'),
     })
     .strict(),
+  z.object({ type: z.literal('LeaveGame') }).strict(),
   z.object({ type: z.literal('StartGame') }).strict(),
+  z.object({ type: z.literal('SurrenderGame') }).strict(),
   z.object({ type: z.literal('SwapPlayerPositions') }).strict(),
   z
     .object({

@@ -17,12 +17,15 @@ export {
   gameViewSchema,
   googleLoginRequestSchema,
   joinGameRequestSchema,
+  leaveGameRequestSchema,
+  leaveGameResponseSchema,
   lobbyGamesResponseSchema,
   lobbyUpdatedMessageSchema,
   publicUserSchema,
   sessionResponseSchema,
   SOCKET_IO_PATH,
   startGameRequestSchema,
+  surrenderGameRequestSchema,
   swapPlayerPositionsRequestSchema,
 } from './schemas.js';
 export type {
@@ -42,6 +45,8 @@ export type {
   GoogleLoginRequest,
   InterServerEvents,
   JoinGameRequest,
+  LeaveGameRequest,
+  LeaveGameResponse,
   LobbyGame,
   LobbyGamePlayer,
   LobbyGamesResponse,
@@ -51,6 +56,7 @@ export type {
   SessionResponse,
   SocketData,
   StartGameRequest,
+  SurrenderGameRequest,
   SwapPlayerPositionsRequest,
 } from './types.js';
 export { API_ERROR_CODES } from './types.js';

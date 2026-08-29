@@ -1,0 +1,17 @@
+.action {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+
+.action p {
+  margin: 0;
+  color: var(--wc-color-error);
+}
+
+@media (width <= 600px) {
+  .action,
+  .action button {
+    width: 100%;
+  }
+}

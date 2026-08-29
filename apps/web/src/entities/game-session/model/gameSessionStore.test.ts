@@ -59,4 +59,34 @@ describe('game session event synchronization', () => {
 
     expect(store.getState().synchronizationStatus).toBe('desynchronized');
   });
+
+  test('retains public player profiles for the open game session', () => {
+    const store = createGameSessionStore();
+
+    store.getState().retainLobbyGame({
+      createdAt: '2026-08-29T00:00:00.000Z',
+      id: 'game-1',
+      players: [
+        {
+          avatarVersion: 'avatar-1',
+          displayName: 'Player One',
+          id: 'player-1',
+          seat: 1,
+          team: 'white',
+        },
+      ],
+      startedAt: '2026-08-29T00:01:00.000Z',
+      status: 'active',
+    });
+
+    expect(store.getState().lobbyGame?.players).toEqual([
+      {
+        avatarVersion: 'avatar-1',
+        displayName: 'Player One',
+        id: 'player-1',
+        seat: 1,
+        team: 'white',
+      },
+    ]);
+  });
 });

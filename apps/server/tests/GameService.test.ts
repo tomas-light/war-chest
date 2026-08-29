@@ -84,6 +84,7 @@ describe('GameService', () => {
     gameRepository = {
       createGame: vi.fn(),
       deleteExpiredWaitingGame: vi.fn(),
+      deleteWaitingGame: vi.fn(),
       findActiveGameIds: vi.fn(),
       findCurrentPlayerGame: vi.fn(),
       findGame: vi.fn(),
@@ -524,6 +525,127 @@ describe('GameService', () => {
     });
 
     expect(result).toEqual({ status: 'gameCommandForbidden' });
+  });
+
+  test('deletes a waiting game when its creator closes the lobby', async () => {
+    activeGames.store(GAME_ID, applyEvent(null, GAME_CREATED_EVENT));
+    vi.mocked(gameRepository.deleteWaitingGame).mockResolvedValue({
+      status: 'deleted',
+    });
+
+    const result = await gameService.executeCommand({
+      command: { type: 'LeaveGame' },
+      commandId: COMMAND_ID,
+      expectedVersion: 1,
+      gameId: GAME_ID,
+      userId: FIRST_USER_ID,
+    });
+
+    expect(gameRepository.deleteWaitingGame).toHaveBeenCalledWith({
+      expectedVersion: 1,
+      gameId: GAME_ID,
+    });
+    expect(result).toEqual({ status: 'gameDeleted' });
+    expect(activeGames.get(GAME_ID)).toBeNull();
+  });
+
+  test('removes a joined non-creator from waiting game projections', async () => {
+    const secondPlayerJoinedEvent: GameEventData = {
+      ...SECOND_PLAYER_JOINED_EVENT,
+      sequence: 2,
+    };
+    const state = restoreGame([GAME_CREATED_EVENT, secondPlayerJoinedEvent]);
+
+    if (state === null) {
+      throw new Error('Expected a restored waiting state.');
+    }
+
+    activeGames.store(GAME_ID, state);
+    vi.mocked(gameRepository.findParticipant).mockResolvedValue({
+      gameId: GAME_ID,
+      seat: 1,
+      team: 'black',
+      userId: SECOND_USER_ID,
+    });
+    vi.mocked(gameRepository.saveCommand).mockResolvedValue({
+      currentVersion: 3,
+      status: 'saved',
+    });
+
+    const result = await gameService.executeCommand({
+      command: { type: 'LeaveGame' },
+      commandId: COMMAND_ID,
+      expectedVersion: 2,
+      gameId: GAME_ID,
+      userId: SECOND_USER_ID,
+    });
+
+    expect(gameRepository.saveCommand).toHaveBeenCalledWith(
+      expect.objectContaining({
+        participantChanges: [
+          { operation: 'removePlayer', userId: SECOND_USER_ID },
+        ],
+      })
+    );
+    expect(result).toMatchObject({
+      status: 'saved',
+      view: { players: [], status: 'waiting' },
+    });
+  });
+
+  test('persists defeat and opponent victory after a non-current player surrenders', async () => {
+    const state = restoreGame([
+      GAME_CREATED_EVENT,
+      FIRST_PLAYER_JOINED_EVENT,
+      SECOND_PLAYER_JOINED_EVENT,
+      GAME_STARTED_EVENT,
+    ]);
+
+    if (state === null) {
+      throw new Error('Expected a restored active state.');
+    }
+
+    activeGames.store(GAME_ID, state);
+    vi.mocked(gameRepository.findParticipant).mockResolvedValue({
+      gameId: GAME_ID,
+      seat: 1,
+      team: 'black',
+      userId: SECOND_USER_ID,
+    });
+    vi.mocked(gameRepository.saveCommand).mockResolvedValue({
+      currentVersion: 6,
+      status: 'saved',
+    });
+
+    const result = await gameService.executeCommand({
+      command: { type: 'SurrenderGame' },
+      commandId: COMMAND_ID,
+      expectedVersion: 4,
+      gameId: GAME_ID,
+      userId: SECOND_USER_ID,
+    });
+
+    const savedCommand = vi.mocked(gameRepository.saveCommand).mock
+      .calls[0]?.[0];
+
+    expect(savedCommand?.events).toEqual([
+      expect.objectContaining({
+        payload: { playerId: SECOND_USER_ID, reason: 'surrender' },
+        type: 'PlayerDefeated',
+      }),
+      expect.objectContaining({
+        payload: { winnerTeam: 'white' },
+        type: 'GameFinished',
+      }),
+    ]);
+    expect(savedCommand?.gameChanges).toMatchObject({
+      status: 'finished',
+      winnerTeam: 'white',
+    });
+    expect(result).toMatchObject({
+      status: 'saved',
+      view: { status: 'finished', winnerTeam: 'white' },
+    });
   });
 
   test('forbids a joined non-creator from starting the game', async () => {

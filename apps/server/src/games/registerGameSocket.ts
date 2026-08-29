@@ -199,6 +199,10 @@ export function registerGameSocket(input: RegisterGameSocketInput): void {
       return;
     }
 
+    if (result.status === 'gameDeleted') {
+      return;
+    }
+
     if (result.status === 'versionConflict') {
       socket.emit('game:error', {
         code: 'game_version_conflict',

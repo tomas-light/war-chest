@@ -19,7 +19,9 @@ JSON 404 и не попадает в SPA fallback.
 | `POST` | `/api/games`                        | session     | создаёт игру                         |
 | `GET`  | `/api/games/:gameId`                | session     | возвращает безопасный snapshot       |
 | `POST` | `/api/games/:gameId/join`           | session     | занимает или меняет позицию игрока   |
+| `POST` | `/api/games/:gameId/leave`          | session     | покидает или закрывает лобби         |
 | `POST` | `/api/games/:gameId/start`          | session     | запускает заполненную игру           |
+| `POST` | `/api/games/:gameId/surrender`      | session     | завершает игру добровольной сдачей   |
 | `POST` | `/api/games/:gameId/swap-positions` | session     | меняет местами двух игроков          |
 | `GET`  | `/api/games/:gameId/events`         | session     | возвращает безопасный хвост истории  |
 | `GET`  | `/api/users/:userId`                | session     | возвращает публичный профиль         |
@@ -90,6 +92,16 @@ snapshot в единственном событии `GameCreated`.
 `expectedVersion`; выполнить его может только создатель. Тот же body принимает
 `POST /api/games/:gameId/swap-positions`: до старта создатель одной командой
 обменивает позиции двух уже присоединившихся игроков.
+
+`POST /api/games/:gameId/leave` принимает `commandId` и `expectedVersion`.
+Присоединившийся игрок освобождает только своё место; создатель удаляет всё
+незапущенное лобби вместе с участниками и историей. Оба успешных исхода
+возвращают `{ "gameId": "..." }`. После старта уйти этим endpoint нельзя.
+
+`POST /api/games/:gameId/surrender` принимает тот же versioned body. Любой из
+двух игроков может сдаться независимо от очереди хода. Ответ содержит обычный
+`GameResponse` со статусом `finished`, поражением отправителя и победой команды
+оппонента.
 
 `GET /api/games/:gameId` возвращает полный персональный snapshot.
 `GET /api/games/:gameId/events?afterSequence=N` возвращает безопасные события

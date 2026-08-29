@@ -13,6 +13,10 @@ export interface JoinGameCommandData {
   type: 'JoinGame';
 }
 
+export interface LeaveGameCommandData {
+  type: 'LeaveGame';
+}
+
 export interface StartGameCommandData {
   type: 'StartGame';
 }
@@ -25,8 +29,14 @@ export interface FinishGameCommandData {
   type: 'FinishGame';
 }
 
+export interface SurrenderGameCommandData {
+  type: 'SurrenderGame';
+}
+
 export type LifecycleCommandData =
   | FinishGameCommandData
   | JoinGameCommandData
+  | LeaveGameCommandData
   | StartGameCommandData
+  | SurrenderGameCommandData
   | SwapPlayerPositionsCommandData;

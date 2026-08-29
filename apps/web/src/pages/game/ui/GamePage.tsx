@@ -1,8 +1,10 @@
 import type { LobbyGamePlayer } from '@war-chest/api-contracts';
 import type { GameView, GameViewPlayer } from '@war-chest/game-engine';
+import { useState } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router';
 import { UserAvatar } from '#/entities/user';
 import { JoinGamePanel } from '#/features/join-game';
+import { LeaveGameButton } from '#/features/leave-game';
 import { StartGameButton } from '#/features/start-game';
 import { SwapPlayerPositionsButton } from '#/features/swap-player-positions';
 import { useApiErrorMessage } from '#/shared/api';
@@ -24,6 +26,7 @@ export function GamePage() {
   const getApiErrorMessage = useApiErrorMessage();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [isLeavingGame, setIsLeavingGame] = useState(false);
   const {
     connectionError,
     currentPlayerGameId,
@@ -62,6 +65,15 @@ export function GamePage() {
 
   if (liveState === null) {
     return <GameError message={t('gameUnavailable')} onBack={openLobby} />;
+  }
+
+  if (!isLeavingGame && connectionError?.code === 'game_not_found') {
+    return (
+      <GameError
+        message={getApiErrorMessage(connectionError)}
+        onBack={openLobby}
+      />
+    );
   }
 
   if (liveState.status !== 'waiting') {
@@ -145,7 +157,7 @@ export function GamePage() {
           <span data-ready={synchronizationStatus === 'ready'}>
             {t(getSynchronizationLabelKey(synchronizationStatus))}
           </span>
-          {connectionError === null ? null : (
+          {connectionError === null || isLeavingGame ? null : (
             <p role="alert">{getApiErrorMessage(connectionError)}</p>
           )}
         </div>
@@ -220,12 +232,32 @@ export function GamePage() {
             view={liveState}
           />
         ) : null}
+
+        {isCreator || isPlayer ? (
+          <LeaveGameButton
+            gameId={gameId}
+            isCreator={isCreator}
+            onLeaveFailed={stopLeavingGame}
+            onLeaving={startLeavingGame}
+            onLeft={openLobby}
+            userId={userId}
+            view={liveState}
+          />
+        ) : null}
       </section>
     </main>
   );
 
   function openLobby(): void {
     void navigate(appRoutes.lobby.url());
+  }
+
+  function startLeavingGame(): void {
+    setIsLeavingGame(true);
+  }
+
+  function stopLeavingGame(): void {
+    setIsLeavingGame(false);
   }
 
   function openPositionSelection(): void {

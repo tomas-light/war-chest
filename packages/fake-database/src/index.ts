@@ -15,6 +15,7 @@ export {
   createFakeFeatureFlagsRepository,
 } from './repositories/featureFlags.js';
 export {
+  type DeleteFakeWaitingGameResult,
   type FakeGameChanges,
   type FakeGameRepository,
   createFakeGameRepository,

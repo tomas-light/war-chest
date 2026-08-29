@@ -149,6 +149,51 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
     expect(await database.select().from(gameEvents)).toEqual([]);
   });
 
+  test('deletes a waiting game with occupied seats when its creator closes it', async () => {
+    const created = await repository.createGame({
+      commandId: CREATE_COMMAND_ID,
+      creatorUserId: FIRST_USER_ID,
+      event: DEFAULT_CREATE_GAME_EVENT,
+      requestHash: CREATE_REQUEST_HASH,
+    });
+    const gameId = requireCreatedGameId(created);
+    await repository.saveCommand({
+      commandId: GAME_COMMAND_ID,
+      commandType: 'JoinGame',
+      events: [
+        {
+          payload: { playerId: SECOND_USER_ID, seat: 1, team: 'black' },
+          sequence: 2,
+          type: 'PlayerJoined',
+          version: GAME_EVENT_VERSION,
+        },
+      ],
+      expectedVersion: 1,
+      gameId,
+      participantChanges: [
+        {
+          operation: 'addPlayer',
+          seat: 1,
+          team: 'black',
+          userId: SECOND_USER_ID,
+        },
+      ],
+      requestHash: GAME_REQUEST_HASH,
+      userId: SECOND_USER_ID,
+    });
+
+    const result = await repository.deleteWaitingGame({
+      expectedVersion: 2,
+      gameId,
+    });
+
+    expect(result).toEqual({ status: 'deleted' });
+    expect(await repository.findGame(gameId)).toBeNull();
+    expect(await repository.findParticipant(gameId, SECOND_USER_ID)).toBeNull();
+    expect(await repository.loadEvents(gameId)).toEqual([]);
+    expect(await repository.findProcessedCommand(GAME_COMMAND_ID)).toBeNull();
+  });
+
   test('keeps an empty waiting game before its timeout', async () => {
     const created = await repository.createGame({
       commandId: CREATE_COMMAND_ID,
@@ -691,6 +736,68 @@ describeWithPostgreSql('GameRepository PostgreSQL integration', () => {
     });
 
     expect(await repository.findCurrentPlayerGame(FIRST_USER_ID)).toBeNull();
+  });
+
+  test('removes a player from waiting projections without deleting the game', async () => {
+    const created = await repository.createGame({
+      commandId: CREATE_COMMAND_ID,
+      creatorUserId: FIRST_USER_ID,
+      event: DEFAULT_CREATE_GAME_EVENT,
+      requestHash: CREATE_REQUEST_HASH,
+    });
+    const gameId = requireCreatedGameId(created);
+    await repository.saveCommand({
+      commandId: GAME_COMMAND_ID,
+      commandType: 'JoinGame',
+      events: [
+        {
+          payload: { playerId: SECOND_USER_ID, seat: 1, team: 'black' },
+          sequence: 2,
+          type: 'PlayerJoined',
+          version: GAME_EVENT_VERSION,
+        },
+      ],
+      expectedVersion: 1,
+      gameId,
+      participantChanges: [
+        {
+          operation: 'addPlayer',
+          seat: 1,
+          team: 'black',
+          userId: SECOND_USER_ID,
+        },
+      ],
+      requestHash: GAME_REQUEST_HASH,
+      userId: SECOND_USER_ID,
+    });
+
+    const result = await repository.saveCommand({
+      commandId: SECOND_GAME_COMMAND_ID,
+      commandType: 'LeaveGame',
+      events: [
+        {
+          payload: { playerId: SECOND_USER_ID },
+          sequence: 3,
+          type: 'PlayerLeft',
+          version: GAME_EVENT_VERSION,
+        },
+      ],
+      expectedVersion: 2,
+      gameId,
+      participantChanges: [
+        { operation: 'removePlayer', userId: SECOND_USER_ID },
+      ],
+      requestHash: SECOND_GAME_REQUEST_HASH,
+      userId: SECOND_USER_ID,
+    });
+
+    expect(result).toEqual({ currentVersion: 3, status: 'saved' });
+    expect(await repository.findParticipant(gameId, SECOND_USER_ID)).toBeNull();
+    expect(await repository.findCurrentPlayerGame(SECOND_USER_ID)).toBeNull();
+    expect(await repository.findGame(gameId)).toMatchObject({
+      currentVersion: 3,
+      status: 'waiting',
+    });
   });
 
   test('swaps two persisted player positions atomically', async () => {

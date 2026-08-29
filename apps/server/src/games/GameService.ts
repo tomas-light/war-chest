@@ -125,6 +125,7 @@ export type ExecuteGameCommandResult =
   | { status: 'commandIdConflict' }
   | { status: 'commandRejected' }
   | { status: 'gameCommandForbidden' }
+  | { status: 'gameDeleted' }
   | { status: 'gameNotFound' }
   | { status: 'gamePositionOccupied' }
   | { gameId: string; status: 'playerAlreadyInGame' };
@@ -268,6 +269,10 @@ interface ProjectionChanges {
         operation: 'movePlayer';
         seat: number;
         team: 'black' | 'white';
+        userId: string;
+      }
+    | {
+        operation: 'removePlayer';
         userId: string;
       }
     | {
@@ -664,6 +669,17 @@ export function createGameService(
         return commandAccessResult;
       }
 
+      if (
+        input.command.type === 'LeaveGame' &&
+        activeGame.state.creatorId === input.userId
+      ) {
+        return deleteCreatorWaitingGame({
+          expectedVersion: input.expectedVersion,
+          gameId: input.gameId,
+          previousVersion: activeGame.state.lastEventSequence,
+        });
+      }
+
       if (input.command.type === 'JoinGame') {
         const currentPlayerGameId =
           await options.gameRepository.findCurrentPlayerGame(input.userId);
@@ -759,10 +775,7 @@ export function createGameService(
 
       const nextState = events.reduce(applyEvent, activeGame.state);
       activeGame.state = nextState;
-
-      if (nextState.status !== 'waiting' || nextState.players.length > 0) {
-        clearEmptyWaitingGameExpiration(input.gameId);
-      }
+      updateEmptyWaitingGameExpirationAfterCommand(input.gameId, nextState);
 
       const viewer: Viewer =
         input.command.type === 'JoinGame' || participant !== null
@@ -784,6 +797,41 @@ export function createGameService(
 
       return result;
     });
+  }
+
+  async function deleteCreatorWaitingGame(input: {
+    expectedVersion: number;
+    gameId: string;
+    previousVersion: number;
+  }): Promise<ExecuteGameCommandResult> {
+    const result = await options.gameRepository.deleteWaitingGame({
+      expectedVersion: input.expectedVersion,
+      gameId: input.gameId,
+    });
+
+    if (result.status === 'versionConflict') {
+      await reloadGame(input.gameId);
+      return result;
+    }
+
+    if (result.status === 'notFound') {
+      clearEmptyWaitingGameExpiration(input.gameId);
+      options.activeGames.delete(input.gameId);
+      return { status: 'gameNotFound' };
+    }
+
+    if (result.status === 'notWaiting') {
+      return { status: 'commandRejected' };
+    }
+
+    clearEmptyWaitingGameExpiration(input.gameId);
+    options.activeGames.delete(input.gameId);
+    notifyUpdate({
+      gameId: input.gameId,
+      previousVersion: input.previousVersion,
+    });
+
+    return { status: 'gameDeleted' };
   }
 
   async function getSnapshot(
@@ -1055,6 +1103,25 @@ export function createGameService(
 
     scheduleEmptyWaitingGameExpiration({
       expiresAt: createEmptyWaitingGameExpiresAt(createdAt),
+      gameId,
+      retryAttempt: 0,
+    });
+  }
+
+  function updateEmptyWaitingGameExpirationAfterCommand(
+    gameId: string,
+    state: GameState
+  ): void {
+    clearEmptyWaitingGameExpiration(gameId);
+
+    if (state.status !== 'waiting' || state.players.length > 0) {
+      return;
+    }
+
+    // Repository повторно проверит исходный createdAt под блокировкой. Если
+    // игра ещё не просрочена, он вернёт точное время следующей проверки.
+    scheduleEmptyWaitingGameExpiration({
+      expiresAt: getCurrentDate().toISOString(),
       gameId,
       retryAttempt: 0,
     });
@@ -1334,6 +1401,13 @@ function checkCommandAccess(
       : { status: 'gameCommandForbidden' };
   }
 
+  if (
+    input.command.type === 'LeaveGame' &&
+    input.state.creatorId === input.userId
+  ) {
+    return null;
+  }
+
   return input.participant === null ? { status: 'gameCommandForbidden' } : null;
 }
 
@@ -1399,6 +1473,13 @@ function createProjectionChanges(
         operation: 'movePlayer',
         seat: event.payload.seat,
         team: event.payload.team,
+        userId: event.payload.playerId,
+      });
+    }
+
+    if (event.type === 'PlayerLeft') {
+      participantChanges.push({
+        operation: 'removePlayer',
         userId: event.payload.playerId,
       });
     }

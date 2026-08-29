@@ -27,6 +27,13 @@ export interface PlayerJoinedEventData extends EventMetadata {
   type: 'PlayerJoined';
 }
 
+export interface PlayerLeftEventData extends EventMetadata {
+  payload: {
+    playerId: string;
+  };
+  type: 'PlayerLeft';
+}
+
 export interface PlayerPositionChangedEventData extends EventMetadata {
   payload: {
     playerId: string;
@@ -64,7 +71,7 @@ export interface PlayerReconnectedEventData extends EventMetadata {
 export interface PlayerDefeatedEventData extends EventMetadata {
   payload: {
     playerId: string;
-    reason: 'disconnectTimeout';
+    reason: 'disconnectTimeout' | 'surrender';
   };
   type: 'PlayerDefeated';
 }
@@ -100,6 +107,7 @@ export type GameEventData =
   | PlayerDefeatedEventData
   | PlayerDisconnectedEventData
   | PlayerJoinedEventData
+  | PlayerLeftEventData
   | PlayerPositionChangedEventData
   | PlayerPositionsSwappedEventData
   | PlayerReconnectedEventData
