@@ -57,6 +57,7 @@ export interface CreateGameRequest {
 
 export interface GameResponse {
   gameId: string;
+  players: readonly LobbyGamePlayer[];
   view: GameView;
 }
 

@@ -1,4 +1,5 @@
 import { type QueryClient, useQueryClient } from '@tanstack/react-query';
+import type { GameResponse } from '@war-chest/api-contracts';
 import type { GameView } from '@war-chest/game-engine';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from 'zustand';
@@ -34,9 +35,9 @@ export function useGameRuntimeState(input: Input) {
   const gameSessionStore = useMemo(() => createGameSessionStore(), []);
   const connectionRef = useRef<GameConnection | null>(null);
   const liveState = useStore(gameSessionStore, (state) => state.liveState);
-  const retainedLobbyGame = useStore(
+  const retainedPlayerProfiles = useStore(
     gameSessionStore,
-    (state) => state.lobbyGame
+    (state) => state.playerProfiles
   );
   const synchronizationStatus = useStore(
     gameSessionStore,
@@ -48,15 +49,18 @@ export function useGameRuntimeState(input: Input) {
   const currentLobbyGame = lobbyGamesQuery.data?.items.find(
     (game) => game.id === input.gameId
   );
-  const lobbyGame =
-    currentLobbyGame ??
-    (retainedLobbyGame?.id === input.gameId ? retainedLobbyGame : undefined);
+  const playerProfiles =
+    currentLobbyGame?.players ??
+    gameQuery.data?.players ??
+    retainedPlayerProfiles;
 
   useEffect(() => {
-    if (currentLobbyGame !== undefined) {
-      gameSessionStore.getState().retainLobbyGame(currentLobbyGame);
+    const profiles = currentLobbyGame?.players ?? gameQuery.data?.players;
+
+    if (profiles !== undefined) {
+      gameSessionStore.getState().retainPlayerProfiles(profiles);
     }
-  }, [currentLobbyGame, gameSessionStore]);
+  }, [currentLobbyGame, gameQuery.data?.players, gameSessionStore]);
 
   useEffect(() => {
     if (gameQuery.data !== undefined) {
@@ -156,7 +160,7 @@ export function useGameRuntimeState(input: Input) {
     hydrateGame,
     isLobbyPending: lobbyGamesQuery.isPending,
     liveState,
-    lobbyGame,
+    playerProfiles,
     synchronizationStatus,
   };
 
@@ -178,8 +182,12 @@ function cacheGame(input: CacheGameInput): void {
     return;
   }
 
-  input.queryClient.setQueryData(getGameQueryKey(input.gameId), {
-    gameId: input.gameId,
-    view: input.view,
-  });
+  input.queryClient.setQueryData<GameResponse>(
+    getGameQueryKey(input.gameId),
+    (cachedGame) => ({
+      gameId: input.gameId,
+      players: cachedGame?.players ?? [],
+      view: input.view,
+    })
+  );
 }

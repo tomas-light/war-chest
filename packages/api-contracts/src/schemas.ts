@@ -142,6 +142,7 @@ export const surrenderGameRequestSchema: z.ZodType<SurrenderGameRequest> = z
 
 const gameViewPlayerSchema = z
   .object({
+    defeatReason: z.enum(['disconnectTimeout', 'surrender']).nullable(),
     id: z.string(),
     moveCount: z.number().int().nonnegative(),
     presence: z.enum(['connected', 'defeated', 'disconnected']),
@@ -317,13 +318,6 @@ export const gameViewEventSchema = z.discriminatedUnion('type', [
   viewSequenceAdvancedEventSchema,
 ]);
 
-export const gameResponseSchema: z.ZodType<GameResponse> = z
-  .object({
-    gameId: gameIdSchema,
-    view: gameViewSchema,
-  })
-  .strict();
-
 const lobbyGamePlayerSchema = z
   .object({
     avatarVersion: z.string().nullable(),
@@ -331,6 +325,14 @@ const lobbyGamePlayerSchema = z
     id: z.string(),
     seat: z.number().int().positive(),
     team: gameTeamSchema,
+  })
+  .strict();
+
+export const gameResponseSchema: z.ZodType<GameResponse> = z
+  .object({
+    gameId: gameIdSchema,
+    players: z.array(lobbyGamePlayerSchema).readonly(),
+    view: gameViewSchema,
   })
   .strict();
 

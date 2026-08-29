@@ -68,6 +68,12 @@ describe('game HTTP routes', () => {
     executeCommand = vi.fn<GameService['executeCommand']>();
     getEvents = vi.fn<GameService['getEvents']>();
     getSnapshot = vi.fn<GameService['getSnapshot']>();
+    getSnapshot.mockResolvedValue({
+      gameId: GAME_ID,
+      players: [],
+      status: 'found',
+      view: WAITING_VIEW,
+    });
     listLobbyGames = vi.fn<GameService['listLobbyGames']>();
     listLobbyGames.mockResolvedValue({
       currentPlayerGameId: null,
@@ -139,7 +145,11 @@ describe('game HTTP routes', () => {
       userId: USER_ID,
     });
     expect(response.statusCode).toBe(201);
-    expect(response.json()).toEqual({ gameId: GAME_ID, view: WAITING_VIEW });
+    expect(response.json()).toEqual({
+      gameId: GAME_ID,
+      players: [],
+      view: WAITING_VIEW,
+    });
   });
 
   test('returns unfinished games for the lobby', async () => {
@@ -209,6 +219,15 @@ describe('game HTTP routes', () => {
   test('returns a safe game snapshot', async () => {
     getSnapshot.mockResolvedValue({
       gameId: GAME_ID,
+      players: [
+        {
+          avatarVersion: null,
+          displayName: 'Ada',
+          id: USER_ID,
+          seat: 1,
+          team: 'white',
+        },
+      ],
       status: 'found',
       view: WAITING_VIEW,
     });
@@ -220,7 +239,19 @@ describe('game HTTP routes', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toEqual({ gameId: GAME_ID, view: WAITING_VIEW });
+    expect(response.json()).toEqual({
+      gameId: GAME_ID,
+      players: [
+        {
+          avatarVersion: null,
+          displayName: 'Ada',
+          id: USER_ID,
+          seat: 1,
+          team: 'white',
+        },
+      ],
+      view: WAITING_VIEW,
+    });
   });
 
   test('executes join with session identity and validated input', async () => {

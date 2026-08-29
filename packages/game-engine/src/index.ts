@@ -59,6 +59,7 @@ export type {
   GameView,
   GameViewPlayer,
   JsonValue,
+  PlayerDefeatReason,
   PlayerPresence,
   PrivateMove,
   Viewer,

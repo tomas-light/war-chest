@@ -82,9 +82,24 @@ export function registerGameRoutes(app: FastifyInstance): void {
       return sendPlayerAlreadyInGame(reply);
     }
 
-    return reply
-      .code(result.status === 'created' ? 201 : 200)
-      .send({ gameId: result.gameId, view: result.view });
+    if (result.status === 'created') {
+      return reply
+        .code(201)
+        .send({ gameId: result.gameId, players: [], view: result.view });
+    }
+
+    const snapshot = await gameService.getSnapshot({
+      gameId: result.gameId,
+      userId: getAuthenticatedUserId(request),
+    });
+
+    return snapshot.status === 'found'
+      ? reply.send({
+          gameId: result.gameId,
+          players: snapshot.players,
+          view: result.view,
+        })
+      : sendGameNotFound(reply);
   }
 
   async function getGame(
@@ -103,7 +118,7 @@ export function registerGameRoutes(app: FastifyInstance): void {
     });
 
     return result.status === 'found'
-      ? reply.send({ gameId, view: result.view })
+      ? reply.send({ gameId, players: result.players, view: result.view })
       : sendGameNotFound(reply);
   }
 
@@ -264,7 +279,18 @@ async function sendMutationResult(
     input.result.status === 'saved' ||
     input.result.status === 'alreadyJoined'
   ) {
-    return input.reply.send({ gameId: input.gameId, view: input.result.view });
+    const snapshot = await input.gameService.getSnapshot({
+      gameId: input.gameId,
+      userId: input.userId,
+    });
+
+    return snapshot.status === 'found'
+      ? input.reply.send({
+          gameId: input.gameId,
+          players: snapshot.players,
+          view: input.result.view,
+        })
+      : sendGameNotFound(input.reply);
   }
 
   if (input.result.status === 'gameDeleted') {
@@ -278,7 +304,11 @@ async function sendMutationResult(
     });
 
     return snapshot.status === 'found'
-      ? input.reply.send({ gameId: input.gameId, view: snapshot.view })
+      ? input.reply.send({
+          gameId: input.gameId,
+          players: snapshot.players,
+          view: snapshot.view,
+        })
       : sendGameNotFound(input.reply);
   }
 

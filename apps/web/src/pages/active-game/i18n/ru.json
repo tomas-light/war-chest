@@ -19,17 +19,21 @@
     "historyTitle": "История ходов",
     "notSelected": "Игра не выбрана.",
     "openHistory": "Открыть историю",
+    "opponentSurrenderedTitle": "Оппонент сдался",
     "playerBottom": "Игрок снизу",
     "playerTop": "Игрок сверху",
     "spectator": "Режим зрителя",
+    "spectatorWinnerTitle": "Победитель: {{winner}}",
     "synchronization": {
       "desynchronized": "Восстанавливаем синхронизацию…",
       "pending": "Ожидаем состояние…",
       "ready": "Состояние синхронизировано"
     },
+    "surrenderedTitle": "Вы сдались",
     "table": "Игровой стол",
     "tableArea": "Игровое поле",
     "turnEyebrow": "Ход",
+    "winnerFallback": "Игрок {{playerId}}",
     "you": "Вы",
     "opponent": "Оппонент"
   },

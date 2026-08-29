@@ -35,7 +35,7 @@ export function GamePage() {
     hydrateGame,
     isLobbyPending,
     liveState,
-    lobbyGame,
+    playerProfiles,
     synchronizationStatus,
     userId,
   } = useGameRuntime();
@@ -124,9 +124,7 @@ export function GamePage() {
         <div className={classes.positions}>
           <PlayerPosition
             player={liveState.players.find((player) => player.team === 'white')}
-            profile={lobbyGame?.players.find(
-              (player) => player.team === 'white'
-            )}
+            profile={playerProfiles.find((player) => player.team === 'white')}
             team={t('whiteTeam')}
             userId={userId}
           />
@@ -144,9 +142,7 @@ export function GamePage() {
           </div>
           <PlayerPosition
             player={liveState.players.find((player) => player.team === 'black')}
-            profile={lobbyGame?.players.find(
-              (player) => player.team === 'black'
-            )}
+            profile={playerProfiles.find((player) => player.team === 'black')}
             team={t('blackTeam')}
             userId={userId}
           />

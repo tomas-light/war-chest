@@ -215,6 +215,7 @@ describe('technical scenario', () => {
   test('stores each player private move history', () => {
     expect(state.players).toEqual([
       {
+        defeatReason: null,
         id: 'player-one',
         moveCount: 1,
         presence: 'connected',
@@ -224,6 +225,7 @@ describe('technical scenario', () => {
         team: 'white',
       },
       {
+        defeatReason: null,
         id: 'player-two',
         moveCount: 1,
         presence: 'connected',
@@ -677,6 +679,21 @@ describe('player surrender', () => {
     expect(decide(activeState, 'spectator', { type: 'SurrenderGame' })).toEqual(
       []
     );
+  });
+
+  test('retains surrender as the defeated player reason in safe views', () => {
+    const events = decide(activeState, 'player-one', {
+      type: 'SurrenderGame',
+    });
+    const finishedState = events.reduce(applyEvent, activeState);
+    const opponentView = createViewFor(finishedState, {
+      playerId: 'player-two',
+      role: 'player',
+    });
+
+    expect(
+      opponentView.players.find((player) => player.id === 'player-one')
+    ).toMatchObject({ defeatReason: 'surrender', presence: 'defeated' });
   });
 });
 

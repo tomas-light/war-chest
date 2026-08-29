@@ -5,6 +5,7 @@ import type {
   LeaveGameRequest,
   LeaveGameResponse,
   LobbyGame,
+  LobbyGamePlayer,
   LobbyGamesResponse,
   StartGameRequest,
   SurrenderGameRequest,
@@ -134,6 +135,7 @@ export function createFakeGameApi(userId: string): GameApi {
 
     return {
       gameId,
+      players: [],
       view: createViewFor(state, { role: 'spectator' }),
     };
   }
@@ -151,7 +153,11 @@ export function createFakeGameApi(userId: string): GameApi {
     const viewer: Viewer =
       participant === null ? { role: 'spectator' } : getPlayerViewer(userId);
 
-    return { gameId, view: createViewFor(state, viewer) };
+    return {
+      gameId,
+      players: await getGamePlayers(gameId),
+      view: createViewFor(state, viewer),
+    };
   }
 
   function joinGame(
@@ -185,27 +191,7 @@ export function createFakeGameApi(userId: string): GameApi {
     };
 
     async function createLobbyGame(game: FakeGame): Promise<LobbyGame> {
-      const participants = await database.games.listParticipants(game.id);
-      const players = await Promise.all(
-        participants.map(async (participant) => {
-          const user = await database.users.getById(participant.userId);
-
-          if (user === null) {
-            throw createFakeApiError(
-              'invalid_response',
-              `Participant ${participant.userId} was not found.`
-            );
-          }
-
-          return {
-            avatarVersion: null,
-            displayName: user.displayName,
-            id: user.id,
-            seat: participant.seat,
-            team: participant.team,
-          };
-        })
-      );
+      const players = await getGamePlayers(game.id);
 
       return {
         createdAt: game.createdAt.toISOString(),
@@ -507,8 +493,37 @@ export function createFakeGameApi(userId: string): GameApi {
 
     return {
       gameId: input.gameId,
+      players: await getGamePlayers(input.gameId),
       view: createViewFor(nextState, viewer),
     };
+  }
+
+  async function getGamePlayers(
+    gameId: string
+  ): Promise<readonly LobbyGamePlayer[]> {
+    const database = await getFakeDatabase();
+    const participants = await database.games.listParticipants(gameId);
+
+    return Promise.all(
+      participants.map(async (participant) => {
+        const user = await database.users.getById(participant.userId);
+
+        if (user === null) {
+          throw createFakeApiError(
+            'invalid_response',
+            `Participant ${participant.userId} was not found.`
+          );
+        }
+
+        return {
+          avatarVersion: null,
+          displayName: user.displayName,
+          id: user.id,
+          seat: participant.seat,
+          team: participant.team,
+        };
+      })
+    );
   }
 
   async function loadGameState(gameId: string): Promise<GameState> {

@@ -19,17 +19,21 @@
     "historyTitle": "Move history",
     "notSelected": "No game was selected.",
     "openHistory": "Open history",
+    "opponentSurrenderedTitle": "Opponent surrendered",
     "playerBottom": "Bottom player",
     "playerTop": "Top player",
     "spectator": "Spectator mode",
+    "spectatorWinnerTitle": "Winner: {{winner}}",
     "synchronization": {
       "desynchronized": "Restoring synchronization…",
       "pending": "Waiting for state…",
       "ready": "State synchronized"
     },
+    "surrenderedTitle": "You surrendered",
     "table": "Game table",
     "tableArea": "Game board",
     "turnEyebrow": "Turn",
+    "winnerFallback": "Player {{playerId}}",
     "you": "You",
     "opponent": "Opponent"
   },

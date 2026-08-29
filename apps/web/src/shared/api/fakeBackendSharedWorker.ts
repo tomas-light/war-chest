@@ -383,7 +383,7 @@ async function broadcastGameUpdate(gameId: string): Promise<void> {
       for (const subscriptionId of matchingSubscriptionIds) {
         sendEvent(state, {
           event: 'game.snapshot',
-          payload: game,
+          payload: { gameId: game.gameId, view: game.view },
           subscriptionId,
           type: 'event',
         });

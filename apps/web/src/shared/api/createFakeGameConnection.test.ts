@@ -11,6 +11,7 @@ vi.mock('./getFakeBackendClient', { spy: true });
 const GAME_ID = '20000000-0000-4000-8000-000000000001';
 const GAME_RESPONSE: GameResponse = {
   gameId: GAME_ID,
+  players: [],
   view: {
     creatorId: '10000000-0000-4000-8000-000000000001',
     currentPlayerId: null,
