@@ -5,7 +5,9 @@ import {
   gameEventsQuerySchema,
   gameParamsSchema,
   joinGameRequestSchema,
+  leaveGameRequestSchema,
   startGameRequestSchema,
+  surrenderGameRequestSchema,
   swapPlayerPositionsRequestSchema,
 } from '@war-chest/api-contracts';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
@@ -34,7 +36,9 @@ export function registerGameRoutes(app: FastifyInstance): void {
   app.post('/games', protectedRoute, createGame);
   app.get('/games/:gameId', protectedRoute, getGame);
   app.post('/games/:gameId/join', protectedRoute, joinGame);
+  app.post('/games/:gameId/leave', protectedRoute, leaveGame);
   app.post('/games/:gameId/start', protectedRoute, startGame);
+  app.post('/games/:gameId/surrender', protectedRoute, surrenderGame);
   app.post('/games/:gameId/swap-positions', protectedRoute, swapPositions);
   app.get('/games/:gameId/events', protectedRoute, getGameEvents);
 
@@ -153,6 +157,60 @@ export function registerGameRoutes(app: FastifyInstance): void {
     return sendMutationResult({ gameId, gameService, reply, result, userId });
   }
 
+  async function leaveGame(
+    request: FastifyRequest,
+    reply: FastifyReply
+  ): Promise<FastifyReply> {
+    const gameId = parseGameId(request, reply);
+    const body = leaveGameRequestSchema.safeParse(request.body);
+
+    if (gameId === null || !body.success) {
+      return gameId === null ? reply : sendInvalidRequest(reply);
+    }
+
+    const userId = getAuthenticatedUserId(request);
+    const result = await gameService.executeCommand({
+      command: { type: 'LeaveGame' },
+      commandId: body.data.commandId,
+      expectedVersion: body.data.expectedVersion,
+      gameId,
+      userId,
+    });
+
+    if (
+      result.status === 'saved' ||
+      result.status === 'duplicateCommand' ||
+      result.status === 'gameDeleted'
+    ) {
+      return reply.send({ gameId });
+    }
+
+    return sendMutationResult({ gameId, gameService, reply, result, userId });
+  }
+
+  async function surrenderGame(
+    request: FastifyRequest,
+    reply: FastifyReply
+  ): Promise<FastifyReply> {
+    const gameId = parseGameId(request, reply);
+    const body = surrenderGameRequestSchema.safeParse(request.body);
+
+    if (gameId === null || !body.success) {
+      return gameId === null ? reply : sendInvalidRequest(reply);
+    }
+
+    const userId = getAuthenticatedUserId(request);
+    const result = await gameService.executeCommand({
+      command: { type: 'SurrenderGame' },
+      commandId: body.data.commandId,
+      expectedVersion: body.data.expectedVersion,
+      gameId,
+      userId,
+    });
+
+    return sendMutationResult({ gameId, gameService, reply, result, userId });
+  }
+
   async function swapPositions(
     request: FastifyRequest,
     reply: FastifyReply
@@ -207,6 +265,10 @@ async function sendMutationResult(
     input.result.status === 'alreadyJoined'
   ) {
     return input.reply.send({ gameId: input.gameId, view: input.result.view });
+  }
+
+  if (input.result.status === 'gameDeleted') {
+    return input.reply.send({ gameId: input.gameId });
   }
 
   if (input.result.status === 'duplicateCommand') {

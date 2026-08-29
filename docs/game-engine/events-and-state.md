@@ -19,8 +19,8 @@
 1. Сервер передаёт текущее состояние, идентификатор игрока и команду в
    `decide`.
 2. Движок возвращает `GameEventData[]`. Обычная команда создаёт ноль или одно
-   событие, а defeat по reconnect timeout — `PlayerDefeated` и следующий
-   `GameFinished`.
+   событие, а поражение по reconnect timeout и добровольная сдача —
+   `PlayerDefeated` и следующий `GameFinished`.
 3. Сервер сохраняет принятые события и метаданные команды в транзакции.
 4. Только после успешного сохранения сервер вызывает `applyEvent` для каждого
    события.
@@ -121,12 +121,13 @@ switch только его механики, а общий `hydrateEvent` мен
 | ------------------------ | ---------------------------------------------------- | ---------------------------------------------------- |
 | `GameCreated`            | `creatorId`, `featureFlags`, `rulesVersion`          | Создаёт `waiting`, фиксирует создателя и флаги       |
 | `PlayerJoined`           | `playerId`, `team`, `seat`                           | Добавляет подключённого игрока на выбранную позицию  |
+| `PlayerLeft`             | `playerId`                                           | Удаляет игрока из ожидающей игры и её составов       |
 | `PlayerPositionChanged`  | `playerId`, `team`, `seat`                           | Переносит игрока на другую свободную позицию         |
 | `PlayerPositionsSwapped` | две конечные позиции игроков                         | Атомарно меняет команды и места двух игроков         |
 | `GameStarted`            | `firstPlayerId`                                      | Переводит игру в `active` и задаёт очередь           |
 | `PlayerDisconnected`     | Игрок и точный reconnect deadline                    | Сохраняет отключение и deadline                      |
 | `PlayerReconnected`      | Игрок                                                | Возвращает presence в `connected` и очищает deadline |
-| `PlayerDefeated`         | Игрок и `disconnectTimeout`                          | Фиксирует поражение и очищает deadline               |
+| `PlayerDefeated`         | Игрок и `disconnectTimeout` либо `surrender`         | Фиксирует поражение и очищает deadline               |
 | `TestMovePerformed`      | Игрок, номер хода, следующий игрок, приватные данные | Обновляет очередь, общий и личный счётчики           |
 | `GameFinished`           | `winnerTeam`                                         | Фиксирует победившую команду и очищает текущий ход   |
 

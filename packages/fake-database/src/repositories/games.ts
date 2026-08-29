@@ -22,9 +22,20 @@ export interface FakeGameChanges {
   game: FakeGame;
   participants?: readonly FakeGameParticipant[];
   processedCommand?: FakeProcessedCommand;
+  removedParticipantUserIds?: readonly string[];
 }
 
+export type DeleteFakeWaitingGameResult =
+  | { status: 'deleted' }
+  | { status: 'notFound' }
+  | { status: 'notWaiting' }
+  | { currentVersion: number; status: 'versionConflict' };
+
 export interface FakeGameRepository {
+  deleteWaitingGame(
+    gameId: string,
+    expectedVersion: number
+  ): Promise<DeleteFakeWaitingGameResult>;
   findCurrentPlayerGame(userId: string): Promise<FakeGame | null>;
   findProcessedCommand(commandId: string): Promise<FakeProcessedCommand | null>;
   getById(gameId: string): Promise<FakeGame | null>;
@@ -59,6 +70,7 @@ export function createFakeGameRepository(
   );
 
   return {
+    deleteWaitingGame,
     findCurrentPlayerGame,
     findProcessedCommand,
     getById,
@@ -69,6 +81,60 @@ export function createFakeGameRepository(
     replaceFeatureFlags,
     saveChanges,
   };
+
+  async function deleteWaitingGame(
+    gameId: string,
+    expectedVersion: number
+  ): Promise<DeleteFakeWaitingGameResult> {
+    return runSchemaTableTransaction(
+      database,
+      ['games', 'gameParticipants', 'processedCommands', 'gameEvents'],
+      async (transaction) => {
+        const games = transaction.table('games');
+        const storedGame = await games.get(gameId);
+
+        if (storedGame === undefined) {
+          return { status: 'notFound' };
+        }
+
+        if (storedGame.status !== 'waiting') {
+          return { status: 'notWaiting' };
+        }
+
+        if (storedGame.currentVersion !== expectedVersion) {
+          return {
+            currentVersion: storedGame.currentVersion,
+            status: 'versionConflict',
+          };
+        }
+
+        const gameParticipants = transaction.table('gameParticipants');
+        const processedCommands = transaction.table('processedCommands');
+        const gameEvents = transaction.table('gameEvents');
+
+        for (const event of await gameEvents.getAll()) {
+          if (event.gameId === gameId) {
+            await gameEvents.delete(event.id);
+          }
+        }
+
+        for (const command of await processedCommands.getAll()) {
+          if (command.gameId === gameId) {
+            await processedCommands.delete(command.id);
+          }
+        }
+
+        for (const participant of await gameParticipants.getAll()) {
+          if (participant.gameId === gameId) {
+            await gameParticipants.delete([gameId, participant.userId]);
+          }
+        }
+
+        await games.delete(gameId);
+        return { status: 'deleted' };
+      }
+    );
+  }
 
   async function findCurrentPlayerGame(
     userId: string
@@ -196,6 +262,10 @@ export function createFakeGameRepository(
         const processedCommands = transaction.table('processedCommands');
         const gameEvents = transaction.table('gameEvents');
 
+        for (const removedUserId of changes.removedParticipantUserIds ?? []) {
+          await gameParticipants.delete([changes.game.id, removedUserId]);
+        }
+
         await validateActiveGamePlayers(
           games,
           gameParticipants,
@@ -277,6 +347,7 @@ async function validateActiveGamePlayers(
 }
 
 function validateGameChanges(changes: FakeGameChanges): void {
+  const removedParticipantUserIds = changes.removedParticipantUserIds ?? [];
   const records = [
     ...(changes.participants ?? []),
     ...(changes.processedCommand === undefined
@@ -284,6 +355,12 @@ function validateGameChanges(changes: FakeGameChanges): void {
       : [changes.processedCommand]),
     ...changes.events,
   ];
+
+  if (
+    new Set(removedParticipantUserIds).size !== removedParticipantUserIds.length
+  ) {
+    throw new Error('Removed fake game participants must be unique.');
+  }
 
   if (records.some((record) => record.gameId !== changes.game.id)) {
     throw new Error('All fake game changes must belong to the saved game.');

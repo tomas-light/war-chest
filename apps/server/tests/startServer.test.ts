@@ -34,6 +34,7 @@ test('explains how to start PostgreSQL when it is unavailable', async () => {
     APP_PORT: 3000,
     APP_SERVE_WEB: false,
     DISCONNECTED_PLAYER_TIMEOUT_MINUTES: 15,
+    EMPTY_WAITING_GAME_TIMEOUT_MINUTES: 10,
     FEATURE_FLAGS_RUNTIME_FILE: 'feature-flags.json',
     WEB_ASSETS_ROOT: 'web-dist',
   });

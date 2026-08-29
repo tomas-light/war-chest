@@ -2,6 +2,7 @@ import type { LobbyGamePlayer } from '@war-chest/api-contracts';
 import type { GameViewPlayer } from '@war-chest/game-engine';
 import { Navigate, useNavigate } from 'react-router';
 import { UserAvatar } from '#/entities/user';
+import { SurrenderGameButton } from '#/features/surrender-game';
 import { useApiErrorMessage } from '#/shared/api';
 import { appRoutes, getGamePageUrl } from '#/shared/config';
 import { useTranslation } from '#/shared/i18n/useTranslation';
@@ -20,6 +21,7 @@ export function ActiveGamePage() {
     connectionError,
     gameId,
     gameQuery,
+    hydrateGame,
     liveState,
     lobbyGame,
     synchronizationStatus,
@@ -136,6 +138,14 @@ export function ActiveGamePage() {
               <Button disabled variant="secondary">
                 {t('finishAction')}
               </Button>
+              {liveState.status === 'active' && currentPlayer !== undefined ? (
+                <SurrenderGameButton
+                  gameId={gameId}
+                  onSurrendered={hydrateGame}
+                  userId={userId}
+                  view={liveState}
+                />
+              ) : null}
             </div>
           </section>
 

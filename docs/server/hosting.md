@@ -13,6 +13,7 @@ APP_HOST: '0.0.0.0'
 APP_PORT: 3000
 APP_SERVE_WEB: false
 DISCONNECTED_PLAYER_TIMEOUT_MINUTES: 15
+EMPTY_WAITING_GAME_TIMEOUT_MINUTES: 10
 FEATURE_FLAGS_RUNTIME_FILE: '../../packages/feature-flags/feature-flags.json'
 WEB_ASSETS_ROOT: '../web/dist'
 ```
@@ -22,6 +23,8 @@ WEB_ASSETS_ROOT: '../web/dist'
 абсолютные пути относительно `apps/server`.
 
 `DISCONNECTED_PLAYER_TIMEOUT_MINUTES` задаёт срок возвращения активного игрока.
+`EMPTY_WAITING_GAME_TIMEOUT_MINUTES` задаёт срок жизни `waiting`-игры без
+участников; после него весь игровой aggregate удаляется из PostgreSQL.
 `FEATURE_FLAGS_RUNTIME_FILE` читается при создании новой игры; exact duplicate
 ранее выполненного `CreateGame` возвращается без повторного чтения файла.
 Файл хранится в Git как типизированный контракт и безопасные локальные значения.

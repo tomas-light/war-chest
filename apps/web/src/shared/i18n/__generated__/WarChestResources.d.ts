@@ -61,6 +61,11 @@ export interface WarChestResources {
     };
     DeveloperPanel: {
       close: '';
+      featureFlagDisabled: '';
+      featureFlagEnabled: '';
+      featureFlags: '';
+      featureFlagsError: '';
+      featureFlagsLoading: '';
       label: '';
       title: '';
     };
@@ -76,10 +81,24 @@ export interface WarChestResources {
       joinTitle: '';
     };
   };
+  'features/leave-game': {
+    LeaveGameButton: {
+      close: '';
+      closing: '';
+      leave: '';
+      leaving: '';
+    };
+  };
   'features/start-game': {
     StartGameButton: {
       start: '';
       starting: '';
+    };
+  };
+  'features/surrender-game': {
+    SurrenderGameButton: {
+      surrender: '';
+      surrendering: '';
     };
   };
   'features/swap-player-positions': {
@@ -319,6 +338,11 @@ export interface WarChestTranslationParameters {
   'features/developer-tools.DeveloperBackendSelector.fakeApi': null;
   'features/developer-tools.DeveloperBackendSelector.realApi': null;
   'features/developer-tools.DeveloperPanel.close': null;
+  'features/developer-tools.DeveloperPanel.featureFlagDisabled': null;
+  'features/developer-tools.DeveloperPanel.featureFlagEnabled': null;
+  'features/developer-tools.DeveloperPanel.featureFlags': null;
+  'features/developer-tools.DeveloperPanel.featureFlagsError': null;
+  'features/developer-tools.DeveloperPanel.featureFlagsLoading': null;
   'features/developer-tools.DeveloperPanel.label': null;
   'features/developer-tools.DeveloperPanel.title': null;
   'features/join-game.JoinGamePanel.changeDescription': null;
@@ -328,8 +352,14 @@ export interface WarChestTranslationParameters {
   'features/join-game.JoinGamePanel.joinDescription': null;
   'features/join-game.JoinGamePanel.joining': null;
   'features/join-game.JoinGamePanel.joinTitle': null;
+  'features/leave-game.LeaveGameButton.close': null;
+  'features/leave-game.LeaveGameButton.closing': null;
+  'features/leave-game.LeaveGameButton.leave': null;
+  'features/leave-game.LeaveGameButton.leaving': null;
   'features/start-game.StartGameButton.start': null;
   'features/start-game.StartGameButton.starting': null;
+  'features/surrender-game.SurrenderGameButton.surrender': null;
+  'features/surrender-game.SurrenderGameButton.surrendering': null;
   'features/swap-player-positions.SwapPlayerPositionsButton.label': null;
   'pages/active-game.ActiveGamePage.actionsDescriptionOpponent': null;
   'pages/active-game.ActiveGamePage.actionsDescriptionSpectator': null;

@@ -54,6 +54,12 @@ const gameEventDataSchema: z.ZodType<GameEventData> = z.discriminatedUnion(
       .strict(),
     eventMetadataSchema
       .extend({
+        payload: z.object({ playerId: z.string() }).strict(),
+        type: z.literal('PlayerLeft'),
+      })
+      .strict(),
+    eventMetadataSchema
+      .extend({
         payload: z
           .object({
             playerId: z.string(),
@@ -111,7 +117,7 @@ const gameEventDataSchema: z.ZodType<GameEventData> = z.discriminatedUnion(
         payload: z
           .object({
             playerId: z.string(),
-            reason: z.literal('disconnectTimeout'),
+            reason: z.enum(['disconnectTimeout', 'surrender']),
           })
           .strict(),
         type: z.literal('PlayerDefeated'),

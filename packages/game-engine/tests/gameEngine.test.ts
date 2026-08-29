@@ -587,6 +587,99 @@ describe('commands rejected while active', () => {
   });
 });
 
+describe('waiting game departure', () => {
+  let waitingState: GameState;
+
+  beforeEach(() => {
+    const gameCreated = createGame({
+      creatorId: 'player-one',
+      featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+      type: 'CreateGame',
+    });
+    waitingState = applyEvent(null, gameCreated);
+    waitingState = decide(waitingState, 'player-two', {
+      seat: 1,
+      team: 'black',
+      type: 'JoinGame',
+    }).reduce(applyEvent, waitingState);
+  });
+
+  test('removes a joined player from the waiting game', () => {
+    const events = decide(waitingState, 'player-two', { type: 'LeaveGame' });
+    const nextState = events.reduce(applyEvent, waitingState);
+
+    expect(events).toEqual([
+      expect.objectContaining({
+        payload: { playerId: 'player-two' },
+        type: 'PlayerLeft',
+      }),
+    ]);
+    expect(nextState.players).toEqual([]);
+    expect(nextState.teams.black).toEqual([]);
+  });
+
+  test('rejects departure from a spectator', () => {
+    expect(decide(waitingState, 'spectator', { type: 'LeaveGame' })).toEqual(
+      []
+    );
+  });
+});
+
+describe('player surrender', () => {
+  let activeState: GameState;
+
+  beforeEach(() => {
+    const gameCreated = createGame({
+      creatorId: 'player-one',
+      featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+      type: 'CreateGame',
+    });
+    const commands: readonly [string, GameCommandData][] = [
+      ['player-one', { seat: 1, team: 'white', type: 'JoinGame' }],
+      ['player-two', { seat: 1, team: 'black', type: 'JoinGame' }],
+      ['player-one', { type: 'StartGame' }],
+    ];
+
+    activeState = applyEvent(null, gameCreated);
+
+    for (const [playerId, command] of commands) {
+      activeState = decide(activeState, playerId, command).reduce(
+        applyEvent,
+        activeState
+      );
+    }
+  });
+
+  test.each([
+    { playerId: 'player-one', winnerTeam: 'black' },
+    { playerId: 'player-two', winnerTeam: 'white' },
+  ] as const)(
+    'finishes the game when $playerId surrenders regardless of turn',
+    ({ playerId, winnerTeam }) => {
+      const events = decide(activeState, playerId, { type: 'SurrenderGame' });
+      const finishedState = events.reduce(applyEvent, activeState);
+
+      expect(events).toEqual([
+        expect.objectContaining({
+          payload: { playerId, reason: 'surrender' },
+          type: 'PlayerDefeated',
+        }),
+        expect.objectContaining({
+          payload: { winnerTeam },
+          type: 'GameFinished',
+        }),
+      ]);
+      expect(finishedState).toMatchObject({ status: 'finished', winnerTeam });
+    }
+  );
+
+  test('rejects surrender from a spectator', () => {
+    expect(decide(activeState, 'spectator', { type: 'SurrenderGame' })).toEqual(
+      []
+    );
+  });
+});
+
 describe('safe player and spectator views', () => {
   let state: GameState;
   let firstPlayerViewer: Viewer;

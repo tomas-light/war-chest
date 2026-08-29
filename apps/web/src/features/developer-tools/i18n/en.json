@@ -6,6 +6,11 @@
   },
   "DeveloperPanel": {
     "close": "Close",
+    "featureFlagDisabled": "Off",
+    "featureFlagEnabled": "On",
+    "featureFlags": "Feature flags",
+    "featureFlagsError": "Current feature flags could not be loaded.",
+    "featureFlagsLoading": "Loading current feature flags…",
     "label": "Developer tools",
     "title": "Dev panel"
   }

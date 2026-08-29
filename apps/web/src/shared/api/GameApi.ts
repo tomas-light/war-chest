@@ -2,10 +2,14 @@ import {
   type CreateGameRequest,
   type GameResponse,
   type JoinGameRequest,
+  type LeaveGameRequest,
+  type LeaveGameResponse,
   type LobbyGamesResponse,
   type StartGameRequest,
+  type SurrenderGameRequest,
   type SwapPlayerPositionsRequest,
   gameResponseSchema,
+  leaveGameResponseSchema,
   lobbyGamesResponseSchema,
 } from '@war-chest/api-contracts';
 import {
@@ -38,11 +42,21 @@ export interface GameApi {
     gameId: string,
     request: JoinGameRequest
   ): Promise<GameResponse>;
+  leaveGame(
+    this: void,
+    gameId: string,
+    request: LeaveGameRequest
+  ): Promise<LeaveGameResponse>;
   listLobbyGames(this: void): Promise<LobbyGamesResponse>;
   startGame(
     this: void,
     gameId: string,
     request: StartGameRequest
+  ): Promise<GameResponse>;
+  surrenderGame(
+    this: void,
+    gameId: string,
+    request: SurrenderGameRequest
   ): Promise<GameResponse>;
   swapPlayerPositions(
     this: void,
@@ -56,8 +70,10 @@ export function createRealGameApi(): GameApi {
     createGame,
     getGame,
     joinGame,
+    leaveGame,
     listLobbyGames,
     startGame,
+    surrenderGame,
     swapPlayerPositions,
   };
 
@@ -100,6 +116,19 @@ export function createRealGameApi(): GameApi {
     });
   }
 
+  function leaveGame(
+    gameId: string,
+    request: LeaveGameRequest
+  ): Promise<LeaveGameResponse> {
+    return requestJson({
+      body: request,
+      invalidResponseMessage: 'The server returned an invalid leave result.',
+      method: 'POST',
+      schema: leaveGameResponseSchema,
+      url: `${GAMES_API_URL}/${gameId}/leave`,
+    });
+  }
+
   function startGame(
     gameId: string,
     request: StartGameRequest
@@ -123,6 +152,19 @@ export function createRealGameApi(): GameApi {
       method: 'POST',
       schema: gameResponseSchema,
       url: `${GAMES_API_URL}/${gameId}/swap-positions`,
+    });
+  }
+
+  function surrenderGame(
+    gameId: string,
+    request: SurrenderGameRequest
+  ): Promise<GameResponse> {
+    return requestJson({
+      body: request,
+      invalidResponseMessage: 'The server returned an invalid game state.',
+      method: 'POST',
+      schema: gameResponseSchema,
+      url: `${GAMES_API_URL}/${gameId}/surrender`,
     });
   }
 }

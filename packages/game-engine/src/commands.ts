@@ -5,8 +5,10 @@ export type {
   CreateGameCommandData,
   FinishGameCommandData,
   JoinGameCommandData,
+  LeaveGameCommandData,
   LifecycleCommandData,
   StartGameCommandData,
+  SurrenderGameCommandData,
   SwapPlayerPositionsCommandData,
 } from './command-data/LifecycleCommandData.js';
 export type {

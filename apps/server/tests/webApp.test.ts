@@ -17,6 +17,7 @@ test('serves the SPA entry point for a deep link navigation', async () => {
     auth: {} as Auth,
     databaseConnection,
     disconnectedPlayerTimeoutMinutes: 15,
+    emptyWaitingGameTimeoutMinutes: 10,
     featureFlagsService: { read: vi.fn() },
     webAssetsRoot,
   });
@@ -47,6 +48,7 @@ test('does not use the SPA fallback for an unknown API route', async () => {
     auth: {} as Auth,
     databaseConnection,
     disconnectedPlayerTimeoutMinutes: 15,
+    emptyWaitingGameTimeoutMinutes: 10,
     featureFlagsService: { read: vi.fn() },
     webAssetsRoot,
   });

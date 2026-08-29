@@ -1,0 +1,13 @@
+.action {
+  display: grid;
+  gap: 10px;
+}
+
+.action p {
+  margin: 0;
+  color: var(--wc-color-error);
+}
+
+.action button {
+  width: 100%;
+}

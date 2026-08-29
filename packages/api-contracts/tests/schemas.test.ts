@@ -8,6 +8,8 @@ import {
   gameJoinMessageSchema,
   googleLoginRequestSchema,
   joinGameRequestSchema,
+  leaveGameRequestSchema,
+  leaveGameResponseSchema,
   lobbyGamesResponseSchema,
   lobbyUpdatedMessageSchema,
   sessionResponseSchema,
@@ -72,6 +74,38 @@ describe('game events contract', () => {
           },
           sequence: 5,
           type: 'PlayerDisconnected',
+          version: 1,
+        },
+      ],
+      gameId: GAME_ID,
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  test('accepts a player leaving a waiting game', () => {
+    const result = gameEventsMessageSchema.safeParse({
+      events: [
+        {
+          payload: { playerId: 'user-1' },
+          sequence: 3,
+          type: 'PlayerLeft',
+          version: 1,
+        },
+      ],
+      gameId: GAME_ID,
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  test('accepts surrender as a public defeat reason', () => {
+    const result = gameEventsMessageSchema.safeParse({
+      events: [
+        {
+          payload: { playerId: 'user-1', reason: 'surrender' },
+          sequence: 5,
+          type: 'PlayerDefeated',
           version: 1,
         },
       ],
@@ -148,6 +182,17 @@ describe('game client message contracts', () => {
     expect(result.success).toBe(true);
   });
 
+  test('accepts surrender independently of the current turn', () => {
+    const result = gameCommandMessageSchema.safeParse({
+      command: { type: 'SurrenderGame' },
+      commandId: COMMAND_ID,
+      expectedVersion: 4,
+      gameId: GAME_ID,
+    });
+
+    expect(result.success).toBe(true);
+  });
+
   test('rejects a non-UUID game identifier', () => {
     const result = gameJoinMessageSchema.safeParse({ gameId: 'game-1' });
 
@@ -193,6 +238,21 @@ describe('game HTTP request contracts', () => {
     });
 
     expect(result.success).toBe(false);
+  });
+
+  test('accepts a versioned waiting game departure request', () => {
+    const result = leaveGameRequestSchema.safeParse({
+      commandId: COMMAND_ID,
+      expectedVersion: 2,
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  test('accepts a closed or left game response', () => {
+    const result = leaveGameResponseSchema.safeParse({ gameId: GAME_ID });
+
+    expect(result.success).toBe(true);
   });
 
   test('coerces the event sequence from an HTTP query', () => {

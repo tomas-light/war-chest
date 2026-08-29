@@ -199,6 +199,10 @@ export function registerGameSocket(input: RegisterGameSocketInput): void {
       return;
     }
 
+    if (result.status === 'gameDeleted') {
+      return;
+    }
+
     if (result.status === 'versionConflict') {
       socket.emit('game:error', {
         code: 'game_version_conflict',
@@ -290,7 +294,14 @@ export async function broadcastGameUpdate(
 
       if (result.status === 'found') {
         emitSynchronization(roomSocket, update.gameId, result.synchronization);
+        return;
       }
+
+      roomSocket.emit('game:error', {
+        code: 'game_not_found',
+        gameId: update.gameId,
+        message: 'Game was not found.',
+      });
     })
   );
 }

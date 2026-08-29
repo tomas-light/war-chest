@@ -85,12 +85,26 @@ export interface JoinGameRequest {
   team: 'black' | 'white';
 }
 
+export interface LeaveGameRequest {
+  commandId: string;
+  expectedVersion: number;
+}
+
+export interface LeaveGameResponse {
+  gameId: string;
+}
+
 export interface StartGameRequest {
   commandId: string;
   expectedVersion: number;
 }
 
 export interface SwapPlayerPositionsRequest {
+  commandId: string;
+  expectedVersion: number;
+}
+
+export interface SurrenderGameRequest {
   commandId: string;
   expectedVersion: number;
 }

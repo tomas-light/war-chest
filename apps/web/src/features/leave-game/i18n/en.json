@@ -1,0 +1,8 @@
+{
+  "LeaveGameButton": {
+    "close": "Close lobby",
+    "closing": "Closing lobby…",
+    "leave": "Leave lobby",
+    "leaving": "Leaving lobby…"
+  }
+}

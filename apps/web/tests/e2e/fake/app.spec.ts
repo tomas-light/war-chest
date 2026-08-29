@@ -52,6 +52,23 @@ test('signs in, restores the fake session and signs out', async ({ page }) => {
   await expect(
     developerPanel.getByRole('combobox', { name: 'Бэкенд' })
   ).toHaveValue('fake');
+  const featureFlags = developerPanel.getByRole('list');
+
+  await expect(
+    featureFlags.getByRole('listitem').filter({ hasText: 'game history' })
+  ).toContainText('Включён');
+  await expect(
+    featureFlags.getByRole('listitem').filter({ hasText: 'optimistic moves' })
+  ).toContainText('Выключен');
+  await expect(
+    featureFlags.getByRole('listitem').filter({ hasText: 'spectator mode' })
+  ).toContainText('Включён');
+
+  await page.mouse.click(16, 220);
+  await expect(developerPanel).toBeHidden();
+
+  await page.getByRole('button', { name: 'Dev' }).click();
+  await expect(developerPanel).toBeVisible();
   await developerPanel.getByRole('button', { name: 'Закрыть' }).click();
   await expect(developerPanel).toBeHidden();
 
@@ -225,12 +242,40 @@ test('updates the lobby and moves role selection inside a waiting game', async (
     page.getByRole('heading', { name: 'История ходов' })
   ).toBeVisible();
   await expect(secondPage).toHaveURL(/\/games\/play\//);
+  await expect(page.getByRole('button', { name: 'Сдаться' })).toBeVisible();
+  await expect(
+    secondPage.getByRole('button', { name: 'Сдаться' })
+  ).toBeVisible();
   await secondPage.waitForTimeout(500);
   const hasReturnedToPreparation = await secondPage.evaluate(
     () => sessionStorage.getItem('war-chest-preparation-returned') === 'true'
   );
 
   expect(hasReturnedToPreparation).toBe(false);
+
+  await page.getByRole('button', { name: 'Сдаться' }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Партия завершена' })
+  ).toBeVisible();
+  await expect(
+    secondPage.getByRole('heading', { name: 'Партия завершена' })
+  ).toBeVisible();
+  const finishedGameTable = page.getByRole('region', {
+    name: 'Игровое поле',
+  });
+
+  await expect(finishedGameTable.getByText('T User')).toBeVisible();
+  await expect(finishedGameTable.getByText('G User')).toBeVisible();
+  await expect(
+    finishedGameTable.getByRole('img', {
+      name: 'Аватар пользователя T User',
+    })
+  ).toBeVisible();
+  await expect(
+    finishedGameTable.getByRole('img', {
+      name: 'Аватар пользователя G User',
+    })
+  ).toBeVisible();
 
   await page.setViewportSize({ height: 844, width: 390 });
   await expect(page.getByText('Игровое поле', { exact: true })).toBeVisible();
@@ -241,4 +286,74 @@ test('updates the lobby and moves role selection inside a waiting game', async (
   );
 
   expect(hasHorizontalOverflow).toBe(false);
+});
+
+test('lets a player leave and the creator close a waiting lobby', async ({
+  context,
+  page,
+}) => {
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'war-chest-dev-backend',
+      JSON.stringify({ state: { backend: 'fake' }, version: 0 })
+    );
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Продолжить с Telegram' }).click();
+  await page.getByRole('button', { name: 'Новая игра' }).click();
+  await page.getByRole('button', { name: 'Создать игру' }).click();
+  await expect(
+    page.getByRole('button', { name: 'Закрыть лобби' })
+  ).toBeVisible();
+
+  const secondPage = await context.newPage();
+  await secondPage.goto('/');
+  await secondPage.getByRole('button', { name: 'Продолжить с Google' }).click();
+  await secondPage.getByRole('button', { name: 'Открыть игру' }).click();
+  await secondPage.getByRole('button', { name: 'Занять место' }).click();
+  await secondPage
+    .getByRole('button', { name: 'Присоединиться как игрок' })
+    .click();
+
+  await secondPage.getByRole('button', { name: 'Покинуть лобби' }).click();
+
+  await expect(secondPage).toHaveURL(/\/lobby$/);
+  await expect(
+    page.locator('article').filter({ hasText: 'Свободно' })
+  ).toHaveCount(2);
+
+  await secondPage.getByRole('button', { name: 'Открыть игру' }).click();
+  await secondPage.getByRole('button', { name: 'Занять место' }).click();
+  await secondPage
+    .getByRole('button', { name: 'Присоединиться как игрок' })
+    .click();
+
+  await page.evaluate(() => {
+    sessionStorage.setItem('war-chest-close-showed-game-error', 'false');
+    const observer = new MutationObserver(() => {
+      const pageText = document.body.textContent ?? '';
+
+      if (
+        pageText.includes('Игра не найдена') ||
+        pageText.includes('Не удалось открыть игру')
+      ) {
+        sessionStorage.setItem('war-chest-close-showed-game-error', 'true');
+      }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+  });
+
+  await page.getByRole('button', { name: 'Закрыть лобби' }).click();
+
+  await expect(page).toHaveURL(/\/lobby$/);
+  await expect(page.getByText('Активных игр пока нет')).toBeVisible();
+  const hasShownGameError = await page.evaluate(
+    () => sessionStorage.getItem('war-chest-close-showed-game-error') === 'true'
+  );
+
+  expect(hasShownGameError).toBe(false);
+  await expect(
+    secondPage.getByRole('heading', { name: 'Не удалось открыть игру' })
+  ).toBeVisible();
 });

@@ -9,6 +9,7 @@ const BASE_CONFIG = [
   'APP_PORT: 3000',
   'APP_SERVE_WEB: false',
   'DISCONNECTED_PLAYER_TIMEOUT_MINUTES: 15',
+  'EMPTY_WAITING_GAME_TIMEOUT_MINUTES: 10',
   'FEATURE_FLAGS_RUNTIME_FILE: "feature-flags.base.json"',
   'WEB_ASSETS_ROOT: "web-dist"',
 ].join('\n');
@@ -37,6 +38,7 @@ test('loads base, local, and environment values in priority order', () => {
         APP_PORT: 3200,
         APP_SERVE_WEB: false,
         DISCONNECTED_PLAYER_TIMEOUT_MINUTES: 20,
+        EMPTY_WAITING_GAME_TIMEOUT_MINUTES: 10,
         FEATURE_FLAGS_RUNTIME_FILE: join(
           packageRoot,
           'feature-flags.environment.json'

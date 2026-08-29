@@ -1,3 +1,4 @@
+import type { LobbyGame } from '@war-chest/api-contracts';
 import {
   type GameView,
   type GameViewEventData,
@@ -10,10 +11,12 @@ type SynchronizationStatus = 'idle' | 'ready' | 'desynchronized';
 interface GameSessionState {
   events: readonly GameViewEventData[];
   liveState: GameView | null;
+  lobbyGame: LobbyGame | null;
   synchronizationStatus: SynchronizationStatus;
   viewedState: GameView | null;
   applyEvents(events: readonly GameViewEventData[]): void;
   hydrate(view: GameView, events?: readonly GameViewEventData[]): void;
+  retainLobbyGame(game: LobbyGame): void;
   viewLiveState(): void;
 }
 
@@ -23,6 +26,7 @@ export function createGameSessionStore() {
   return createStore<GameSessionState>()((set) => ({
     events: [],
     liveState: null,
+    lobbyGame: null,
     synchronizationStatus: 'idle',
     viewedState: null,
     applyEvents(events) {
@@ -35,6 +39,9 @@ export function createGameSessionStore() {
         synchronizationStatus: 'ready',
         viewedState: view,
       });
+    },
+    retainLobbyGame(game) {
+      set({ lobbyGame: game });
     },
     viewLiveState() {
       set((state) => ({ viewedState: state.liveState }));

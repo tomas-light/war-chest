@@ -24,7 +24,9 @@ const AUTHENTICATED_GAME_ROUTES = [
   { method: 'GET', url: '/api/games' },
   { method: 'GET', url: `/api/games/${GAME_ID}` },
   { method: 'POST', url: `/api/games/${GAME_ID}/join` },
+  { method: 'POST', url: `/api/games/${GAME_ID}/leave` },
   { method: 'POST', url: `/api/games/${GAME_ID}/start` },
+  { method: 'POST', url: `/api/games/${GAME_ID}/surrender` },
   { method: 'POST', url: `/api/games/${GAME_ID}/swap-positions` },
   { method: 'GET', url: `/api/games/${GAME_ID}/events` },
 ] satisfies readonly { method: HTTPMethods; url: string }[];
@@ -80,7 +82,7 @@ describe('game HTTP routes', () => {
       getEvents,
       getSnapshot,
       listLobbyGames,
-      recoverActiveGames: vi.fn(),
+      recoverGames: vi.fn(),
       subscribe: vi.fn<GameService['subscribe']>().mockReturnValue(vi.fn()),
       synchronize: vi.fn(),
     };
@@ -98,6 +100,7 @@ describe('game HTTP routes', () => {
       auth,
       databaseConnection,
       disconnectedPlayerTimeoutMinutes: 15,
+      emptyWaitingGameTimeoutMinutes: 10,
       featureFlagsService: { read: vi.fn() },
     });
   });
@@ -271,6 +274,53 @@ describe('game HTTP routes', () => {
       command: { type: 'SwapPlayerPositions' },
       commandId: COMMAND_ID,
       expectedVersion: 3,
+      gameId: GAME_ID,
+      userId: USER_ID,
+    });
+    expect(response.statusCode).toBe(200);
+  });
+
+  test('closes a waiting lobby for its creator', async () => {
+    executeCommand.mockResolvedValue({ status: 'gameDeleted' });
+
+    const response = await app.inject({
+      body: { commandId: COMMAND_ID, expectedVersion: 3 },
+      headers: AUTH_HEADERS,
+      method: 'POST',
+      url: `/api/games/${GAME_ID}/leave`,
+    });
+
+    expect(executeCommand).toHaveBeenCalledWith({
+      command: { type: 'LeaveGame' },
+      commandId: COMMAND_ID,
+      expectedVersion: 3,
+      gameId: GAME_ID,
+      userId: USER_ID,
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ gameId: GAME_ID });
+  });
+
+  test('executes surrender for the authenticated player', async () => {
+    executeCommand.mockResolvedValue({
+      currentVersion: 6,
+      events: [],
+      previousVersion: 4,
+      status: 'saved',
+      view: { ...WAITING_VIEW, lastEventSequence: 6, status: 'finished' },
+    });
+
+    const response = await app.inject({
+      body: { commandId: COMMAND_ID, expectedVersion: 4 },
+      headers: AUTH_HEADERS,
+      method: 'POST',
+      url: `/api/games/${GAME_ID}/surrender`,
+    });
+
+    expect(executeCommand).toHaveBeenCalledWith({
+      command: { type: 'SurrenderGame' },
+      commandId: COMMAND_ID,
+      expectedVersion: 4,
       gameId: GAME_ID,
       userId: USER_ID,
     });

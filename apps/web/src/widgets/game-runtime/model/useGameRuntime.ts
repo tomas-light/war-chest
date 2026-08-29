@@ -34,6 +34,10 @@ export function useGameRuntimeState(input: Input) {
   const gameSessionStore = useMemo(() => createGameSessionStore(), []);
   const connectionRef = useRef<GameConnection | null>(null);
   const liveState = useStore(gameSessionStore, (state) => state.liveState);
+  const retainedLobbyGame = useStore(
+    gameSessionStore,
+    (state) => state.lobbyGame
+  );
   const synchronizationStatus = useStore(
     gameSessionStore,
     (state) => state.synchronizationStatus
@@ -41,9 +45,18 @@ export function useGameRuntimeState(input: Input) {
   const [connectionError, setConnectionError] = useState<ApiClientError | null>(
     null
   );
-  const lobbyGame = lobbyGamesQuery.data?.items.find(
+  const currentLobbyGame = lobbyGamesQuery.data?.items.find(
     (game) => game.id === input.gameId
   );
+  const lobbyGame =
+    currentLobbyGame ??
+    (retainedLobbyGame?.id === input.gameId ? retainedLobbyGame : undefined);
+
+  useEffect(() => {
+    if (currentLobbyGame !== undefined) {
+      gameSessionStore.getState().retainLobbyGame(currentLobbyGame);
+    }
+  }, [currentLobbyGame, gameSessionStore]);
 
   useEffect(() => {
     if (gameQuery.data !== undefined) {

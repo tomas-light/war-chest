@@ -13,6 +13,7 @@ import {
 import type { GameRepository } from '../src/games/GameRepository.js';
 import {
   type GameService,
+  type GameUpdate,
   createGameService,
 } from '../src/games/GameService.js';
 
@@ -24,6 +25,7 @@ const FIRST_USER_ID = '10000000-0000-4000-8000-000000000001';
 const SECOND_USER_ID = '10000000-0000-4000-8000-000000000002';
 const SPECTATOR_USER_ID = '10000000-0000-4000-8000-000000000003';
 const DISCONNECTED_PLAYER_TIMEOUT_MS = 15 * 60 * 1000;
+const EMPTY_WAITING_GAME_TIMEOUT_MS = 10 * 60 * 1000;
 const RECONNECT_DEADLINE_RETRY_DELAY_MS = 1_000;
 const CURRENT_TIME = new Date('2026-08-16T12:00:00.000Z');
 const CREATE_REQUEST_HASH =
@@ -81,11 +83,14 @@ describe('GameService', () => {
     featureFlagsService = { read: vi.fn() };
     gameRepository = {
       createGame: vi.fn(),
+      deleteExpiredWaitingGame: vi.fn(),
+      deleteWaitingGame: vi.fn(),
       findActiveGameIds: vi.fn(),
       findCurrentPlayerGame: vi.fn(),
       findGame: vi.fn(),
       findParticipant: vi.fn(),
       findProcessedCommand: vi.fn(),
+      listEmptyWaitingGames: vi.fn(),
       listLobbyGames: vi.fn(),
       loadEvents: vi.fn(),
       saveCommand: vi.fn(),
@@ -94,13 +99,18 @@ describe('GameService', () => {
     gameService = createGameService({
       activeGames,
       disconnectedPlayerTimeoutMs: DISCONNECTED_PLAYER_TIMEOUT_MS,
+      emptyWaitingGameTimeoutMs: EMPTY_WAITING_GAME_TIMEOUT_MS,
       featureFlagsService,
       gameRepository,
+    });
+    vi.mocked(gameRepository.deleteExpiredWaitingGame).mockResolvedValue({
+      status: 'deleted',
     });
     vi.mocked(gameRepository.findProcessedCommand).mockResolvedValue(null);
     vi.mocked(gameRepository.findActiveGameIds).mockResolvedValue([]);
     vi.mocked(gameRepository.findCurrentPlayerGame).mockResolvedValue(null);
     vi.mocked(gameRepository.findParticipant).mockResolvedValue(null);
+    vi.mocked(gameRepository.listEmptyWaitingGames).mockResolvedValue([]);
     vi.mocked(gameRepository.listLobbyGames).mockResolvedValue([]);
   });
 
@@ -114,6 +124,7 @@ describe('GameService', () => {
       DEFAULT_RUNTIME_FEATURE_FLAGS
     );
     vi.mocked(gameRepository.createGame).mockResolvedValue({
+      createdAt: CURRENT_TIME,
       gameId: GAME_ID,
       status: 'created',
     });
@@ -148,7 +159,11 @@ describe('GameService', () => {
       })
       .mockResolvedValueOnce(DEFAULT_RUNTIME_FEATURE_FLAGS);
     vi.mocked(gameRepository.createGame)
-      .mockResolvedValueOnce({ gameId: GAME_ID, status: 'created' })
+      .mockResolvedValueOnce({
+        createdAt: CURRENT_TIME,
+        gameId: GAME_ID,
+        status: 'created',
+      })
       .mockResolvedValueOnce({ status: 'commandIdConflict' });
 
     await gameService.createGame({
@@ -168,6 +183,7 @@ describe('GameService', () => {
       DEFAULT_RUNTIME_FEATURE_FLAGS
     );
     vi.mocked(gameRepository.createGame).mockResolvedValue({
+      createdAt: CURRENT_TIME,
       gameId: GAME_ID,
       status: 'created',
     });
@@ -185,6 +201,99 @@ describe('GameService', () => {
         previousVersion: 0,
       });
     });
+  });
+
+  test('deletes a newly created empty waiting game after its timeout', async () => {
+    vi.mocked(featureFlagsService.read).mockResolvedValue(
+      DEFAULT_RUNTIME_FEATURE_FLAGS
+    );
+    vi.mocked(gameRepository.createGame).mockResolvedValue({
+      createdAt: CURRENT_TIME,
+      gameId: GAME_ID,
+      status: 'created',
+    });
+    await gameService.createGame({
+      commandId: COMMAND_ID,
+      userId: FIRST_USER_ID,
+    });
+    const deletionUpdate = new Promise<GameUpdate>((resolve) => {
+      gameService.subscribe(resolve);
+    });
+
+    await vi.advanceTimersByTimeAsync(EMPTY_WAITING_GAME_TIMEOUT_MS - 1);
+    expect(gameRepository.deleteExpiredWaitingGame).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1);
+    await deletionUpdate;
+
+    expect(gameRepository.deleteExpiredWaitingGame).toHaveBeenCalledWith({
+      expiredBefore: CURRENT_TIME,
+      gameId: GAME_ID,
+    });
+    expect(activeGames.get(GAME_ID)).toBeNull();
+  });
+
+  test('keeps a waiting game after a player takes a seat', async () => {
+    vi.mocked(featureFlagsService.read).mockResolvedValue(
+      DEFAULT_RUNTIME_FEATURE_FLAGS
+    );
+    vi.mocked(gameRepository.createGame).mockResolvedValue({
+      createdAt: CURRENT_TIME,
+      gameId: GAME_ID,
+      status: 'created',
+    });
+    vi.mocked(gameRepository.saveCommand).mockResolvedValue({
+      currentVersion: 2,
+      status: 'saved',
+    });
+    await gameService.createGame({
+      commandId: COMMAND_ID,
+      userId: FIRST_USER_ID,
+    });
+
+    await gameService.executeCommand({
+      command: { seat: 1, team: 'white', type: 'JoinGame' },
+      commandId: SECOND_COMMAND_ID,
+      expectedVersion: 1,
+      gameId: GAME_ID,
+      userId: FIRST_USER_ID,
+    });
+    await vi.advanceTimersByTimeAsync(EMPTY_WAITING_GAME_TIMEOUT_MS);
+
+    expect(gameRepository.deleteExpiredWaitingGame).not.toHaveBeenCalled();
+    expect(activeGames.get(GAME_ID)?.state.players).toHaveLength(1);
+  });
+
+  test('retries empty waiting game deletion after a transient failure', async () => {
+    vi.mocked(featureFlagsService.read).mockResolvedValue(
+      DEFAULT_RUNTIME_FEATURE_FLAGS
+    );
+    vi.mocked(gameRepository.createGame).mockResolvedValue({
+      createdAt: CURRENT_TIME,
+      gameId: GAME_ID,
+      status: 'created',
+    });
+    vi.mocked(gameRepository.deleteExpiredWaitingGame)
+      .mockRejectedValueOnce(
+        new Error('PostgreSQL is temporarily unavailable.')
+      )
+      .mockResolvedValueOnce({ status: 'deleted' });
+    await gameService.createGame({
+      commandId: COMMAND_ID,
+      userId: FIRST_USER_ID,
+    });
+    const deletionUpdate = new Promise<GameUpdate>((resolve) => {
+      gameService.subscribe(resolve);
+    });
+
+    await vi.advanceTimersByTimeAsync(EMPTY_WAITING_GAME_TIMEOUT_MS);
+    expect(gameRepository.deleteExpiredWaitingGame).toHaveBeenCalledOnce();
+    await vi.advanceTimersByTimeAsync(RECONNECT_DEADLINE_RETRY_DELAY_MS - 1);
+    expect(gameRepository.deleteExpiredWaitingGame).toHaveBeenCalledOnce();
+    await vi.advanceTimersByTimeAsync(1);
+    await deletionUpdate;
+
+    expect(gameRepository.deleteExpiredWaitingGame).toHaveBeenCalledTimes(2);
+    expect(activeGames.get(GAME_ID)).toBeNull();
   });
 
   test('returns a duplicate create result without reading unavailable runtime flags', async () => {
@@ -416,6 +525,127 @@ describe('GameService', () => {
     });
 
     expect(result).toEqual({ status: 'gameCommandForbidden' });
+  });
+
+  test('deletes a waiting game when its creator closes the lobby', async () => {
+    activeGames.store(GAME_ID, applyEvent(null, GAME_CREATED_EVENT));
+    vi.mocked(gameRepository.deleteWaitingGame).mockResolvedValue({
+      status: 'deleted',
+    });
+
+    const result = await gameService.executeCommand({
+      command: { type: 'LeaveGame' },
+      commandId: COMMAND_ID,
+      expectedVersion: 1,
+      gameId: GAME_ID,
+      userId: FIRST_USER_ID,
+    });
+
+    expect(gameRepository.deleteWaitingGame).toHaveBeenCalledWith({
+      expectedVersion: 1,
+      gameId: GAME_ID,
+    });
+    expect(result).toEqual({ status: 'gameDeleted' });
+    expect(activeGames.get(GAME_ID)).toBeNull();
+  });
+
+  test('removes a joined non-creator from waiting game projections', async () => {
+    const secondPlayerJoinedEvent: GameEventData = {
+      ...SECOND_PLAYER_JOINED_EVENT,
+      sequence: 2,
+    };
+    const state = restoreGame([GAME_CREATED_EVENT, secondPlayerJoinedEvent]);
+
+    if (state === null) {
+      throw new Error('Expected a restored waiting state.');
+    }
+
+    activeGames.store(GAME_ID, state);
+    vi.mocked(gameRepository.findParticipant).mockResolvedValue({
+      gameId: GAME_ID,
+      seat: 1,
+      team: 'black',
+      userId: SECOND_USER_ID,
+    });
+    vi.mocked(gameRepository.saveCommand).mockResolvedValue({
+      currentVersion: 3,
+      status: 'saved',
+    });
+
+    const result = await gameService.executeCommand({
+      command: { type: 'LeaveGame' },
+      commandId: COMMAND_ID,
+      expectedVersion: 2,
+      gameId: GAME_ID,
+      userId: SECOND_USER_ID,
+    });
+
+    expect(gameRepository.saveCommand).toHaveBeenCalledWith(
+      expect.objectContaining({
+        participantChanges: [
+          { operation: 'removePlayer', userId: SECOND_USER_ID },
+        ],
+      })
+    );
+    expect(result).toMatchObject({
+      status: 'saved',
+      view: { players: [], status: 'waiting' },
+    });
+  });
+
+  test('persists defeat and opponent victory after a non-current player surrenders', async () => {
+    const state = restoreGame([
+      GAME_CREATED_EVENT,
+      FIRST_PLAYER_JOINED_EVENT,
+      SECOND_PLAYER_JOINED_EVENT,
+      GAME_STARTED_EVENT,
+    ]);
+
+    if (state === null) {
+      throw new Error('Expected a restored active state.');
+    }
+
+    activeGames.store(GAME_ID, state);
+    vi.mocked(gameRepository.findParticipant).mockResolvedValue({
+      gameId: GAME_ID,
+      seat: 1,
+      team: 'black',
+      userId: SECOND_USER_ID,
+    });
+    vi.mocked(gameRepository.saveCommand).mockResolvedValue({
+      currentVersion: 6,
+      status: 'saved',
+    });
+
+    const result = await gameService.executeCommand({
+      command: { type: 'SurrenderGame' },
+      commandId: COMMAND_ID,
+      expectedVersion: 4,
+      gameId: GAME_ID,
+      userId: SECOND_USER_ID,
+    });
+
+    const savedCommand = vi.mocked(gameRepository.saveCommand).mock
+      .calls[0]?.[0];
+
+    expect(savedCommand?.events).toEqual([
+      expect.objectContaining({
+        payload: { playerId: SECOND_USER_ID, reason: 'surrender' },
+        type: 'PlayerDefeated',
+      }),
+      expect.objectContaining({
+        payload: { winnerTeam: 'white' },
+        type: 'GameFinished',
+      }),
+    ]);
+    expect(savedCommand?.gameChanges).toMatchObject({
+      status: 'finished',
+      winnerTeam: 'white',
+    });
+    expect(result).toMatchObject({
+      status: 'saved',
+      view: { status: 'finished', winnerTeam: 'white' },
+    });
   });
 
   test('forbids a joined non-creator from starting the game', async () => {
@@ -1260,6 +1490,27 @@ describe('GameService', () => {
     expect(activeGames.get(GAME_ID)).toBeNull();
   });
 
+  test('deletes an already expired empty waiting game during recovery', async () => {
+    const expiredCreatedAt = new Date(
+      CURRENT_TIME.getTime() - EMPTY_WAITING_GAME_TIMEOUT_MS
+    );
+    vi.mocked(gameRepository.listEmptyWaitingGames).mockResolvedValue([
+      { createdAt: expiredCreatedAt, id: GAME_ID },
+    ]);
+    const deletionUpdate = new Promise<GameUpdate>((resolve) => {
+      gameService.subscribe(resolve);
+    });
+
+    await gameService.recoverGames();
+    await deletionUpdate;
+
+    expect(gameRepository.deleteExpiredWaitingGame).toHaveBeenCalledWith({
+      expiredBefore: expiredCreatedAt,
+      gameId: GAME_ID,
+    });
+    expect(gameRepository.findGame).not.toHaveBeenCalled();
+  });
+
   test('restores a future reconnect timer from persisted history', async () => {
     const disconnectedEvent: GameEventData = {
       payload: {
@@ -1288,7 +1539,7 @@ describe('GameService', () => {
       disconnectedEvent,
     ]);
 
-    await gameService.recoverActiveGames();
+    await gameService.recoverGames();
 
     expect(vi.getTimerCount()).toBe(1);
     await vi.advanceTimersByTimeAsync(DISCONNECTED_PLAYER_TIMEOUT_MS - 1);
@@ -1332,7 +1583,7 @@ describe('GameService', () => {
       status: 'saved',
     });
 
-    await gameService.recoverActiveGames();
+    await gameService.recoverGames();
     await vi.runOnlyPendingTimersAsync();
 
     await vi.waitFor(() => {

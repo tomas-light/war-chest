@@ -28,6 +28,12 @@ const SUPPORTED_EVENTS: readonly GameEventData[] = [
     version: GAME_EVENT_VERSION,
   },
   {
+    payload: { playerId: 'player-one' },
+    sequence: 3,
+    type: 'PlayerLeft',
+    version: GAME_EVENT_VERSION,
+  },
+  {
     payload: { playerId: 'player-one', seat: 1, team: 'black' },
     sequence: 3,
     type: 'PlayerPositionChanged',
@@ -62,6 +68,12 @@ const SUPPORTED_EVENTS: readonly GameEventData[] = [
   {
     payload: { playerId: 'player-one', reason: 'disconnectTimeout' },
     sequence: 7,
+    type: 'PlayerDefeated',
+    version: GAME_EVENT_VERSION,
+  },
+  {
+    payload: { playerId: 'player-one', reason: 'surrender' },
+    sequence: 8,
     type: 'PlayerDefeated',
     version: GAME_EVENT_VERSION,
   },
