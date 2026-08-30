@@ -1,5 +1,8 @@
 {
   "UserAvatar": {
     "label": "Аватар пользователя {{userName}}"
+  },
+  "UserProfileLink": {
+    "label": "Открыть профиль игрока {{userName}}"
   }
 }

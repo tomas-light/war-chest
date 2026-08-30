@@ -5,7 +5,6 @@ import type {
   GameParticipant,
   ProcessedCommand,
   User,
-  UserIdentity,
 } from '@war-chest/database';
 import type { RuntimeFeatureFlags } from '@war-chest/feature-flags';
 import type { DBSchema, IDBPDatabase } from 'idb';
@@ -17,14 +16,13 @@ export const FAKE_DATABASE_STORE_NAMES = [
   'games',
   'processedCommands',
   'runtimeFeatureFlags',
-  'userIdentities',
   'users',
 ] as const;
 
-export type FakeAuthProvider = UserIdentity['provider'];
 export type FakeGameStatus = Game['status'];
-export type FakeUser = User;
-export type FakeUserIdentity = UserIdentity;
+export type FakeUser = User & {
+  avatarDataUrl?: string | null;
+};
 export type FakeAuthSession = Omit<AuthSession, 'tokenHash'>;
 export type FakeGame = Game;
 export type FakeGameParticipant = GameParticipant;
@@ -64,10 +62,6 @@ export interface FakeDatabaseSchema extends DBSchema {
   runtimeFeatureFlags: {
     key: 'application';
     value: FakeRuntimeFeatureFlags;
-  };
-  userIdentities: {
-    key: string;
-    value: FakeUserIdentity;
   };
   users: {
     key: string;

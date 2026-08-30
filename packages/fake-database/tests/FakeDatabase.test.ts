@@ -8,7 +8,6 @@ import {
   type FakeGameEvent,
   createFakeDatabase,
   deleteFakeDatabase,
-  FAKE_PROVIDER_SUBJECTS,
   FAKE_SEED_IDENTIFIERS,
 } from '../src/index.js';
 
@@ -34,7 +33,6 @@ describe('fake database', () => {
       'games',
       'processedCommands',
       'runtimeFeatureFlags',
-      'userIdentities',
       'users',
     ]);
   });
@@ -48,7 +46,6 @@ describe('fake database', () => {
         'games',
         'processedCommands',
         'runtimeFeatureFlags',
-        'userIdentities',
         'users',
       ],
       'readonly'
@@ -63,7 +60,6 @@ describe('fake database', () => {
         transaction.objectStore('gameParticipants'),
         transaction.objectStore('games'),
         transaction.objectStore('processedCommands'),
-        transaction.objectStore('userIdentities'),
         transaction.objectStore('users'),
       ].every((store) => store.indexNames.length === 0)
     ).toBe(true);
@@ -201,69 +197,12 @@ describe('fake database', () => {
     await expect(database.game.get(game.id)).resolves.toBeUndefined();
   });
 
-  test('seeds one stable user for each fake provider', async () => {
-    const googleAccount = await database.users.findByIdentity(
-      'google',
-      FAKE_PROVIDER_SUBJECTS.google
-    );
-    const telegramAccount = await database.users.findByIdentity(
-      'telegram',
-      FAKE_PROVIDER_SUBJECTS.telegram
-    );
-    const yandexAccount = await database.users.findByIdentity(
-      'yandex',
-      FAKE_PROVIDER_SUBJECTS.yandex
-    );
-
-    expect([
-      googleAccount?.user.id,
-      telegramAccount?.user.id,
-      yandexAccount?.user.id,
-    ]).toEqual([
-      FAKE_SEED_IDENTIFIERS.googleUser,
-      FAKE_SEED_IDENTIFIERS.telegramUser,
-      FAKE_SEED_IDENTIFIERS.yandexUser,
-    ]);
-  });
-
-  test('uses provider-specific display names for fake users', async () => {
-    const googleAccount = await database.users.findByIdentity(
-      'google',
-      FAKE_PROVIDER_SUBJECTS.google
-    );
-    const telegramAccount = await database.users.findByIdentity(
-      'telegram',
-      FAKE_PROVIDER_SUBJECTS.telegram
-    );
-    const yandexAccount = await database.users.findByIdentity(
-      'yandex',
-      FAKE_PROVIDER_SUBJECTS.yandex
-    );
-
-    expect([
-      googleAccount?.user.displayName,
-      telegramAccount?.user.displayName,
-      yandexAccount?.user.displayName,
-    ]).toEqual(['G User', 'T User', 'Y User']);
-  });
-
-  test('rejects a duplicate provider identity without an index', async () => {
-    const user = {
-      createdAt: new Date('2026-08-03T10:00:00.000Z'),
-      displayName: 'Duplicate Google user',
-      id: 'duplicate-google-user',
-    };
-    const identity = {
-      createdAt: new Date('2026-08-03T10:00:00.000Z'),
-      id: 'duplicate-google-identity',
-      provider: 'google' as const,
-      providerSubject: FAKE_PROVIDER_SUBJECTS.google,
-      userId: user.id,
-    };
-
+  test('seeds stable users with normalized emails', async () => {
     await expect(
-      database.users.saveWithIdentity(user, identity)
-    ).rejects.toThrow('Fake provider identity must be unique.');
+      database.users.findByEmail('archer@example.com')
+    ).resolves.toMatchObject({
+      id: FAKE_SEED_IDENTIFIERS.firstUser,
+    });
   });
 
   test('rejects duplicate player positions without an index', async () => {
@@ -286,13 +225,13 @@ describe('fake database', () => {
             gameId: game.id,
             seat: 1,
             team: 'white',
-            userId: FAKE_SEED_IDENTIFIERS.googleUser,
+            userId: FAKE_SEED_IDENTIFIERS.firstUser,
           },
           {
             gameId: game.id,
             seat: 1,
             team: 'white',
-            userId: FAKE_SEED_IDENTIFIERS.telegramUser,
+            userId: FAKE_SEED_IDENTIFIERS.secondUser,
           },
         ],
       })
@@ -318,13 +257,13 @@ describe('fake database', () => {
           gameId: game.id,
           seat: 1,
           team: 'white',
-          userId: FAKE_SEED_IDENTIFIERS.googleUser,
+          userId: FAKE_SEED_IDENTIFIERS.firstUser,
         },
         {
           gameId: game.id,
           seat: 1,
           team: 'black',
-          userId: FAKE_SEED_IDENTIFIERS.telegramUser,
+          userId: FAKE_SEED_IDENTIFIERS.secondUser,
         },
       ],
     });
@@ -354,7 +293,7 @@ describe('fake database', () => {
             gameId: game.id,
             seat: 0,
             team: 'white',
-            userId: FAKE_SEED_IDENTIFIERS.googleUser,
+            userId: FAKE_SEED_IDENTIFIERS.firstUser,
           },
         ],
       })
@@ -382,7 +321,7 @@ describe('fake database', () => {
       expiresAt: new Date('2026-08-03T12:00:00.000Z'),
       id: 'active-session',
       revokedAt: null,
-      userId: FAKE_SEED_IDENTIFIERS.googleUser,
+      userId: FAKE_SEED_IDENTIFIERS.firstUser,
     });
 
     await expect(
@@ -399,7 +338,7 @@ describe('fake database', () => {
       expiresAt: new Date('2026-08-03T12:00:00.000Z'),
       id: 'expired-session',
       revokedAt: null,
-      userId: FAKE_SEED_IDENTIFIERS.googleUser,
+      userId: FAKE_SEED_IDENTIFIERS.firstUser,
     });
 
     await expect(
@@ -416,7 +355,7 @@ describe('fake database', () => {
       expiresAt: new Date('2026-08-03T12:00:00.000Z'),
       id: 'revoked-session',
       revokedAt: null,
-      userId: FAKE_SEED_IDENTIFIERS.googleUser,
+      userId: FAKE_SEED_IDENTIFIERS.firstUser,
     });
 
     await database.sessions.revoke(
@@ -448,7 +387,7 @@ describe('fake database', () => {
       gameId: game.id,
       id: 'first-event',
       payload: {
-        creatorId: FAKE_SEED_IDENTIFIERS.googleUser,
+        creatorId: FAKE_SEED_IDENTIFIERS.firstUser,
         featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
         rulesVersion: 1,
       },
@@ -461,7 +400,7 @@ describe('fake database', () => {
       createdAt: new Date('2026-08-03T10:01:00.000Z'),
       gameId: game.id,
       id: 'second-event',
-      payload: { playerId: FAKE_SEED_IDENTIFIERS.googleUser, seat: 1 },
+      payload: { playerId: FAKE_SEED_IDENTIFIERS.firstUser, seat: 1 },
       sequence: 2,
       type: 'PlayerJoined',
       version: 1,
@@ -492,7 +431,7 @@ describe('fake database', () => {
       gameId: game.id,
       id: 'atomic-game-created',
       payload: {
-        creatorId: FAKE_SEED_IDENTIFIERS.googleUser,
+        creatorId: FAKE_SEED_IDENTIFIERS.firstUser,
         featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
         rulesVersion: 1,
       },
@@ -506,14 +445,14 @@ describe('fake database', () => {
       gameId: game.id,
       id: 'duplicate-command',
       processedAt: new Date('2026-08-03T10:01:00.000Z'),
-      userId: FAKE_SEED_IDENTIFIERS.googleUser,
+      userId: FAKE_SEED_IDENTIFIERS.firstUser,
     };
     const playerJoinedEvent: FakeGameEvent = {
       commandId: processedCommand.id,
       createdAt: new Date('2026-08-03T10:01:00.000Z'),
       gameId: game.id,
       id: 'atomic-player-joined',
-      payload: { playerId: FAKE_SEED_IDENTIFIERS.googleUser, seat: 1 },
+      payload: { playerId: FAKE_SEED_IDENTIFIERS.firstUser, seat: 1 },
       sequence: 2,
       type: 'PlayerJoined',
       version: 1,
@@ -566,7 +505,7 @@ describe('fake database', () => {
           gameId: game.id,
           id: 'feature-flags-event',
           payload: {
-            creatorId: FAKE_SEED_IDENTIFIERS.googleUser,
+            creatorId: FAKE_SEED_IDENTIFIERS.firstUser,
             featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
             rulesVersion: 1,
           },
@@ -582,7 +521,7 @@ describe('fake database', () => {
 
     const [gameCreatedEvent] = await database.games.getEvents(game.id);
     expect(gameCreatedEvent?.payload).toEqual({
-      creatorId: FAKE_SEED_IDENTIFIERS.googleUser,
+      creatorId: FAKE_SEED_IDENTIFIERS.firstUser,
       featureFlags: replacementFeatureFlags,
       rulesVersion: 1,
     });
@@ -594,7 +533,7 @@ describe('fake database', () => {
       expiresAt: new Date('2026-08-04T10:00:00.000Z'),
       id: 'session-to-reset',
       revokedAt: null,
-      userId: FAKE_SEED_IDENTIFIERS.googleUser,
+      userId: FAKE_SEED_IDENTIFIERS.firstUser,
     });
     await database.featureFlags.setApplication({
       ...DEFAULT_RUNTIME_FEATURE_FLAGS,
@@ -610,9 +549,7 @@ describe('fake database', () => {
       DEFAULT_RUNTIME_FEATURE_FLAGS
     );
     await expect(
-      database.users.findByIdentity('google', FAKE_PROVIDER_SUBJECTS.google)
-    ).resolves.toMatchObject({
-      user: { id: FAKE_SEED_IDENTIFIERS.googleUser },
-    });
+      database.users.findByEmail('archer@example.com')
+    ).resolves.toMatchObject({ id: FAKE_SEED_IDENTIFIERS.firstUser });
   });
 });

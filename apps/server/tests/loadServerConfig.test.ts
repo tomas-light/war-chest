@@ -5,6 +5,7 @@ import { expect, test } from 'vitest';
 import { loadServerConfig } from '../src/config/index.js';
 
 const BASE_CONFIG = [
+  'APP_ENV: "development"',
   'APP_HOST: "0.0.0.0"',
   'APP_PORT: 3000',
   'APP_SERVE_WEB: false',
@@ -34,6 +35,7 @@ test('loads base, local, and environment values in priority order', () => {
       });
 
       expect(config).toEqual({
+        APP_ENV: 'development',
         APP_HOST: '127.0.0.1',
         APP_PORT: 3200,
         APP_SERVE_WEB: false,

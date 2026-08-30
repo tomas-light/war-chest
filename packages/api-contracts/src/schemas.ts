@@ -7,7 +7,9 @@ import {
 import { z } from 'zod';
 import type {
   ApiError,
+  CompleteEmailRegistrationRequest,
   CreateGameRequest,
+  EmailCodeRequestedResponse,
   GameCommandMessage,
   GameErrorMessage,
   GameEventsMessage,
@@ -17,18 +19,24 @@ import type {
   GameResponse,
   GameSnapshotMessage,
   GameSyncMessage,
-  GoogleLoginRequest,
   JoinGameRequest,
   LeaveGameRequest,
   LeaveGameResponse,
   LobbyGamesResponse,
   LobbyUpdatedMessage,
   PublicUser,
+  RequestEmailCodeRequest,
+  SelectAvatarPresetRequest,
   SessionResponse,
   StartGameRequest,
   SurrenderGameRequest,
   SwapPlayerPositionsRequest,
+  UpdateCurrentUserRequest,
+  UserGamesResponse,
+  VerifyEmailCodeRequest,
+  VerifyEmailCodeResponse,
 } from './types.js';
+import { AVATAR_PRESETS } from './types.js';
 
 export const API_PREFIX = '/api';
 export const SOCKET_IO_PATH = `${API_PREFIX}/socket.io`;
@@ -53,11 +61,41 @@ const eventMetadataSchema = z.object({
   version: z.literal(GAME_EVENT_VERSION),
 });
 
+const publicUserShape = {
+  avatarVersion: z.string().nullable(),
+  displayName: z.string(),
+  id: z.string(),
+};
+
 export const publicUserSchema: z.ZodType<PublicUser> = z
+  .object(publicUserShape)
+  .strict();
+
+const userGameParticipantSchema = z
   .object({
-    avatarVersion: z.string().nullable(),
-    displayName: z.string(),
-    id: z.string(),
+    ...publicUserShape,
+    seat: z.number().int().positive(),
+    team: gameTeamSchema,
+  })
+  .strict();
+
+export const userGamesResponseSchema: z.ZodType<UserGamesResponse> = z
+  .object({
+    items: z
+      .array(
+        z
+          .object({
+            finishedAt: z.iso.datetime(),
+            id: gameIdSchema,
+            participants: z.array(userGameParticipantSchema).readonly(),
+            result: z.enum(['defeat', 'victory']),
+            team: gameTeamSchema,
+            winnerTeam: gameTeamSchema,
+          })
+          .strict()
+      )
+      .readonly(),
+    nextCursor: z.string().min(1).nullable(),
   })
   .strict();
 
@@ -68,8 +106,72 @@ export const sessionResponseSchema: z.ZodType<SessionResponse> = z
   })
   .strict();
 
-export const googleLoginRequestSchema: z.ZodType<GoogleLoginRequest> = z
-  .object({ idToken: z.string().trim().min(1) })
+export const emailSchema = z.email().trim().toLowerCase();
+export const displayNameSchema = z
+  .string()
+  .trim()
+  .min(2)
+  .max(24)
+  .regex(/^[\p{L}\p{N}_ -]+$/u);
+
+export const requestEmailCodeRequestSchema: z.ZodType<RequestEmailCodeRequest> =
+  z.object({ email: emailSchema }).strict();
+
+type EmailCodeRequestedSchema = z.ZodType<EmailCodeRequestedResponse>;
+export const emailCodeRequestedResponseSchema: EmailCodeRequestedSchema = z
+  .object({
+    expiresAt: z.iso.datetime(),
+    resendAvailableAt: z.iso.datetime(),
+  })
+  .strict();
+
+export const verifyEmailCodeRequestSchema: z.ZodType<VerifyEmailCodeRequest> = z
+  .object({
+    code: z.string().regex(/^\d{6}$/),
+    email: emailSchema,
+  })
+  .strict();
+
+export const verifyEmailCodeResponseSchema: z.ZodType<VerifyEmailCodeResponse> =
+  z.discriminatedUnion('status', [
+    z
+      .object({
+        session: sessionResponseSchema,
+        status: z.literal('authenticated'),
+      })
+      .strict(),
+    z
+      .object({
+        expiresAt: z.iso.datetime(),
+        registrationToken: z.string().min(1),
+        status: z.literal('registration_required'),
+      })
+      .strict(),
+  ]);
+
+type RegistrationSchema = z.ZodType<CompleteEmailRegistrationRequest>;
+export const completeEmailRegistrationRequestSchema: RegistrationSchema = z
+  .object({
+    displayName: displayNameSchema,
+    registrationToken: z.string().min(1),
+  })
+  .strict();
+
+type UpdateCurrentUserSchema = z.ZodType<UpdateCurrentUserRequest>;
+export const updateCurrentUserRequestSchema: UpdateCurrentUserSchema = z
+  .object({ displayName: displayNameSchema })
+  .strict();
+
+const avatarPresetIdSchema = z.enum(
+  AVATAR_PRESETS.map((preset) => preset.id) as [
+    (typeof AVATAR_PRESETS)[number]['id'],
+    ...(typeof AVATAR_PRESETS)[number]['id'][],
+  ]
+);
+
+type SelectAvatarPresetSchema = z.ZodType<SelectAvatarPresetRequest>;
+export const selectAvatarPresetRequestSchema: SelectAvatarPresetSchema = z
+  .object({ presetId: avatarPresetIdSchema })
   .strict();
 
 export const apiErrorSchema: z.ZodType<ApiError> = z

@@ -30,6 +30,7 @@ test('explains how to start PostgreSQL when it is unavailable', async () => {
   );
 
   mocks.loadServerConfig.mockReturnValue({
+    APP_ENV: 'development',
     APP_HOST: '127.0.0.1',
     APP_PORT: 3000,
     APP_SERVE_WEB: false,

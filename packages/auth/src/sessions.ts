@@ -2,8 +2,8 @@ import { createHash, randomBytes } from 'node:crypto';
 import type { Database } from '@war-chest/database';
 import { authSessions, userAvatars, users } from '@war-chest/database';
 import { and, eq, gt, isNull } from 'drizzle-orm';
+import type { AuthUser } from './AuthUser.js';
 import type { AuthConfig } from './config/index.js';
-import type { AuthUser } from './identities.js';
 
 const MILLISECONDS_PER_MINUTE = 60 * 1000;
 
@@ -68,6 +68,7 @@ export async function findSession(
   const [session] = await database
     .select({
       avatarHash: userAvatars.contentHash,
+      avatarPresetId: users.avatarPresetId,
       displayName: users.displayName,
       expiresAt: authSessions.expiresAt,
       userId: users.id,
@@ -91,7 +92,11 @@ export async function findSession(
   return {
     expiresAt: session.expiresAt,
     user: {
-      avatarHash: session.avatarHash,
+      avatarVersion:
+        session.avatarHash ??
+        (session.avatarPresetId === null
+          ? null
+          : `preset:${session.avatarPresetId}`),
       displayName: session.displayName,
       id: session.userId,
     },

@@ -1,15 +1,15 @@
 import {
   type ApiErrorCode,
+  type EmailCodeRequestedResponse,
   type SessionResponse,
-  API_PREFIX,
-  googleLoginRequestSchema,
+  type VerifyEmailCodeResponse,
+  completeEmailRegistrationRequestSchema,
+  requestEmailCodeRequestSchema,
+  verifyEmailCodeRequestSchema,
 } from '@war-chest/api-contracts';
 import { type AuthCookie, type AuthSession, AuthError } from '@war-chest/auth';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { z } from 'zod';
 import { createPublicUser } from '../users/PublicUser.js';
-
-type RedirectProvider = 'telegram' | 'yandex';
 
 interface SendErrorInput {
   code: ApiErrorCode;
@@ -18,137 +18,110 @@ interface SendErrorInput {
   statusCode: number;
 }
 
-const oauthCallbackQuerySchema = z.object({
-  code: z.string().trim().min(1),
-  state: z.string().trim().min(1),
-});
-
 export function registerAuthRoutes(app: FastifyInstance): void {
   const { auth } = app.serverDependencies;
 
-  app.post('/auth/google', loginWithGoogle);
-  app.get('/auth/telegram/start', beginTelegramLogin);
-  app.get('/auth/telegram/callback', completeTelegramLogin);
-  app.get('/auth/yandex/start', beginYandexLogin);
-  app.get('/auth/yandex/callback', completeYandexLogin);
+  app.post('/auth/email/code', requestEmailCode);
+  app.post('/auth/email/verify', verifyEmailCode);
+  app.post('/auth/email/register', completeEmailRegistration);
   app.get('/auth/session', { preHandler: app.requireAuthSession }, getSession);
   app.post('/auth/logout', logout);
 
-  async function loginWithGoogle(
+  async function requestEmailCode(
     request: FastifyRequest,
     reply: FastifyReply
-  ): Promise<FastifyReply | SessionResponse> {
+  ): Promise<FastifyReply | EmailCodeRequestedResponse> {
     setNoStore(reply);
-    const requestResult = googleLoginRequestSchema.safeParse(request.body);
+    const body = requestEmailCodeRequestSchema.safeParse(request.body);
 
-    if (!requestResult.success) {
+    if (!body.success) {
       return sendError({
         code: 'invalid_request',
-        message: 'Google ID token is required.',
+        message: 'A valid email address is required.',
         reply,
         statusCode: 400,
       });
     }
 
     try {
-      const loginResult = await auth.loginWithGoogle(
-        requestResult.data.idToken
-      );
+      const result = await auth.requestEmailCode({
+        email: body.data.email,
+        requestIp: request.ip,
+      });
 
-      setAuthCookie(reply, loginResult.cookie);
-      return createSessionResponse(loginResult.session);
+      return reply.code(202).send({
+        expiresAt: result.expiresAt.toISOString(),
+        resendAvailableAt: result.resendAvailableAt.toISOString(),
+      });
     } catch (error) {
       return handleAuthError(error, reply);
     }
   }
 
-  async function beginTelegramLogin(
+  async function verifyEmailCode(
     request: FastifyRequest,
     reply: FastifyReply
-  ): Promise<FastifyReply> {
-    return beginRedirectLogin(request, reply, 'telegram');
-  }
-
-  async function beginYandexLogin(
-    request: FastifyRequest,
-    reply: FastifyReply
-  ): Promise<FastifyReply> {
-    return beginRedirectLogin(request, reply, 'yandex');
-  }
-
-  async function beginRedirectLogin(
-    request: FastifyRequest,
-    reply: FastifyReply,
-    provider: RedirectProvider
-  ): Promise<FastifyReply> {
+  ): Promise<FastifyReply | VerifyEmailCodeResponse> {
     setNoStore(reply);
+    const body = verifyEmailCodeRequestSchema.safeParse(request.body);
 
-    try {
-      const authorization =
-        provider === 'telegram'
-          ? auth.beginTelegramLogin()
-          : auth.beginYandexLogin();
-
-      setAuthCookie(reply, authorization.stateCookie);
-      return reply.code(302).header('Location', authorization.url).send();
-    } catch (error) {
-      request.log.warn({ error, provider }, 'OAuth login could not be started');
-      return handleRedirectAuthError(error, reply, auth.successRedirectUrl);
-    }
-  }
-
-  async function completeTelegramLogin(
-    request: FastifyRequest,
-    reply: FastifyReply
-  ): Promise<FastifyReply> {
-    return completeRedirectLogin(request, reply, 'telegram');
-  }
-
-  async function completeYandexLogin(
-    request: FastifyRequest,
-    reply: FastifyReply
-  ): Promise<FastifyReply> {
-    return completeRedirectLogin(request, reply, 'yandex');
-  }
-
-  async function completeRedirectLogin(
-    request: FastifyRequest,
-    reply: FastifyReply,
-    provider: RedirectProvider
-  ): Promise<FastifyReply> {
-    setNoStore(reply);
-    const queryResult = oauthCallbackQuerySchema.safeParse(request.query);
-
-    if (!queryResult.success) {
-      return redirectAuthError(
-        'invalid_request',
+    if (!body.success) {
+      return sendError({
+        code: 'invalid_request',
+        message: 'Email and a six-digit code are required.',
         reply,
-        auth.successRedirectUrl
-      );
+        statusCode: 400,
+      });
     }
 
-    const stateCookieName = `${auth.sessionCookieName}_${provider}_oauth_state`;
-    const stateCookie = request.cookies[stateCookieName] ?? '';
+    try {
+      const result = await auth.verifyEmailCode({
+        code: body.data.code,
+        email: body.data.email,
+        requestIp: request.ip,
+      });
 
-    reply.clearCookie(stateCookieName, {
-      path: `${API_PREFIX}/auth/${provider}/callback`,
-    });
+      if (result.status === 'registration_required') {
+        return {
+          expiresAt: result.expiresAt.toISOString(),
+          registrationToken: result.registrationToken,
+          status: result.status,
+        };
+      }
+
+      setAuthCookie(reply, result.login.cookie);
+      return {
+        session: createSessionResponse(result.login.session),
+        status: 'authenticated',
+      };
+    } catch (error) {
+      return handleAuthError(error, reply);
+    }
+  }
+
+  async function completeEmailRegistration(
+    request: FastifyRequest,
+    reply: FastifyReply
+  ): Promise<FastifyReply | SessionResponse> {
+    setNoStore(reply);
+    const body = completeEmailRegistrationRequestSchema.safeParse(request.body);
+
+    if (!body.success) {
+      return sendError({
+        code: 'invalid_request',
+        message: 'A valid nickname and registration token are required.',
+        reply,
+        statusCode: 400,
+      });
+    }
 
     try {
-      const { code, state } = queryResult.data;
-      const loginResult =
-        provider === 'telegram'
-          ? await auth.completeTelegramLogin(code, state, stateCookie)
-          : await auth.completeYandexLogin(code, state, stateCookie);
+      const result = await auth.completeEmailRegistration(body.data);
 
-      setAuthCookie(reply, loginResult.cookie);
-      return reply.code(302).header('Location', auth.successRedirectUrl).send();
+      setAuthCookie(reply, result.cookie);
+      return createSessionResponse(result.session);
     } catch (error) {
-      request.log.warn(
-        { error, provider },
-        'OAuth callback could not be completed'
-      );
-      return handleRedirectAuthError(error, reply, auth.successRedirectUrl);
+      return handleAuthError(error, reply);
     }
   }
 
@@ -167,12 +140,10 @@ export function registerAuthRoutes(app: FastifyInstance): void {
     reply: FastifyReply
   ): Promise<FastifyReply> {
     setNoStore(reply);
-
     const sessionToken = request.cookies[auth.sessionCookieName] ?? '';
     const clearedCookie = await auth.logout(sessionToken);
 
     setAuthCookie(reply, clearedCookie);
-
     return reply.code(204).send();
   }
 }
@@ -194,62 +165,35 @@ function handleAuthError(error: unknown, reply: FastifyReply): FastifyReply {
   }
 
   switch (error.code) {
-    case 'invalid_credentials':
+    case 'email_code_invalid':
       return sendError({
         code: error.code,
-        message: 'Provider credentials are invalid.',
+        message: 'The code is invalid or expired.',
         reply,
         statusCode: 401,
       });
-    case 'invalid_oauth_state':
+    case 'email_code_rate_limited':
       return sendError({
         code: error.code,
-        message: 'OAuth state is invalid or expired.',
+        message: 'Too many authentication attempts. Try again later.',
         reply,
-        statusCode: 400,
+        statusCode: 429,
       });
-    case 'provider_disabled':
+    case 'email_delivery_unavailable':
       return sendError({
         code: error.code,
-        message: 'The selected login provider is not configured.',
+        message: 'The login email could not be sent.',
         reply,
         statusCode: 503,
       });
-    case 'provider_request_failed':
+    case 'registration_ticket_invalid':
       return sendError({
         code: error.code,
-        message: 'The login provider request failed.',
+        message: 'Registration has expired. Request a new code.',
         reply,
-        statusCode: 502,
+        statusCode: 401,
       });
   }
-}
-
-function handleRedirectAuthError(
-  error: unknown,
-  reply: FastifyReply,
-  successRedirectUrl: string
-): FastifyReply {
-  if (!(error instanceof AuthError)) {
-    throw error;
-  }
-
-  return redirectAuthError(error.code, reply, successRedirectUrl);
-}
-
-function redirectAuthError(
-  code: ApiErrorCode,
-  reply: FastifyReply,
-  successRedirectUrl: string
-): FastifyReply {
-  const redirectUrl = new URL(successRedirectUrl);
-
-  redirectUrl.pathname = '/login';
-  redirectUrl.search = '';
-  redirectUrl.searchParams.set('authError', code);
-  redirectUrl.hash = '';
-
-  return reply.code(302).header('Location', redirectUrl.toString()).send();
 }
 
 function sendError(input: SendErrorInput): FastifyReply {

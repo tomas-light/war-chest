@@ -1,3 +1,5 @@
+import { AVATAR_PRESETS } from '@war-chest/api-contracts';
+import clsx from 'clsx';
 import { useState } from 'react';
 import { useTranslation } from '#/shared/i18n/useTranslation';
 import classes from './UserAvatar.module.scss';
@@ -26,7 +28,7 @@ export function UserAvatar(props: Props) {
   return (
     <span
       aria-label={t('label', { userName: user.displayName })}
-      className={[classes.avatar, className].filter(Boolean).join(' ')}
+      className={clsx(classes.avatar, className)}
       data-size={size}
       role="img"
     >
@@ -46,9 +48,22 @@ export function UserAvatar(props: Props) {
 }
 
 function getAvatarUrl(user: AvatarUser): string | null {
-  return user.avatarVersion === null
-    ? null
-    : `/api/users/${encodeURIComponent(user.id)}/avatar?v=${encodeURIComponent(user.avatarVersion)}`;
+  if (user.avatarVersion === null) {
+    return null;
+  }
+
+  if (user.avatarVersion.startsWith('data:image/')) {
+    return user.avatarVersion;
+  }
+
+  if (user.avatarVersion.startsWith('preset:')) {
+    const presetId = user.avatarVersion.slice('preset:'.length);
+    return (
+      AVATAR_PRESETS.find((preset) => preset.id === presetId)?.imageUrl ?? null
+    );
+  }
+
+  return `/api/users/${encodeURIComponent(user.id)}/avatar?v=${encodeURIComponent(user.avatarVersion)}`;
 }
 
 function getInitials(

@@ -1,4 +1,5 @@
 import {
+  type AvatarPresetId,
   type CreateGameRequest,
   type GameErrorMessage,
   type GameResponse,
@@ -8,17 +9,21 @@ import {
   type LeaveGameResponse,
   type LobbyGamesResponse,
   type LobbyUpdatedMessage,
+  type PublicUser,
   type SessionResponse,
   type StartGameRequest,
   type SurrenderGameRequest,
   type SwapPlayerPositionsRequest,
+  type UserGamesResponse,
   gameErrorMessageSchema,
   gameResponseSchema,
   gameSnapshotMessageSchema,
   leaveGameResponseSchema,
   lobbyGamesResponseSchema,
   lobbyUpdatedMessageSchema,
+  publicUserSchema,
   sessionResponseSchema,
+  userGamesResponseSchema,
 } from '@war-chest/api-contracts';
 import {
   type RuntimeFeatureFlags,
@@ -26,7 +31,6 @@ import {
 } from '@war-chest/feature-flags';
 import { ApiClientError, createApiClientError } from './ApiClientError';
 import {
-  type FakeAuthProvider,
   type FakeBackendEventEnvelope,
   type FakeBackendOperation,
   type FakeBackendRequest,
@@ -67,6 +71,7 @@ export interface FakeBackendClient {
   createGame(this: void, request: CreateGameRequest): Promise<GameResponse>;
   disconnectGameConnection(this: void, subscriptionId: string): Promise<void>;
   getGame(this: void, gameId: string): Promise<GameResponse>;
+  getPublicUser(this: void, userId: string): Promise<PublicUser>;
   getSession(
     this: void,
     sessionId: string | null
@@ -92,9 +97,21 @@ export interface FakeBackendClient {
     subscriptionId: string
   ): Promise<void>;
   listLobbyGames(this: void): Promise<LobbyGamesResponse>;
-  login(this: void, provider: FakeAuthProvider): Promise<FakeLoginResult>;
+  listFinishedGames(
+    this: void,
+    userId: string,
+    cursor?: string
+  ): Promise<UserGamesResponse>;
+  login(
+    this: void,
+    email: string,
+    displayName: string
+  ): Promise<FakeLoginResult>;
+  loginExisting(this: void, email: string): Promise<FakeLoginResult | null>;
   logout(this: void, sessionId: string | null): Promise<void>;
   readFeatureFlags(this: void): Promise<RuntimeFeatureFlags>;
+  removeAvatar(this: void): Promise<PublicUser>;
+  selectAvatarPreset(this: void, presetId: AvatarPresetId): Promise<PublicUser>;
   startGame(
     this: void,
     gameId: string,
@@ -122,6 +139,8 @@ export interface FakeBackendClient {
     subscriptionId: string
   ): Promise<GameResponse>;
   unsubscribeFromLobby(this: void, subscriptionId: string): Promise<void>;
+  updateDisplayName(this: void, displayName: string): Promise<PublicUser>;
+  uploadAvatar(this: void, dataUrl: string): Promise<PublicUser>;
 }
 
 export function createFakeBackendClient(): FakeBackendClient {
@@ -143,15 +162,20 @@ export function createFakeBackendClient(): FakeBackendClient {
     createGame,
     disconnectGameConnection,
     getGame,
+    getPublicUser,
     getSession,
     joinGame,
     joinGameConnection,
     leaveGame,
     leaveGameConnection,
     listLobbyGames,
+    listFinishedGames,
     login,
+    loginExisting,
     logout,
     readFeatureFlags,
+    removeAvatar,
+    selectAvatarPreset,
     startGame,
     subscribe,
     subscribeToLobby,
@@ -159,6 +183,8 @@ export function createFakeBackendClient(): FakeBackendClient {
     swapPlayerPositions,
     synchronizeGameConnection,
     unsubscribeFromLobby,
+    updateDisplayName,
+    uploadAvatar,
   };
 
   function createGame(request: CreateGameRequest): Promise<GameResponse> {
@@ -189,6 +215,10 @@ export function createFakeBackendClient(): FakeBackendClient {
         'The fake backend returned an invalid game state.'
       )
     );
+  }
+
+  function getPublicUser(userId: string): Promise<PublicUser> {
+    return sendRequest('user.getPublic', { userId }, parsePublicUser);
   }
 
   function getSession(
@@ -261,8 +291,30 @@ export function createFakeBackendClient(): FakeBackendClient {
     );
   }
 
-  function login(provider: FakeAuthProvider): Promise<FakeLoginResult> {
-    return sendRequest('auth.login', { provider }, parseLoginResult);
+  function listFinishedGames(
+    userId: string,
+    cursor?: string
+  ): Promise<UserGamesResponse> {
+    return sendRequest(
+      'user.listFinishedGames',
+      { cursor: cursor ?? null, userId },
+      createSchemaParser(
+        userGamesResponseSchema,
+        'The fake backend returned an invalid game history.'
+      )
+    );
+  }
+
+  function login(email: string, displayName: string): Promise<FakeLoginResult> {
+    return sendRequest('auth.login', { displayName, email }, parseLoginResult);
+  }
+
+  function loginExisting(email: string): Promise<FakeLoginResult | null> {
+    return sendRequest(
+      'auth.loginExisting',
+      { email },
+      parseNullableLoginResult
+    );
   }
 
   function logout(sessionId: string | null): Promise<void> {
@@ -277,6 +329,18 @@ export function createFakeBackendClient(): FakeBackendClient {
         runtimeFeatureFlagsSchema,
         'The fake backend returned invalid feature flags.'
       )
+    );
+  }
+
+  function removeAvatar(): Promise<PublicUser> {
+    return sendRequest('user.removeAvatar', null, parsePublicUser);
+  }
+
+  function selectAvatarPreset(presetId: AvatarPresetId): Promise<PublicUser> {
+    return sendRequest(
+      'user.selectAvatarPreset',
+      { presetId },
+      parsePublicUser
     );
   }
 
@@ -356,6 +420,18 @@ export function createFakeBackendClient(): FakeBackendClient {
       { subscriptionId },
       parseVoidResult
     );
+  }
+
+  function updateDisplayName(displayName: string): Promise<PublicUser> {
+    return sendRequest(
+      'user.updateDisplayName',
+      { displayName },
+      parsePublicUser
+    );
+  }
+
+  function uploadAvatar(dataUrl: string): Promise<PublicUser> {
+    return sendRequest('user.uploadAvatar', { dataUrl }, parsePublicUser);
   }
 
   function sendRequest<Result>(
@@ -524,6 +600,17 @@ function parseLoginResult(value: unknown): FakeLoginResult {
     )(value.session),
     sessionId: value.sessionId,
   };
+}
+
+function parseNullableLoginResult(value: unknown): FakeLoginResult | null {
+  return value === null ? null : parseLoginResult(value);
+}
+
+function parsePublicUser(value: unknown): PublicUser {
+  return createSchemaParser(
+    publicUserSchema,
+    'The fake backend returned an invalid user.'
+  )(value);
 }
 
 function parseVoidResult(value: unknown): void {

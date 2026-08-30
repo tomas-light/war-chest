@@ -1,3 +1,4 @@
+import type { AvatarPresetId } from '@war-chest/api-contracts';
 import {
   type Database,
   type Game,
@@ -37,20 +38,77 @@ export interface UserGamePage {
 }
 
 export interface UserRepository {
+  findAvatar(userId: string): Promise<StoredAvatar | null>;
   findPublicUser(userId: string): Promise<PublicUser | null>;
   listFinishedGames(
     userId: string,
     options: { cursor?: UserGameCursor; limit: number }
   ): Promise<UserGamePage>;
+  removeAvatar(userId: string): Promise<PublicUser | null>;
+  saveAvatar(userId: string, avatar: CustomAvatar): Promise<PublicUser | null>;
+  selectAvatarPreset(
+    userId: string,
+    presetId: AvatarPresetId
+  ): Promise<PublicUser | null>;
+  updateDisplayName(
+    userId: string,
+    displayName: string
+  ): Promise<PublicUser | null>;
 }
 
+export interface CustomAvatar {
+  content: Buffer;
+  contentHash: string;
+  contentType: string;
+}
+
+export type StoredAvatar =
+  | ({ kind: 'custom' } & CustomAvatar)
+  | { kind: 'preset'; presetId: AvatarPresetId };
+
 export function createUserRepository(database: Database): UserRepository {
-  return { findPublicUser, listFinishedGames };
+  return {
+    findAvatar,
+    findPublicUser,
+    listFinishedGames,
+    removeAvatar,
+    saveAvatar,
+    selectAvatarPreset,
+    updateDisplayName,
+  };
+
+  async function findAvatar(userId: string): Promise<StoredAvatar | null> {
+    const [avatar] = await database
+      .select({
+        avatarPresetId: users.avatarPresetId,
+        content: userAvatars.content,
+        contentHash: userAvatars.contentHash,
+        contentType: userAvatars.contentType,
+      })
+      .from(users)
+      .leftJoin(userAvatars, eq(userAvatars.userId, users.id))
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (avatar?.content !== null && avatar?.content !== undefined) {
+      return {
+        content: avatar.content,
+        contentHash: requireAvatarValue(avatar.contentHash),
+        contentType: requireAvatarValue(avatar.contentType),
+        kind: 'custom',
+      };
+    }
+
+    return avatar?.avatarPresetId === null || avatar === undefined
+      ? null
+      : { kind: 'preset', presetId: avatar.avatarPresetId as AvatarPresetId };
+  }
 
   async function findPublicUser(userId: string): Promise<PublicUser | null> {
     const [user] = await database
       .select({
         avatarHash: userAvatars.contentHash,
+        avatarPresetId: users.avatarPresetId,
         displayName: users.displayName,
         id: users.id,
       })
@@ -59,7 +117,67 @@ export function createUserRepository(database: Database): UserRepository {
       .where(eq(users.id, userId))
       .limit(1);
 
-    return user === undefined ? null : createPublicUser(user);
+    return user === undefined ? null : toPublicUser(user);
+  }
+
+  async function updateDisplayName(
+    userId: string,
+    displayName: string
+  ): Promise<PublicUser | null> {
+    await database
+      .update(users)
+      .set({ displayName })
+      .where(eq(users.id, userId));
+    return findPublicUser(userId);
+  }
+
+  async function selectAvatarPreset(
+    userId: string,
+    presetId: AvatarPresetId
+  ): Promise<PublicUser | null> {
+    await database.transaction(async (transaction) => {
+      await transaction
+        .update(users)
+        .set({ avatarPresetId: presetId })
+        .where(eq(users.id, userId));
+      await transaction
+        .delete(userAvatars)
+        .where(eq(userAvatars.userId, userId));
+    });
+    return findPublicUser(userId);
+  }
+
+  async function saveAvatar(
+    userId: string,
+    avatar: CustomAvatar
+  ): Promise<PublicUser | null> {
+    await database.transaction(async (transaction) => {
+      await transaction
+        .insert(userAvatars)
+        .values({ ...avatar, userId })
+        .onConflictDoUpdate({
+          set: avatar,
+          target: userAvatars.userId,
+        });
+      await transaction
+        .update(users)
+        .set({ avatarPresetId: null })
+        .where(eq(users.id, userId));
+    });
+    return findPublicUser(userId);
+  }
+
+  async function removeAvatar(userId: string): Promise<PublicUser | null> {
+    await database.transaction(async (transaction) => {
+      await transaction
+        .delete(userAvatars)
+        .where(eq(userAvatars.userId, userId));
+      await transaction
+        .update(users)
+        .set({ avatarPresetId: null })
+        .where(eq(users.id, userId));
+    });
+    return findPublicUser(userId);
   }
 
   async function listFinishedGames(
@@ -142,6 +260,7 @@ export function createUserRepository(database: Database): UserRepository {
     const participantRows = await database
       .select({
         avatarHash: userAvatars.contentHash,
+        avatarPresetId: users.avatarPresetId,
         displayName: users.displayName,
         gameId: gameParticipants.gameId,
         id: users.id,
@@ -170,7 +289,7 @@ export function createUserRepository(database: Database): UserRepository {
         participantsByGame.get(participant.gameId) ?? [];
 
       gameParticipantsList.push({
-        ...createPublicUser(participant),
+        ...toPublicUser(participant),
         seat: requireSeat(participant.seat, participant.gameId),
         team: requireTeam(participant.team, participant.gameId),
       });
@@ -179,6 +298,29 @@ export function createUserRepository(database: Database): UserRepository {
 
     return participantsByGame;
   }
+}
+
+function toPublicUser(user: {
+  avatarHash: string | null;
+  avatarPresetId: string | null;
+  displayName: string;
+  id: string;
+}): PublicUser {
+  return createPublicUser({
+    avatarVersion:
+      user.avatarHash ??
+      (user.avatarPresetId === null ? null : `preset:${user.avatarPresetId}`),
+    displayName: user.displayName,
+    id: user.id,
+  });
+}
+
+function requireAvatarValue(value: string | null): string {
+  if (value === null) {
+    throw new Error('Stored avatar is incomplete.');
+  }
+
+  return value;
 }
 
 function requireFinishedAt(finishedAt: Date | null, gameId: string): Date {

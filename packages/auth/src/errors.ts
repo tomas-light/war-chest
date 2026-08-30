@@ -1,8 +1,8 @@
 export type AuthErrorCode =
-  | 'invalid_credentials'
-  | 'invalid_oauth_state'
-  | 'provider_disabled'
-  | 'provider_request_failed';
+  | 'email_code_invalid'
+  | 'email_code_rate_limited'
+  | 'email_delivery_unavailable'
+  | 'registration_ticket_invalid';
 
 export class AuthError extends Error {
   override readonly name = 'AuthError';

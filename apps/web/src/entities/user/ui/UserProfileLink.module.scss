@@ -1,0 +1,28 @@
+.link {
+  color: inherit;
+  text-decoration-color: rgb(21 217 237 / 42%);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition:
+    color 160ms ease,
+    text-decoration-color 160ms ease,
+    text-shadow 160ms ease;
+
+  &:hover {
+    color: var(--wc-color-cyan-soft);
+    text-decoration-color: currentColor;
+    text-shadow: 0 0 10px rgb(21 217 237 / 24%);
+  }
+
+  &:focus-visible {
+    border-radius: 2px;
+    outline: 2px solid var(--wc-color-cyan);
+    outline-offset: 3px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .link {
+    transition: none;
+  }
+}

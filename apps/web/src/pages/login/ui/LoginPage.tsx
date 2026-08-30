@@ -1,9 +1,8 @@
 import { lazy, Suspense } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { useAuthSession } from '#/entities/auth-session';
-import { LoginOptions } from '#/features/auth-login';
+import { EmailLoginForm } from '#/features/auth-login';
 import { LanguageSelector } from '#/features/change-language';
-import { createApiClientError, useApiErrorMessage } from '#/shared/api';
 import { useTranslation } from '#/shared/i18n/useTranslation';
 import { Button } from '#/shared/ui/button';
 import { LoadingIndicator } from '#/shared/ui/loading-indicator';
@@ -28,21 +27,10 @@ export function LoginPage(props: Props) {
   const { t } = useTranslation('pages/login', {
     keyPrefix: 'LoginPage',
   });
-  const getApiErrorMessage = useApiErrorMessage();
   const location = useLocation();
   const navigate = useNavigate();
   const { refetch, status } = useAuthSession();
   const resolvedReturnTo = returnTo ?? getReturnTo(location.state);
-  const authErrorCode = new URLSearchParams(location.search).get('authError');
-  const authErrorMessage =
-    authErrorCode === null
-      ? null
-      : getApiErrorMessage(
-          createApiClientError({
-            code: authErrorCode,
-            diagnosticMessage: `OAuth redirect failed with code ${authErrorCode}.`,
-          })
-        );
 
   return (
     <PlaceholderPage
@@ -59,11 +47,6 @@ export function LoginPage(props: Props) {
           </Suspense>
         </div>
       )}
-      {authErrorMessage === null ? null : (
-        <p className={classes.authError} role="alert">
-          {authErrorMessage}
-        </p>
-      )}
       {status === 'pending' ? (
         <LoadingIndicator label={t('loadingLabel')} />
       ) : status === 'error' ? (
@@ -72,7 +55,7 @@ export function LoginPage(props: Props) {
           <Button onClick={() => void refetch()}>{t('retry')}</Button>
         </div>
       ) : (
-        <LoginOptions onAuthenticated={handleAuthenticated} />
+        <EmailLoginForm onAuthenticated={handleAuthenticated} />
       )}
     </PlaceholderPage>
   );

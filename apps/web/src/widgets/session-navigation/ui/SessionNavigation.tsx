@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 import { type ReactNode, lazy, Suspense, useState } from 'react';
 import { Link, Outlet } from 'react-router';
 import { useAuthSession } from '#/entities/auth-session';
@@ -67,12 +68,9 @@ export function SessionNavigation(props: Props) {
           )}
 
           <span
-            className={[
-              classes.sessionName,
-              isSessionPending ? classes.sessionLoading : undefined,
-            ]
-              .filter(Boolean)
-              .join(' ')}
+            className={clsx(classes.sessionName, {
+              [classes.sessionLoading]: isSessionPending,
+            })}
           >
             {isSessionPending ? t('sessionPending') : session?.user.displayName}
           </span>

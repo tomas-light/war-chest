@@ -8,7 +8,7 @@ export interface PublicUser {
 
 export function createPublicUser(user: AuthUser): PublicUser {
   return {
-    avatarVersion: user.avatarHash,
+    avatarVersion: user.avatarVersion,
     displayName: user.displayName,
     id: user.id,
   };

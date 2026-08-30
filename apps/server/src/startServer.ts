@@ -1,6 +1,7 @@
 import { createAuth } from '@war-chest/auth';
 import { type DatabaseConnection, createDatabase } from '@war-chest/database';
 import type { FastifyInstance } from 'fastify';
+import { createEmailCodeSender } from './auth/createEmailCodeSender.js';
 import { loadServerConfig } from './config/index.js';
 import { createApp } from './createApp.js';
 import { createFeatureFlagsService } from './featureFlags/FeatureFlagsService.js';
@@ -11,7 +12,10 @@ export async function startServer(): Promise<FastifyInstance> {
   let app: FastifyInstance | null = null;
 
   try {
-    const auth = createAuth({ database: databaseConnection.database });
+    const auth = createAuth({
+      database: databaseConnection.database,
+      emailCodeSender: createEmailCodeSender(config),
+    });
     const featureFlagsService = createFeatureFlagsService(
       config.FEATURE_FLAGS_RUNTIME_FILE
     );

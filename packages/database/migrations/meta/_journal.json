@@ -5,36 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1785860093899,
-      "tag": "0000_initial-schema",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1786904301717,
-      "tag": "0001_absurd_sue_storm",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1787935071323,
-      "tag": "0002_parallel_steel_serpent",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1787939302204,
-      "tag": "0003_reset_game_creator",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1787943400000,
-      "tag": "0004_single_active_game",
+      "when": 1788127351826,
+      "tag": "0000_shallow_lifeguard",
       "breakpoints": true
     }
   ]

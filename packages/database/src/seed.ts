@@ -7,7 +7,6 @@ import {
   gameParticipants,
   games,
   processedCommands,
-  userIdentities,
   users,
 } from './schema/index.js';
 
@@ -47,29 +46,15 @@ async function seedDatabase(): Promise<void> {
         .values([
           {
             id: SEED_IDENTIFIERS.firstUser,
+            email: 'ada@example.com',
             displayName: 'Ada',
+            avatarPresetId: 'archer',
           },
           {
             id: SEED_IDENTIFIERS.secondUser,
+            email: 'grace@example.com',
             displayName: 'Grace',
-          },
-        ])
-        .onConflictDoNothing();
-
-      await transaction
-        .insert(userIdentities)
-        .values([
-          {
-            id: '50000000-0000-4000-8000-000000000001',
-            userId: SEED_IDENTIFIERS.firstUser,
-            provider: 'google',
-            providerSubject: 'seed-google-user',
-          },
-          {
-            id: '50000000-0000-4000-8000-000000000002',
-            userId: SEED_IDENTIFIERS.secondUser,
-            provider: 'telegram',
-            providerSubject: 'seed-telegram-user',
+            avatarPresetId: 'cavalry',
           },
         ])
         .onConflictDoNothing();

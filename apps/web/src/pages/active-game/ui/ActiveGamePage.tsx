@@ -1,7 +1,7 @@
 import type { LobbyGamePlayer } from '@war-chest/api-contracts';
 import type { GameStatus, GameViewPlayer } from '@war-chest/game-engine';
 import { Navigate, useNavigate } from 'react-router';
-import { UserAvatar } from '#/entities/user';
+import { UserAvatar, UserProfileLink } from '#/entities/user';
 import { SurrenderGameButton } from '#/features/surrender-game';
 import { useApiErrorMessage } from '#/shared/api';
 import { appRoutes, getGamePageUrl } from '#/shared/config';
@@ -240,10 +240,15 @@ function PlayerPanel(props: PlayerPanelProps) {
       <div>
         <span>{label}</span>
         <strong>
-          {profile?.displayName ??
-            (player === undefined
-              ? t('empty')
-              : t('playerFallback', { playerId: player.id.slice(0, 8) }))}
+          {profile === undefined ? (
+            player === undefined ? (
+              t('empty')
+            ) : (
+              t('playerFallback', { playerId: player.id.slice(0, 8) })
+            )
+          ) : (
+            <UserProfileLink user={profile} />
+          )}
         </strong>
         <small>
           {player === undefined

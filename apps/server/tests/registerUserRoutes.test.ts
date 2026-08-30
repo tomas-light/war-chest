@@ -1,9 +1,10 @@
-import type { Auth, AuthSession, StoredAvatar } from '@war-chest/auth';
+import type { Auth, AuthSession } from '@war-chest/auth';
 import type { DatabaseConnection } from '@war-chest/database';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { createApp } from '../src/createApp.js';
 import {
+  type StoredAvatar,
   type UserGamePage,
   type UserRepository,
   createUserRepository,
@@ -25,7 +26,7 @@ describe('user profile routes', () => {
   let findPublicUser: ReturnType<
     typeof vi.fn<UserRepository['findPublicUser']>
   >;
-  let getAvatar: ReturnType<typeof vi.fn<Auth['getAvatar']>>;
+  let findAvatar: ReturnType<typeof vi.fn<UserRepository['findAvatar']>>;
   let listFinishedGames: ReturnType<
     typeof vi.fn<UserRepository['listFinishedGames']>
   >;
@@ -34,7 +35,7 @@ describe('user profile routes', () => {
     const session: AuthSession = {
       expiresAt: new Date('2026-09-03T10:00:00.000Z'),
       user: {
-        avatarHash: null,
+        avatarVersion: null,
         displayName: 'Viewer',
         id: OTHER_USER_ID,
       },
@@ -42,12 +43,11 @@ describe('user profile routes', () => {
     const getSession = vi.fn<Auth['getSession']>();
 
     getSession.mockResolvedValue(session);
-    getAvatar = vi.fn<Auth['getAvatar']>();
+    findAvatar = vi.fn<UserRepository['findAvatar']>();
     findPublicUser = vi.fn<UserRepository['findPublicUser']>();
     listFinishedGames = vi.fn<UserRepository['listFinishedGames']>();
 
     const auth = {
-      getAvatar,
       getSession,
       sessionCookieName: 'war_chest_session',
     } as unknown as Auth;
@@ -56,8 +56,13 @@ describe('user profile routes', () => {
       close: vi.fn(),
     } as unknown as DatabaseConnection;
     const userRepository: UserRepository = {
+      findAvatar,
       findPublicUser,
       listFinishedGames,
+      removeAvatar: vi.fn(),
+      saveAvatar: vi.fn(),
+      selectAvatarPreset: vi.fn(),
+      updateDisplayName: vi.fn(),
     };
     vi.mocked(createUserRepository).mockReturnValue(userRepository);
 
@@ -129,8 +134,9 @@ describe('user profile routes', () => {
       content: Buffer.from('avatar-bytes'),
       contentHash: 'avatar-version',
       contentType: 'image/webp',
+      kind: 'custom',
     };
-    getAvatar.mockResolvedValue(avatar);
+    findAvatar.mockResolvedValue(avatar);
 
     const response = await app.inject({
       headers: AUTH_HEADERS,
@@ -147,7 +153,7 @@ describe('user profile routes', () => {
   });
 
   test('returns 404 when the user has no stored avatar', async () => {
-    getAvatar.mockResolvedValue(null);
+    findAvatar.mockResolvedValue(null);
 
     const response = await app.inject({
       headers: AUTH_HEADERS,

@@ -1,0 +1,33 @@
+{
+  "GameCard": {
+    "blackTeam": "Black",
+    "defeat": "Defeat",
+    "viewGame": "Open game",
+    "victory": "Victory",
+    "whiteTeam": "White",
+    "yourTeam": "Your team: {{team}}"
+  },
+  "HistoryError": {
+    "retry": "Try again",
+    "title": "Unable to open history"
+  },
+  "Team": {
+    "seat": "Seat {{seat}}",
+    "winner": "Winners"
+  },
+  "UserGameHistoryPage": {
+    "backToProfile": "Back to profile",
+    "description": "Finished games from newest to oldest. Select a participant's name to open their profile.",
+    "emptyDescription": "Finished games will appear here after the first played game.",
+    "emptyTitle": "No game history yet",
+    "eyebrow": "Battle archive",
+    "gamesList": "User's finished games",
+    "loadingHistory": "Loading finished games",
+    "loadingMore": "Loading…",
+    "loadingProfile": "Loading player profile",
+    "loadMore": "Show earlier games",
+    "missingUser": "No player selected.",
+    "retry": "Try again",
+    "title": "Game history: {{userName}}"
+  }
+}

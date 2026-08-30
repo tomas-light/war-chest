@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 import type { ChangeEvent } from 'react';
 import {
   type SupportedLanguage,
@@ -18,7 +19,7 @@ export function LanguageSelector(props: Props) {
   const selectedLanguage = getSelectedLanguage(i18n.resolvedLanguage);
 
   return (
-    <label className={[classes.selector, className].filter(Boolean).join(' ')}>
+    <label className={clsx(classes.selector, className)}>
       <span>{t('label')}</span>
       <select value={selectedLanguage} onChange={handleLanguageChange}>
         {SUPPORTED_LANGUAGES.map((language) => (

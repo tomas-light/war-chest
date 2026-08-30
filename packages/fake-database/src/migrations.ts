@@ -4,7 +4,7 @@ import {
   type FakeDatabaseSchema,
 } from './schema.js';
 
-export const FAKE_DATABASE_VERSION = 4;
+export const FAKE_DATABASE_VERSION = 5;
 
 type MigrationTransaction = IDBPTransaction<
   FakeDatabaseSchema,
@@ -28,10 +28,6 @@ export function migrateFakeDatabase(
 
 function migrateToVersionOne(database: IDBPDatabase<FakeDatabaseSchema>): void {
   database.createObjectStore('users', { keyPath: 'id' });
-
-  database.createObjectStore('userIdentities', {
-    keyPath: 'id',
-  });
 
   database.createObjectStore('authSessions', {
     keyPath: 'id',

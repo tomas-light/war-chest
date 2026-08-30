@@ -1,7 +1,32 @@
 {
   "UserProfilePage": {
-    "currentUserDescription": "Профиль текущего пользователя и его завершённые партии.",
-    "publicUserDescription": "Публичный профиль пользователя {{userId}}.",
-    "title": "Профиль"
+    "avatarDescription": "Выберите готовый портрет или загрузите JPEG, PNG либо WebP до 5 МБ. Изображение будет обрезано до квадрата.",
+    "avatarRemoved": "Аватар удалён.",
+    "avatarSaved": "Аватар обновлён.",
+    "avatarTitle": "Аватар",
+    "currentUserDescription": "Настройте имя и портрет, которые видят другие игроки.",
+    "errorTitle": "Не удалось открыть профиль",
+    "loadingProfile": "Загружаем профиль игрока",
+    "nicknameLabel": "Никнейм",
+    "nicknameRequirements": "От 2 до 24 символов: буквы, цифры, пробел, дефис или подчёркивание.",
+    "nicknameSaved": "Никнейм сохранён.",
+    "nicknameTitle": "Отображаемое имя",
+    "presets": {
+      "archer": "Лучница",
+      "cavalry": "Кавалерия",
+      "warrior-priest": "Воин-жрец"
+    },
+    "publicProfile": "Профиль игрока",
+    "publicUserDescription": "Публичное имя и портрет игрока.",
+    "removeAvatar": "Удалить аватар",
+    "retry": "Повторить",
+    "saveNickname": "Сохранить",
+    "title": "Профиль",
+    "uploadAvatar": "Загрузить свой"
+  },
+  "HistorySection": {
+    "description": "Посмотрите завершённые партии, составы команд и результаты игрока.",
+    "openHistory": "Открыть историю игр",
+    "title": "История игр"
   }
 }

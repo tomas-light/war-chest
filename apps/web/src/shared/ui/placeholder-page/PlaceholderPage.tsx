@@ -1,5 +1,6 @@
 import {
   type CSSProperties,
+  type PropsWithChildren,
   type ReactNode,
   useEffect,
   useRef,
@@ -51,11 +52,7 @@ export function PlaceholderPage(props: PlaceholderPageProps) {
   );
 }
 
-interface AnimatedContentProps {
-  children?: ReactNode;
-}
-
-function AnimatedContent(props: AnimatedContentProps) {
+function AnimatedContent(props: PropsWithChildren) {
   const { children } = props;
   const contentRef = useRef<HTMLDivElement>(null);
   const [contentHeight, setContentHeight] = useState<number>();

@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 import type { MouseEvent } from 'react';
 import { useFeatureFlags } from '#/shared/api';
 import { useDevBackendStore } from '#/shared/config';
@@ -28,9 +29,9 @@ export function DeveloperPanel(props: Props) {
   return (
     <div
       aria-hidden={!isOpen}
-      className={[classes.drawer, isOpen ? classes.drawerOpen : undefined]
-        .filter(Boolean)
-        .join(' ')}
+      className={clsx(classes.drawer, {
+        [classes.drawerOpen]: isOpen,
+      })}
       onClick={handleOutsideClick}
     >
       <aside
@@ -76,14 +77,9 @@ export function DeveloperPanel(props: Props) {
                     <span className={classes.featureFlagState}>
                       <span
                         aria-hidden="true"
-                        className={[
-                          classes.featureFlagLamp,
-                          isEnabled
-                            ? classes.featureFlagLampEnabled
-                            : undefined,
-                        ]
-                          .filter(Boolean)
-                          .join(' ')}
+                        className={clsx(classes.featureFlagLamp, {
+                          [classes.featureFlagLampEnabled]: isEnabled,
+                        })}
                       />
                       {isEnabled
                         ? t('featureFlagEnabled')

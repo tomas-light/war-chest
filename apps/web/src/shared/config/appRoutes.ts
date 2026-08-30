@@ -15,6 +15,8 @@ export const appRoutes = createNiceWebRoutes({
   login: {},
   profile: {},
   users: {
-    userId: () => ({}),
+    userId: () => ({
+      history: {},
+    }),
   },
 });

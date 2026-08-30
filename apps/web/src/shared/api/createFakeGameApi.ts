@@ -30,6 +30,7 @@ import {
   restoreGame,
 } from '@war-chest/game-engine';
 import { type ApiClientErrorCode, ApiClientError } from './ApiClientError';
+import { createFakePublicUser } from './createFakePublicUser';
 import type { GameApi } from './GameApi';
 import { getFakeDatabase } from './getFakeDatabase';
 
@@ -516,9 +517,7 @@ export function createFakeGameApi(userId: string): GameApi {
         }
 
         return {
-          avatarVersion: null,
-          displayName: user.displayName,
-          id: user.id,
+          ...createFakePublicUser(user),
           seat: participant.seat,
           team: participant.team,
         };

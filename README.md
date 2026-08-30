@@ -69,22 +69,11 @@ packages/database/env.local.yaml
 
 Подробности находятся в [документации конфигурации](./docs/development-plan/configuration.md).
 
-### Telegram-авторизация через ngrok
+### Вход по email-коду
 
-Telegram требует публичный HTTPS callback. После запуска server и Vite откройте
-третий терминал и направьте ngrok на порт клиента:
-
-```shell
-yarn dev:ngrok
-```
-
-Затем открывайте приложение по выданному адресу `https://<dev-domain>`, а не
-через localhost. Этот же домен нужно разрешить в локальной конфигурации Vite и
-зарегистрировать в BotFather вместе с callback
-`https://<dev-domain>/api/auth/telegram/callback`.
-
-Полная настройка ngrok, BotFather и локальной auth-конфигурации описана в
-[инструкции по входу через Telegram](./docs/auth/telegram-local-development.md).
+В development-режиме код не отправляется по почте: server выводит его в свой
+терминал. Fake backend использует код `123456`. Подробный сценарий, лимиты и
+production-ограничения описаны в [документации авторизации](./docs/auth/README.md).
 
 ## Production bundle
 

@@ -1,16 +1,29 @@
 import {
+  type AvatarPresetId,
+  type EmailCodeRequestedResponse,
+  type PublicUser,
   type SessionResponse,
+  type VerifyEmailCodeResponse,
+  emailCodeRequestedResponseSchema,
+  publicUserSchema,
   sessionResponseSchema,
+  verifyEmailCodeResponseSchema,
 } from '@war-chest/api-contracts';
 import { ApiClientError, createResponseError, requestApi } from '#/shared/api';
-import type { AuthClient, AuthProvider } from './AuthClient';
+import type { AuthClient } from './AuthClient';
 
 export function createRealAuthClient(): AuthClient {
   return {
     backend: 'real',
+    completeEmailRegistration,
     getSession,
-    login,
     logout,
+    removeAvatar,
+    requestEmailCode,
+    selectAvatarPreset,
+    updateDisplayName,
+    uploadAvatar,
+    verifyEmailCode,
   };
 
   async function getSession(): Promise<SessionResponse | null> {
@@ -23,36 +36,41 @@ export function createRealAuthClient(): AuthClient {
       return null;
     }
 
-    return parseSessionResponse(response);
+    return parseResponse(response, sessionResponseSchema, 'session');
   }
 
-  async function login(
-    provider: AuthProvider,
-    idToken?: string
-  ): Promise<SessionResponse | null> {
-    if (provider !== 'google') {
-      window.location.assign(`/api/auth/${provider}/start`);
-      return null;
-    }
+  async function requestEmailCode(
+    email: string
+  ): Promise<EmailCodeRequestedResponse> {
+    const response = await postJson('/api/auth/email/code', { email });
+    return parseResponse(
+      response,
+      emailCodeRequestedResponseSchema,
+      'email code'
+    );
+  }
 
-    if (idToken === undefined || idToken.trim() === '') {
-      throw new ApiClientError({
-        code: 'invalid_credentials',
-        diagnosticMessage: 'Google did not return an ID token.',
-      });
-    }
+  async function verifyEmailCode(
+    email: string,
+    code: string
+  ): Promise<VerifyEmailCodeResponse> {
+    const response = await postJson('/api/auth/email/verify', { code, email });
+    return parseResponse(
+      response,
+      verifyEmailCodeResponseSchema,
+      'email code verification'
+    );
+  }
 
-    const response = await requestApi('/api/auth/google', {
-      body: JSON.stringify({ idToken }),
-      credentials: 'same-origin',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      method: 'POST',
+  async function completeEmailRegistration(
+    registrationToken: string,
+    displayName: string
+  ): Promise<SessionResponse> {
+    const response = await postJson('/api/auth/email/register', {
+      displayName,
+      registrationToken,
     });
-
-    return parseSessionResponse(response);
+    return parseResponse(response, sessionResponseSchema, 'registration');
   }
 
   async function logout(): Promise<void> {
@@ -66,11 +84,73 @@ export function createRealAuthClient(): AuthClient {
       throw await createResponseError(response);
     }
   }
+
+  async function removeAvatar(): Promise<PublicUser> {
+    const response = await requestApi('/api/users/me/avatar', {
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json' },
+      method: 'DELETE',
+    });
+    return parseResponse(response, publicUserSchema, 'updated user');
+  }
+
+  async function selectAvatarPreset(
+    presetId: AvatarPresetId
+  ): Promise<PublicUser> {
+    const response = await postJson(
+      '/api/users/me/avatar/preset',
+      {
+        presetId,
+      },
+      'PUT'
+    );
+    return parseResponse(response, publicUserSchema, 'updated user');
+  }
+
+  async function updateDisplayName(displayName: string): Promise<PublicUser> {
+    const response = await postJson('/api/users/me', { displayName }, 'PATCH');
+    return parseResponse(response, publicUserSchema, 'updated user');
+  }
+
+  async function uploadAvatar(file: File): Promise<PublicUser> {
+    const response = await requestApi('/api/users/me/avatar', {
+      body: file,
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': file.type,
+      },
+      method: 'PUT',
+    });
+    return parseResponse(response, publicUserSchema, 'updated user');
+  }
 }
 
-async function parseSessionResponse(
-  response: Response
-): Promise<SessionResponse> {
+function postJson(
+  path: string,
+  body: unknown,
+  method: 'PATCH' | 'POST' | 'PUT' = 'POST'
+): Promise<Response> {
+  return requestApi(path, {
+    body: JSON.stringify(body),
+    credentials: 'same-origin',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    method,
+  });
+}
+
+async function parseResponse<Output>(
+  response: Response,
+  schema: {
+    safeParse(
+      value: unknown
+    ): { data: Output; success: true } | { success: false };
+  },
+  responseName: string
+): Promise<Output> {
   if (!response.ok) {
     throw await createResponseError(response);
   }
@@ -80,21 +160,25 @@ async function parseSessionResponse(
   try {
     responseBody = await response.json();
   } catch (error) {
-    throw new ApiClientError({
-      cause: error,
-      code: 'invalid_response',
-      diagnosticMessage: 'The server returned an invalid session response.',
-    });
+    throw invalidResponse(responseName, error);
   }
 
-  const result = sessionResponseSchema.safeParse(responseBody);
+  const result = schema.safeParse(responseBody);
 
   if (!result.success) {
-    throw new ApiClientError({
-      code: 'invalid_response',
-      diagnosticMessage: 'The server returned an invalid session response.',
-    });
+    throw invalidResponse(responseName);
   }
 
   return result.data;
+}
+
+function invalidResponse(
+  responseName: string,
+  cause?: unknown
+): ApiClientError {
+  return new ApiClientError({
+    cause,
+    code: 'invalid_response',
+    diagnosticMessage: `The server returned an invalid ${responseName} response.`,
+  });
 }

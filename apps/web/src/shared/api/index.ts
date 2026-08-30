@@ -5,6 +5,8 @@ export {
 } from './gameConnection';
 export { type GameApi, createRealGameApi } from './GameApi';
 export { createSelectedGameApi } from './createSelectedGameApi';
+export { type UserApi, createRealUserApi } from './UserApi';
+export { createSelectedUserApi } from './createSelectedUserApi';
 export {
   type LobbyConnection,
   createLobbyConnection,

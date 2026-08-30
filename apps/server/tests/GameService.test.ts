@@ -367,7 +367,7 @@ describe('GameService', () => {
         id: GAME_ID,
         players: [
           {
-            avatarHash: 'avatar-hash',
+            avatarVersion: 'avatar-hash',
             displayName: 'Ada',
             id: FIRST_USER_ID,
             seat: 1,
@@ -451,7 +451,7 @@ describe('GameService', () => {
     activeGames.store(GAME_ID, applyEvent(null, GAME_CREATED_EVENT));
     vi.mocked(gameRepository.listGamePlayers).mockResolvedValue([
       {
-        avatarHash: 'avatar-hash',
+        avatarVersion: 'avatar-hash',
         displayName: 'Ada',
         id: FIRST_USER_ID,
         seat: 1,
