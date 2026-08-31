@@ -1,9 +1,19 @@
-import type { ApiErrorCode } from '@war-chest/api-contracts';
-import type { StoredAvatar } from '@war-chest/auth';
+import {
+  type ApiErrorCode,
+  type UserGamesResponse,
+  AVATAR_PRESETS,
+  selectAvatarPresetRequestSchema,
+  updateCurrentUserRequestSchema,
+} from '@war-chest/api-contracts';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
+import { normalizeAvatar } from './normalizeAvatar.js';
 import type { PublicUser } from './PublicUser.js';
-import type { UserGameCursor, UserGamePage } from './UserRepository.js';
+import type {
+  StoredAvatar,
+  UserGameCursor,
+  UserGamePage,
+} from './UserRepository.js';
 
 const DEFAULT_HISTORY_LIMIT = 20;
 const MAXIMUM_HISTORY_LIMIT = 100;
@@ -35,9 +45,13 @@ const userGameCursorSchema = z
   .strict();
 
 export function registerUserRoutes(app: FastifyInstance): void {
-  const { auth, userRepository } = app.serverDependencies;
+  const { userRepository } = app.serverDependencies;
   const protectedRoute = { preHandler: app.requireAuthSession };
 
+  app.patch('/users/me', protectedRoute, updateCurrentUser);
+  app.put('/users/me/avatar', protectedRoute, uploadCurrentUserAvatar);
+  app.put('/users/me/avatar/preset', protectedRoute, selectCurrentUserAvatar);
+  app.delete('/users/me/avatar', protectedRoute, removeCurrentUserAvatar);
   app.get('/users/:userId', protectedRoute, getPublicUser);
   app.get('/users/:userId/avatar', protectedRoute, getAvatar);
   app.get('/users/:userId/games', protectedRoute, getFinishedGames);
@@ -67,7 +81,7 @@ export function registerUserRoutes(app: FastifyInstance): void {
       return reply;
     }
 
-    const avatar = await auth.getAvatar(userId);
+    const avatar = await userRepository.findAvatar(userId);
 
     if (avatar === null) {
       return sendError({
@@ -81,10 +95,94 @@ export function registerUserRoutes(app: FastifyInstance): void {
     return sendAvatar(reply, avatar);
   }
 
+  async function updateCurrentUser(
+    request: FastifyRequest,
+    reply: FastifyReply
+  ): Promise<FastifyReply | PublicUser> {
+    const body = updateCurrentUserRequestSchema.safeParse(request.body);
+
+    if (!body.success) {
+      return sendError({
+        code: 'invalid_request',
+        message: 'Nickname must contain 2 to 24 supported characters.',
+        reply,
+        statusCode: 400,
+      });
+    }
+
+    const user = await userRepository.updateDisplayName(
+      requireCurrentUserId(request),
+      body.data.displayName
+    );
+    return user ?? sendUserNotFound(reply);
+  }
+
+  async function selectCurrentUserAvatar(
+    request: FastifyRequest,
+    reply: FastifyReply
+  ): Promise<FastifyReply | PublicUser> {
+    const body = selectAvatarPresetRequestSchema.safeParse(request.body);
+
+    if (!body.success) {
+      return sendError({
+        code: 'invalid_request',
+        message: 'Avatar preset is invalid.',
+        reply,
+        statusCode: 400,
+      });
+    }
+
+    const user = await userRepository.selectAvatarPreset(
+      requireCurrentUserId(request),
+      body.data.presetId
+    );
+    return user ?? sendUserNotFound(reply);
+  }
+
+  async function uploadCurrentUserAvatar(
+    request: FastifyRequest,
+    reply: FastifyReply
+  ): Promise<FastifyReply | PublicUser> {
+    if (!Buffer.isBuffer(request.body)) {
+      return sendError({
+        code: 'avatar_invalid',
+        message: 'Avatar must be a JPEG, PNG, or WebP image.',
+        reply,
+        statusCode: 400,
+      });
+    }
+
+    try {
+      const avatar = await normalizeAvatar(request.body);
+      const user = await userRepository.saveAvatar(
+        requireCurrentUserId(request),
+        avatar
+      );
+      return user ?? sendUserNotFound(reply);
+    } catch {
+      return sendError({
+        code: 'avatar_invalid',
+        message: 'Avatar must be a JPEG, PNG, or WebP image up to 4096x4096.',
+        reply,
+        statusCode: 400,
+      });
+    }
+  }
+
+  async function removeCurrentUserAvatar(
+    request: FastifyRequest,
+    reply: FastifyReply
+  ): Promise<FastifyReply | PublicUser> {
+    const user = await userRepository.removeAvatar(
+      requireCurrentUserId(request)
+    );
+    return user ?? sendUserNotFound(reply);
+  }
+
   async function getFinishedGames(
     request: FastifyRequest,
     reply: FastifyReply
-  ): Promise<FastifyReply | SerializedUserGamePage> {
+  ): Promise<FastifyReply | UserGamesResponse> {
     const userId = parseUserId(request, reply);
 
     if (userId === null) {
@@ -119,18 +217,6 @@ export function registerUserRoutes(app: FastifyInstance): void {
 
     return serializeGamePage(page);
   }
-}
-
-interface SerializedUserGamePage {
-  items: Array<{
-    finishedAt: string;
-    id: string;
-    participants: UserGamePage['items'][number]['participants'];
-    result: UserGamePage['items'][number]['result'];
-    team: UserGamePage['items'][number]['team'];
-    winnerTeam: UserGamePage['items'][number]['winnerTeam'];
-  }>;
-  nextCursor: string | null;
 }
 
 function parseUserId(
@@ -181,7 +267,7 @@ function parseCursor(
   }
 }
 
-function serializeGamePage(page: UserGamePage): SerializedUserGamePage {
+function serializeGamePage(page: UserGamePage): UserGamesResponse {
   return {
     items: page.items.map((game) => ({
       ...game,
@@ -201,10 +287,28 @@ function encodeCursor(cursor: UserGameCursor): string {
 }
 
 function sendAvatar(reply: FastifyReply, avatar: StoredAvatar): FastifyReply {
+  if (avatar.kind === 'preset') {
+    const preset = AVATAR_PRESETS.find((item) => item.id === avatar.presetId);
+
+    if (preset === undefined) {
+      return sendUserNotFound(reply);
+    }
+
+    return reply.code(302).header('Location', preset.imageUrl).send();
+  }
+
   return reply
     .header('Cache-Control', 'private, max-age=31536000, immutable')
     .header('Content-Type', avatar.contentType)
     .send(avatar.content);
+}
+
+function requireCurrentUserId(request: FastifyRequest): string {
+  if (request.authSession === null) {
+    throw new Error('Auth session pre-handler did not resolve a session.');
+  }
+
+  return request.authSession.user.id;
 }
 
 function sendUserNotFound(reply: FastifyReply): FastifyReply {

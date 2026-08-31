@@ -39,7 +39,7 @@ describe('fake game API lifecycle', () => {
   });
 
   test('creates a waiting game without occupying a position', async () => {
-    const gameApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.googleUser);
+    const gameApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.firstUser);
 
     const createdGame = await gameApi.createGame({
       commandId: CREATE_COMMAND_ID,
@@ -53,10 +53,8 @@ describe('fake game API lifecycle', () => {
   });
 
   test('lets a second user join the free team position', async () => {
-    const creatorApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.googleUser);
-    const secondPlayerApi = createFakeGameApi(
-      FAKE_SEED_IDENTIFIERS.telegramUser
-    );
+    const creatorApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.firstUser);
+    const secondPlayerApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.secondUser);
     const createdGame = await creatorApi.createGame({
       commandId: CREATE_COMMAND_ID,
     });
@@ -70,13 +68,13 @@ describe('fake game API lifecycle', () => {
 
     expect(joinedGame.view).toMatchObject({
       lastEventSequence: 2,
-      players: [{ id: FAKE_SEED_IDENTIFIERS.telegramUser, team: 'black' }],
+      players: [{ id: FAKE_SEED_IDENTIFIERS.secondUser, team: 'black' }],
       status: 'waiting',
     });
   });
 
   test('lets a joined player move to the remaining free position', async () => {
-    const gameApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.googleUser);
+    const gameApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.firstUser);
     const createdGame = await gameApi.createGame({
       commandId: CREATE_COMMAND_ID,
     });
@@ -96,17 +94,15 @@ describe('fake game API lifecycle', () => {
 
     expect(movedGame.view).toMatchObject({
       lastEventSequence: 3,
-      players: [{ id: FAKE_SEED_IDENTIFIERS.googleUser, team: 'black' }],
-      teams: { black: [FAKE_SEED_IDENTIFIERS.googleUser], white: [] },
+      players: [{ id: FAKE_SEED_IDENTIFIERS.firstUser, team: 'black' }],
+      teams: { black: [FAKE_SEED_IDENTIFIERS.firstUser], white: [] },
     });
   });
 
   test('lets the creator start without occupying a position', async () => {
-    const creatorApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.googleUser);
-    const firstPlayerApi = createFakeGameApi(
-      FAKE_SEED_IDENTIFIERS.telegramUser
-    );
-    const secondPlayerApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.yandexUser);
+    const creatorApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.firstUser);
+    const firstPlayerApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.secondUser);
+    const secondPlayerApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.thirdUser);
     const createdGame = await creatorApi.createGame({
       commandId: CREATE_COMMAND_ID,
     });
@@ -135,7 +131,7 @@ describe('fake game API lifecycle', () => {
     });
 
     expect(startedGame.view).toMatchObject({
-      creatorId: FAKE_SEED_IDENTIFIERS.googleUser,
+      creatorId: FAKE_SEED_IDENTIFIERS.firstUser,
       lastEventSequence: 4,
       privateMoves: [],
       status: 'active',
@@ -143,10 +139,8 @@ describe('fake game API lifecycle', () => {
   });
 
   test('rejects start from a joined player who is not the creator', async () => {
-    const creatorApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.googleUser);
-    const secondPlayerApi = createFakeGameApi(
-      FAKE_SEED_IDENTIFIERS.telegramUser
-    );
+    const creatorApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.firstUser);
+    const secondPlayerApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.secondUser);
     const createdGame = await creatorApi.createGame({
       commandId: CREATE_COMMAND_ID,
     });
@@ -174,10 +168,8 @@ describe('fake game API lifecycle', () => {
   });
 
   test('lets the creator swap both occupied positions', async () => {
-    const creatorApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.googleUser);
-    const secondPlayerApi = createFakeGameApi(
-      FAKE_SEED_IDENTIFIERS.telegramUser
-    );
+    const creatorApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.firstUser);
+    const secondPlayerApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.secondUser);
     const createdGame = await creatorApi.createGame({
       commandId: CREATE_COMMAND_ID,
     });
@@ -207,21 +199,19 @@ describe('fake game API lifecycle', () => {
 
     expect(swappedGame.view.players).toEqual([
       expect.objectContaining({
-        id: FAKE_SEED_IDENTIFIERS.googleUser,
+        id: FAKE_SEED_IDENTIFIERS.firstUser,
         team: 'black',
       }),
       expect.objectContaining({
-        id: FAKE_SEED_IDENTIFIERS.telegramUser,
+        id: FAKE_SEED_IDENTIFIERS.secondUser,
         team: 'white',
       }),
     ]);
   });
 
   test('lets a joined player leave a waiting lobby', async () => {
-    const creatorApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.googleUser);
-    const secondPlayerApi = createFakeGameApi(
-      FAKE_SEED_IDENTIFIERS.telegramUser
-    );
+    const creatorApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.firstUser);
+    const secondPlayerApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.secondUser);
     const createdGame = await creatorApi.createGame({
       commandId: CREATE_COMMAND_ID,
     });
@@ -248,10 +238,8 @@ describe('fake game API lifecycle', () => {
   });
 
   test('deletes a waiting lobby when its creator closes it', async () => {
-    const creatorApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.googleUser);
-    const secondPlayerApi = createFakeGameApi(
-      FAKE_SEED_IDENTIFIERS.telegramUser
-    );
+    const creatorApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.firstUser);
+    const secondPlayerApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.secondUser);
     const createdGame = await creatorApi.createGame({
       commandId: CREATE_COMMAND_ID,
     });
@@ -273,10 +261,8 @@ describe('fake game API lifecycle', () => {
   });
 
   test('lets a non-current player surrender and awards victory to the opponent', async () => {
-    const creatorApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.googleUser);
-    const secondPlayerApi = createFakeGameApi(
-      FAKE_SEED_IDENTIFIERS.telegramUser
-    );
+    const creatorApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.firstUser);
+    const secondPlayerApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.secondUser);
     const createdGame = await creatorApi.createGame({
       commandId: CREATE_COMMAND_ID,
     });
@@ -310,9 +296,9 @@ describe('fake game API lifecycle', () => {
 
     expect(finishedGame.view).toMatchObject({
       players: [
-        expect.objectContaining({ id: FAKE_SEED_IDENTIFIERS.googleUser }),
+        expect.objectContaining({ id: FAKE_SEED_IDENTIFIERS.firstUser }),
         expect.objectContaining({
-          id: FAKE_SEED_IDENTIFIERS.telegramUser,
+          id: FAKE_SEED_IDENTIFIERS.secondUser,
           presence: 'defeated',
         }),
       ],
@@ -322,7 +308,7 @@ describe('fake game API lifecycle', () => {
   });
 
   test('does not create another game for a current player', async () => {
-    const gameApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.googleUser);
+    const gameApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.firstUser);
     const createdGame = await gameApi.createGame({
       commandId: CREATE_COMMAND_ID,
     });
@@ -339,8 +325,8 @@ describe('fake game API lifecycle', () => {
   });
 
   test('does not join a second game for a current player', async () => {
-    const firstGameApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.googleUser);
-    const secondGameApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.telegramUser);
+    const firstGameApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.firstUser);
+    const secondGameApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.secondUser);
     const firstGame = await firstGameApi.createGame({
       commandId: CREATE_COMMAND_ID,
     });
@@ -365,7 +351,7 @@ describe('fake game API lifecycle', () => {
   });
 
   test('reports the current player game in the lobby', async () => {
-    const gameApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.googleUser);
+    const gameApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.firstUser);
     const createdGame = await gameApi.createGame({
       commandId: CREATE_COMMAND_ID,
     });

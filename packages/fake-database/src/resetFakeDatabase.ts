@@ -4,11 +4,7 @@ import {
   type FakeDatabaseSchema,
   FAKE_DATABASE_STORE_NAMES,
 } from './schema.js';
-import {
-  FAKE_SEED_CREATED_AT,
-  FAKE_USER_IDENTITIES,
-  FAKE_USERS,
-} from './seed.js';
+import { FAKE_SEED_CREATED_AT, FAKE_USERS } from './seed.js';
 import {
   type SchemaTableTransaction,
   runSchemaTableTransaction,
@@ -36,11 +32,6 @@ export async function resetFakeDatabase(
     const users = transaction.table('users');
     for (const user of FAKE_USERS) {
       await users.insert(user.id, user);
-    }
-
-    const userIdentities = transaction.table('userIdentities');
-    for (const identity of FAKE_USER_IDENTITIES) {
-      await userIdentities.insert(identity.id, identity);
     }
 
     await transaction.table('runtimeFeatureFlags').insert('application', {

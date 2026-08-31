@@ -8,11 +8,9 @@ JSON 404 и не попадает в SPA fallback.
 | Метод  | URL                                 | Авторизация | Поведение                            |
 | ------ | ----------------------------------- | ----------- | ------------------------------------ |
 | `GET`  | `/api/health`                       | нет         | проверяет соединение с PostgreSQL    |
-| `POST` | `/api/auth/google`                  | нет         | проверяет Google ID token            |
-| `GET`  | `/api/auth/telegram/start`          | нет         | начинает Telegram OAuth flow         |
-| `GET`  | `/api/auth/telegram/callback`       | state       | завершает Telegram OAuth flow        |
-| `GET`  | `/api/auth/yandex/start`            | нет         | начинает Yandex OAuth flow           |
-| `GET`  | `/api/auth/yandex/callback`         | state       | завершает Yandex OAuth flow          |
+| `POST` | `/api/auth/email/code`              | нет         | запрашивает одноразовый код          |
+| `POST` | `/api/auth/email/verify`            | нет         | проверяет одноразовый код            |
+| `POST` | `/api/auth/email/register`          | ticket      | завершает первый вход                |
 | `GET`  | `/api/auth/session`                 | session     | возвращает текущую сессию            |
 | `POST` | `/api/auth/logout`                  | нестрогая   | отзывает сессию и очищает cookie     |
 | `GET`  | `/api/games`                        | session     | возвращает активные игры для лобби   |
@@ -167,31 +165,24 @@ Presence-события доступны в том же безопасном eve
 }
 ```
 
-## Вход через провайдеров
+## Вход по email-коду
 
-`POST /api/auth/google` принимает JSON `{ "idToken": "..." }`. После успешной
-проверки server устанавливает session cookie и возвращает тот же
-`SessionResponse`, что и `/api/auth/session`.
+`POST /api/auth/email/code` принимает email и создаёт шестизначный код на 10
+минут. Успешный ответ `202` содержит `expiresAt` и `resendAvailableAt`. Новый
+запрос не отменяет предыдущие ещё живые коды.
 
-Telegram и Yandex используют redirect flow. Маршрут `/start` получает URL и
-OAuth state из `@war-chest/auth`, устанавливает подготовленную state cookie и
-отвечает `302` на страницу провайдера. Callback требует непустые `code` и
-`state`, передаёт их вместе со state cookie в пакет авторизации, очищает state
-cookie, устанавливает session cookie и перенаправляет браузер на
-`AUTH_SUCCESS_REDIRECT_URL`.
+`POST /api/auth/email/verify` принимает email и код. Существующий пользователь
+получает `status: "authenticated"`, сессию и session cookie. Новый получает
+`status: "registration_required"`, `registrationToken` и срок его действия.
+`POST /api/auth/email/register` принимает этот token и обязательный никнейм.
 
-Ошибки `POST /api/auth/google` возвращаются в едином API envelope. Ошибка
-redirect flow перенаправляет браузер на `/login?authError=<code>` относительно
-origin из `AUTH_SUCCESS_REDIRECT_URL`: клиент переводит стабильный код и не
-показывает техническое сообщение сервера.
-
-| Код                       | Google HTTP | Redirect flow | Ситуация                                    |
-| ------------------------- | ----------- | ------------- | ------------------------------------------- |
-| `invalid_request`         | 400         | `302 /login`  | callback не содержит обязательные параметры |
-| `invalid_credentials`     | 401         | `302 /login`  | провайдер не подтвердил credentials         |
-| `invalid_oauth_state`     | 400         | `302 /login`  | OAuth state недействителен или истёк        |
-| `provider_disabled`       | 503         | `302 /login`  | credentials провайдера не настроены         |
-| `provider_request_failed` | 502         | `302 /login`  | запрос внешнего провайдера завершился сбоем |
+| Код                           | HTTP | Ситуация                              |
+| ----------------------------- | ---- | ------------------------------------- |
+| `invalid_request`             | 400  | email, код или никнейм невалидны      |
+| `email_code_invalid`          | 401  | код неверен, использован или истёк    |
+| `registration_ticket_invalid` | 401  | регистрационный ticket недействителен |
+| `email_code_rate_limited`     | 429  | превышен лимит запросов или проверок  |
+| `email_delivery_unavailable`  | 503  | адаптер не отправил письмо            |
 
 Все ответы auth endpoints используют `Cache-Control: no-store`.
 
@@ -225,10 +216,9 @@ origin из `AUTH_SUCCESS_REDIRECT_URL`: клиент переводит ста�
 пользователя. `userId` должен быть UUID; иначе возвращается `400 invalid_request`.
 
 Публичный профиль содержит только `id`, `displayName` и `avatarVersion`.
-Внешние OAuth identifiers в ответ не попадают.
+Email в ответ не попадает.
 
-Avatar загружается из `@war-chest/auth`. Успешный ответ получает сохранённый
-`Content-Type` и:
+Пользовательский avatar возвращается с сохранённым `Content-Type` и:
 
 ```text
 Cache-Control: private, max-age=31536000, immutable
@@ -236,6 +226,11 @@ Cache-Control: private, max-age=31536000, immutable
 
 Если пользователя или avatar нет, server отвечает `404` с кодом
 `user_not_found` или `avatar_not_found` соответственно.
+
+`PATCH /api/users/me` изменяет никнейм. `PUT /api/users/me/avatar/preset`
+выбирает стабильный preset ID, `PUT /api/users/me/avatar` принимает JPEG, PNG
+или WebP body до 5 МБ, а `DELETE /api/users/me/avatar` возвращает fallback с
+инициалами. Preset-аватар выдаётся redirect на статический asset.
 
 ## История завершённых игр
 

@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { type FormEvent } from 'react';
 import { LOBBY_GAMES_QUERY_KEY } from '#/entities/game';
 import { createSelectedGameApi, useApiErrorMessage } from '#/shared/api';
 import { useTranslation } from '#/shared/i18n/useTranslation';
@@ -37,7 +36,10 @@ export function CreateGameForm(props: Props) {
     <form
       aria-busy={createGameMutation.isPending}
       className={classes.form}
-      onSubmit={handleSubmit}
+      onSubmit={(event) => {
+        event.preventDefault();
+        createGameMutation.mutate();
+      }}
     >
       <p className={classes.description}>{t('description')}</p>
       {createGameMutation.error === null ? null : (
@@ -50,10 +52,4 @@ export function CreateGameForm(props: Props) {
       </Button>
     </form>
   );
-
-  function handleSubmit(event: FormEvent<HTMLFormElement>): void {
-    event.preventDefault();
-
-    createGameMutation.mutate();
-  }
 }

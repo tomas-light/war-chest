@@ -4,7 +4,6 @@ import type {
   FakeDatabaseSchema,
   FakeRuntimeFeatureFlags,
   FakeUser,
-  FakeUserIdentity,
 } from './schema.js';
 import {
   type SchemaTableTransaction,
@@ -12,68 +11,40 @@ import {
 } from './Table.js';
 
 export const FAKE_SEED_CREATED_AT = new Date('2026-01-01T00:00:00.000Z');
-const SEED_STORE_NAMES = [
-  'users',
-  'userIdentities',
-  'runtimeFeatureFlags',
-] as const;
+const SEED_STORE_NAMES = ['users', 'runtimeFeatureFlags'] as const;
 
 export const FAKE_SEED_IDENTIFIERS = {
-  googleIdentity: '50000000-0000-4000-8000-000000000001',
-  googleUser: '10000000-0000-4000-8000-000000000001',
-  telegramIdentity: '50000000-0000-4000-8000-000000000002',
-  telegramUser: '10000000-0000-4000-8000-000000000002',
-  yandexIdentity: '50000000-0000-4000-8000-000000000003',
-  yandexUser: '10000000-0000-4000-8000-000000000003',
-} as const;
-
-export const FAKE_PROVIDER_SUBJECTS = {
-  google: 'fake-google-user',
-  telegram: 'fake-telegram-user',
-  yandex: 'fake-yandex-user',
+  firstUser: '10000000-0000-4000-8000-000000000001',
+  secondUser: '10000000-0000-4000-8000-000000000002',
+  thirdUser: '10000000-0000-4000-8000-000000000003',
 } as const;
 
 export const FAKE_USERS = [
   {
+    avatarDataUrl: null,
     createdAt: FAKE_SEED_CREATED_AT,
-    displayName: 'G User',
-    id: FAKE_SEED_IDENTIFIERS.googleUser,
+    avatarPresetId: 'archer',
+    displayName: 'Archer',
+    email: 'archer@example.com',
+    id: FAKE_SEED_IDENTIFIERS.firstUser,
   },
   {
+    avatarDataUrl: null,
     createdAt: FAKE_SEED_CREATED_AT,
-    displayName: 'T User',
-    id: FAKE_SEED_IDENTIFIERS.telegramUser,
+    avatarPresetId: 'cavalry',
+    displayName: 'Cavalry',
+    email: 'cavalry@example.com',
+    id: FAKE_SEED_IDENTIFIERS.secondUser,
   },
   {
+    avatarDataUrl: null,
     createdAt: FAKE_SEED_CREATED_AT,
-    displayName: 'Y User',
-    id: FAKE_SEED_IDENTIFIERS.yandexUser,
+    avatarPresetId: 'warrior-priest',
+    displayName: 'Warrior Priest',
+    email: 'priest@example.com',
+    id: FAKE_SEED_IDENTIFIERS.thirdUser,
   },
 ] satisfies readonly FakeUser[];
-
-export const FAKE_USER_IDENTITIES = [
-  {
-    createdAt: FAKE_SEED_CREATED_AT,
-    id: FAKE_SEED_IDENTIFIERS.googleIdentity,
-    provider: 'google',
-    providerSubject: FAKE_PROVIDER_SUBJECTS.google,
-    userId: FAKE_SEED_IDENTIFIERS.googleUser,
-  },
-  {
-    createdAt: FAKE_SEED_CREATED_AT,
-    id: FAKE_SEED_IDENTIFIERS.telegramIdentity,
-    provider: 'telegram',
-    providerSubject: FAKE_PROVIDER_SUBJECTS.telegram,
-    userId: FAKE_SEED_IDENTIFIERS.telegramUser,
-  },
-  {
-    createdAt: FAKE_SEED_CREATED_AT,
-    id: FAKE_SEED_IDENTIFIERS.yandexIdentity,
-    provider: 'yandex',
-    providerSubject: FAKE_PROVIDER_SUBJECTS.yandex,
-    userId: FAKE_SEED_IDENTIFIERS.yandexUser,
-  },
-] satisfies readonly FakeUserIdentity[];
 
 export async function seedFakeDatabase(
   database: FakeDatabaseConnection
@@ -95,15 +66,6 @@ async function writeSeedFixtures(
       await users.insert(user.id, user);
     } else if (overwriteExisting) {
       await users.update(user.id, user);
-    }
-  }
-
-  const userIdentities = transaction.table('userIdentities');
-  for (const identity of FAKE_USER_IDENTITIES) {
-    if ((await userIdentities.get(identity.id)) === undefined) {
-      await userIdentities.insert(identity.id, identity);
-    } else if (overwriteExisting) {
-      await userIdentities.update(identity.id, identity);
     }
   }
 

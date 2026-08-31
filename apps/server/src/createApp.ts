@@ -49,6 +49,14 @@ declare module 'fastify' {
 export function createApp(options: CreateAppOptions): FastifyInstance {
   const app = Fastify({ logger: true });
 
+  app.addContentTypeParser(
+    ['image/jpeg', 'image/png', 'image/webp'],
+    { bodyLimit: 5 * 1024 * 1024, parseAs: 'buffer' },
+    function parseImageBody(_request, body, done) {
+      done(null, body);
+    }
+  );
+
   const gameRepository = createGameRepository(
     options.databaseConnection.database
   );

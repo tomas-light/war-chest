@@ -1,12 +1,21 @@
 {
-  "GoogleLoginButton": {
-    "loadingLabel": "Загрузка входа через Google"
-  },
-  "LoginOptions": {
-    "continueWithGoogle": "Продолжить с Google",
-    "continueWithTelegram": "Продолжить с Telegram",
-    "continueWithYandex": "Продолжить с Yandex ID",
-    "fakeModeHint": "Fake-режим создаёт отдельного тестового игрока для каждого способа входа в этой вкладке.",
-    "googleNotConfigured": "Google не настроен"
+  "EmailLoginForm": {
+    "changeEmail": "Изменить email",
+    "checkingCode": "Проверяем…",
+    "codeDescription": "Мы отправили код на {{email}}. Подойдут и более ранние коды, если они ещё не истекли.",
+    "codeLabel": "Код из письма",
+    "createProfile": "Создать профиль",
+    "creatingProfile": "Создаём профиль…",
+    "displayNameLabel": "Никнейм",
+    "displayNameRequirements": "От 2 до 24 символов: буквы, цифры, пробел, дефис или подчёркивание.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "player@example.com",
+    "fakeModeHint": "В fake-режиме письмо не отправляется. Используйте код 123456.",
+    "registrationDescription": "Этот email входит впервые. Укажите имя, которое увидят другие игроки.",
+    "resendCode": "Отправить ещё раз",
+    "resendCountdown": "Повтор через {{seconds}} с",
+    "sendCode": "Получить код",
+    "sendingCode": "Отправляем…",
+    "signIn": "Войти"
   }
 }

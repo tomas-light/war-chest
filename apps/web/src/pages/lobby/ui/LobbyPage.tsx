@@ -4,7 +4,7 @@ import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuthSession } from '#/entities/auth-session';
 import { LOBBY_GAMES_QUERY_KEY, useLobbyGamesQuery } from '#/entities/game';
-import { UserAvatar } from '#/entities/user';
+import { UserAvatar, UserProfileLink } from '#/entities/user';
 import {
   createSelectedLobbyConnection,
   useApiErrorMessage,
@@ -221,7 +221,13 @@ function TeamSlot(props: TeamSlotProps) {
         {player === undefined ? null : (
           <UserAvatar size="small" user={player} />
         )}
-        <strong>{player?.displayName ?? t('available')}</strong>
+        <strong>
+          {player === undefined ? (
+            t('available')
+          ) : (
+            <UserProfileLink user={player} />
+          )}
+        </strong>
       </div>
     </div>
   );

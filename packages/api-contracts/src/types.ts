@@ -6,6 +6,8 @@ import type {
 
 export const API_ERROR_CODES = [
   'avatar_not_found',
+  'avatar_invalid',
+  'avatar_too_large',
   'command_id_conflict',
   'feature_flags_unavailable',
   'game_command_forbidden',
@@ -14,15 +16,15 @@ export const API_ERROR_CODES = [
   'game_position_occupied',
   'game_version_conflict',
   'internal_error',
-  'invalid_credentials',
+  'email_code_invalid',
+  'email_code_rate_limited',
+  'email_delivery_unavailable',
   'invalid_cursor',
   'invalid_message',
-  'invalid_oauth_state',
   'invalid_request',
   'not_found',
   'player_already_in_game',
-  'provider_disabled',
-  'provider_request_failed',
+  'registration_ticket_invalid',
   'unauthorized',
   'user_not_found',
 ] as const;
@@ -35,13 +37,83 @@ export interface PublicUser {
   id: string;
 }
 
+export interface UserGameParticipant extends PublicUser {
+  seat: number;
+  team: 'black' | 'white';
+}
+
+export interface UserFinishedGame {
+  finishedAt: string;
+  id: string;
+  participants: readonly UserGameParticipant[];
+  result: 'defeat' | 'victory';
+  team: 'black' | 'white';
+  winnerTeam: 'black' | 'white';
+}
+
+export interface UserGamesResponse {
+  items: readonly UserFinishedGame[];
+  nextCursor: string | null;
+}
+
 export interface SessionResponse {
   expiresAt: string;
   user: PublicUser;
 }
 
-export interface GoogleLoginRequest {
-  idToken: string;
+export const AVATAR_PRESETS = [
+  {
+    id: 'archer',
+    imageUrl: '/game-images/concepts/base-game/archer/avatar.png',
+  },
+  {
+    id: 'cavalry',
+    imageUrl: '/game-images/concepts/base-game/cavalry/avatar.png',
+  },
+  {
+    id: 'warrior-priest',
+    imageUrl: '/game-images/concepts/base-game/warrior-priest/avatar.png',
+  },
+] as const;
+
+export type AvatarPresetId = (typeof AVATAR_PRESETS)[number]['id'];
+
+export interface RequestEmailCodeRequest {
+  email: string;
+}
+
+export interface EmailCodeRequestedResponse {
+  expiresAt: string;
+  resendAvailableAt: string;
+}
+
+export interface VerifyEmailCodeRequest {
+  code: string;
+  email: string;
+}
+
+export type VerifyEmailCodeResponse =
+  | {
+      status: 'authenticated';
+      session: SessionResponse;
+    }
+  | {
+      expiresAt: string;
+      registrationToken: string;
+      status: 'registration_required';
+    };
+
+export interface CompleteEmailRegistrationRequest {
+  displayName: string;
+  registrationToken: string;
+}
+
+export interface UpdateCurrentUserRequest {
+  displayName: string;
+}
+
+export interface SelectAvatarPresetRequest {
+  presetId: AvatarPresetId;
 }
 
 export interface ApiError {

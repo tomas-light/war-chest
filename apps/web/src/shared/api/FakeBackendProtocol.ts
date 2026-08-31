@@ -3,6 +3,7 @@ import type { SessionResponse } from '@war-chest/api-contracts';
 export const FAKE_BACKEND_OPERATIONS = [
   'auth.getSession',
   'auth.login',
+  'auth.loginExisting',
   'auth.logout',
   'featureFlags.read',
   'game.create',
@@ -19,6 +20,12 @@ export const FAKE_BACKEND_OPERATIONS = [
   'gameConnection.synchronize',
   'lobby.subscribe',
   'lobby.unsubscribe',
+  'user.getPublic',
+  'user.listFinishedGames',
+  'user.removeAvatar',
+  'user.selectAvatarPreset',
+  'user.updateDisplayName',
+  'user.uploadAvatar',
 ] as const;
 
 export const FAKE_BACKEND_EVENT_NAMES = [
@@ -27,7 +34,6 @@ export const FAKE_BACKEND_EVENT_NAMES = [
   'lobby.updated',
 ] as const;
 
-export type FakeAuthProvider = 'google' | 'telegram' | 'yandex';
 export type FakeBackendOperation = (typeof FAKE_BACKEND_OPERATIONS)[number];
 export type FakeBackendEventName = (typeof FAKE_BACKEND_EVENT_NAMES)[number];
 

@@ -8,4 +8,3 @@ export { type GameOpenMode, getGamePageUrl } from './getGamePageUrl';
 export { getActiveGamePageUrl } from './getActiveGamePageUrl';
 export { DEV_BACKEND_STORAGE_KEY, readDevBackend } from './backendKind';
 export { useDevBackendStore } from './useDevBackendStore';
-export { webConfig } from './webConfig';

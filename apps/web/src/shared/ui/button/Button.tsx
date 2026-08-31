@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 import type { ButtonHTMLAttributes } from 'react';
 import classes from './Button.module.scss';
 
@@ -12,13 +13,11 @@ export function Button(props: Props) {
     variant = 'primary',
     ...buttonProps
   } = props;
-  const buttonClassName =
-    className === undefined ? classes.button : `${classes.button} ${className}`;
 
   return (
     <button
       {...buttonProps}
-      className={buttonClassName}
+      className={clsx(classes.button, className)}
       data-variant={variant}
       type={type}
     />

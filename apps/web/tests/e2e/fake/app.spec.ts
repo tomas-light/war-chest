@@ -1,4 +1,8 @@
-import { expect, test } from '@playwright/test';
+import { type Page, expect, test } from '@playwright/test';
+
+const ARCHER_EMAIL = 'archer@example.com';
+const CAVALRY_EMAIL = 'cavalry@example.com';
+const WARRIOR_PRIEST_EMAIL = 'priest@example.com';
 
 test('keeps backend selection available when the real API is unavailable', async ({
   page,
@@ -28,19 +32,15 @@ test('signs in, restores the fake session and signs out', async ({ page }) => {
   await expect(page.getByRole('combobox', { name: 'Бэкенд' })).toHaveValue(
     'fake'
   );
-  await expect(
-    page.getByRole('button', { name: 'Продолжить с Google' })
-  ).toBeVisible();
-  await expect(
-    page.getByRole('button', { name: 'Продолжить с Yandex ID' })
-  ).toBeVisible();
-  await page.getByRole('button', { name: 'Продолжить с Telegram' }).click();
+  await expect(page.getByLabel('Email')).toBeVisible();
+  await expect(page.getByText('Используйте код 123456')).toBeVisible();
+  await signIn(page, CAVALRY_EMAIL);
 
   await expect(page).toHaveURL(/\/lobby$/);
   await expect(page.getByRole('heading', { name: 'Лобби' })).toBeVisible();
-  await expect(page.getByText('T User')).toBeVisible();
+  await expect(page.getByText('Cavalry')).toBeVisible();
   await expect(
-    page.getByRole('img', { name: 'Аватар пользователя T User' })
+    page.getByRole('img', { name: 'Аватар пользователя Cavalry' })
   ).toBeVisible();
   await expect(page.getByRole('button', { name: 'Выйти' })).toBeVisible();
 
@@ -125,7 +125,7 @@ test('signs in, restores the fake session and signs out', async ({ page }) => {
   await page.reload();
 
   await expect(page).toHaveURL(/\/lobby$/);
-  await expect(page.getByText('T User')).toBeVisible();
+  await expect(page.getByText('Cavalry')).toBeVisible();
 
   await page.getByRole('button', { name: 'Выйти' }).click();
 
@@ -143,12 +143,12 @@ test('updates the lobby and moves role selection inside a waiting game', async (
     );
   });
   await page.goto('/');
-  await page.getByRole('button', { name: 'Продолжить с Telegram' }).click();
+  await signIn(page, CAVALRY_EMAIL);
   await expect(page.getByRole('heading', { name: 'Лобби' })).toBeVisible();
 
   const secondPage = await context.newPage();
   await secondPage.goto('/');
-  await secondPage.getByRole('button', { name: 'Продолжить с Google' }).click();
+  await signIn(secondPage, ARCHER_EMAIL);
   await expect(
     secondPage.getByRole('heading', { name: 'Лобби' })
   ).toBeVisible();
@@ -283,44 +283,87 @@ test('updates the lobby and moves role selection inside a waiting game', async (
     name: 'Игровое поле',
   });
 
-  await expect(finishedGameTable.getByText('T User')).toBeVisible();
-  await expect(finishedGameTable.getByText('G User')).toBeVisible();
+  await expect(finishedGameTable.getByText('Cavalry')).toBeVisible();
+  await expect(finishedGameTable.getByText('Archer')).toBeVisible();
   await expect(
     finishedGameTable.getByRole('img', {
-      name: 'Аватар пользователя T User',
+      name: 'Аватар пользователя Cavalry',
     })
   ).toBeVisible();
   await expect(
     finishedGameTable.getByRole('img', {
-      name: 'Аватар пользователя G User',
+      name: 'Аватар пользователя Archer',
     })
   ).toBeVisible();
-  await expect(secondFinishedGameTable.getByText('T User')).toBeVisible();
-  await expect(secondFinishedGameTable.getByText('G User')).toBeVisible();
+  await expect(secondFinishedGameTable.getByText('Cavalry')).toBeVisible();
+  await expect(secondFinishedGameTable.getByText('Archer')).toBeVisible();
   await expect(
     secondFinishedGameTable.getByRole('img', {
-      name: 'Аватар пользователя T User',
+      name: 'Аватар пользователя Cavalry',
     })
   ).toBeVisible();
   await expect(
     secondFinishedGameTable.getByRole('img', {
-      name: 'Аватар пользователя G User',
+      name: 'Аватар пользователя Archer',
     })
   ).toBeVisible();
 
   const finishedGameUrl = page.url();
+
+  await finishedGameTable
+    .getByRole('link', { name: 'Открыть профиль игрока Archer' })
+    .click();
+  await expect(page).toHaveURL(
+    /\/users\/10000000-0000-4000-8000-000000000001$/
+  );
+  await expect(page.getByRole('heading', { name: 'Archer' })).toBeVisible();
+
+  await page.getByRole('link', { name: 'Открыть историю игр' }).click();
+  await expect(page).toHaveURL(
+    /\/users\/10000000-0000-4000-8000-000000000001\/history$/
+  );
+  await expect(
+    page.getByRole('heading', { name: 'История игр: Archer' })
+  ).toBeVisible();
+  await expect(page.getByText('Победа', { exact: true })).toBeVisible();
+
+  await page
+    .getByRole('link', { name: 'Открыть профиль игрока Cavalry' })
+    .click();
+  await expect(page).toHaveURL(
+    /\/users\/10000000-0000-4000-8000-000000000002$/
+  );
+  await expect(page.getByRole('heading', { name: 'Cavalry' })).toBeVisible();
+
+  await page.getByRole('link', { name: 'Открыть историю игр' }).click();
+  await expect(page.getByText('Поражение', { exact: true })).toBeVisible();
+  await page.setViewportSize({ height: 844, width: 390 });
+  const hasHistoryHorizontalOverflow = await page.evaluate(
+    () =>
+      document.documentElement.scrollWidth >
+      document.documentElement.clientWidth
+  );
+
+  expect(hasHistoryHorizontalOverflow).toBe(false);
+  await page.getByRole('link', { name: 'Открыть игру' }).click();
+  await expect(page).toHaveURL(/\/history\//);
+  await expect(
+    page.getByRole('heading', { name: 'История игры' })
+  ).toBeVisible();
+
+  await page.goto(finishedGameUrl);
+  await expect(page.getByRole('heading', { name: 'Вы сдались' })).toBeVisible();
+
   const spectatorPage = await context.newPage();
 
   await spectatorPage.goto('/');
-  await spectatorPage
-    .getByRole('button', { name: 'Продолжить с Yandex ID' })
-    .click();
+  await signIn(spectatorPage, WARRIOR_PRIEST_EMAIL);
   await expect(
     spectatorPage.getByRole('heading', { name: 'Лобби' })
   ).toBeVisible();
   await spectatorPage.goto(finishedGameUrl);
   await expect(
-    spectatorPage.getByRole('heading', { name: 'Победитель: G User' })
+    spectatorPage.getByRole('heading', { name: 'Победитель: Archer' })
   ).toBeVisible();
   await expect(
     spectatorPage.getByRole('heading', { name: 'Доступные действия' })
@@ -351,7 +394,7 @@ test('lets a player leave and the creator close a waiting lobby', async ({
     );
   });
   await page.goto('/');
-  await page.getByRole('button', { name: 'Продолжить с Telegram' }).click();
+  await signIn(page, CAVALRY_EMAIL);
   await page.getByRole('button', { name: 'Новая игра' }).click();
   await page.getByRole('button', { name: 'Создать игру' }).click();
   await expect(
@@ -360,7 +403,7 @@ test('lets a player leave and the creator close a waiting lobby', async ({
 
   const secondPage = await context.newPage();
   await secondPage.goto('/');
-  await secondPage.getByRole('button', { name: 'Продолжить с Google' }).click();
+  await signIn(secondPage, ARCHER_EMAIL);
   await secondPage.getByRole('button', { name: 'Открыть игру' }).click();
   await secondPage.getByRole('button', { name: 'Занять место' }).click();
   await secondPage
@@ -409,3 +452,11 @@ test('lets a player leave and the creator close a waiting lobby', async ({
     secondPage.getByRole('heading', { name: 'Не удалось открыть игру' })
   ).toBeVisible();
 });
+
+async function signIn(page: Page, email: string): Promise<void> {
+  await expect(page).toHaveURL(/\/login$/);
+  await page.getByLabel('Email').fill(email);
+  await page.getByRole('button', { name: 'Получить код' }).click();
+  await page.getByLabel('Код из письма').fill('123456');
+  await page.getByRole('button', { name: 'Войти' }).click();
+}

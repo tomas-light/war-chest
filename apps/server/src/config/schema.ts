@@ -7,6 +7,7 @@ const booleanConfigSchema = z.union([
 
 export const serverConfigSchema = z
   .object({
+    APP_ENV: z.enum(['development', 'test', 'production']),
     APP_HOST: z.string().trim().min(1),
     APP_PORT: z.coerce.number().int().min(1).max(65_535),
     APP_SERVE_WEB: booleanConfigSchema,
@@ -20,6 +21,7 @@ export const serverConfigSchema = z
 export type ServerConfig = z.infer<typeof serverConfigSchema>;
 
 export const SERVER_CONFIG_KEYS = [
+  'APP_ENV',
   'APP_HOST',
   'APP_PORT',
   'APP_SERVE_WEB',

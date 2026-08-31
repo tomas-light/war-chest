@@ -1,5 +1,8 @@
 {
   "UserAvatar": {
     "label": "{{userName}}'s avatar"
+  },
+  "UserProfileLink": {
+    "label": "Open {{userName}}'s profile"
   }
 }

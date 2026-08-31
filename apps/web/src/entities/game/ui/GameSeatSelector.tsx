@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 import { useTranslation } from '#/shared/i18n/useTranslation';
 import classes from './GameSeatSelector.module.scss';
 
@@ -26,6 +27,7 @@ export function GameSeatSelector(props: Props) {
   return (
     <fieldset className={classes.selector} disabled={disabled}>
       <legend>{t('legend')}</legend>
+
       <div className={classes.seats}>
         {GAME_TEAMS.map((team) => {
           const isOccupied = occupiedTeams.includes(team);
@@ -34,7 +36,10 @@ export function GameSeatSelector(props: Props) {
 
           return (
             <label
-              className={getSeatClassName(isOccupied, isSelected)}
+              className={clsx(classes.seat, {
+                [classes.occupied]: isOccupied,
+                [classes.selected]: isSelected && !isOccupied,
+              })}
               key={team}
             >
               <input
@@ -56,12 +61,4 @@ export function GameSeatSelector(props: Props) {
       </div>
     </fieldset>
   );
-}
-
-function getSeatClassName(isOccupied: boolean, isSelected: boolean): string {
-  if (isOccupied) {
-    return `${classes.seat} ${classes.occupied}`;
-  }
-
-  return isSelected ? `${classes.seat} ${classes.selected}` : classes.seat;
 }

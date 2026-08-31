@@ -15,6 +15,7 @@ import { GameHistoryPage } from '#/pages/game-history';
 import { LobbyPage } from '#/pages/lobby';
 import { LoginPage } from '#/pages/login';
 import { NewGamePage } from '#/pages/new-game';
+import { UserGameHistoryPage } from '#/pages/user-game-history';
 import { UserProfilePage } from '#/pages/user-profile';
 import { appRoutes } from '#/shared/config';
 import { useTranslation } from '#/shared/i18n/useTranslation';
@@ -55,6 +56,10 @@ export function AppRouter() {
           <Route
             path={appRoutes.users.userId().url()}
             element={<UserProfilePage />}
+          />
+          <Route
+            path={appRoutes.users.userId().history.url()}
+            element={<UserGameHistoryPage />}
           />
           <Route
             path={appRoutes.history.gameId().url()}

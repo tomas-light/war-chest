@@ -25,8 +25,7 @@ __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS: '<dev-domain>'
 
 Значение не содержит схему и путь. Vite передаёт его в `server.allowedHosts`,
 но не включает в публичную конфигурацию приложения. После изменения
-перезапустите `yarn dev:web`. Полный пример находится в
-[локальном входе через Telegram](../auth/telegram-local-development.md).
+перезапустите `yarn dev:web`.
 
 ## Production bundle
 

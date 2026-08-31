@@ -9,6 +9,11 @@ test.each([
   ['game board', appRoutes.games.play.gameId().url(), '/games/play/:gameId'],
   ['profile', appRoutes.profile.url(), '/profile'],
   ['user profile', appRoutes.users.userId().url(), '/users/:userId'],
+  [
+    'user game history',
+    appRoutes.users.userId().history.url(),
+    '/users/:userId/history',
+  ],
   ['game history', appRoutes.history.gameId().url(), '/history/:gameId'],
 ])('builds the %s route', (_routeName, actualUrl, expectedUrl) => {
   expect(actualUrl).toBe(expectedUrl);

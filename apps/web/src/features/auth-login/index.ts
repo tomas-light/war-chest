@@ -1,1 +1,1 @@
-export { LoginOptions } from './ui/LoginOptions';
+export { EmailLoginForm } from './ui/EmailLoginForm';

@@ -5,7 +5,6 @@ import {
 } from '@war-chest/api-contracts';
 
 const CLIENT_ERROR_CODES = [
-  'external_provider_unavailable',
   'invalid_response',
   'network_error',
   'unknown',

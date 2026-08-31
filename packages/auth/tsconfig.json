@@ -5,7 +5,8 @@
     "paths": {
       "#/*": ["./src/*"]
     },
-    "tsBuildInfoFile": "../../ts-builds/packages/auth.tsbuildinfo"
+    "tsBuildInfoFile": "../../ts-builds/packages/auth.tsbuildinfo",
+    "types": ["node"]
   },
   "include": ["src"],
   "references": [

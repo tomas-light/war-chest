@@ -15,7 +15,8 @@ const SERVER_PROXY = {
   },
 };
 
-const { __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS, ...config } = loadWebConfig();
+const loadedConfig = loadWebConfig();
+const { __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS } = loadedConfig;
 
 const SERVER_ALLOWED_HOSTS =
   __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS === ''
@@ -28,7 +29,7 @@ export default defineConfig({
     outDir: 'dist',
   },
   define: {
-    __WEB_CONFIG__: JSON.stringify(config),
+    __WEB_CONFIG__: JSON.stringify({}),
   },
   plugins: [react(), readableClassnames()],
   preview: {

@@ -26,19 +26,11 @@ export {
 } from './repositories/sessions.js';
 export {
   type FakeUserRepository,
-  type FakeUserWithIdentity,
   createFakeUserRepository,
 } from './repositories/users.js';
 export { resetFakeDatabase } from './resetFakeDatabase.js';
-export {
-  FAKE_PROVIDER_SUBJECTS,
-  FAKE_SEED_IDENTIFIERS,
-  FAKE_USER_IDENTITIES,
-  FAKE_USERS,
-  seedFakeDatabase,
-} from './seed.js';
+export { FAKE_SEED_IDENTIFIERS, FAKE_USERS, seedFakeDatabase } from './seed.js';
 export type {
-  FakeAuthProvider,
   FakeAuthSession,
   FakeDatabaseConnection,
   FakeDatabaseSchema,
@@ -49,7 +41,6 @@ export type {
   FakeProcessedCommand,
   FakeRuntimeFeatureFlags,
   FakeUser,
-  FakeUserIdentity,
 } from './schema.js';
 export {
   type SchemaTable,

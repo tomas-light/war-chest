@@ -4,15 +4,17 @@ import {
   gameParamsSchema,
   joinGameRequestSchema,
   leaveGameRequestSchema,
+  selectAvatarPresetRequestSchema,
   startGameRequestSchema,
   surrenderGameRequestSchema,
   swapPlayerPositionsRequestSchema,
+  updateCurrentUserRequestSchema,
 } from '@war-chest/api-contracts';
 import { ApiClientError } from './ApiClientError';
 import { createFakeAuthApi } from './createFakeAuthApi';
 import { createFakeGameApi } from './createFakeGameApi';
+import { createFakeUserApi } from './createFakeUserApi';
 import {
-  type FakeAuthProvider,
   type FakeBackendError,
   type FakeBackendEventEnvelope,
   type FakeBackendRequest,
@@ -124,10 +126,23 @@ async function dispatchRequest(
   }
 
   if (request.operation === 'auth.login') {
-    const provider = readAuthProvider(request.payload);
-    const result = await FAKE_AUTH_API.login(provider);
+    const email = readStringProperty(request.payload, 'email');
+    const displayName = readStringProperty(request.payload, 'displayName');
+    const result = await FAKE_AUTH_API.login(email, displayName);
 
     bindSession(state, result.sessionId, result.session.user.id);
+    return result;
+  }
+
+  if (request.operation === 'auth.loginExisting') {
+    const email = readStringProperty(request.payload, 'email');
+    const result = await FAKE_AUTH_API.loginExisting(email);
+
+    bindSession(
+      state,
+      result?.sessionId ?? null,
+      result?.session.user.id ?? null
+    );
     return result;
   }
 
@@ -224,6 +239,42 @@ async function dispatchRequest(
   }
 
   const userId = await requireAuthenticatedUserId(state);
+
+  const userApi = createFakeUserApi(userId);
+
+  if (request.operation === 'user.getPublic') {
+    return userApi.getPublicUser(readStringProperty(request.payload, 'userId'));
+  }
+
+  if (request.operation === 'user.listFinishedGames') {
+    return userApi.listFinishedGames(
+      readStringProperty(request.payload, 'userId'),
+      readNullableStringProperty(request.payload, 'cursor') ?? undefined
+    );
+  }
+
+  if (request.operation === 'user.removeAvatar') {
+    requireNullPayload(request.payload);
+    return userApi.removeAvatar();
+  }
+
+  if (request.operation === 'user.selectAvatarPreset') {
+    const input = parsePayload(
+      selectAvatarPresetRequestSchema,
+      request.payload
+    );
+    return userApi.selectAvatarPreset(input.presetId);
+  }
+
+  if (request.operation === 'user.updateDisplayName') {
+    const input = parsePayload(updateCurrentUserRequestSchema, request.payload);
+    return userApi.updateDisplayName(input.displayName);
+  }
+
+  if (request.operation === 'user.uploadAvatar') {
+    return userApi.uploadAvatar(readStringProperty(request.payload, 'dataUrl'));
+  }
+
   const gameApi = createFakeGameApi(userId);
 
   if (request.operation === 'game.create') {
@@ -411,20 +462,6 @@ async function broadcastGameUpdate(gameId: string): Promise<void> {
       }
     }
   }
-}
-
-function readAuthProvider(payload: unknown): FakeAuthProvider {
-  const provider = readStringProperty(payload, 'provider');
-
-  if (
-    provider !== 'google' &&
-    provider !== 'telegram' &&
-    provider !== 'yandex'
-  ) {
-    throw createInvalidMessageError('Invalid fake auth provider.');
-  }
-
-  return provider;
 }
 
 function readGameId(payload: unknown): string {

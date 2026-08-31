@@ -1,7 +1,32 @@
 {
   "UserProfilePage": {
-    "currentUserDescription": "The current user's profile and completed games.",
-    "publicUserDescription": "Public profile of user {{userId}}.",
-    "title": "Profile"
+    "avatarDescription": "Choose a prepared portrait or upload a JPEG, PNG, or WebP up to 5 MB. The image will be cropped to a square.",
+    "avatarRemoved": "Avatar removed.",
+    "avatarSaved": "Avatar updated.",
+    "avatarTitle": "Avatar",
+    "currentUserDescription": "Configure the name and portrait other players see.",
+    "errorTitle": "Unable to open profile",
+    "loadingProfile": "Loading player profile",
+    "nicknameLabel": "Nickname",
+    "nicknameRequirements": "2 to 24 characters: letters, numbers, spaces, hyphens, or underscores.",
+    "nicknameSaved": "Nickname saved.",
+    "nicknameTitle": "Display name",
+    "presets": {
+      "archer": "Archer",
+      "cavalry": "Cavalry",
+      "warrior-priest": "Warrior-priest"
+    },
+    "publicProfile": "Player profile",
+    "publicUserDescription": "The player's public name and portrait.",
+    "removeAvatar": "Remove avatar",
+    "retry": "Try again",
+    "saveNickname": "Save",
+    "title": "Profile",
+    "uploadAvatar": "Upload your own"
+  },
+  "HistorySection": {
+    "description": "See finished games, team lineups, and the player's results.",
+    "openHistory": "Open game history",
+    "title": "Game history"
   }
 }

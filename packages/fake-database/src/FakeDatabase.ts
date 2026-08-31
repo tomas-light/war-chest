@@ -37,7 +37,6 @@ export interface FakeDatabaseTables {
   processedCommand: SchemaTable<FakeDatabaseSchema, 'processedCommands'>;
   runtimeFeatureFlags: SchemaTable<FakeDatabaseSchema, 'runtimeFeatureFlags'>;
   user: SchemaTable<FakeDatabaseSchema, 'users'>;
-  userIdentity: SchemaTable<FakeDatabaseSchema, 'userIdentities'>;
 }
 
 export interface FakeDatabase extends FakeDatabaseTables {
@@ -110,7 +109,6 @@ function createFakeDatabaseTables(
     processedCommand: createSchemaTable(database, 'processedCommands'),
     runtimeFeatureFlags: createSchemaTable(database, 'runtimeFeatureFlags'),
     user: createSchemaTable(database, 'users'),
-    userIdentity: createSchemaTable(database, 'userIdentities'),
   };
 }
 
@@ -128,6 +126,5 @@ function createFakeTransactionTables(
     processedCommand: transaction.table('processedCommands'),
     runtimeFeatureFlags: transaction.table('runtimeFeatureFlags'),
     user: transaction.table('users'),
-    userIdentity: transaction.table('userIdentities'),
   };
 }

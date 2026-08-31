@@ -2,7 +2,7 @@ import type { LobbyGamePlayer } from '@war-chest/api-contracts';
 import type { GameView, GameViewPlayer } from '@war-chest/game-engine';
 import { useState } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router';
-import { UserAvatar } from '#/entities/user';
+import { UserAvatar, UserProfileLink } from '#/entities/user';
 import { JoinGamePanel } from '#/features/join-game';
 import { LeaveGameButton } from '#/features/leave-game';
 import { StartGameButton } from '#/features/start-game';
@@ -289,11 +289,15 @@ function PlayerPosition(props: PlayerPositionProps) {
           <UserAvatar size="medium" user={profile} />
         )}
         <strong>
-          {isCurrentUser
-            ? t('youLabel', {
-                playerName: profile?.displayName ?? t('you'),
-              })
-            : playerName}
+          {profile === undefined ? (
+            playerName
+          ) : (
+            <UserProfileLink user={profile}>
+              {isCurrentUser
+                ? t('youLabel', { playerName: profile.displayName })
+                : profile.displayName}
+            </UserProfileLink>
+          )}
         </strong>
       </div>
       <small>

@@ -44,7 +44,7 @@ export interface StoredParticipant {
 }
 
 export interface StoredGamePlayer {
-  avatarHash: string | null;
+  avatarVersion: string | null;
   displayName: string;
   id: string;
   seat: number;
@@ -463,6 +463,7 @@ export function createGameRepository(database: Database): GameRepository {
     const playerRows = await database
       .select({
         avatarHash: userAvatars.contentHash,
+        avatarPresetId: users.avatarPresetId,
         displayName: users.displayName,
         gameId: gameParticipants.gameId,
         id: users.id,
@@ -482,9 +483,12 @@ export function createGameRepository(database: Database): GameRepository {
 
     for (const player of playerRows) {
       const players = playersByGameId.get(player.gameId) ?? [];
-      const { gameId, ...storedPlayer } = player;
+      const { avatarHash, avatarPresetId, gameId, ...storedPlayer } = player;
 
-      players.push(storedPlayer);
+      players.push({
+        ...storedPlayer,
+        avatarVersion: createAvatarVersion(avatarHash, avatarPresetId),
+      });
       playersByGameId.set(gameId, players);
     }
 
@@ -498,9 +502,10 @@ export function createGameRepository(database: Database): GameRepository {
   async function listGamePlayers(
     gameId: string
   ): Promise<readonly StoredGamePlayer[]> {
-    return database
+    const players = await database
       .select({
         avatarHash: userAvatars.contentHash,
+        avatarPresetId: users.avatarPresetId,
         displayName: users.displayName,
         id: users.id,
         seat: gameParticipants.seat,
@@ -511,6 +516,11 @@ export function createGameRepository(database: Database): GameRepository {
       .leftJoin(userAvatars, eq(userAvatars.userId, users.id))
       .where(eq(gameParticipants.gameId, gameId))
       .orderBy(asc(gameParticipants.team), asc(gameParticipants.seat));
+
+    return players.map(({ avatarHash, avatarPresetId, ...player }) => ({
+      ...player,
+      avatarVersion: createAvatarVersion(avatarHash, avatarPresetId),
+    }));
   }
 
   async function findParticipant(
@@ -834,6 +844,15 @@ export function createGameRepository(database: Database): GameRepository {
       return { currentVersion: lastEvent.sequence, status: 'saved' };
     });
   }
+}
+
+function createAvatarVersion(
+  avatarHash: string | null,
+  avatarPresetId: string | null
+): string | null {
+  return (
+    avatarHash ?? (avatarPresetId === null ? null : `preset:${avatarPresetId}`)
+  );
 }
 
 function classifyCreateCommand(

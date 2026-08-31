@@ -2,7 +2,9 @@ import { z } from 'zod';
 
 export const webConfigSchema = z
   .object({
-    GOOGLE_CLIENT_ID: z.string(),
+    // Accepted but never exposed to the bundle; developers can remove it from
+    // their ignored env.local.yaml without coordinating a repository change.
+    GOOGLE_CLIENT_ID: z.string().optional(),
     __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS: z.string(),
   })
   .strict();

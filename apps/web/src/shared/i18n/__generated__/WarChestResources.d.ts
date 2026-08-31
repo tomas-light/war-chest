@@ -26,17 +26,29 @@ export interface WarChestResources {
     UserAvatar: {
       label: '{{userName}}';
     };
+    UserProfileLink: {
+      label: '{{userName}}';
+    };
   };
   'features/auth-login': {
-    GoogleLoginButton: {
-      loadingLabel: '';
-    };
-    LoginOptions: {
-      continueWithGoogle: '';
-      continueWithTelegram: '';
-      continueWithYandex: '';
+    EmailLoginForm: {
+      changeEmail: '';
+      checkingCode: '';
+      codeDescription: '{{email}}';
+      codeLabel: '';
+      createProfile: '';
+      creatingProfile: '';
+      displayNameLabel: '';
+      displayNameRequirements: '';
+      emailLabel: '';
+      emailPlaceholder: '';
       fakeModeHint: '';
-      googleNotConfigured: '';
+      registrationDescription: '';
+      resendCode: '';
+      resendCountdown: '{{seconds}}';
+      sendCode: '';
+      sendingCode: '';
+      signIn: '';
     };
   };
   'features/change-language': {
@@ -259,18 +271,80 @@ export interface WarChestResources {
       title: '';
     };
   };
-  'pages/user-profile': {
-    UserProfilePage: {
-      currentUserDescription: '';
-      publicUserDescription: '{{userId}}';
+  'pages/user-game-history': {
+    GameCard: {
+      blackTeam: '';
+      defeat: '';
+      victory: '';
+      viewGame: '';
+      whiteTeam: '';
+      yourTeam: '{{team}}';
+    };
+    HistoryError: {
+      retry: '';
       title: '';
+    };
+    Team: {
+      seat: '{{seat}}';
+      winner: '';
+    };
+    UserGameHistoryPage: {
+      backToProfile: '';
+      description: '';
+      emptyDescription: '';
+      emptyTitle: '';
+      eyebrow: '';
+      gamesList: '';
+      loadingHistory: '';
+      loadingMore: '';
+      loadingProfile: '';
+      loadMore: '';
+      missingUser: '';
+      retry: '';
+      title: '{{userName}}';
+    };
+  };
+  'pages/user-profile': {
+    HistorySection: {
+      description: '';
+      openHistory: '';
+      title: '';
+    };
+    UserProfilePage: {
+      avatarDescription: '';
+      avatarRemoved: '';
+      avatarSaved: '';
+      avatarTitle: '';
+      currentUserDescription: '';
+      errorTitle: '';
+      loadingProfile: '';
+      nicknameLabel: '';
+      nicknameRequirements: '';
+      nicknameSaved: '';
+      nicknameTitle: '';
+      presets: {
+        archer: '';
+        cavalry: '';
+        'warrior-priest': '';
+      };
+      publicProfile: '';
+      publicUserDescription: '';
+      removeAvatar: '';
+      retry: '';
+      saveNickname: '';
+      title: '';
+      uploadAvatar: '';
     };
   };
   'shared/api': {
     ApiErrors: {
+      avatar_invalid: '';
       avatar_not_found: '';
+      avatar_too_large: '';
       command_id_conflict: '';
-      external_provider_unavailable: '';
+      email_code_invalid: '';
+      email_code_rate_limited: '';
+      email_delivery_unavailable: '';
       feature_flags_unavailable: '';
       game_command_forbidden: '';
       game_command_rejected: '';
@@ -278,17 +352,14 @@ export interface WarChestResources {
       game_position_occupied: '';
       game_version_conflict: '';
       internal_error: '';
-      invalid_credentials: '';
       invalid_cursor: '';
       invalid_message: '';
-      invalid_oauth_state: '';
       invalid_request: '';
       invalid_response: '';
       network_error: '';
       not_found: '';
       player_already_in_game: '';
-      provider_disabled: '';
-      provider_request_failed: '';
+      registration_ticket_invalid: '';
       unauthorized: '';
       unknown: '';
       user_not_found: '';
@@ -326,12 +397,24 @@ export interface WarChestTranslationParameters {
   'entities/game.GameSeatSelector.takenSeat': null;
   'entities/game.GameSeatSelector.whiteTeam': null;
   'entities/user.UserAvatar.label': { userName: unknown };
-  'features/auth-login.GoogleLoginButton.loadingLabel': null;
-  'features/auth-login.LoginOptions.continueWithGoogle': null;
-  'features/auth-login.LoginOptions.continueWithTelegram': null;
-  'features/auth-login.LoginOptions.continueWithYandex': null;
-  'features/auth-login.LoginOptions.fakeModeHint': null;
-  'features/auth-login.LoginOptions.googleNotConfigured': null;
+  'entities/user.UserProfileLink.label': { userName: unknown };
+  'features/auth-login.EmailLoginForm.changeEmail': null;
+  'features/auth-login.EmailLoginForm.checkingCode': null;
+  'features/auth-login.EmailLoginForm.codeDescription': { email: unknown };
+  'features/auth-login.EmailLoginForm.codeLabel': null;
+  'features/auth-login.EmailLoginForm.createProfile': null;
+  'features/auth-login.EmailLoginForm.creatingProfile': null;
+  'features/auth-login.EmailLoginForm.displayNameLabel': null;
+  'features/auth-login.EmailLoginForm.displayNameRequirements': null;
+  'features/auth-login.EmailLoginForm.emailLabel': null;
+  'features/auth-login.EmailLoginForm.emailPlaceholder': null;
+  'features/auth-login.EmailLoginForm.fakeModeHint': null;
+  'features/auth-login.EmailLoginForm.registrationDescription': null;
+  'features/auth-login.EmailLoginForm.resendCode': null;
+  'features/auth-login.EmailLoginForm.resendCountdown': { seconds: unknown };
+  'features/auth-login.EmailLoginForm.sendCode': null;
+  'features/auth-login.EmailLoginForm.sendingCode': null;
+  'features/auth-login.EmailLoginForm.signIn': null;
   'features/change-language.LanguageSelector.english': null;
   'features/change-language.LanguageSelector.label': null;
   'features/change-language.LanguageSelector.russian': null;
@@ -474,14 +557,60 @@ export interface WarChestTranslationParameters {
   'pages/login.LoginPage.title': null;
   'pages/new-game.NewGamePage.description': null;
   'pages/new-game.NewGamePage.title': null;
+  'pages/user-game-history.GameCard.blackTeam': null;
+  'pages/user-game-history.GameCard.defeat': null;
+  'pages/user-game-history.GameCard.victory': null;
+  'pages/user-game-history.GameCard.viewGame': null;
+  'pages/user-game-history.GameCard.whiteTeam': null;
+  'pages/user-game-history.GameCard.yourTeam': { team: unknown };
+  'pages/user-game-history.HistoryError.retry': null;
+  'pages/user-game-history.HistoryError.title': null;
+  'pages/user-game-history.Team.seat': { seat: unknown };
+  'pages/user-game-history.Team.winner': null;
+  'pages/user-game-history.UserGameHistoryPage.backToProfile': null;
+  'pages/user-game-history.UserGameHistoryPage.description': null;
+  'pages/user-game-history.UserGameHistoryPage.emptyDescription': null;
+  'pages/user-game-history.UserGameHistoryPage.emptyTitle': null;
+  'pages/user-game-history.UserGameHistoryPage.eyebrow': null;
+  'pages/user-game-history.UserGameHistoryPage.gamesList': null;
+  'pages/user-game-history.UserGameHistoryPage.loadingHistory': null;
+  'pages/user-game-history.UserGameHistoryPage.loadingMore': null;
+  'pages/user-game-history.UserGameHistoryPage.loadingProfile': null;
+  'pages/user-game-history.UserGameHistoryPage.loadMore': null;
+  'pages/user-game-history.UserGameHistoryPage.missingUser': null;
+  'pages/user-game-history.UserGameHistoryPage.retry': null;
+  'pages/user-game-history.UserGameHistoryPage.title': { userName: unknown };
+  'pages/user-profile.HistorySection.description': null;
+  'pages/user-profile.HistorySection.openHistory': null;
+  'pages/user-profile.HistorySection.title': null;
+  'pages/user-profile.UserProfilePage.avatarDescription': null;
+  'pages/user-profile.UserProfilePage.avatarRemoved': null;
+  'pages/user-profile.UserProfilePage.avatarSaved': null;
+  'pages/user-profile.UserProfilePage.avatarTitle': null;
   'pages/user-profile.UserProfilePage.currentUserDescription': null;
-  'pages/user-profile.UserProfilePage.publicUserDescription': {
-    userId: unknown;
-  };
+  'pages/user-profile.UserProfilePage.errorTitle': null;
+  'pages/user-profile.UserProfilePage.loadingProfile': null;
+  'pages/user-profile.UserProfilePage.nicknameLabel': null;
+  'pages/user-profile.UserProfilePage.nicknameRequirements': null;
+  'pages/user-profile.UserProfilePage.nicknameSaved': null;
+  'pages/user-profile.UserProfilePage.nicknameTitle': null;
+  'pages/user-profile.UserProfilePage.presets.archer': null;
+  'pages/user-profile.UserProfilePage.presets.cavalry': null;
+  'pages/user-profile.UserProfilePage.presets.warrior-priest': null;
+  'pages/user-profile.UserProfilePage.publicProfile': null;
+  'pages/user-profile.UserProfilePage.publicUserDescription': null;
+  'pages/user-profile.UserProfilePage.removeAvatar': null;
+  'pages/user-profile.UserProfilePage.retry': null;
+  'pages/user-profile.UserProfilePage.saveNickname': null;
   'pages/user-profile.UserProfilePage.title': null;
+  'pages/user-profile.UserProfilePage.uploadAvatar': null;
+  'shared/api.ApiErrors.avatar_invalid': null;
   'shared/api.ApiErrors.avatar_not_found': null;
+  'shared/api.ApiErrors.avatar_too_large': null;
   'shared/api.ApiErrors.command_id_conflict': null;
-  'shared/api.ApiErrors.external_provider_unavailable': null;
+  'shared/api.ApiErrors.email_code_invalid': null;
+  'shared/api.ApiErrors.email_code_rate_limited': null;
+  'shared/api.ApiErrors.email_delivery_unavailable': null;
   'shared/api.ApiErrors.feature_flags_unavailable': null;
   'shared/api.ApiErrors.game_command_forbidden': null;
   'shared/api.ApiErrors.game_command_rejected': null;
@@ -489,17 +618,14 @@ export interface WarChestTranslationParameters {
   'shared/api.ApiErrors.game_position_occupied': null;
   'shared/api.ApiErrors.game_version_conflict': null;
   'shared/api.ApiErrors.internal_error': null;
-  'shared/api.ApiErrors.invalid_credentials': null;
   'shared/api.ApiErrors.invalid_cursor': null;
   'shared/api.ApiErrors.invalid_message': null;
-  'shared/api.ApiErrors.invalid_oauth_state': null;
   'shared/api.ApiErrors.invalid_request': null;
   'shared/api.ApiErrors.invalid_response': null;
   'shared/api.ApiErrors.network_error': null;
   'shared/api.ApiErrors.not_found': null;
   'shared/api.ApiErrors.player_already_in_game': null;
-  'shared/api.ApiErrors.provider_disabled': null;
-  'shared/api.ApiErrors.provider_request_failed': null;
+  'shared/api.ApiErrors.registration_ticket_invalid': null;
   'shared/api.ApiErrors.unauthorized': null;
   'shared/api.ApiErrors.unknown': null;
   'shared/api.ApiErrors.user_not_found': null;

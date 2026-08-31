@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm';
-import { authSessions, userAvatars, userIdentities, users } from './auth.js';
+import { authSessions, userAvatars, users } from './auth.js';
 import {
   activeGamePlayers,
   gameEvents,
@@ -10,7 +10,6 @@ import {
 
 export const usersRelations = relations(users, ({ many, one }) => ({
   avatar: one(userAvatars),
-  identities: many(userIdentities),
   sessions: many(authSessions),
   participations: many(gameParticipants),
   activeGame: one(activeGamePlayers),
@@ -20,13 +19,6 @@ export const usersRelations = relations(users, ({ many, one }) => ({
 export const userAvatarsRelations = relations(userAvatars, ({ one }) => ({
   user: one(users, {
     fields: [userAvatars.userId],
-    references: [users.id],
-  }),
-}));
-
-export const userIdentitiesRelations = relations(userIdentities, ({ one }) => ({
-  user: one(users, {
-    fields: [userIdentities.userId],
     references: [users.id],
   }),
 }));
