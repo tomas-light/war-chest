@@ -1,0 +1,16 @@
+.submit {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 6px;
+}
+
+.description,
+.requirements {
+  margin: 0;
+  color: var(--wc-color-text-muted);
+  line-height: 1.5;
+}
+
+.requirements {
+  font-size: 13px;
+}

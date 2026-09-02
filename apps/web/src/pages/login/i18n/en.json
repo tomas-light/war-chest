@@ -1,7 +1,7 @@
 {
   "LoginPage": {
     "connectionError": "Could not connect to the server and check the session.",
-    "description": "Sign in with a familiar provider. After verification, the server will create a separate War Chest session.",
+    "description": "Enter your email to receive a code for signing in to War Chest. If you are new here, choose a nickname after confirming your email.",
     "loadingDescription": "Checking the current War Chest session.",
     "loadingLabel": "Checking the current session…",
     "loadingTitle": "Loading",

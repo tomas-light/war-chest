@@ -1,41 +1,47 @@
 {
-  "ActiveGamePage": {
-    "actionsDescriptionOpponent": "Waiting for the opponent's turn.",
-    "actionsDescriptionSpectator": "Actions are unavailable in spectator mode.",
-    "actionsDescriptionYou": "It is your turn.",
-    "actionsTitle": "Available actions",
+  "ActiveGameHeader": {
     "backToLobby": "Back to lobby",
-    "boardDescription": "The War Chest board will be placed here.",
-    "boardLabel": "Game board",
-    "chooseSquad": "Choose a unit",
-    "connecting": "Connecting to the game table…",
-    "finishAction": "Finish action",
     "finishedTitle": "Game finished",
     "gameLabel": "Game {{gameId}}",
     "gameTitle": "Game",
-    "gameUnavailable": "The game state is unavailable.",
-    "historyDescription": "The move history panel will appear here after game moves are implemented.",
-    "historyEyebrow": "Log",
-    "historyTitle": "Move history",
-    "notSelected": "No game was selected.",
-    "openHistory": "Open history",
     "opponentSurrenderedTitle": "Opponent surrendered",
-    "playerBottom": "Bottom player",
-    "playerTop": "Top player",
     "spectator": "Spectator mode",
     "spectatorWinnerTitle": "Winner: {{winner}}",
+    "surrenderedTitle": "You surrendered",
+    "table": "Game table",
+    "winnerFallback": "Player {{playerId}}"
+  },
+  "ActiveGamePage": {
+    "connecting": "Connecting to the game table…",
+    "gameUnavailable": "The game state is unavailable.",
+    "notSelected": "No game was selected.",
     "synchronization": {
       "desynchronized": "Restoring synchronization…",
       "pending": "Waiting for state…",
       "ready": "State synchronized"
-    },
-    "surrenderedTitle": "You surrendered",
-    "table": "Game table",
+    }
+  },
+  "ActiveGameSidebar": {
+    "actionsDescriptionOpponent": "Waiting for the opponent's turn.",
+    "actionsDescriptionSpectator": "Actions are unavailable in spectator mode.",
+    "actionsDescriptionYou": "It is your turn.",
+    "actionsTitle": "Available actions",
+    "chooseSquad": "Choose a unit",
+    "finishAction": "Finish action",
+    "historyDescription": "The move history panel will appear here after game moves are implemented.",
+    "historyEyebrow": "Log",
+    "historyTitle": "Move history",
+    "openHistory": "Open history",
+    "turnEyebrow": "Turn"
+  },
+  "ActiveGameTable": {
+    "boardDescription": "The War Chest board will be placed here.",
+    "boardLabel": "Game board",
+    "opponent": "Opponent",
+    "playerBottom": "Bottom player",
+    "playerTop": "Top player",
     "tableArea": "Game board",
-    "turnEyebrow": "Turn",
-    "winnerFallback": "Player {{playerId}}",
-    "you": "You",
-    "opponent": "Opponent"
+    "you": "You"
   },
   "GameError": {
     "backToLobby": "Back to lobby",

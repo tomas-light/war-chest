@@ -21,11 +21,14 @@ interface Props {
 
 export function LeaveGameButton(props: Props) {
   const { gameId, isCreator, onLeaving, onLeaveFailed, onLeft, view } = props;
+
   const { t } = useTranslation('features/leave-game', {
     keyPrefix: 'LeaveGameButton',
   });
+
   const getApiErrorMessage = useApiErrorMessage();
   const queryClient = useQueryClient();
+
   const leaveGameMutation = useMutation({
     mutationFn: leaveGame,
     onError: onLeaveFailed,
@@ -50,6 +53,7 @@ export function LeaveGameButton(props: Props) {
           ? t(isCreator ? 'closing' : 'leaving')
           : t(isCreator ? 'close' : 'leave')}
       </Button>
+
       {leaveGameMutation.error === null ? null : (
         <p role="alert">{getApiErrorMessage(leaveGameMutation.error)}</p>
       )}

@@ -42,11 +42,13 @@ export function CreateGameForm(props: Props) {
       }}
     >
       <p className={classes.description}>{t('description')}</p>
+
       {createGameMutation.error === null ? null : (
         <p className={classes.error} role="alert">
           {getApiErrorMessage(createGameMutation.error)}
         </p>
       )}
+
       <Button disabled={createGameMutation.isPending} type="submit">
         {createGameMutation.isPending ? t('creating') : t('create')}
       </Button>

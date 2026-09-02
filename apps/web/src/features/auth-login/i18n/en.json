@@ -1,21 +1,27 @@
 {
-  "EmailLoginForm": {
+  "CodeStage": {
     "changeEmail": "Change email",
     "checkingCode": "Checking…",
     "codeDescription": "We sent a code to {{email}}. Earlier codes also work while they have not expired.",
     "codeLabel": "Email code",
+    "resendCode": "Send another code",
+    "resendCountdown": "Resend in {{seconds}}s",
+    "signIn": "Sign in"
+  },
+  "EmailLoginForm": {
+    "fakeModeHint": "Fake mode does not send email. Use code 123456."
+  },
+  "EmailStage": {
+    "emailLabel": "Email",
+    "emailPlaceholder": "player@example.com",
+    "sendCode": "Send code",
+    "sendingCode": "Sending…"
+  },
+  "RegistrationStage": {
     "createProfile": "Create profile",
     "creatingProfile": "Creating profile…",
     "displayNameLabel": "Nickname",
     "displayNameRequirements": "2 to 24 characters: letters, numbers, spaces, hyphens, or underscores.",
-    "emailLabel": "Email",
-    "emailPlaceholder": "player@example.com",
-    "fakeModeHint": "Fake mode does not send email. Use code 123456.",
-    "registrationDescription": "This email is signing in for the first time. Choose the name other players will see.",
-    "resendCode": "Send another code",
-    "resendCountdown": "Resend in {{seconds}}s",
-    "sendCode": "Send code",
-    "sendingCode": "Sending…",
-    "signIn": "Sign in"
+    "registrationDescription": "This email is signing in for the first time. Choose the name other players will see."
   }
 }

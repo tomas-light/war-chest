@@ -1,6 +1,6 @@
-import { AVATAR_PRESETS } from '@war-chest/api-contracts';
 import clsx from 'clsx';
 import { useState } from 'react';
+import { getUserAvatarUrl } from '#/shared/api';
 import { useTranslation } from '#/shared/i18n/useTranslation';
 import classes from './UserAvatar.module.scss';
 
@@ -22,7 +22,7 @@ export function UserAvatar(props: Props) {
     keyPrefix: 'UserAvatar',
   });
   const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);
-  const avatarUrl = getAvatarUrl(user);
+  const avatarUrl = getUserAvatarUrl(user);
   const shouldShowImage = avatarUrl !== null && avatarUrl !== failedAvatarUrl;
 
   return (
@@ -45,25 +45,6 @@ export function UserAvatar(props: Props) {
       )}
     </span>
   );
-}
-
-function getAvatarUrl(user: AvatarUser): string | null {
-  if (user.avatarVersion === null) {
-    return null;
-  }
-
-  if (user.avatarVersion.startsWith('data:image/')) {
-    return user.avatarVersion;
-  }
-
-  if (user.avatarVersion.startsWith('preset:')) {
-    const presetId = user.avatarVersion.slice('preset:'.length);
-    return (
-      AVATAR_PRESETS.find((preset) => preset.id === presetId)?.imageUrl ?? null
-    );
-  }
-
-  return `/api/users/${encodeURIComponent(user.id)}/avatar?v=${encodeURIComponent(user.avatarVersion)}`;
 }
 
 function getInitials(

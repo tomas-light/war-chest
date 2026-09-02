@@ -53,29 +53,28 @@ export function AuthSessionProvider({ children }: PropsWithChildren) {
   const emailAuthentication = useEmailAuthentication();
   const currentUserProfile = useCurrentUserProfile();
   const logout = useLogout();
-  const refetchSession = sessionQuery.refetch;
+
+  const { refetch: refetchSession, data, error } = sessionQuery;
+
   const refetch = useCallback(async () => {
     await refetchSession();
   }, [refetchSession]);
-  const backend = sessionQuery.data?.backend ?? null;
-  const error = sessionQuery.error;
-  const session = sessionQuery.data?.session ?? null;
+
+  const backend = data?.backend ?? null;
+  const session = data?.session ?? null;
+
   const status = getSessionStatus(sessionQuery);
-  const value = useMemo<AuthSessionContextValue>(
+
+  const contextValue = useMemo<AuthSessionContextValue>(
     () => ({
       backend,
-      completeEmailRegistration: emailAuthentication.completeEmailRegistration,
       error,
       logout,
-      removeAvatar: currentUserProfile.removeAvatar,
       refetch,
-      requestEmailCode: emailAuthentication.requestEmailCode,
-      selectAvatarPreset: currentUserProfile.selectAvatarPreset,
       session,
       status,
-      updateDisplayName: currentUserProfile.updateDisplayName,
-      uploadAvatar: currentUserProfile.uploadAvatar,
-      verifyEmailCode: emailAuthentication.verifyEmailCode,
+      ...emailAuthentication,
+      ...currentUserProfile,
     }),
     [
       backend,
@@ -89,7 +88,9 @@ export function AuthSessionProvider({ children }: PropsWithChildren) {
     ]
   );
 
-  return <AuthSessionContext value={value}>{children}</AuthSessionContext>;
+  return (
+    <AuthSessionContext value={contextValue}>{children}</AuthSessionContext>
+  );
 }
 
 export function useAuthSession(): AuthSessionContextValue {

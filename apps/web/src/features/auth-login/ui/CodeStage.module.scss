@@ -1,0 +1,30 @@
+.codeInput {
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.3em;
+  text-align: center;
+}
+
+.submit {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 6px;
+}
+
+.secondaryActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.description {
+  margin: 0;
+  color: var(--wc-color-text-muted);
+  line-height: 1.5;
+}
+
+@media (width <= 480px) {
+  .secondaryActions {
+    grid-template-columns: 1fr;
+  }
+}

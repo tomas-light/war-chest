@@ -46,6 +46,7 @@ export function DeveloperPanel(props: Props) {
             {t('close')}
           </Button>
         </header>
+
         <DeveloperBackendSelector />
 
         <section className={classes.featureFlags}>
