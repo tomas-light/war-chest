@@ -14,11 +14,14 @@ interface Props {
 
 export function SwapPlayerPositionsButton(props: Props) {
   const { gameId, onSwapped, view } = props;
+
   const { t } = useTranslation('features/swap-player-positions', {
     keyPrefix: 'SwapPlayerPositionsButton',
   });
+
   const getApiErrorMessage = useApiErrorMessage();
   const queryClient = useQueryClient();
+
   const swapMutation = useMutation({
     mutationFn: async () => {
       const gameApi = await createSelectedGameApi();
@@ -51,6 +54,7 @@ export function SwapPlayerPositionsButton(props: Props) {
           <path d="M7 7h11l-3-3M17 17H6l3 3M18 7l-3 3M6 17l3-3" />
         </svg>
       </Button>
+
       {swapMutation.error === null ? null : (
         <p role="alert">{getApiErrorMessage(swapMutation.error)}</p>
       )}

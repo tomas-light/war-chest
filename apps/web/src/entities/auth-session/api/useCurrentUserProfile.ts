@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { AvatarPresetId, PublicUser } from '@war-chest/api-contracts';
 import { useCallback } from 'react';
+import type { AuthClient } from '../model/AuthClient';
 import { useAuthClient } from '../model/AuthClientProvider';
 import { clearSessionScopedQueries } from './sessionQueryCache';
 import { sessionQueryOptions } from './sessionQueryOptions';
@@ -12,33 +13,41 @@ interface CurrentUserProfile {
   uploadAvatar(this: void, file: File): Promise<PublicUser>;
 }
 
-type ProfileOperation =
-  | { operation: 'removeAvatar' }
-  | { operation: 'selectAvatarPreset'; presetId: AvatarPresetId }
-  | { displayName: string; operation: 'updateDisplayName' }
-  | { file: File; operation: 'uploadAvatar' };
-
 export function useCurrentUserProfile(): CurrentUserProfile {
   const authClientPromise = useAuthClient();
   const queryClient = useQueryClient();
   const sessionQuery = sessionQueryOptions(authClientPromise);
-  const mutation = useMutation({ mutationFn: mutateProfile });
+  const mutation = useMutation({ mutationFn: updateProfile });
+
   const removeAvatar = useCallback(
-    () => mutation.mutateAsync({ operation: 'removeAvatar' }),
+    () =>
+      mutation.mutateAsync(
+        async (authClient) => await authClient.removeAvatar()
+      ),
     [mutation]
   );
+
   const selectAvatarPreset = useCallback(
     (presetId: AvatarPresetId) =>
-      mutation.mutateAsync({ operation: 'selectAvatarPreset', presetId }),
+      mutation.mutateAsync(
+        async (authClient) => await authClient.selectAvatarPreset(presetId)
+      ),
     [mutation]
   );
+
   const updateDisplayName = useCallback(
     (displayName: string) =>
-      mutation.mutateAsync({ displayName, operation: 'updateDisplayName' }),
+      mutation.mutateAsync(
+        async (authClient) => await authClient.updateDisplayName(displayName)
+      ),
     [mutation]
   );
+
   const uploadAvatar = useCallback(
-    (file: File) => mutation.mutateAsync({ file, operation: 'uploadAvatar' }),
+    (file: File) =>
+      mutation.mutateAsync(
+        async (authClient) => await authClient.uploadAvatar(file)
+      ),
     [mutation]
   );
 
@@ -49,21 +58,12 @@ export function useCurrentUserProfile(): CurrentUserProfile {
     uploadAvatar,
   };
 
-  async function mutateProfile(
-    operation: ProfileOperation
-  ): Promise<PublicUser> {
+  async function updateProfile(
+    operation: (authClient: AuthClient) => Promise<PublicUser>
+  ) {
     const authClient = await authClientPromise;
-    let user: PublicUser;
 
-    if (operation.operation === 'removeAvatar') {
-      user = await authClient.removeAvatar();
-    } else if (operation.operation === 'selectAvatarPreset') {
-      user = await authClient.selectAvatarPreset(operation.presetId);
-    } else if (operation.operation === 'updateDisplayName') {
-      user = await authClient.updateDisplayName(operation.displayName);
-    } else {
-      user = await authClient.uploadAvatar(operation.file);
-    }
+    const user = await operation(authClient);
 
     clearSessionScopedQueries(queryClient);
     queryClient.setQueryData(sessionQuery.queryKey, (current) =>

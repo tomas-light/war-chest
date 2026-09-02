@@ -11,6 +11,11 @@ War Chest — Yarn Workspaces-монорепозиторий браузерно�
 - [фактическое поведение server](./docs/server/README.md);
 - [план дальнейшей разработки](./docs/development-plan/README.md).
 
+Интерфейс `apps/web` верстаем на основе
+[макетов War Chest в Figma](https://www.figma.com/design/3dryG8iK34xmpJF7HLYeau/War-Chest?node-id=15-5).
+Ссылки на компоненты и токены, правила переноса и текущее покрытие описаны в
+[руководстве по работе с макетами](./docs/ui/figma.md).
+
 ## Требования
 
 - Node.js 22.22 или новее;

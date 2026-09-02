@@ -21,18 +21,23 @@ interface Props {
 
 export function JoinGamePanel(props: Props) {
   const { gameId, onJoined, userId, view } = props;
+
   const { t } = useTranslation('features/join-game', {
     keyPrefix: 'JoinGamePanel',
   });
+
   const getApiErrorMessage = useApiErrorMessage();
   const queryClient = useQueryClient();
+
   const occupiedTeams = view.players.map((player) => player.team);
   const currentPlayer = view.players.find((player) => player.id === userId);
   const isChangingPosition = currentPlayer !== undefined;
   const firstAvailableTeam = getFirstAvailableTeam(occupiedTeams);
+
   const [selectedTeam, setSelectedTeam] = useState<GameTeam | null>(
     firstAvailableTeam
   );
+
   const joinGameMutation = useMutation({
     mutationFn: async (team: GameTeam) => {
       const gameApi = await createSelectedGameApi();
@@ -55,6 +60,7 @@ export function JoinGamePanel(props: Props) {
       });
     },
   });
+
   const actionLabel = joinGameMutation.isPending
     ? isChangingPosition
       ? t('changingPosition')
@@ -66,20 +72,24 @@ export function JoinGamePanel(props: Props) {
   return (
     <section className={classes.panel}>
       <h2>{isChangingPosition ? t('changePosition') : t('joinTitle')}</h2>
+
       <p>
         {isChangingPosition ? t('changeDescription') : t('joinDescription')}
       </p>
+
       <GameSeatSelector
         disabled={joinGameMutation.isPending}
         occupiedTeams={occupiedTeams}
         onSelect={setSelectedTeam}
         selectedTeam={selectedTeam}
       />
+
       {joinGameMutation.error === null ? null : (
         <p className={classes.error} role="alert">
           {getApiErrorMessage(joinGameMutation.error)}
         </p>
       )}
+
       <Button
         disabled={selectedTeam === null || joinGameMutation.isPending}
         onClick={joinSelectedTeam}

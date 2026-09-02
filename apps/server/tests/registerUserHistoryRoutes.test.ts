@@ -4,7 +4,6 @@ import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { createApp } from '../src/createApp.js';
 import {
-  type StoredAvatar,
   type UserGamePage,
   type UserRepository,
   createUserRepository,
@@ -21,7 +20,7 @@ const GAME_ID = '20000000-0000-4000-8000-000000000001';
 const NEXT_GAME_ID = '20000000-0000-4000-8000-000000000002';
 const AUTH_HEADERS = { cookie: 'war_chest_session=session-token' };
 
-describe('user profile routes', () => {
+describe('user history routes', () => {
   let app: FastifyInstance;
   let findPublicUser: ReturnType<
     typeof vi.fn<UserRepository['findPublicUser']>
@@ -78,98 +77,6 @@ describe('user profile routes', () => {
   afterEach(async () => {
     await app.close();
   });
-
-  test('returns only the public user profile fields', async () => {
-    findPublicUser.mockResolvedValue({
-      avatarVersion: 'avatar-version',
-      displayName: 'Ada',
-      id: USER_ID,
-    });
-
-    const response = await app.inject({
-      headers: AUTH_HEADERS,
-      method: 'GET',
-      url: `/api/users/${USER_ID}`,
-    });
-
-    expect(response.statusCode).toBe(200);
-    expect(response.json()).toEqual({
-      avatarVersion: 'avatar-version',
-      displayName: 'Ada',
-      id: USER_ID,
-    });
-  });
-
-  test('returns 404 when the public profile does not exist', async () => {
-    findPublicUser.mockResolvedValue(null);
-
-    const response = await app.inject({
-      headers: AUTH_HEADERS,
-      method: 'GET',
-      url: `/api/users/${USER_ID}`,
-    });
-
-    expect(response.statusCode).toBe(404);
-    expect(response.json()).toEqual({
-      error: {
-        code: 'user_not_found',
-        message: 'User was not found.',
-      },
-    });
-  });
-
-  test('rejects a malformed user id before querying the repository', async () => {
-    const response = await app.inject({
-      headers: AUTH_HEADERS,
-      method: 'GET',
-      url: '/api/users/not-a-uuid',
-    });
-
-    expect(response.statusCode).toBe(400);
-    expect(findPublicUser).not.toHaveBeenCalled();
-  });
-
-  test('returns the stored avatar with immutable private caching', async () => {
-    const avatar: StoredAvatar = {
-      content: Buffer.from('avatar-bytes'),
-      contentHash: 'avatar-version',
-      contentType: 'image/webp',
-      kind: 'custom',
-    };
-    findAvatar.mockResolvedValue(avatar);
-
-    const response = await app.inject({
-      headers: AUTH_HEADERS,
-      method: 'GET',
-      url: `/api/users/${USER_ID}/avatar?v=avatar-version`,
-    });
-
-    expect(response.statusCode).toBe(200);
-    expect(response.headers['cache-control']).toBe(
-      'private, max-age=31536000, immutable'
-    );
-    expect(response.headers['content-type']).toBe('image/webp');
-    expect(response.rawPayload).toEqual(avatar.content);
-  });
-
-  test('returns 404 when the user has no stored avatar', async () => {
-    findAvatar.mockResolvedValue(null);
-
-    const response = await app.inject({
-      headers: AUTH_HEADERS,
-      method: 'GET',
-      url: `/api/users/${USER_ID}/avatar`,
-    });
-
-    expect(response.statusCode).toBe(404);
-    expect(response.json()).toEqual({
-      error: {
-        code: 'avatar_not_found',
-        message: 'Avatar was not found.',
-      },
-    });
-  });
-
   test('returns a serialized page of finished player games', async () => {
     findPublicUser.mockResolvedValue({
       avatarVersion: null,

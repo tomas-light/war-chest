@@ -1,0 +1,400 @@
+import { fileURLToPath } from 'node:url';
+import {
+  type Database,
+  gameEvents,
+  gameParticipants,
+  games,
+  processedCommands,
+  users,
+} from '@war-chest/database';
+import { DEFAULT_RUNTIME_FEATURE_FLAGS } from '@war-chest/feature-flags';
+import {
+  type GameEventData,
+  createGame,
+  GAME_EVENT_VERSION,
+} from '@war-chest/game-engine';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import { migrate } from 'drizzle-orm/postgres-js/migrator';
+import postgres, { type Sql } from 'postgres';
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+} from 'vitest';
+import * as schema from '../../../packages/database/src/schema/index.js';
+import {
+  type GameRepository,
+  createGameRepository,
+} from '../src/games/GameRepository.js';
+
+const TEST_DATABASE_URL = process.env.WAR_CHEST_TEST_DATABASE_URL;
+const MIGRATIONS_FOLDER = fileURLToPath(
+  new URL('../../../packages/database/migrations', import.meta.url)
+);
+const FIRST_USER_ID = '10000000-0000-4000-8000-000000000001';
+const SECOND_USER_ID = '10000000-0000-4000-8000-000000000002';
+const THIRD_USER_ID = '10000000-0000-4000-8000-000000000003';
+const MISSING_USER_ID = '10000000-0000-4000-8000-000000000099';
+const CREATE_COMMAND_ID = '30000000-0000-4000-8000-000000000001';
+const SECOND_CREATE_COMMAND_ID = '30000000-0000-4000-8000-000000000002';
+const GAME_COMMAND_ID = '30000000-0000-4000-8000-000000000003';
+const POSTGRESQL_FOREIGN_KEY_VIOLATION_SQLSTATE = '23503';
+const CREATE_REQUEST_HASH = 'a'.repeat(64);
+const SECOND_CREATE_REQUEST_HASH = 'b'.repeat(64);
+const GAME_REQUEST_HASH = 'c'.repeat(64);
+const DEFAULT_CREATE_GAME_COMMAND = {
+  creatorId: FIRST_USER_ID,
+  featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+  type: 'CreateGame',
+} as const;
+const DEFAULT_CREATE_GAME_EVENT = createGame(DEFAULT_CREATE_GAME_COMMAND);
+
+const describeWithPostgreSql =
+  TEST_DATABASE_URL === undefined ? describe.skip : describe;
+
+describeWithPostgreSql('GameRepository saveCommand', () => {
+  let database: Database;
+  let driver: Sql;
+  let repository: GameRepository;
+
+  beforeAll(async () => {
+    const databaseUrl = requireTestDatabaseUrl(TEST_DATABASE_URL);
+
+    driver = postgres(databaseUrl, { max: 10 });
+    database = drizzle(driver, { schema });
+    await migrate(database, { migrationsFolder: MIGRATIONS_FOLDER });
+  });
+
+  beforeEach(async () => {
+    await database.delete(gameEvents);
+    await database.delete(processedCommands);
+    await database.delete(gameParticipants);
+    await database.delete(games);
+    await database.delete(users);
+    await database.insert(users).values([
+      {
+        displayName: 'Ada',
+        email: 'ada@example.com',
+        id: FIRST_USER_ID,
+      },
+      {
+        displayName: 'Grace',
+        email: 'grace@example.com',
+        id: SECOND_USER_ID,
+      },
+      {
+        displayName: 'Linus',
+        email: 'linus@example.com',
+        id: THIRD_USER_ID,
+      },
+    ]);
+    repository = createGameRepository(database);
+  });
+
+  afterAll(async () => {
+    await driver.end();
+  });
+  test('saves events and SQL projections in the command transaction', async () => {
+    const created = await repository.createGame({
+      commandId: CREATE_COMMAND_ID,
+      creatorUserId: FIRST_USER_ID,
+      event: DEFAULT_CREATE_GAME_EVENT,
+      requestHash: CREATE_REQUEST_HASH,
+    });
+    const gameId = requireCreatedGameId(created);
+    const startedAt = new Date('2026-08-16T12:00:00.000Z');
+    const events: readonly GameEventData[] = [
+      {
+        payload: { playerId: SECOND_USER_ID, seat: 1, team: 'black' },
+        sequence: 2,
+        type: 'PlayerJoined',
+        version: GAME_EVENT_VERSION,
+      },
+      {
+        payload: { firstPlayerId: FIRST_USER_ID },
+        sequence: 3,
+        type: 'GameStarted',
+        version: GAME_EVENT_VERSION,
+      },
+    ];
+
+    const result = await repository.saveCommand({
+      commandId: GAME_COMMAND_ID,
+      commandType: 'JoinAndStartForTest',
+      events,
+      expectedVersion: 1,
+      gameChanges: { startedAt, status: 'active' },
+      gameId,
+      participantChanges: [
+        {
+          operation: 'addPlayer',
+          seat: 1,
+          team: 'black',
+          userId: SECOND_USER_ID,
+        },
+      ],
+      requestHash: GAME_REQUEST_HASH,
+      userId: FIRST_USER_ID,
+    });
+    const storedGame = await repository.findGame(gameId);
+    const storedParticipant = await repository.findParticipant(
+      gameId,
+      SECOND_USER_ID
+    );
+    const storedEvents = await repository.loadEvents(gameId);
+
+    expect(result).toEqual({ currentVersion: 3, status: 'saved' });
+    expect(storedGame).toMatchObject({
+      currentVersion: 3,
+      startedAt,
+      status: 'active',
+    });
+    expect(storedParticipant).toEqual({
+      gameId,
+      seat: 1,
+      team: 'black',
+      userId: SECOND_USER_ID,
+    });
+    expect(storedEvents).toEqual([DEFAULT_CREATE_GAME_EVENT, ...events]);
+  });
+
+  test('returns duplicate before checking an outdated expected version', async () => {
+    const created = await repository.createGame({
+      commandId: CREATE_COMMAND_ID,
+      creatorUserId: FIRST_USER_ID,
+      event: DEFAULT_CREATE_GAME_EVENT,
+      requestHash: CREATE_REQUEST_HASH,
+    });
+    const gameId = requireCreatedGameId(created);
+    const event: GameEventData = {
+      payload: { firstPlayerId: FIRST_USER_ID },
+      sequence: 2,
+      type: 'GameStarted',
+      version: GAME_EVENT_VERSION,
+    };
+    const input = {
+      commandId: GAME_COMMAND_ID,
+      commandType: 'StartGame',
+      events: [event],
+      expectedVersion: 1,
+      gameId,
+      requestHash: GAME_REQUEST_HASH,
+      userId: FIRST_USER_ID,
+    } as const;
+    await repository.saveCommand(input);
+
+    const duplicateResult = await repository.saveCommand(input);
+
+    expect(duplicateResult).toEqual({
+      currentVersion: 2,
+      status: 'duplicateCommand',
+    });
+  });
+
+  test('rejects a command id already used by another game', async () => {
+    const firstCreated = await repository.createGame({
+      commandId: CREATE_COMMAND_ID,
+      creatorUserId: FIRST_USER_ID,
+      event: DEFAULT_CREATE_GAME_EVENT,
+      requestHash: CREATE_REQUEST_HASH,
+    });
+    const secondCreated = await repository.createGame({
+      commandId: SECOND_CREATE_COMMAND_ID,
+      creatorUserId: SECOND_USER_ID,
+      event: DEFAULT_CREATE_GAME_EVENT,
+      requestHash: SECOND_CREATE_REQUEST_HASH,
+    });
+    const firstGameId = requireCreatedGameId(firstCreated);
+    const secondGameId = requireCreatedGameId(secondCreated);
+    const event: GameEventData = {
+      payload: { firstPlayerId: FIRST_USER_ID },
+      sequence: 2,
+      type: 'GameStarted',
+      version: GAME_EVENT_VERSION,
+    };
+    await repository.saveCommand({
+      commandId: GAME_COMMAND_ID,
+      commandType: 'StartGame',
+      events: [event],
+      expectedVersion: 1,
+      gameId: firstGameId,
+      requestHash: GAME_REQUEST_HASH,
+      userId: FIRST_USER_ID,
+    });
+
+    const result = await repository.saveCommand({
+      commandId: GAME_COMMAND_ID,
+      commandType: 'StartGame',
+      events: [event],
+      expectedVersion: 1,
+      gameId: secondGameId,
+      requestHash: GAME_REQUEST_HASH,
+      userId: FIRST_USER_ID,
+    });
+
+    expect(result).toEqual({ status: 'commandIdConflict' });
+    expect(await repository.findGame(secondGameId)).toMatchObject({
+      currentVersion: 1,
+    });
+  });
+
+  test('classifies a concurrent command id reused across games', async () => {
+    const firstCreated = await repository.createGame({
+      commandId: CREATE_COMMAND_ID,
+      creatorUserId: FIRST_USER_ID,
+      event: DEFAULT_CREATE_GAME_EVENT,
+      requestHash: CREATE_REQUEST_HASH,
+    });
+    const secondCreated = await repository.createGame({
+      commandId: SECOND_CREATE_COMMAND_ID,
+      creatorUserId: SECOND_USER_ID,
+      event: DEFAULT_CREATE_GAME_EVENT,
+      requestHash: SECOND_CREATE_REQUEST_HASH,
+    });
+    const firstGameId = requireCreatedGameId(firstCreated);
+    const secondGameId = requireCreatedGameId(secondCreated);
+
+    const results = await Promise.all([
+      repository.saveCommand({
+        commandId: GAME_COMMAND_ID,
+        commandType: 'StartGame',
+        events: [
+          {
+            payload: { firstPlayerId: FIRST_USER_ID },
+            sequence: 2,
+            type: 'GameStarted',
+            version: GAME_EVENT_VERSION,
+          },
+        ],
+        expectedVersion: 1,
+        gameId: firstGameId,
+        requestHash: GAME_REQUEST_HASH,
+        userId: FIRST_USER_ID,
+      }),
+      repository.saveCommand({
+        commandId: GAME_COMMAND_ID,
+        commandType: 'StartGame',
+        events: [
+          {
+            payload: { firstPlayerId: FIRST_USER_ID },
+            sequence: 2,
+            type: 'GameStarted',
+            version: GAME_EVENT_VERSION,
+          },
+        ],
+        expectedVersion: 1,
+        gameId: secondGameId,
+        requestHash: GAME_REQUEST_HASH,
+        userId: FIRST_USER_ID,
+      }),
+    ]);
+
+    expect(results.map((result) => result.status).sort()).toEqual([
+      'commandIdConflict',
+      'saved',
+    ]);
+  });
+
+  test('does not persist a command with an outdated expected version', async () => {
+    const created = await repository.createGame({
+      commandId: CREATE_COMMAND_ID,
+      creatorUserId: FIRST_USER_ID,
+      event: DEFAULT_CREATE_GAME_EVENT,
+      requestHash: CREATE_REQUEST_HASH,
+    });
+    const gameId = requireCreatedGameId(created);
+
+    const result = await repository.saveCommand({
+      commandId: GAME_COMMAND_ID,
+      commandType: 'StartGame',
+      events: [
+        {
+          payload: { firstPlayerId: FIRST_USER_ID },
+          sequence: 2,
+          type: 'GameStarted',
+          version: GAME_EVENT_VERSION,
+        },
+      ],
+      expectedVersion: 0,
+      gameId,
+      requestHash: GAME_REQUEST_HASH,
+      userId: FIRST_USER_ID,
+    });
+
+    expect(result).toEqual({ currentVersion: 1, status: 'versionConflict' });
+    expect(await repository.findProcessedCommand(GAME_COMMAND_ID)).toBeNull();
+    expect(await repository.loadEvents(gameId)).toHaveLength(1);
+  });
+
+  test('rolls back the command when a projection insert fails', async () => {
+    const created = await repository.createGame({
+      commandId: CREATE_COMMAND_ID,
+      creatorUserId: FIRST_USER_ID,
+      event: DEFAULT_CREATE_GAME_EVENT,
+      requestHash: CREATE_REQUEST_HASH,
+    });
+    const gameId = requireCreatedGameId(created);
+
+    await expect(
+      repository.saveCommand({
+        commandId: GAME_COMMAND_ID,
+        commandType: 'JoinGame',
+        events: [
+          {
+            payload: { playerId: MISSING_USER_ID, seat: 1, team: 'white' },
+            sequence: 2,
+            type: 'PlayerJoined',
+            version: GAME_EVENT_VERSION,
+          },
+        ],
+        expectedVersion: 1,
+        gameId,
+        participantChanges: [
+          {
+            operation: 'addPlayer',
+            seat: 1,
+            team: 'white',
+            userId: MISSING_USER_ID,
+          },
+        ],
+        requestHash: GAME_REQUEST_HASH,
+        userId: FIRST_USER_ID,
+      })
+    ).rejects.toMatchObject({
+      cause: { code: POSTGRESQL_FOREIGN_KEY_VIOLATION_SQLSTATE },
+    });
+    expect(await repository.findProcessedCommand(GAME_COMMAND_ID)).toBeNull();
+    expect(await repository.loadEvents(gameId)).toHaveLength(1);
+    expect(await repository.findGame(gameId)).toMatchObject({
+      currentVersion: 1,
+    });
+  });
+});
+
+function requireTestDatabaseUrl(value: string | undefined): string {
+  if (value === undefined) {
+    throw new Error('WAR_CHEST_TEST_DATABASE_URL is required.');
+  }
+
+  const databaseName = new URL(value).pathname.slice(1);
+
+  if (!databaseName.endsWith('_test')) {
+    throw new Error('The integration database name must end with "_test".');
+  }
+
+  return value;
+}
+
+function requireCreatedGameId(result: {
+  gameId?: string;
+  status: string;
+}): string {
+  if (result.status !== 'created' || result.gameId === undefined) {
+    throw new Error('Expected a newly created game.');
+  }
+
+  return result.gameId;
+}

@@ -1,6 +1,7 @@
 import {
   type PublicUser,
   type UserGamesResponse,
+  AVATAR_PRESETS,
   publicUserSchema,
   userGamesResponseSchema,
 } from '@war-chest/api-contracts';
@@ -51,6 +52,27 @@ export function createRealUserApi(): UserApi {
       url: `${getUserUrl(userId)}/games${query}`,
     });
   }
+}
+
+export function getUserAvatarUrl(
+  user: Pick<PublicUser, 'avatarVersion' | 'id'>
+): string | null {
+  if (user.avatarVersion === null) {
+    return null;
+  }
+
+  if (user.avatarVersion.startsWith('data:image/')) {
+    return user.avatarVersion;
+  }
+
+  if (user.avatarVersion.startsWith('preset:')) {
+    const presetId = user.avatarVersion.slice('preset:'.length);
+    return (
+      AVATAR_PRESETS.find((preset) => preset.id === presetId)?.imageUrl ?? null
+    );
+  }
+
+  return `${getUserUrl(user.id)}/avatar?v=${encodeURIComponent(user.avatarVersion)}`;
 }
 
 interface JsonRequest<Result> {

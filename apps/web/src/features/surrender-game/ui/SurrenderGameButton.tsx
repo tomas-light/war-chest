@@ -18,11 +18,14 @@ interface Props {
 
 export function SurrenderGameButton(props: Props) {
   const { gameId, onSurrendered, view } = props;
+
   const { t } = useTranslation('features/surrender-game', {
     keyPrefix: 'SurrenderGameButton',
   });
+
   const getApiErrorMessage = useApiErrorMessage();
   const queryClient = useQueryClient();
+
   const surrenderGameMutation = useMutation({
     mutationFn: surrenderGame,
     onSuccess: async (game) => {
@@ -43,6 +46,7 @@ export function SurrenderGameButton(props: Props) {
       >
         {surrenderGameMutation.isPending ? t('surrendering') : t('surrender')}
       </Button>
+
       {surrenderGameMutation.error === null ? null : (
         <p role="alert">{getApiErrorMessage(surrenderGameMutation.error)}</p>
       )}

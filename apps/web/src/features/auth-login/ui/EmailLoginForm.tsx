@@ -1,9 +1,10 @@
-import clsx from 'clsx';
-import { type SubmitEvent, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuthSession } from '#/entities/auth-session';
 import { useApiErrorMessage } from '#/shared/api';
 import { useTranslation } from '#/shared/i18n/useTranslation';
-import { Button } from '#/shared/ui/button';
+import { CodeStage } from './CodeStage';
+import { EmailStage } from './EmailStage';
+import { RegistrationStage } from './RegistrationStage';
 import classes from './EmailLoginForm.module.scss';
 
 type Stage = 'code' | 'email' | 'registration';
@@ -64,9 +65,33 @@ export function EmailLoginForm(props: Props) {
         }
       }}
     >
-      {stage === 'email' ? renderEmailStage() : null}
-      {stage === 'code' ? renderCodeStage() : null}
-      {stage === 'registration' ? renderRegistrationStage() : null}
+      {stage === 'email' ? (
+        <EmailStage
+          email={email}
+          isPending={isPending}
+          onEmailChange={setEmail}
+        />
+      ) : null}
+
+      {stage === 'code' ? (
+        <CodeStage
+          code={code}
+          email={email}
+          isPending={isPending}
+          onCodeChange={setCode}
+          onResendCode={() => void sendCode()}
+          onReturnToEmail={returnToEmail}
+          resendSeconds={resendSeconds}
+        />
+      ) : null}
+
+      {stage === 'registration' ? (
+        <RegistrationStage
+          displayName={displayName}
+          isPending={isPending}
+          onDisplayNameChange={setDisplayName}
+        />
+      ) : null}
 
       {errorMessage === null ? null : (
         <p className={classes.error} role="alert">
@@ -79,103 +104,6 @@ export function EmailLoginForm(props: Props) {
       ) : null}
     </form>
   );
-
-  function renderEmailStage() {
-    return (
-      <>
-        <label className={classes.label} htmlFor="login-email">
-          {t('emailLabel')}
-        </label>
-        <input
-          autoComplete="email"
-          autoFocus
-          className={classes.input}
-          disabled={isPending}
-          id="login-email"
-          onChange={(event) => setEmail(event.target.value)}
-          placeholder={t('emailPlaceholder')}
-          required
-          type="email"
-          value={email}
-        />
-        <Button className={classes.submit} disabled={isPending} type="submit">
-          {isPending ? t('sendingCode') : t('sendCode')}
-        </Button>
-      </>
-    );
-  }
-
-  function renderCodeStage() {
-    return (
-      <>
-        <p className={classes.description}>{t('codeDescription', { email })}</p>
-        <label className={classes.label} htmlFor="login-code">
-          {t('codeLabel')}
-        </label>
-        <input
-          autoComplete="one-time-code"
-          autoFocus
-          className={clsx(classes.input, classes.codeInput)}
-          disabled={isPending}
-          id="login-code"
-          inputMode="numeric"
-          maxLength={6}
-          onChange={(event) => setCode(event.target.value.replace(/\D/g, ''))}
-          pattern="\d{6}"
-          required
-          value={code}
-        />
-        <Button className={classes.submit} disabled={isPending} type="submit">
-          {isPending ? t('checkingCode') : t('signIn')}
-        </Button>
-        <div className={classes.secondaryActions}>
-          <Button
-            disabled={isPending}
-            onClick={returnToEmail}
-            variant="secondary"
-          >
-            {t('changeEmail')}
-          </Button>
-          <Button
-            disabled={isPending || resendSeconds > 0}
-            onClick={() => void sendCode()}
-            variant="secondary"
-          >
-            {resendSeconds > 0
-              ? t('resendCountdown', { seconds: resendSeconds })
-              : t('resendCode')}
-          </Button>
-        </div>
-      </>
-    );
-  }
-
-  function renderRegistrationStage() {
-    return (
-      <>
-        <p className={classes.description}>{t('registrationDescription')}</p>
-        <label className={classes.label} htmlFor="display-name">
-          {t('displayNameLabel')}
-        </label>
-        <input
-          autoComplete="nickname"
-          autoFocus
-          className={classes.input}
-          disabled={isPending}
-          id="display-name"
-          maxLength={24}
-          minLength={2}
-          onChange={(event) => setDisplayName(event.target.value)}
-          required
-          value={displayName}
-        />
-        <p className={classes.requirements}>{t('displayNameRequirements')}</p>
-        <Button className={classes.submit} disabled={isPending} type="submit">
-          {isPending ? t('creatingProfile') : t('createProfile')}
-        </Button>
-      </>
-    );
-  }
 
   async function sendCode(): Promise<void> {
     await run(async () => {

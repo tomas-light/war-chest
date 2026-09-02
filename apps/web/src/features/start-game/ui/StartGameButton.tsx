@@ -14,11 +14,14 @@ interface Props {
 
 export function StartGameButton(props: Props) {
   const { gameId, onStarted, view } = props;
+
   const { t } = useTranslation('features/start-game', {
     keyPrefix: 'StartGameButton',
   });
+
   const getApiErrorMessage = useApiErrorMessage();
   const queryClient = useQueryClient();
+
   const startGameMutation = useMutation({
     mutationFn: async () => {
       const gameApi = await createSelectedGameApi();
@@ -45,6 +48,7 @@ export function StartGameButton(props: Props) {
       >
         {startGameMutation.isPending ? t('starting') : t('start')}
       </Button>
+
       {startGameMutation.error === null ? null : (
         <p role="alert">{getApiErrorMessage(startGameMutation.error)}</p>
       )}

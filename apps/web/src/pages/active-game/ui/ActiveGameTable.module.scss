@@ -1,0 +1,51 @@
+.tableArea {
+  display: grid;
+  gap: 16px;
+}
+
+.boardPlaceholder {
+  min-height: min(62vw, 690px);
+  display: grid;
+  align-content: center;
+  padding: 28px;
+  border: 1px solid rgb(199 150 53 / 48%);
+  border-radius: 4px 28px;
+  background:
+    linear-gradient(rgb(21 217 237 / 5%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(21 217 237 / 5%) 1px, transparent 1px),
+    radial-gradient(circle at center, rgb(21 217 237 / 8%), transparent 58%),
+    var(--wc-color-ink);
+  background-size:
+    42px 42px,
+    42px 42px,
+    auto,
+    auto;
+  box-shadow:
+    inset 0 0 80px rgb(0 0 0 / 48%),
+    0 24px 70px rgb(0 0 0 / 32%);
+  justify-items: center;
+  text-align: center;
+}
+
+.boardPlaceholder span {
+  color: var(--wc-color-brass-bright);
+  font-family: var(--wc-font-display);
+  font-size: clamp(24px, 4vw, 40px);
+}
+
+.boardPlaceholder p {
+  margin: 10px 0 0;
+  color: var(--wc-color-text-muted);
+}
+
+@media (width <= 900px) {
+  .boardPlaceholder {
+    min-height: min(82vw, 620px);
+  }
+}
+
+@media (width <= 620px) {
+  .boardPlaceholder {
+    min-height: 92vw;
+  }
+}
