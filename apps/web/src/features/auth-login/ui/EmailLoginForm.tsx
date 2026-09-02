@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { type SubmitEvent, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuthSession } from '#/entities/auth-session';
 import { useApiErrorMessage } from '#/shared/api';
 import { useTranslation } from '#/shared/i18n/useTranslation';

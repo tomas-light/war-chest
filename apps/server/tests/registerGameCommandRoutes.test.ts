@@ -2,7 +2,7 @@ import type { Auth, AuthSession } from '@war-chest/auth';
 import type { DatabaseConnection } from '@war-chest/database';
 import { DEFAULT_RUNTIME_FEATURE_FLAGS } from '@war-chest/feature-flags';
 import type { GameView } from '@war-chest/game-engine';
-import type { FastifyInstance, HTTPMethods } from 'fastify';
+import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { createApp } from '../src/createApp.js';
 import {
@@ -19,17 +19,6 @@ const USER_ID = '10000000-0000-4000-8000-000000000001';
 const GAME_ID = '20000000-0000-4000-8000-000000000001';
 const COMMAND_ID = '30000000-0000-4000-8000-000000000001';
 const AUTH_HEADERS = { cookie: 'war_chest_session=session-token' };
-const AUTHENTICATED_GAME_ROUTES = [
-  { method: 'POST', url: '/api/games' },
-  { method: 'GET', url: '/api/games' },
-  { method: 'GET', url: `/api/games/${GAME_ID}` },
-  { method: 'POST', url: `/api/games/${GAME_ID}/join` },
-  { method: 'POST', url: `/api/games/${GAME_ID}/leave` },
-  { method: 'POST', url: `/api/games/${GAME_ID}/start` },
-  { method: 'POST', url: `/api/games/${GAME_ID}/surrender` },
-  { method: 'POST', url: `/api/games/${GAME_ID}/swap-positions` },
-  { method: 'GET', url: `/api/games/${GAME_ID}/events` },
-] satisfies readonly { method: HTTPMethods; url: string }[];
 const WAITING_VIEW: GameView = {
   creatorId: USER_ID,
   currentPlayerId: null,
@@ -44,7 +33,7 @@ const WAITING_VIEW: GameView = {
   winnerTeam: null,
 };
 
-describe('game HTTP routes', () => {
+describe('game command HTTP routes', () => {
   let app: FastifyInstance;
   let createGame: ReturnType<typeof vi.fn<GameService['createGame']>>;
   let executeCommand: ReturnType<typeof vi.fn<GameService['executeCommand']>>;
@@ -57,7 +46,7 @@ describe('game HTTP routes', () => {
     const session: AuthSession = {
       expiresAt: new Date('2026-09-03T10:00:00.000Z'),
       user: {
-        avatarHash: null,
+        avatarVersion: null,
         displayName: 'Ada',
         id: USER_ID,
       },
@@ -113,145 +102,6 @@ describe('game HTTP routes', () => {
 
   afterEach(async () => {
     await app.close();
-  });
-
-  test.each(AUTHENTICATED_GAME_ROUTES)(
-    'requires authentication for $method $url',
-    async ({ method, url }) => {
-      getSession.mockResolvedValue(null);
-
-      const response = await app.inject({ method, url });
-
-      expect(response.statusCode).toBe(401);
-    }
-  );
-
-  test('creates a game for the authenticated user', async () => {
-    createGame.mockResolvedValue({
-      gameId: GAME_ID,
-      status: 'created',
-      view: WAITING_VIEW,
-    });
-
-    const response = await app.inject({
-      body: { commandId: COMMAND_ID },
-      headers: AUTH_HEADERS,
-      method: 'POST',
-      url: '/api/games',
-    });
-
-    expect(createGame).toHaveBeenCalledWith({
-      commandId: COMMAND_ID,
-      userId: USER_ID,
-    });
-    expect(response.statusCode).toBe(201);
-    expect(response.json()).toEqual({
-      gameId: GAME_ID,
-      players: [],
-      view: WAITING_VIEW,
-    });
-  });
-
-  test('returns unfinished games for the lobby', async () => {
-    const lobbyGame = {
-      createdAt: '2026-08-28T10:00:00.000Z',
-      id: GAME_ID,
-      players: [
-        {
-          avatarVersion: null,
-          displayName: 'Ada',
-          id: USER_ID,
-          seat: 1,
-          team: 'white' as const,
-        },
-      ],
-      startedAt: null,
-      status: 'waiting' as const,
-    };
-    listLobbyGames.mockResolvedValue({
-      currentPlayerGameId: GAME_ID,
-      items: [lobbyGame],
-    });
-
-    const response = await app.inject({
-      headers: AUTH_HEADERS,
-      method: 'GET',
-      url: '/api/games',
-    });
-
-    expect(response.statusCode).toBe(200);
-    expect(listLobbyGames).toHaveBeenCalledWith({ userId: USER_ID });
-    expect(response.json()).toEqual({
-      currentPlayerGameId: GAME_ID,
-      items: [lobbyGame],
-    });
-  });
-
-  test('returns 200 for a duplicate create command', async () => {
-    createGame.mockResolvedValue({
-      gameId: GAME_ID,
-      status: 'duplicateCommand',
-      view: WAITING_VIEW,
-    });
-
-    const response = await app.inject({
-      body: { commandId: COMMAND_ID },
-      headers: AUTH_HEADERS,
-      method: 'POST',
-      url: '/api/games',
-    });
-
-    expect(response.statusCode).toBe(200);
-  });
-
-  test('rejects an invalid create body before the service', async () => {
-    const response = await app.inject({
-      body: { commandId: 'not-a-uuid', userId: USER_ID },
-      headers: AUTH_HEADERS,
-      method: 'POST',
-      url: '/api/games',
-    });
-
-    expect(response.statusCode).toBe(400);
-    expect(createGame).not.toHaveBeenCalled();
-  });
-
-  test('returns a safe game snapshot', async () => {
-    getSnapshot.mockResolvedValue({
-      gameId: GAME_ID,
-      players: [
-        {
-          avatarVersion: null,
-          displayName: 'Ada',
-          id: USER_ID,
-          seat: 1,
-          team: 'white',
-        },
-      ],
-      status: 'found',
-      view: WAITING_VIEW,
-    });
-
-    const response = await app.inject({
-      headers: AUTH_HEADERS,
-      method: 'GET',
-      url: `/api/games/${GAME_ID}`,
-    });
-
-    expect(response.statusCode).toBe(200);
-    expect(response.json()).toEqual({
-      gameId: GAME_ID,
-      players: [
-        {
-          avatarVersion: null,
-          displayName: 'Ada',
-          id: USER_ID,
-          seat: 1,
-          team: 'white',
-        },
-      ],
-      view: WAITING_VIEW,
-    });
   });
 
   test('executes join with session identity and validated input', async () => {
@@ -403,26 +253,5 @@ describe('game HTTP routes', () => {
     expect(response.json()).toMatchObject({
       error: { code: 'player_already_in_game' },
     });
-  });
-
-  test('returns safe events after the requested sequence', async () => {
-    getEvents.mockResolvedValue({
-      events: [],
-      gameId: GAME_ID,
-      status: 'found',
-    });
-
-    const response = await app.inject({
-      headers: AUTH_HEADERS,
-      method: 'GET',
-      url: `/api/games/${GAME_ID}/events?afterSequence=2`,
-    });
-
-    expect(getEvents).toHaveBeenCalledWith({
-      afterSequence: 2,
-      gameId: GAME_ID,
-      userId: USER_ID,
-    });
-    expect(response.json()).toEqual({ events: [], gameId: GAME_ID });
   });
 });

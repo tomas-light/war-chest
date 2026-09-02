@@ -4,6 +4,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { createActiveGames } from '../src/games/ActiveGames.js';
 
 const WAITING_STATE: GameState = {
+  creatorId: 'creator-one',
   currentPlayerId: null,
   featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
   lastEventSequence: 1,
