@@ -62,21 +62,25 @@ export interface SessionResponse {
 }
 
 export const AVATAR_PRESETS = [
-  {
-    id: 'archer',
-    imageUrl: '/game-images/concepts/base-game/archer/avatar.png',
-  },
-  {
-    id: 'cavalry',
-    imageUrl: '/game-images/concepts/base-game/cavalry/avatar.png',
-  },
-  {
-    id: 'warrior-priest',
-    imageUrl: '/game-images/concepts/base-game/warrior-priest/avatar.png',
-  },
+  'pinkSmile',
+  'mintWink',
+  'lavenderSleepy',
+  'butterJoy',
+  'skyCurious',
+  'peachShy',
+  'coralMischief',
+  'periwinkleLaugh',
+  'turquoiseSurprise',
+  'apricotCalm',
+  'lilacFreckles',
+  'creamRound',
+  'roseTuft',
+  'blueGrin',
+  'melonDreamy',
+  'clown',
 ] as const;
 
-export type AvatarPresetId = (typeof AVATAR_PRESETS)[number]['id'];
+export type AvatarPresetId = (typeof AVATAR_PRESETS)[number];
 
 export interface RequestEmailCodeRequest {
   email: string;

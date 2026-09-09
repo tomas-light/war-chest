@@ -2718,6 +2718,7 @@ __metadata:
     react-i18next: "npm:17.0.12"
     react-router: "npm:8.3.0"
     sass-embedded: "npm:1.100.0"
+    sharp: "npm:0.35.3"
     socket.io-client: "npm:4.8.3"
     typescript: "npm:7.0.2"
     vite: "npm:8.2.0"

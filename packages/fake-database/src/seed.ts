@@ -23,7 +23,7 @@ export const FAKE_USERS = [
   {
     avatarDataUrl: null,
     createdAt: FAKE_SEED_CREATED_AT,
-    avatarPresetId: 'archer',
+    avatarPresetId: 'pinkSmile',
     displayName: 'Archer',
     email: 'archer@example.com',
     id: FAKE_SEED_IDENTIFIERS.firstUser,
@@ -31,7 +31,7 @@ export const FAKE_USERS = [
   {
     avatarDataUrl: null,
     createdAt: FAKE_SEED_CREATED_AT,
-    avatarPresetId: 'cavalry',
+    avatarPresetId: 'mintWink',
     displayName: 'Cavalry',
     email: 'cavalry@example.com',
     id: FAKE_SEED_IDENTIFIERS.secondUser,
@@ -39,7 +39,7 @@ export const FAKE_USERS = [
   {
     avatarDataUrl: null,
     createdAt: FAKE_SEED_CREATED_AT,
-    avatarPresetId: 'warrior-priest',
+    avatarPresetId: 'lavenderSleepy',
     displayName: 'Warrior Priest',
     email: 'priest@example.com',
     id: FAKE_SEED_IDENTIFIERS.thirdUser,

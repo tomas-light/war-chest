@@ -16,7 +16,7 @@ describe('fake auth client email verification', () => {
   const session: SessionResponse = {
     expiresAt: '2026-09-30T12:00:00.000Z',
     user: {
-      avatarVersion: 'preset:cavalry',
+      avatarVersion: 'preset:mintWink',
       displayName: 'Existing Player',
       id: '10000000-0000-4000-8000-000000000010',
     },

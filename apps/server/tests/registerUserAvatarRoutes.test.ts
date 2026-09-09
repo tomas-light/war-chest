@@ -1,3 +1,4 @@
+import { AVATAR_PRESETS } from '@war-chest/api-contracts';
 import type { Auth, AuthSession } from '@war-chest/auth';
 import type { DatabaseConnection } from '@war-chest/database';
 import type { FastifyInstance } from 'fastify';
@@ -24,6 +25,9 @@ describe('user avatar routes', () => {
     typeof vi.fn<UserRepository['findPublicUser']>
   >;
   let findAvatar: ReturnType<typeof vi.fn<UserRepository['findAvatar']>>;
+  let selectAvatarPreset: ReturnType<
+    typeof vi.fn<UserRepository['selectAvatarPreset']>
+  >;
   let listFinishedGames: ReturnType<
     typeof vi.fn<UserRepository['listFinishedGames']>
   >;
@@ -41,6 +45,7 @@ describe('user avatar routes', () => {
 
     getSession.mockResolvedValue(session);
     findAvatar = vi.fn<UserRepository['findAvatar']>();
+    selectAvatarPreset = vi.fn<UserRepository['selectAvatarPreset']>();
     findPublicUser = vi.fn<UserRepository['findPublicUser']>();
     listFinishedGames = vi.fn<UserRepository['listFinishedGames']>();
 
@@ -58,7 +63,7 @@ describe('user avatar routes', () => {
       listFinishedGames,
       removeAvatar: vi.fn(),
       saveAvatar: vi.fn(),
-      selectAvatarPreset: vi.fn(),
+      selectAvatarPreset,
       updateDisplayName: vi.fn(),
     };
     vi.mocked(createUserRepository).mockReturnValue(userRepository);
@@ -75,12 +80,45 @@ describe('user avatar routes', () => {
   afterEach(async () => {
     await app.close();
   });
+
+  test.each(AVATAR_PRESETS)(
+    'accepts the %s avatar preset',
+    async (presetId) => {
+      selectAvatarPreset.mockResolvedValue({
+        avatarVersion: `preset:${presetId}`,
+        displayName: 'Viewer',
+        id: OTHER_USER_ID,
+      });
+
+      const response = await app.inject({
+        headers: AUTH_HEADERS,
+        method: 'PUT',
+        payload: { presetId },
+        url: '/api/users/me/avatar/preset',
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(selectAvatarPreset).toHaveBeenCalledWith(OTHER_USER_ID, presetId);
+    }
+  );
+
+  test('rejects a removed game artwork preset', async () => {
+    const response = await app.inject({
+      headers: AUTH_HEADERS,
+      method: 'PUT',
+      payload: { presetId: 'archer' },
+      url: '/api/users/me/avatar/preset',
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(selectAvatarPreset).not.toHaveBeenCalled();
+  });
+
   test('returns the stored avatar with immutable private caching', async () => {
     const avatar: StoredAvatar = {
       content: Buffer.from('avatar-bytes'),
       contentHash: 'avatar-version',
       contentType: 'image/webp',
-      kind: 'custom',
     };
     findAvatar.mockResolvedValue(avatar);
 

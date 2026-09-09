@@ -3,7 +3,11 @@ import clsx from 'clsx';
 import { type ChangeEvent, type PropsWithChildren, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { useAuthSession } from '#/entities/auth-session';
-import { usePublicUserQuery, UserAvatar } from '#/entities/user';
+import {
+  AvatarPresetImage,
+  usePublicUserQuery,
+  UserAvatar,
+} from '#/entities/user';
 import { useApiErrorMessage } from '#/shared/api';
 import { appRoutes } from '#/shared/config';
 import { useTranslation } from '#/shared/i18n/useTranslation';
@@ -128,16 +132,20 @@ export function UserProfilePage() {
         <h2>{t('avatarTitle')}</h2>
         <p className={classes.help}>{t('avatarDescription')}</p>
         <div className={classes.presets}>
-          {AVATAR_PRESETS.map((preset) => (
+          {AVATAR_PRESETS.map((presetId) => (
             <button
+              aria-pressed={currentUser.avatarVersion === `preset:${presetId}`}
               className={classes.preset}
               disabled={isPending}
-              key={preset.id}
-              onClick={() => void selectPreset(preset.id)}
+              key={presetId}
+              onClick={() => void selectPreset(presetId)}
               type="button"
             >
-              <img alt={t(`presets.${preset.id}`)} src={preset.imageUrl} />
-              <span>{t(`presets.${preset.id}`)}</span>
+              <AvatarPresetImage
+                className={classes.presetImage}
+                presetId={presetId}
+              />
+              <span>{t(`presets.${presetId}`)}</span>
             </button>
           ))}
         </div>

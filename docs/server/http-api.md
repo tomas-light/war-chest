@@ -230,7 +230,10 @@ Cache-Control: private, max-age=31536000, immutable
 `PATCH /api/users/me` изменяет никнейм. `PUT /api/users/me/avatar/preset`
 выбирает стабильный preset ID, `PUT /api/users/me/avatar` принимает JPEG, PNG
 или WebP body до 5 МБ, а `DELETE /api/users/me/avatar` возвращает fallback с
-инициалами. Preset-аватар выдаётся redirect на статический asset.
+инициалами. Для пресета `avatarVersion` содержит `preset:<id>` из
+`AVATAR_PRESETS`; клиент показывает соответствующую ячейку общего спрайта.
+`GET /api/users/:userId/avatar` отдаёт только пользовательскую загрузку;
+для пользователя с пресетом возвращается `404 avatar_not_found`.
 
 ## История завершённых игр
 

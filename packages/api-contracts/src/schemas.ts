@@ -162,12 +162,7 @@ export const updateCurrentUserRequestSchema: UpdateCurrentUserSchema = z
   .object({ displayName: displayNameSchema })
   .strict();
 
-const avatarPresetIdSchema = z.enum(
-  AVATAR_PRESETS.map((preset) => preset.id) as [
-    (typeof AVATAR_PRESETS)[number]['id'],
-    ...(typeof AVATAR_PRESETS)[number]['id'][],
-  ]
-);
+const avatarPresetIdSchema = z.enum(AVATAR_PRESETS);
 
 type SelectAvatarPresetSchema = z.ZodType<SelectAvatarPresetRequest>;
 export const selectAvatarPresetRequestSchema: SelectAvatarPresetSchema = z

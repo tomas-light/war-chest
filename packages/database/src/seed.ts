@@ -48,13 +48,13 @@ async function seedDatabase(): Promise<void> {
             id: SEED_IDENTIFIERS.firstUser,
             email: 'ada@example.com',
             displayName: 'Ada',
-            avatarPresetId: 'archer',
+            avatarPresetId: 'pinkSmile',
           },
           {
             id: SEED_IDENTIFIERS.secondUser,
             email: 'grace@example.com',
             displayName: 'Grace',
-            avatarPresetId: 'cavalry',
+            avatarPresetId: 'mintWink',
           },
         ])
         .onConflictDoNothing();

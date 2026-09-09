@@ -1,0 +1,23 @@
+{
+  "cellSize": 192,
+  "columns": 4,
+  "rows": 4,
+  "presetIds": [
+    "pinkSmile",
+    "mintWink",
+    "lavenderSleepy",
+    "butterJoy",
+    "skyCurious",
+    "peachShy",
+    "coralMischief",
+    "periwinkleLaugh",
+    "turquoiseSurprise",
+    "apricotCalm",
+    "lilacFreckles",
+    "creamRound",
+    "roseTuft",
+    "blueGrin",
+    "melonDreamy",
+    "clown"
+  ]
+}

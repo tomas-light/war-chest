@@ -53,6 +53,4 @@ export interface CustomAvatar {
   contentType: string;
 }
 
-export type StoredAvatar =
-  | ({ kind: 'custom' } & CustomAvatar)
-  | { kind: 'preset'; presetId: AvatarPresetId };
+export type StoredAvatar = CustomAvatar;
