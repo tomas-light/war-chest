@@ -45,7 +45,6 @@ export function SessionNavigation(props: Props) {
 
         <nav aria-label={t('mainNavigation')} className={classes.navigation}>
           <Link to="/lobby">{t('lobby')}</Link>
-          <Link to="/profile">{t('profile')}</Link>
 
           {DeveloperPanel === null ? null : (
             <button
@@ -63,17 +62,22 @@ export function SessionNavigation(props: Props) {
         <div className={classes.session}>
           <LanguageSelector className={classes.languageSelector} />
 
-          {session === null || session === undefined ? null : (
-            <UserAvatar size="small" user={session.user} />
+          {session === null || session === undefined ? (
+            <span
+              className={clsx(classes.sessionName, {
+                [classes.sessionLoading]: isSessionPending,
+              })}
+            >
+              {isSessionPending ? t('sessionPending') : null}
+            </span>
+          ) : (
+            <Link className={classes.profileLink} to="/profile">
+              <UserAvatar size="small" user={session.user} />
+              <span className={classes.sessionName}>
+                {session.user.displayName}
+              </span>
+            </Link>
           )}
-
-          <span
-            className={clsx(classes.sessionName, {
-              [classes.sessionLoading]: isSessionPending,
-            })}
-          >
-            {isSessionPending ? t('sessionPending') : session?.user.displayName}
-          </span>
 
           <Button
             disabled={isSessionPending || isLoggingOut}

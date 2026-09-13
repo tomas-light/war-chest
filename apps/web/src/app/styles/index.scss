@@ -9,12 +9,20 @@
   --wc-color-text: #eee5d2;
   --wc-color-text-muted: #aaa18f;
   --wc-color-error: #ff9d88;
-  --wc-font-display: copperplate, 'Copperplate Gothic Light', georgia, serif;
+  --wc-color-background: var(--wc-color-ink);
+  --wc-color-border: rgb(199 150 53 / 34%);
+  --wc-color-surface: linear-gradient(
+    140deg,
+    rgb(23 32 35 / 95%),
+    rgb(8 13 16 / 97%)
+  );
+  --wc-font-body: 'Segoe UI', ui-sans-serif, system-ui, sans-serif;
+  --wc-font-display: georgia, 'Times New Roman', serif;
 
   background: var(--wc-color-void);
   color: var(--wc-color-text);
   color-scheme: dark;
-  font-family: Inter, 'Segoe UI', ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--wc-font-body);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }

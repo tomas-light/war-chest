@@ -2,6 +2,7 @@
   width: min(920px, calc(100% - 32px));
   display: grid;
   gap: 20px;
+  align-content: start;
   padding: 32px 0 48px;
   margin: 0 auto;
 }
@@ -29,6 +30,16 @@
     margin-top: 6px;
     color: var(--wc-color-text-muted);
   }
+
+  h1 {
+    font-size: 32px;
+  }
+}
+
+.publicHeader {
+  min-height: 426px;
+  justify-content: center;
+  padding: clamp(40px, 8vw, 80px);
 }
 
 .eyebrow {
@@ -58,6 +69,11 @@
   h2 {
     margin-bottom: 0;
   }
+}
+
+.publicHistorySection {
+  min-height: 396px;
+  padding: clamp(40px, 8vw, 80px);
 }
 
 .historyLink {
@@ -97,32 +113,16 @@
   }
 }
 
-.label {
-  display: block;
-  margin-bottom: 6px;
-  font-weight: 700;
-}
-
 .inlineForm {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 10px;
+  align-items: end;
 }
 
-.input {
-  min-height: 44px;
-  padding: 9px 12px;
-  border: 1px solid var(--wc-color-border);
-  border-radius: 2px 10px;
-  background: rgb(0 0 0 / 28%);
-  color: var(--wc-color-text);
-  font: inherit;
-  outline: none;
-
-  &:focus-visible {
-    border-color: var(--wc-color-cyan);
-    box-shadow: 0 0 0 2px rgb(21 217 237 / 18%);
-  }
+.field {
+  display: grid;
+  gap: 6px;
 }
 
 .help {
@@ -236,6 +236,19 @@
 
   .header {
     align-items: flex-start;
+  }
+
+  .publicHeader,
+  .publicHistorySection {
+    padding: 32px 20px;
+  }
+
+  .publicHeader {
+    min-height: 325px;
+  }
+
+  .publicHistorySection {
+    min-height: 318px;
   }
 
   .inlineForm {
