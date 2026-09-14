@@ -3,12 +3,17 @@ import clsx from 'clsx';
 import { type ChangeEvent, type PropsWithChildren, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { useAuthSession } from '#/entities/auth-session';
-import { usePublicUserQuery, UserAvatar } from '#/entities/user';
+import {
+  AvatarPresetImage,
+  usePublicUserQuery,
+  UserAvatar,
+} from '#/entities/user';
 import { useApiErrorMessage } from '#/shared/api';
 import { appRoutes } from '#/shared/config';
 import { useTranslation } from '#/shared/i18n/useTranslation';
 import { Button } from '#/shared/ui/button';
 import { LoadingIndicator } from '#/shared/ui/loading-indicator';
+import { TextField } from '#/shared/ui/text-field';
 import classes from './UserProfilePage.module.scss';
 
 export function UserProfilePage() {
@@ -59,7 +64,7 @@ export function UserProfilePage() {
 
     return (
       <main className={classes.page}>
-        <header className={classes.header}>
+        <header className={clsx(classes.header, classes.publicHeader)}>
           <UserAvatar size="large" user={publicUser} />
           <div>
             <p className={classes.eyebrow}>{t('publicProfile')}</p>
@@ -68,7 +73,7 @@ export function UserProfilePage() {
           </div>
         </header>
 
-        <HistorySection userId={publicUser.id} />
+        <HistorySection isPublic userId={publicUser.id} />
       </main>
     );
   }
@@ -103,20 +108,19 @@ export function UserProfilePage() {
         }}
       >
         <h2>{t('nicknameTitle')}</h2>
-        <label className={classes.label} htmlFor="profile-display-name">
-          {t('nicknameLabel')}
-        </label>
         <div className={classes.inlineForm}>
-          <input
-            className={classes.input}
-            disabled={isPending}
-            id="profile-display-name"
-            maxLength={24}
-            minLength={2}
-            onChange={(event) => setDisplayName(event.target.value)}
-            required
-            value={displayName}
-          />
+          <div className={classes.field}>
+            <TextField
+              disabled={isPending}
+              id="profile-display-name"
+              label={t('nicknameLabel')}
+              maxLength={24}
+              minLength={2}
+              onChange={(event) => setDisplayName(event.target.value)}
+              required
+              value={displayName}
+            />
+          </div>
           <Button disabled={isPending} type="submit">
             {t('saveNickname')}
           </Button>
@@ -128,16 +132,20 @@ export function UserProfilePage() {
         <h2>{t('avatarTitle')}</h2>
         <p className={classes.help}>{t('avatarDescription')}</p>
         <div className={classes.presets}>
-          {AVATAR_PRESETS.map((preset) => (
+          {AVATAR_PRESETS.map((presetId) => (
             <button
+              aria-pressed={currentUser.avatarVersion === `preset:${presetId}`}
               className={classes.preset}
               disabled={isPending}
-              key={preset.id}
-              onClick={() => void selectPreset(preset.id)}
+              key={presetId}
+              onClick={() => void selectPreset(presetId)}
               type="button"
             >
-              <img alt={t(`presets.${preset.id}`)} src={preset.imageUrl} />
-              <span>{t(`presets.${preset.id}`)}</span>
+              <AvatarPresetImage
+                className={classes.presetImage}
+                presetId={presetId}
+              />
+              <span>{t(`presets.${presetId}`)}</span>
             </button>
           ))}
         </div>
@@ -223,17 +231,22 @@ export function UserProfilePage() {
 }
 
 interface HistorySectionProps {
+  isPublic?: boolean;
   userId: string;
 }
 
 function HistorySection(props: HistorySectionProps) {
-  const { userId } = props;
+  const { isPublic = false, userId } = props;
   const { t } = useTranslation('pages/user-profile', {
     keyPrefix: 'HistorySection',
   });
 
   return (
-    <section className={clsx(classes.section, classes.historySection)}>
+    <section
+      className={clsx(classes.section, classes.historySection, {
+        [classes.publicHistorySection]: isPublic,
+      })}
+    >
       <div>
         <h2>{t('title')}</h2>
         <p className={classes.help}>{t('description')}</p>

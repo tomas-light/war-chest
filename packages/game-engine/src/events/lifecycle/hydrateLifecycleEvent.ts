@@ -2,6 +2,7 @@ import type { GameEventData } from '../../events.js';
 import type { ApplicableEvent } from '../ApplicableEvent.js';
 import { GameCreatedEvent } from './GameCreatedEvent.js';
 import { GameFinishedEvent } from './GameFinishedEvent.js';
+import { GameSettingsUpdatedEvent } from './GameSettingsUpdatedEvent.js';
 import { GameStartedEvent } from './GameStartedEvent.js';
 import { PlayerDefeatedEvent } from './PlayerDefeatedEvent.js';
 import { PlayerDisconnectedEvent } from './PlayerDisconnectedEvent.js';
@@ -17,6 +18,8 @@ export function hydrateLifecycleEvent(
   switch (data.type) {
     case 'GameCreated':
       return GameCreatedEvent.fromData(data);
+    case 'GameSettingsUpdated':
+      return GameSettingsUpdatedEvent.fromData(data);
     case 'PlayerJoined':
       return PlayerJoinedEvent.fromData(data);
     case 'PlayerLeft':

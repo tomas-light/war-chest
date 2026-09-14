@@ -1,4 +1,5 @@
 import type { GameCreatedEventData } from '../../events.js';
+import { cloneGameSettings } from '../../GameSettings.js';
 import type { GameState } from '../../state.js';
 import type { GameCreatedViewEventData } from '../../viewEvents.js';
 import type { ApplicableEvent } from '../ApplicableEvent.js';
@@ -15,6 +16,7 @@ export class GameCreatedEvent implements ApplicableEvent<GameCreatedEventData> {
       payload: {
         ...data.payload,
         featureFlags: { ...data.payload.featureFlags },
+        settings: cloneGameSettings(data.payload.settings),
       },
     });
   }
@@ -32,6 +34,7 @@ export class GameCreatedEvent implements ApplicableEvent<GameCreatedEventData> {
       moveCount: 0,
       players: [],
       rulesVersion: this.data.payload.rulesVersion,
+      settings: cloneGameSettings(this.data.payload.settings),
       status: 'waiting',
       teams: { black: [], white: [] },
       winnerTeam: null,
@@ -44,6 +47,7 @@ export class GameCreatedEvent implements ApplicableEvent<GameCreatedEventData> {
       payload: {
         ...this.data.payload,
         featureFlags: { ...this.data.payload.featureFlags },
+        settings: cloneGameSettings(this.data.payload.settings),
       },
     };
   }

@@ -1,0 +1,47 @@
+.settings,
+.group {
+  display: grid;
+  gap: 18px;
+}
+
+.settings {
+  gap: 30px;
+}
+
+.heading h2,
+.heading p {
+  margin: 0;
+}
+
+.heading h2 {
+  color: var(--wc-color-text);
+  font-family: var(--wc-font-display);
+  font-size: 20px;
+}
+
+.heading p {
+  margin-top: 6px;
+  color: var(--wc-color-text-muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.error {
+  padding: 10px 12px;
+  border-left: 2px solid var(--wc-color-error);
+  margin: 0;
+  background: rgb(95 34 28 / 28%);
+  color: var(--wc-color-error);
+}
+
+@media (width <= 680px) {
+  .options {
+    grid-template-columns: 1fr;
+  }
+}

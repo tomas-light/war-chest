@@ -1,5 +1,8 @@
 import type {
   GameCommandData,
+  GameFormat,
+  GamePreparationSettings,
+  GameSettings,
   GameView,
   GameViewEventData,
 } from '@war-chest/game-engine';
@@ -47,6 +50,7 @@ export interface UserFinishedGame {
   id: string;
   participants: readonly UserGameParticipant[];
   result: 'defeat' | 'victory';
+  settings: GameSettings;
   team: 'black' | 'white';
   winnerTeam: 'black' | 'white';
 }
@@ -62,21 +66,25 @@ export interface SessionResponse {
 }
 
 export const AVATAR_PRESETS = [
-  {
-    id: 'archer',
-    imageUrl: '/game-images/concepts/base-game/archer/avatar.png',
-  },
-  {
-    id: 'cavalry',
-    imageUrl: '/game-images/concepts/base-game/cavalry/avatar.png',
-  },
-  {
-    id: 'warrior-priest',
-    imageUrl: '/game-images/concepts/base-game/warrior-priest/avatar.png',
-  },
+  'pinkSmile',
+  'mintWink',
+  'lavenderSleepy',
+  'butterJoy',
+  'skyCurious',
+  'peachShy',
+  'coralMischief',
+  'periwinkleLaugh',
+  'turquoiseSurprise',
+  'apricotCalm',
+  'lilacFreckles',
+  'creamRound',
+  'roseTuft',
+  'blueGrin',
+  'melonDreamy',
+  'clown',
 ] as const;
 
-export type AvatarPresetId = (typeof AVATAR_PRESETS)[number]['id'];
+export type AvatarPresetId = (typeof AVATAR_PRESETS)[number];
 
 export interface RequestEmailCodeRequest {
   email: string;
@@ -125,6 +133,7 @@ export interface ApiError {
 
 export interface CreateGameRequest {
   commandId: string;
+  format: GameFormat;
 }
 
 export interface GameResponse {
@@ -142,6 +151,7 @@ export interface LobbyGame {
   createdAt: string;
   id: string;
   players: readonly LobbyGamePlayer[];
+  settings: GameSettings;
   startedAt: string | null;
   status: 'active' | 'waiting';
 }
@@ -173,6 +183,11 @@ export interface StartGameRequest {
 }
 
 export interface SwapPlayerPositionsRequest {
+  commandId: string;
+  expectedVersion: number;
+}
+
+export interface UpdateGameSettingsRequest extends GamePreparationSettings {
   commandId: string;
   expectedVersion: number;
 }

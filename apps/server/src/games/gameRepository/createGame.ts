@@ -53,7 +53,11 @@ export async function createGame(
       const [createdGame] = await transaction
         .insert(games)
         .values({
+          cardSelectionMode:
+            input.game.event.payload.settings.cardSelectionMode,
           currentVersion: input.game.event.sequence,
+          expansions: [...input.game.event.payload.settings.expansions],
+          format: input.game.event.payload.settings.format,
           status: 'waiting',
         })
         .returning({ createdAt: games.createdAt, id: games.id });

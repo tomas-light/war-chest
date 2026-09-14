@@ -15,6 +15,11 @@ import {
 const FIRST_PLAYER_ID = 'player-one';
 const SECOND_PLAYER_ID = 'player-two';
 const RECONNECT_DEADLINE = '2026-08-16T12:15:00.000Z';
+const DEFAULT_CREATE_GAME_SETTINGS = {
+  cardSelectionMode: 'random',
+  expansions: [],
+  format: 'duel',
+} as const;
 
 describe('player presence', () => {
   let events: GameEventData[];
@@ -24,6 +29,7 @@ describe('player presence', () => {
     const gameCreated = createGame({
       creatorId: FIRST_PLAYER_ID,
       featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+      settings: DEFAULT_CREATE_GAME_SETTINGS,
       type: 'CreateGame',
     });
     events = [gameCreated];
@@ -56,7 +62,7 @@ describe('player presence', () => {
       },
       sequence: 5,
       type: 'PlayerDisconnected',
-      version: 1,
+      version: 2,
     });
   });
 

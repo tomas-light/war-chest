@@ -6,6 +6,10 @@
     "creatorReadyNotice": "All seats are taken. Waiting for the creator to start the game.",
     "gameLabel": "Game {{gameId}}",
     "gameUnavailable": "The game state is unavailable.",
+    "format": {
+      "duel": "Duel 1×1 · 2 players",
+      "team": "Team 2×2 · 4 players"
+    },
     "notSelected": "No game was selected.",
     "ownGameDescription": "You cannot take a seat in another game until your current match is over.",
     "ownGameTitle": "You are watching as a spectator",
@@ -16,10 +20,9 @@
       "select": "Choose a mode",
       "spectator": "Spectator mode"
     },
-    "roleChoiceDescription": "You can watch the preparation or take an available seat.",
+    "roleChoiceDescription": "Use + on an available seat to join, or continue as a spectator.",
     "roleChoiceFullDescription": "All seats are taken, so the game is available for watching only.",
     "roleChoiceTitle": "How would you like to open the game?",
-    "selectSeat": "Take a seat",
     "spectatorReadyNotice": "All seats are taken. You are watching the preparation, and the creator will start the game.",
     "spectatorWaitingNotice": "You are watching the preparation. You can still join while a seat is available.",
     "status": {
@@ -41,11 +44,11 @@
   },
   "PlayerPosition": {
     "available": "Available",
-    "connected": "Online · seat 1",
+    "connected": "Online · seat {{seat}}",
     "disconnected": "Connection lost",
     "left": "Left the game",
     "playerFallback": "Player {{playerId}}",
-    "seat": "Seat 1",
+    "seat": "Seat {{seat}}",
     "you": "You",
     "youLabel": "{{playerName}} · You"
   }

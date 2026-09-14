@@ -2,6 +2,7 @@ import type { GameViewEventData } from '../../viewEvents.js';
 import type { ApplicableViewEvent } from '../ApplicableViewEvent.js';
 import { GameCreatedViewEvent } from './GameCreatedViewEvent.js';
 import { GameFinishedViewEvent } from './GameFinishedViewEvent.js';
+import { GameSettingsUpdatedViewEvent } from './GameSettingsUpdatedViewEvent.js';
 import { GameStartedViewEvent } from './GameStartedViewEvent.js';
 import { PlayerDefeatedViewEvent } from './PlayerDefeatedViewEvent.js';
 import { PlayerDisconnectedViewEvent } from './PlayerDisconnectedViewEvent.js';
@@ -17,6 +18,8 @@ export function hydrateLifecycleViewEvent(
   switch (data.type) {
     case 'GameCreated':
       return GameCreatedViewEvent.fromData(data);
+    case 'GameSettingsUpdated':
+      return GameSettingsUpdatedViewEvent.fromData(data);
     case 'PlayerJoined':
       return PlayerJoinedViewEvent.fromData(data);
     case 'PlayerLeft':

@@ -1,3 +1,4 @@
+import { cloneGameSettings } from '../../GameSettings.js';
 import type { GameView } from '../../state.js';
 import type { GameCreatedViewEventData } from '../../viewEvents.js';
 import type { ApplicableViewEvent } from '../ApplicableViewEvent.js';
@@ -33,6 +34,7 @@ export class GameCreatedViewEvent implements ApplicableViewEvent<GameCreatedView
       players: [],
       privateMoves: [],
       rulesVersion: this.data.payload.rulesVersion,
+      settings: cloneGameSettings(this.data.payload.settings),
       status: 'waiting',
       teams: { black: [], white: [] },
       winnerTeam: null,
@@ -45,6 +47,7 @@ export class GameCreatedViewEvent implements ApplicableViewEvent<GameCreatedView
       payload: {
         ...this.data.payload,
         featureFlags: { ...this.data.payload.featureFlags },
+        settings: cloneGameSettings(this.data.payload.settings),
       },
     };
   }

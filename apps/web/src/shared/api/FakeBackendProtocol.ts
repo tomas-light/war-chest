@@ -14,6 +14,7 @@ export const FAKE_BACKEND_OPERATIONS = [
   'game.start',
   'game.surrender',
   'game.swapPositions',
+  'game.updateSettings',
   'gameConnection.disconnect',
   'gameConnection.join',
   'gameConnection.leave',

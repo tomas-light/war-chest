@@ -1,5 +1,8 @@
 {
   "gameHistory": true,
+  "nightfallExpansion": false,
+  "nobilityExpansion": false,
   "optimisticMoves": false,
+  "siegeExpansion": false,
   "spectatorMode": true
 }

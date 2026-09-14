@@ -36,7 +36,10 @@ export async function listFinishedGames(input: Input): Promise<UserGamePage> {
         );
   const gameRows = await input.database
     .select({
+      cardSelectionMode: games.cardSelectionMode,
+      expansions: games.expansions,
       finishedAt: games.finishedAt,
+      format: games.format,
       id: games.id,
       team: gameParticipants.team,
       winnerTeam: games.winnerTeam,
@@ -75,6 +78,11 @@ export async function listFinishedGames(input: Input): Promise<UserGamePage> {
       id: game.id,
       participants,
       result: team === winnerTeam ? 'victory' : 'defeat',
+      settings: {
+        cardSelectionMode: game.cardSelectionMode,
+        expansions: [...game.expansions],
+        format: game.format,
+      },
       team,
       winnerTeam,
     };

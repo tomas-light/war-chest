@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1078" viewBox="0 0 1200 1078" role="img" aria-labelledby="title description">
+  <title id="title">Общая реверсивная очередь выбора карт в Draft</title>
+  <desc id="description">Каждый ход в обоих форматах даёт одну карту. После каждого прохода списка направление меняется, крайний игрок выбирает ещё раз. Дуэль: 1, 2, 2, 1, 1, 2, 2, 1; по четыре карты. Команды: 1, 2, 3, 4, 4, 3, 2, 1, 1, 2, 3, 4; по три карты. В Elimination Draft эта же очередь начинается после двух банов в дуэли или четырёх в командах.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#475569"/>
+    </marker>
+    <style>
+      .title { font: 700 28px Arial, sans-serif; fill: #0f172a; }
+      .heading { font: 700 22px Arial, sans-serif; fill: #0f172a; }
+      .text { font: 16px Arial, sans-serif; fill: #334155; }
+      .label { font: 700 18px Arial, sans-serif; fill: #0f172a; text-anchor: middle; }
+      .small { font: 14px Arial, sans-serif; fill: #475569; text-anchor: middle; }
+      .panel { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 1.5; }
+      .first { fill: #eff6ff; stroke: #2563eb; stroke-width: 2; }
+      .second { fill: #fff7ed; stroke: #c2410c; stroke-width: 2; }
+      .arrow { fill: none; stroke: #475569; stroke-width: 2; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect width="1200" height="1078" fill="#ffffff"/>
+  <text x="32" y="42" class="title">Draft: общая реверсивная очередь</text>
+  <text x="32" y="68" class="text">В Elimination Draft эта же очередь начинается после завершения всех банов.</text>
+
+  <rect x="32" y="90" width="1136" height="514" rx="16" class="panel"/>
+  <text x="56" y="126" class="heading">Дуэль 1×1 · 8 карт · по 4 каждому</text>
+  <text x="56" y="151" class="text">В Elimination Draft: 10 карт → первый и второй игроки банят по одной → выбор из 8.</text>
+
+  <rect x="392" y="177" width="156" height="62" rx="10" class="first"/>
+  <text x="470" y="202" class="label">Игрок 1</text>
+  <text x="470" y="225" class="small">Ход 1 · 1 карта</text>
+  <path d="M548 208 H653" class="arrow"/>
+  <rect x="652" y="177" width="156" height="62" rx="10" class="second"/>
+  <text x="730" y="202" class="label">Игрок 2</text>
+  <text x="730" y="225" class="small">Ход 2 · 1 карта</text>
+
+  <path d="M730 239 V278" class="arrow"/>
+  <text x="790" y="263" class="small">2 → 2</text>
+
+  <rect x="392" y="277" width="156" height="62" rx="10" class="first"/>
+  <text x="470" y="302" class="label">Игрок 1</text>
+  <text x="470" y="325" class="small">Ход 4 · 1 карта</text>
+  <path d="M652 308 H547" class="arrow"/>
+  <rect x="652" y="277" width="156" height="62" rx="10" class="second"/>
+  <text x="730" y="302" class="label">Игрок 2</text>
+  <text x="730" y="325" class="small">Ход 3 · 1 карта</text>
+
+  <path d="M470 339 V378" class="arrow"/>
+  <text x="410" y="363" class="small">1 → 1</text>
+
+  <rect x="392" y="377" width="156" height="62" rx="10" class="first"/>
+  <text x="470" y="402" class="label">Игрок 1</text>
+  <text x="470" y="425" class="small">Ход 5 · 1 карта</text>
+  <path d="M548 408 H653" class="arrow"/>
+  <rect x="652" y="377" width="156" height="62" rx="10" class="second"/>
+  <text x="730" y="402" class="label">Игрок 2</text>
+  <text x="730" y="425" class="small">Ход 6 · 1 карта</text>
+
+  <path d="M730 439 V478" class="arrow"/>
+  <text x="790" y="463" class="small">2 → 2</text>
+
+  <rect x="392" y="477" width="156" height="62" rx="10" class="first"/>
+  <text x="470" y="502" class="label">Игрок 1</text>
+  <text x="470" y="525" class="small">Ход 8 · 1 карта</text>
+  <path d="M652 508 H547" class="arrow"/>
+  <rect x="652" y="477" width="156" height="62" rx="10" class="second"/>
+  <text x="730" y="502" class="label">Игрок 2</text>
+  <text x="730" y="525" class="small">Ход 7 · 1 карта</text>
+  <text x="56" y="575" class="text">Каждый блок — отдельный выбор и подтверждение одной карты, в том числе на разворотах.</text>
+
+  <g transform="translate(0 298)">
+  <rect x="32" y="324" width="1136" height="414" rx="16" class="panel"/>
+  <text x="56" y="360" class="heading">Команды 2×2 · 12 карт · по 3 каждому</text>
+  <text x="56" y="385" class="text">В Elimination Draft: 16 карт → баны 1 → 2 → 3 → 4 → выбор из 12.</text>
+
+  <rect x="132" y="408" width="156" height="62" rx="10" class="first"/>
+  <text x="210" y="433" class="label">Игрок 1</text>
+  <text x="210" y="456" class="small">Ход 1 · 1 карта</text>
+  <path d="M288 439 H393" class="arrow"/>
+  <rect x="392" y="408" width="156" height="62" rx="10" class="second"/>
+  <text x="470" y="433" class="label">Игрок 2</text>
+  <text x="470" y="456" class="small">Ход 2 · 1 карта</text>
+  <path d="M548 439 H653" class="arrow"/>
+  <rect x="652" y="408" width="156" height="62" rx="10" class="first"/>
+  <text x="730" y="433" class="label">Игрок 3</text>
+  <text x="730" y="456" class="small">Ход 3 · 1 карта</text>
+  <path d="M808 439 H913" class="arrow"/>
+  <rect x="912" y="408" width="156" height="62" rx="10" class="second"/>
+  <text x="990" y="433" class="label">Игрок 4</text>
+  <text x="990" y="456" class="small">Ход 4 · 1 карта</text>
+
+  <path d="M990 470 V509" class="arrow"/>
+  <text x="1050" y="494" class="small">4 → 4</text>
+
+  <rect x="132" y="508" width="156" height="62" rx="10" class="first"/>
+  <text x="210" y="533" class="label">Игрок 1</text>
+  <text x="210" y="556" class="small">Ход 8 · 1 карта</text>
+  <path d="M392 539 H287" class="arrow"/>
+  <rect x="392" y="508" width="156" height="62" rx="10" class="second"/>
+  <text x="470" y="533" class="label">Игрок 2</text>
+  <text x="470" y="556" class="small">Ход 7 · 1 карта</text>
+  <path d="M652 539 H547" class="arrow"/>
+  <rect x="652" y="508" width="156" height="62" rx="10" class="first"/>
+  <text x="730" y="533" class="label">Игрок 3</text>
+  <text x="730" y="556" class="small">Ход 6 · 1 карта</text>
+  <path d="M912 539 H807" class="arrow"/>
+  <rect x="912" y="508" width="156" height="62" rx="10" class="second"/>
+  <text x="990" y="533" class="label">Игрок 4</text>
+  <text x="990" y="556" class="small">Ход 5 · 1 карта</text>
+
+  <path d="M210 570 V609" class="arrow"/>
+  <text x="150" y="594" class="small">1 → 1</text>
+
+  <rect x="132" y="608" width="156" height="62" rx="10" class="first"/>
+  <text x="210" y="633" class="label">Игрок 1</text>
+  <text x="210" y="656" class="small">Ход 9 · 1 карта</text>
+  <path d="M288 639 H393" class="arrow"/>
+  <rect x="392" y="608" width="156" height="62" rx="10" class="second"/>
+  <text x="470" y="633" class="label">Игрок 2</text>
+  <text x="470" y="656" class="small">Ход 10 · 1 карта</text>
+  <path d="M548 639 H653" class="arrow"/>
+  <rect x="652" y="608" width="156" height="62" rx="10" class="first"/>
+  <text x="730" y="633" class="label">Игрок 3</text>
+  <text x="730" y="656" class="small">Ход 11 · 1 карта</text>
+  <path d="M808 639 H913" class="arrow"/>
+  <rect x="912" y="608" width="156" height="62" rx="10" class="second"/>
+  <text x="990" y="633" class="label">Игрок 4</text>
+  <text x="990" y="656" class="small">Ход 12 · 1 карта</text>
+
+  <text x="56" y="707" class="text">Белая команда: 1 и 3. Чёрная команда: 2 и 4. На разворотах — два отдельных выбора.</text>
+  </g>
+  <text x="32" y="1064" class="text">Согласованные правила подготовки партии · уточнение общей очереди от 9 сентября 2026</text>
+</svg>

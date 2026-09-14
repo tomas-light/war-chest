@@ -14,6 +14,10 @@ import { useApiErrorMessage } from '#/shared/api';
 import { appRoutes } from '#/shared/config';
 import { useTranslation } from '#/shared/i18n/useTranslation';
 import { Button } from '#/shared/ui/button';
+import {
+  type GameSummaryTeam,
+  GameSummaryCard,
+} from '#/shared/ui/game-summary-card';
 import { LoadingIndicator } from '#/shared/ui/loading-indicator';
 import classes from './UserGameHistoryPage.module.scss';
 
@@ -55,7 +59,12 @@ export function UserGameHistoryPage() {
   const user = userQuery.data;
 
   return (
-    <main className={classes.page}>
+    <main
+      className={classes.page}
+      data-empty={
+        !gamesQuery.isPending && !gamesQuery.isError && games.length === 0
+      }
+    >
       <header className={classes.header}>
         <div className={classes.profileIdentity}>
           <UserAvatar size="large" user={user} />
@@ -138,87 +147,85 @@ function GameCard(props: GameCardProps) {
   const { t } = useTranslation('pages/user-game-history', {
     keyPrefix: 'GameCard',
   });
+  const { t: tTeam } = useTranslation('pages/user-game-history', {
+    keyPrefix: 'Team',
+  });
   const whitePlayers = game.participants.filter(
     (participant) => participant.team === 'white'
   );
   const blackPlayers = game.participants.filter(
     (participant) => participant.team === 'black'
   );
+  const teams: readonly [GameSummaryTeam, GameSummaryTeam] = [
+    {
+      isWinner: game.winnerTeam === 'white',
+      members: whitePlayers.map((player) => ({
+        content: <HistoryPlayer player={player} />,
+        id: player.id,
+      })),
+      name: t('whiteTeam'),
+    },
+    {
+      isWinner: game.winnerTeam === 'black',
+      members: blackPlayers.map((player) => ({
+        content: <HistoryPlayer player={player} />,
+        id: player.id,
+      })),
+      name: t('blackTeam'),
+    },
+  ];
 
   return (
-    <article className={classes.gameCard}>
-      <header className={classes.gameHeader}>
-        <div>
-          <span className={classes.result} data-result={game.result}>
-            {game.result === 'victory' ? t('victory') : t('defeat')}
-          </span>
-          <p>
-            {t('yourTeam', {
-              team: game.team === 'white' ? t('whiteTeam') : t('blackTeam'),
-            })}
-          </p>
-        </div>
-        <time dateTime={game.finishedAt}>
-          {dateFormatter.format(new Date(game.finishedAt))}
-        </time>
-      </header>
-
-      <div className={classes.teams}>
-        <Team
-          isWinner={game.winnerTeam === 'white'}
-          name={t('whiteTeam')}
-          players={whitePlayers}
-        />
-        <span aria-hidden="true" className={classes.versus}>
-          VS
-        </span>
-        <Team
-          isWinner={game.winnerTeam === 'black'}
-          name={t('blackTeam')}
-          players={blackPlayers}
-        />
-      </div>
-
-      <Link
-        className={classes.primaryAction}
-        to={appRoutes.history.gameId(game.id).url()}
-      >
-        {t('viewGame')}
-      </Link>
-    </article>
+    <GameSummaryCard
+      action={
+        <Link
+          className={classes.primaryAction}
+          to={appRoutes.history.gameId(game.id).url()}
+        >
+          {t('viewGame')}
+        </Link>
+      }
+      dateLabel={dateFormatter.format(new Date(game.finishedAt))}
+      dateTime={game.finishedAt}
+      description={
+        <p>
+          {t('yourTeam', {
+            team: game.team === 'white' ? t('whiteTeam') : t('blackTeam'),
+          })}
+          {' · '}
+          {t('configuration', {
+            format: t(`format.${game.settings.format}`),
+            selection: t(`selection.${game.settings.cardSelectionMode}`),
+          })}
+        </p>
+      }
+      heading={game.result === 'victory' ? t('victory') : t('defeat')}
+      headingTone={game.result}
+      teams={teams}
+      versusLabel="VS"
+      winnerLabel={tTeam('winner')}
+    />
   );
 }
 
-interface TeamProps {
-  isWinner: boolean;
-  name: string;
-  players: readonly UserGameParticipant[];
+interface HistoryPlayerProps {
+  player: UserGameParticipant;
 }
 
-function Team(props: TeamProps) {
-  const { isWinner, name, players } = props;
+function HistoryPlayer(props: HistoryPlayerProps) {
+  const { player } = props;
   const { t } = useTranslation('pages/user-game-history', {
     keyPrefix: 'Team',
   });
 
   return (
-    <section className={classes.team} data-winner={isWinner}>
-      <div className={classes.teamHeader}>
-        <h3>{name}</h3>
-        {isWinner ? <span>{t('winner')}</span> : null}
+    <div className={classes.player}>
+      <UserAvatar size="small" user={player} />
+      <div>
+        <UserProfileLink user={player} />
+        <small>{t('seat', { seat: player.seat })}</small>
       </div>
-      <ul>
-        {players.map((player) => (
-          <li key={player.id}>
-            <UserAvatar size="small" user={player} />
-            <div>
-              <UserProfileLink user={player} />
-              <small>{t('seat', { seat: player.seat })}</small>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </section>
+    </div>
   );
 }
 

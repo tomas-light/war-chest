@@ -1,0 +1,43 @@
+.wrapper {
+  display: grid;
+  gap: 6px;
+  justify-items: end;
+}
+
+.button {
+  width: 44px;
+  min-width: 44px;
+  padding: 0;
+  border-radius: 2px 10px;
+}
+
+.plus {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  display: block;
+  margin: auto;
+}
+
+.plus:before,
+.plus:after {
+  position: absolute;
+  top: 8px;
+  left: 2px;
+  width: 14px;
+  height: 2px;
+  background: currentColor;
+  box-shadow: 0 0 8px rgb(21 217 237 / 45%);
+  content: '';
+}
+
+.plus:after {
+  transform: rotate(90deg);
+}
+
+.error {
+  max-width: 220px;
+  color: var(--wc-color-error);
+  font-size: 11px;
+  text-align: right;
+}

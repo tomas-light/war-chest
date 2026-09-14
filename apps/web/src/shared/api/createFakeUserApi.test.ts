@@ -16,7 +16,7 @@ describe('fake user API', () => {
   beforeEach(() => {
     user = {
       avatarDataUrl: null,
-      avatarPresetId: 'archer',
+      avatarPresetId: 'pinkSmile',
       createdAt: new Date('2026-08-31T12:00:00.000Z'),
       displayName: 'Player One',
       email: 'player@example.com',
@@ -46,20 +46,20 @@ describe('fake user API', () => {
   test('selects an avatar preset for the authenticated fake user', async () => {
     const userApi = createFakeUserApi(user.id);
 
-    const result = await userApi.selectAvatarPreset('cavalry');
+    const result = await userApi.selectAvatarPreset('mintWink');
 
-    expect(result.avatarVersion).toBe('preset:cavalry');
+    expect(result.avatarVersion).toBe('preset:mintWink');
     expect(saveUser).toHaveBeenCalledWith({
       ...user,
       avatarDataUrl: null,
-      avatarPresetId: 'cavalry',
+      avatarPresetId: 'mintWink',
     });
   });
 
   test('returns another fake user public profile', async () => {
     const otherUser: FakeUser = {
       ...user,
-      avatarPresetId: 'cavalry',
+      avatarPresetId: 'mintWink',
       displayName: 'Player Two',
       email: 'player-two@example.com',
       id: '10000000-0000-4000-8000-000000000011',
@@ -70,7 +70,7 @@ describe('fake user API', () => {
     const result = await userApi.getPublicUser(otherUser.id);
 
     expect(result).toEqual({
-      avatarVersion: 'preset:cavalry',
+      avatarVersion: 'preset:mintWink',
       displayName: 'Player Two',
       id: otherUser.id,
     });
@@ -79,7 +79,7 @@ describe('fake user API', () => {
   test('returns finished fake games with participants and user result', async () => {
     const otherUser: FakeUser = {
       ...user,
-      avatarPresetId: 'cavalry',
+      avatarPresetId: 'mintWink',
       displayName: 'Player Two',
       email: 'player-two@example.com',
       id: '10000000-0000-4000-8000-000000000011',
@@ -101,18 +101,24 @@ describe('fake user API', () => {
 
     listGamesForUser.mockResolvedValue([
       {
+        cardSelectionMode: 'random',
         createdAt: new Date('2026-08-31T14:00:00.000Z'),
         currentVersion: 8,
+        expansions: [],
         finishedAt,
+        format: 'duel',
         id: gameId,
         startedAt: new Date('2026-08-31T14:05:00.000Z'),
         status: 'finished',
         winnerTeam: 'white',
       },
       {
+        cardSelectionMode: 'random',
         createdAt: new Date('2026-08-31T16:00:00.000Z'),
         currentVersion: 1,
+        expansions: [],
         finishedAt: null,
+        format: 'duel',
         id: '20000000-0000-4000-8000-000000000011',
         startedAt: null,
         status: 'waiting',
@@ -138,14 +144,14 @@ describe('fake user API', () => {
           id: gameId,
           participants: [
             {
-              avatarVersion: 'preset:archer',
+              avatarVersion: 'preset:pinkSmile',
               displayName: user.displayName,
               id: user.id,
               seat: 1,
               team: 'black',
             },
             {
-              avatarVersion: 'preset:cavalry',
+              avatarVersion: 'preset:mintWink',
               displayName: otherUser.displayName,
               id: otherUser.id,
               seat: 1,
@@ -153,6 +159,11 @@ describe('fake user API', () => {
             },
           ],
           result: 'defeat',
+          settings: {
+            cardSelectionMode: 'random',
+            expansions: [],
+            format: 'duel',
+          },
           team: 'black',
           winnerTeam: 'white',
         },

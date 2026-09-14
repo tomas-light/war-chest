@@ -3,8 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "avatars:build": "node tools/avatars/buildAvatarSprite.mjs",
     "build": "yarn locale:generate && vite build",
     "dev": "yarn locale:generate && concurrently --kill-others --names locale,vite \"yarn locale:watch\" \"vite\"",
+    "game-assets:build": "node tools/game-assets/buildGameAssetSprites.mjs",
     "locale:generate": "node tools/locale/generateLocaleResources.mjs",
     "locale:watch": "node tools/locale/generateLocaleResources.mjs --watch",
     "preview": "vite preview",
@@ -45,6 +47,7 @@
     "eslint": "10.8.0",
     "prettier": "3.9.6",
     "sass-embedded": "1.100.0",
+    "sharp": "0.35.3",
     "typescript": "7.0.2",
     "vite": "8.2.0",
     "vite-plugin-readable-classnames": "1.5.11",

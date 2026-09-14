@@ -16,6 +16,10 @@ import {
 } from '#/shared/config';
 import { useTranslation } from '#/shared/i18n/useTranslation';
 import { Button } from '#/shared/ui/button';
+import {
+  type GameSummaryTeam,
+  GameSummaryCard,
+} from '#/shared/ui/game-summary-card';
 import { LoadingIndicator } from '#/shared/ui/loading-indicator';
 import classes from './LobbyPage.module.scss';
 
@@ -73,7 +77,14 @@ export function LobbyPage() {
   }, [queryClient, userId]);
 
   return (
-    <main className={classes.page}>
+    <main
+      className={classes.page}
+      data-empty={
+        !lobbyGamesQuery.isPending &&
+        !lobbyGamesQuery.isError &&
+        games.length === 0
+      }
+    >
       <section className={classes.hero}>
         <div>
           <p className={classes.eyebrow}>{t('eyebrow')}</p>
@@ -162,73 +173,96 @@ function GameCard(props: GameCardProps) {
       }),
     [i18n.resolvedLanguage]
   );
-  const whitePlayer = game.players.find((player) => player.team === 'white');
-  const blackPlayer = game.players.find((player) => player.team === 'black');
+  const seatNumbers = game.settings.format === 'duel' ? [1] : [1, 2];
+  const teams: readonly [GameSummaryTeam, GameSummaryTeam] = [
+    {
+      members: seatNumbers.map((seat) => {
+        const player = game.players.find(
+          (item) => item.team === 'white' && item.seat === seat
+        );
+
+        return {
+          content: <LobbyPlayer player={player} />,
+          id: player?.id ?? `white-${seat}-available`,
+        };
+      }),
+      name: t('whiteTeam'),
+    },
+    {
+      members: seatNumbers.map((seat) => {
+        const player = game.players.find(
+          (item) => item.team === 'black' && item.seat === seat
+        );
+
+        return {
+          content: <LobbyPlayer player={player} />,
+          id: player?.id ?? `black-${seat}-available`,
+        };
+      }),
+      name: t('blackTeam'),
+    },
+  ];
 
   return (
-    <article className={classes.gameCard}>
-      <div className={classes.gameHeader}>
-        <span className={classes.status} data-status={game.status}>
-          {game.status === 'waiting' ? t('statusWaiting') : t('statusActive')}
-        </span>
-        <div className={classes.gameHeaderActions}>
-          <time dateTime={game.createdAt}>
-            {dateFormatter.format(new Date(game.createdAt))}
-          </time>
-          <Button
-            aria-label={t('openGame')}
-            className={classes.openGameButton}
-            onClick={onOpen}
-            title={t('openGame')}
-            variant="secondary"
+    <GameSummaryCard
+      action={
+        <Button
+          aria-label={t('openGame')}
+          className={classes.openGameButton}
+          onClick={onOpen}
+          title={t('openGame')}
+          variant="secondary"
+        >
+          <svg
+            aria-hidden="true"
+            className={classes.openGameIcon}
+            viewBox="0 0 24 24"
           >
-            <svg
-              aria-hidden="true"
-              className={classes.openGameIcon}
-              viewBox="0 0 24 24"
-            >
-              <path d="M14 5h5v5M19 5l-9 9M18 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />
-            </svg>
-          </Button>
-        </div>
-      </div>
-      <div className={classes.teams}>
-        <TeamSlot name={t('whiteTeam')} player={whitePlayer} />
-        <span aria-hidden="true" className={classes.versus}>
-          VS
-        </span>
-        <TeamSlot name={t('blackTeam')} player={blackPlayer} />
-      </div>
-    </article>
+            <path d="M14 5h5v5M19 5l-9 9M18 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />
+          </svg>
+        </Button>
+      }
+      actionPlacement="header"
+      dateLabel={dateFormatter.format(new Date(game.createdAt))}
+      dateTime={game.createdAt}
+      description={
+        <p>
+          {t('configuration', {
+            format: t(`format.${game.settings.format}`),
+            selection: t(`selection.${game.settings.cardSelectionMode}`),
+          })}
+        </p>
+      }
+      heading={
+        game.status === 'waiting' ? t('statusWaiting') : t('statusActive')
+      }
+      headingTone={game.status}
+      teams={teams}
+      versusLabel="VS"
+    />
   );
 }
 
-interface TeamSlotProps {
-  name: string;
+interface LobbyPlayerProps {
   player: LobbyGamePlayer | undefined;
 }
 
-function TeamSlot(props: TeamSlotProps) {
-  const { name, player } = props;
+function LobbyPlayer(props: LobbyPlayerProps) {
+  const { player } = props;
   const { t } = useTranslation('pages/lobby', {
     keyPrefix: 'TeamSlot',
   });
 
   return (
-    <div className={classes.teamSlot}>
-      <span>{name}</span>
-      <div className={classes.playerIdentity}>
-        {player === undefined ? null : (
-          <UserAvatar size="small" user={player} />
+    <div className={classes.playerIdentity}>
+      {player === undefined ? null : <UserAvatar size="small" user={player} />}
+      <strong>
+        {player === undefined ? (
+          t('available')
+        ) : (
+          <UserProfileLink user={player} />
         )}
-        <strong>
-          {player === undefined ? (
-            t('available')
-          ) : (
-            <UserProfileLink user={player} />
-          )}
-        </strong>
-      </div>
+      </strong>
     </div>
   );
 }

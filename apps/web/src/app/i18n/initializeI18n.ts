@@ -9,10 +9,18 @@ import {
 
 const DEFAULT_LANGUAGE: SupportedLanguage = 'ru';
 const LANGUAGE_STORAGE_KEY = 'war-chest-language';
-const TRANSLATION_MODULES = import.meta.glob<ResourceKey>(
+const ROOT_TRANSLATION_MODULES = import.meta.glob<ResourceKey>(
   '/src/**/i18n/{en,ru}.json',
   { import: 'default' }
 );
+const RELATIVE_TRANSLATION_MODULES = import.meta.glob<ResourceKey>(
+  '../../**/i18n/{en,ru}.json',
+  { import: 'default' }
+);
+const TRANSLATION_MODULES = {
+  ...ROOT_TRANSLATION_MODULES,
+  ...RELATIVE_TRANSLATION_MODULES,
+};
 
 export async function initializeI18n(): Promise<void> {
   if (i18n.isInitialized) {
@@ -51,11 +59,14 @@ async function loadTranslationResources(
   language: string,
   namespace: string
 ): Promise<ResourceKey> {
-  const modulePath = `/src/${namespace}/i18n/${language}.json`;
-  const loadModule = TRANSLATION_MODULES[modulePath];
+  const moduleSuffix = `/${namespace}/i18n/${language}.json`;
+  const translationModuleEntry = Object.entries(TRANSLATION_MODULES).find(
+    ([modulePath]) => modulePath.endsWith(moduleSuffix)
+  );
+  const loadModule = translationModuleEntry?.[1];
 
   if (loadModule === undefined) {
-    throw new Error(`Translation module was not found: ${modulePath}.`);
+    throw new Error(`Translation module was not found: *${moduleSuffix}.`);
   }
 
   return loadModule();

@@ -1,0 +1,15 @@
+.image {
+  position: relative;
+  display: block;
+  flex: 0 0 auto;
+  overflow: hidden;
+  aspect-ratio: var(--wc-sprite-aspect-ratio);
+}
+
+.sprite {
+  position: absolute;
+  max-width: none;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+}

@@ -48,13 +48,13 @@ async function seedDatabase(): Promise<void> {
             id: SEED_IDENTIFIERS.firstUser,
             email: 'ada@example.com',
             displayName: 'Ada',
-            avatarPresetId: 'archer',
+            avatarPresetId: 'pinkSmile',
           },
           {
             id: SEED_IDENTIFIERS.secondUser,
             email: 'grace@example.com',
             displayName: 'Grace',
-            avatarPresetId: 'cavalry',
+            avatarPresetId: 'mintWink',
           },
         ])
         .onConflictDoNothing();
@@ -62,6 +62,9 @@ async function seedDatabase(): Promise<void> {
       await transaction
         .insert(games)
         .values({
+          cardSelectionMode: 'random',
+          expansions: [],
+          format: 'duel',
           id: SEED_IDENTIFIERS.game,
           status: 'waiting',
           currentVersion: 1,
@@ -105,11 +108,16 @@ async function seedDatabase(): Promise<void> {
           commandId: SEED_IDENTIFIERS.command,
           sequence: 1,
           type: 'GameCreated',
-          version: 1,
+          version: 2,
           payload: {
             creatorId: SEED_IDENTIFIERS.firstUser,
             featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
-            rulesVersion: 1,
+            rulesVersion: 2,
+            settings: {
+              cardSelectionMode: 'random',
+              expansions: [],
+              format: 'duel',
+            },
           },
         })
         .onConflictDoNothing();

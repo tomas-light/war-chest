@@ -32,8 +32,8 @@
 
 События читаются через составной индекс в порядке `sequence`, с параметрами
 `afterSequence` и `limit`. `replaceFeatureFlags()` изменяет только snapshot
-`featureFlags` в первом событии `GameCreated`; остальные поля события и цепочка
-истории сохраняются.
+`featureFlags` в первом событии `GameCreated`; настройки партии и остальная
+цепочка истории сохраняются.
 
 ## Начальные данные и reset
 
@@ -41,27 +41,35 @@
 только отсутствующие записи и не перезаписывает изменённые runtime flags или
 профили при повторном открытии базы.
 
-| Provider | Имя пользователя | Provider subject     |
-| -------- | ---------------- | -------------------- |
-| Google   | `G User`         | `fake-google-user`   |
-| Telegram | `T User`         | `fake-telegram-user` |
-| Yandex   | `Y User`         | `fake-yandex-user`   |
+| Email                 | Имя пользователя |
+| --------------------- | ----------------- |
+| `archer@example.com`  | `Archer`          |
+| `cavalry@example.com` | `Cavalry`         |
+| `priest@example.com`  | `Warrior Priest`  |
 
-UUID пользователей и identities, provider subjects и дата создания стабильны.
-Благодаря этому повторный fake-вход после reload или reset находит тот же
-логический аккаунт.
+UUID пользователей и дата создания стабильны. Благодаря этому повторный
+fake-вход после reload или reset находит тот же логический аккаунт.
 
 Начальные application feature flags:
 
-| Flag              | Значение |
-| ----------------- | -------- |
-| `gameHistory`     | `true`   |
-| `optimisticMoves` | `false`  |
-| `spectatorMode`   | `true`   |
+| Flag                 | Значение |
+| -------------------- | -------- |
+| `gameHistory`        | `true`   |
+| `nightfallExpansion` | `false`  |
+| `nobilityExpansion`  | `false`  |
+| `optimisticMoves`    | `false`  |
+| `siegeExpansion`     | `false`  |
+| `spectatorMode`      | `true`   |
 
-`reset()` атомарно очищает все восемь stores и в той же транзакции возвращает
-три аккаунта, identities и исходные feature flags. Игры, события, команды и
-сессии после reset отсутствуют.
+Версия IndexedDB schema равна `7`. При обновлении со старой версии игровые
+stores очищаются, потому что события без обязательного snapshot настроек не
+переинтерпретируются новым контрактом. Fake IndexedDB считается одноразовым
+development-окружением: пользователи, сессии и runtime feature flags также
+очищаются, после чего seed создаёт чистые стандартные данные.
+
+`reset()` атомарно очищает все семь stores и в той же транзакции возвращает три
+seed-аккаунта и исходные feature flags. Игры, события, команды и сессии после
+reset отсутствуют.
 
 ## Проверки пакета
 
@@ -71,8 +79,8 @@ UUID пользователей и identities, provider subjects и дата с�
 yarn workspace @war-chest/fake-database test
 ```
 
-Набор из 21 теста проверяет миграцию и индекс, все CRUD-операции таблицы,
-публичный откат транзакции, seed, ограничения репозиториев, активность сессий,
+Набор тестов проверяет миграции и индекс, все CRUD-операции таблицы, публичный
+откат транзакции, seed, ограничения репозиториев, активность сессий,
 постраничное чтение событий, изменение `GameCreated` и полный reset. Типы
 пакета отдельно проверяются командой:
 

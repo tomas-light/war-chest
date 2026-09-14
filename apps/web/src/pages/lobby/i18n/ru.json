@@ -13,7 +13,17 @@
   },
   "GameCard": {
     "blackTeam": "Чёрная команда",
+    "configuration": "{{format}} · {{selection}}",
+    "format": {
+      "duel": "Дуэль",
+      "team": "Командная игра"
+    },
     "openGame": "Открыть игру",
+    "selection": {
+      "draft": "Драфт",
+      "eliminationDraft": "Драфт с исключением",
+      "random": "Случайные карты"
+    },
     "statusActive": "Идёт игра",
     "statusWaiting": "Ожидает игроков",
     "whiteTeam": "Белая команда"

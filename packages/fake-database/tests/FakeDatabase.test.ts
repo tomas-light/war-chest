@@ -11,6 +11,15 @@ import {
   FAKE_SEED_IDENTIFIERS,
 } from '../src/index.js';
 
+const DEFAULT_GAME_SETTINGS: Pick<
+  FakeGame,
+  'cardSelectionMode' | 'expansions' | 'format'
+> = {
+  cardSelectionMode: 'random',
+  expansions: [],
+  format: 'duel',
+};
+
 describe('fake database', () => {
   let database: FakeDatabase;
   let databaseName: string;
@@ -72,6 +81,7 @@ describe('fake database', () => {
       currentVersion: 0,
       finishedAt: null,
       id: 'inserted-table-game',
+      ...DEFAULT_GAME_SETTINGS,
       startedAt: null,
       status: 'waiting',
       winnerTeam: null,
@@ -88,6 +98,7 @@ describe('fake database', () => {
       currentVersion: 0,
       finishedAt: null,
       id: 'first-table-game',
+      ...DEFAULT_GAME_SETTINGS,
       startedAt: null,
       status: 'waiting',
       winnerTeam: null,
@@ -97,6 +108,7 @@ describe('fake database', () => {
       currentVersion: 0,
       finishedAt: null,
       id: 'second-table-game',
+      ...DEFAULT_GAME_SETTINGS,
       startedAt: null,
       status: 'waiting',
       winnerTeam: null,
@@ -115,6 +127,7 @@ describe('fake database', () => {
       currentVersion: 0,
       finishedAt: null,
       id: 'updated-table-game',
+      ...DEFAULT_GAME_SETTINGS,
       startedAt: null,
       status: 'waiting',
       winnerTeam: null,
@@ -134,6 +147,7 @@ describe('fake database', () => {
       currentVersion: 1,
       finishedAt: null,
       id: 'missing-table-game',
+      ...DEFAULT_GAME_SETTINGS,
       startedAt: null,
       status: 'waiting',
       winnerTeam: null,
@@ -149,6 +163,7 @@ describe('fake database', () => {
       currentVersion: 0,
       finishedAt: null,
       id: 'deleted-table-game',
+      ...DEFAULT_GAME_SETTINGS,
       startedAt: null,
       status: 'waiting',
       winnerTeam: null,
@@ -166,6 +181,7 @@ describe('fake database', () => {
       currentVersion: 0,
       finishedAt: null,
       id: 'cleared-table-game',
+      ...DEFAULT_GAME_SETTINGS,
       startedAt: null,
       status: 'waiting',
       winnerTeam: null,
@@ -183,6 +199,7 @@ describe('fake database', () => {
       currentVersion: 0,
       finishedAt: null,
       id: 'rolled-back-table-game',
+      ...DEFAULT_GAME_SETTINGS,
       startedAt: null,
       status: 'waiting',
       winnerTeam: null,
@@ -211,6 +228,7 @@ describe('fake database', () => {
       currentVersion: 0,
       finishedAt: null,
       id: 'duplicate-seat-game',
+      ...DEFAULT_GAME_SETTINGS,
       startedAt: null,
       status: 'waiting',
       winnerTeam: null,
@@ -244,6 +262,7 @@ describe('fake database', () => {
       currentVersion: 0,
       finishedAt: null,
       id: 'opposing-team-seats-game',
+      ...DEFAULT_GAME_SETTINGS,
       startedAt: null,
       status: 'waiting',
       winnerTeam: null,
@@ -279,6 +298,7 @@ describe('fake database', () => {
       currentVersion: 0,
       finishedAt: null,
       id: 'invalid-seat-game',
+      ...DEFAULT_GAME_SETTINGS,
       startedAt: null,
       status: 'waiting',
       winnerTeam: null,
@@ -377,6 +397,7 @@ describe('fake database', () => {
       currentVersion: 2,
       finishedAt: null,
       id: 'game-with-events',
+      ...DEFAULT_GAME_SETTINGS,
       startedAt: null,
       status: 'waiting',
       winnerTeam: null,
@@ -421,6 +442,7 @@ describe('fake database', () => {
       currentVersion: 1,
       finishedAt: null,
       id: 'atomic-game',
+      ...DEFAULT_GAME_SETTINGS,
       startedAt: null,
       status: 'waiting',
       winnerTeam: null,
@@ -445,6 +467,7 @@ describe('fake database', () => {
       gameId: game.id,
       id: 'duplicate-command',
       processedAt: new Date('2026-08-03T10:01:00.000Z'),
+      requestHash: 'a'.repeat(64),
       userId: FAKE_SEED_IDENTIFIERS.firstUser,
     };
     const playerJoinedEvent: FakeGameEvent = {
@@ -493,6 +516,7 @@ describe('fake database', () => {
       currentVersion: 1,
       finishedAt: null,
       id: 'feature-flags-game',
+      ...DEFAULT_GAME_SETTINGS,
       startedAt: null,
       status: 'waiting',
       winnerTeam: null,

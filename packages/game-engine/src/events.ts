@@ -1,8 +1,9 @@
 import type { RuntimeFeatureFlags } from '@war-chest/feature-flags';
+import type { GamePreparationSettings, GameSettings } from './GameSettings.js';
 import type { GameTeam, JsonValue } from './state.js';
 
-export const GAME_EVENT_VERSION = 1;
-export const GAME_RULES_VERSION = 1;
+export const GAME_EVENT_VERSION = 2;
+export const GAME_RULES_VERSION = 2;
 
 interface EventMetadata {
   sequence: number;
@@ -14,8 +15,14 @@ export interface GameCreatedEventData extends EventMetadata {
     creatorId: string;
     featureFlags: RuntimeFeatureFlags;
     rulesVersion: typeof GAME_RULES_VERSION;
+    settings: GameSettings;
   };
   type: 'GameCreated';
+}
+
+export interface GameSettingsUpdatedEventData extends EventMetadata {
+  payload: GamePreparationSettings;
+  type: 'GameSettingsUpdated';
 }
 
 export interface PlayerJoinedEventData extends EventMetadata {
@@ -103,6 +110,7 @@ export interface GameFinishedEventData extends EventMetadata {
 export type GameEventData =
   | GameCreatedEventData
   | GameFinishedEventData
+  | GameSettingsUpdatedEventData
   | GameStartedEventData
   | PlayerDefeatedEventData
   | PlayerDisconnectedEventData

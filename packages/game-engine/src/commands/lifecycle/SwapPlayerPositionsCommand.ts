@@ -19,6 +19,7 @@ export class SwapPlayerPositionsCommand implements DecidableCommand<SwapPlayerPo
     const [firstPlayer, secondPlayer] = state.players;
     const canSwapPlayers =
       state.status === 'waiting' &&
+      state.settings.format === 'duel' &&
       state.creatorId === playerId &&
       state.players.length === REQUIRED_PLAYER_COUNT &&
       firstPlayer !== undefined &&

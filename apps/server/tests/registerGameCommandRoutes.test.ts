@@ -27,7 +27,12 @@ const WAITING_VIEW: GameView = {
   moveCount: 0,
   players: [],
   privateMoves: [],
-  rulesVersion: 1,
+  rulesVersion: 2,
+  settings: {
+    cardSelectionMode: 'random',
+    expansions: [],
+    format: 'duel',
+  },
   status: 'waiting',
   teams: { black: [], white: [] },
   winnerTeam: null,
@@ -155,6 +160,48 @@ describe('game command HTTP routes', () => {
       command: { type: 'SwapPlayerPositions' },
       commandId: COMMAND_ID,
       expectedVersion: 3,
+      gameId: GAME_ID,
+      userId: USER_ID,
+    });
+    expect(response.statusCode).toBe(200);
+  });
+
+  test('updates preparation settings for the authenticated creator', async () => {
+    executeCommand.mockResolvedValue({
+      currentVersion: 2,
+      events: [],
+      previousVersion: 1,
+      status: 'saved',
+      view: {
+        ...WAITING_VIEW,
+        lastEventSequence: 2,
+        settings: {
+          ...WAITING_VIEW.settings,
+          cardSelectionMode: 'draft',
+        },
+      },
+    });
+
+    const response = await app.inject({
+      body: {
+        cardSelectionMode: 'draft',
+        commandId: COMMAND_ID,
+        expansions: [],
+        expectedVersion: 1,
+      },
+      headers: AUTH_HEADERS,
+      method: 'POST',
+      url: `/api/games/${GAME_ID}/settings`,
+    });
+
+    expect(executeCommand).toHaveBeenCalledWith({
+      command: {
+        cardSelectionMode: 'draft',
+        expansions: [],
+        type: 'UpdateGameSettings',
+      },
+      commandId: COMMAND_ID,
+      expectedVersion: 1,
       gameId: GAME_ID,
       userId: USER_ID,
     });

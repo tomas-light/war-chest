@@ -12,7 +12,8 @@ export function checkCommandAccess(
 
   if (
     input.command.type === 'StartGame' ||
-    input.command.type === 'SwapPlayerPositions'
+    input.command.type === 'SwapPlayerPositions' ||
+    input.command.type === 'UpdateGameSettings'
   ) {
     return input.state.creatorId === input.userId
       ? null

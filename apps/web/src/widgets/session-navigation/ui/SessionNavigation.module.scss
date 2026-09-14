@@ -147,20 +147,46 @@
   font-size: 14px;
 }
 
+.profileLink {
+  min-width: 0;
+  min-height: 42px;
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  padding: 4px 8px 4px 4px;
+  border: 1px solid transparent;
+  border-radius: 21px 4px 4px 21px;
+  color: var(--wc-color-text);
+  text-decoration: none;
+  transition:
+    border-color 150ms ease,
+    background 150ms ease;
+}
+
+.profileLink:hover,
+.profileLink:focus-visible {
+  border-color: rgb(21 217 237 / 42%);
+  background: rgb(21 217 237 / 6%);
+}
+
+.profileLink:focus-visible {
+  outline: 2px solid var(--wc-color-cyan);
+  outline-offset: 2px;
+}
+
 .languageSelector {
   flex: 0 0 auto;
 }
 
 .sessionName {
-  min-width: 112px;
+  min-width: 0;
   display: flex;
   gap: 9px;
   align-items: center;
-  justify-content: flex-end;
-}
-
-.session > [role='img'] + .sessionName {
-  min-width: 0;
+  overflow: hidden;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .sessionName:before {
@@ -203,12 +229,14 @@
     gap: 12px 18px;
     flex-wrap: wrap;
     padding-top: 8px;
+    padding-right: 14px;
     padding-bottom: 12px;
+    padding-left: 14px;
   }
 
   .session {
     width: 100%;
-    flex-wrap: wrap;
+    gap: 8px;
     justify-content: space-between;
     margin-left: 0;
   }
@@ -217,8 +245,8 @@
     justify-content: flex-start;
   }
 
-  .languageSelector {
-    order: 3;
+  .profileLink {
+    max-width: min(42vw, 190px);
   }
 
   .layout main {
@@ -245,6 +273,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .brandLogo,
+  .profileLink,
   .navigation a,
   .navigation a:after {
     transition: none;

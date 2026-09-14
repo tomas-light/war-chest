@@ -1,7 +1,17 @@
 {
   "GameCard": {
     "blackTeam": "Black",
+    "configuration": "{{format}} · {{selection}}",
     "defeat": "Defeat",
+    "format": {
+      "duel": "Duel",
+      "team": "Team game"
+    },
+    "selection": {
+      "draft": "Draft",
+      "eliminationDraft": "Elimination draft",
+      "random": "Random cards"
+    },
     "viewGame": "Open game",
     "victory": "Victory",
     "whiteTeam": "White",

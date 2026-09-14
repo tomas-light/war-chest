@@ -5,7 +5,7 @@ import type { DecidableCommand } from '../DecidableCommand.js';
 import {
   FIRST_PLAYER_SEAT,
   FIRST_PLAYER_TEAM,
-  REQUIRED_PLAYER_COUNT,
+  getRequiredPlayerCount,
 } from './lifecycleRules.js';
 
 // eslint-disable-next-line max-len
@@ -18,7 +18,8 @@ export class StartGameCommand implements DecidableCommand<StartGameCommandData> 
 
   decide(state: GameState, playerId: string): GameEventData[] {
     const isWaitingGame = state.status === 'waiting';
-    const hasRequiredPlayers = state.players.length === REQUIRED_PLAYER_COUNT;
+    const hasRequiredPlayers =
+      state.players.length === getRequiredPlayerCount(state.settings.format);
 
     // Состав может заполниться без участия создателя, но право начать партию
     // остаётся только у пользователя, который создал эту игру.

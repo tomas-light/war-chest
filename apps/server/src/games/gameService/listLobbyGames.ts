@@ -21,6 +21,7 @@ export async function listLobbyGames(
       createdAt: game.createdAt.toISOString(),
       id: game.id,
       players: createGamePlayers(game.players),
+      settings: game.settings,
       startedAt: game.startedAt?.toISOString() ?? null,
       status: game.status,
     };

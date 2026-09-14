@@ -1,5 +1,6 @@
 import type { AvatarPresetId } from '@war-chest/api-contracts';
 import type { Game } from '@war-chest/database';
+import type { GameSettings } from '@war-chest/game-engine';
 import type { PublicUser } from '../PublicUser.js';
 
 export type GameTeam = NonNullable<Game['winnerTeam']>;
@@ -14,6 +15,7 @@ export interface UserFinishedGame {
   id: string;
   participants: readonly FinishedGameParticipant[];
   result: 'defeat' | 'victory';
+  settings: GameSettings;
   team: GameTeam;
   winnerTeam: GameTeam;
 }
@@ -53,6 +55,4 @@ export interface CustomAvatar {
   contentType: string;
 }
 
-export type StoredAvatar =
-  | ({ kind: 'custom' } & CustomAvatar)
-  | { kind: 'preset'; presetId: AvatarPresetId };
+export type StoredAvatar = CustomAvatar;

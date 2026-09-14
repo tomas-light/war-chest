@@ -1,7 +1,6 @@
 import {
   type PublicUser,
   type UserGamesResponse,
-  AVATAR_PRESETS,
   publicUserSchema,
   userGamesResponseSchema,
 } from '@war-chest/api-contracts';
@@ -66,10 +65,7 @@ export function getUserAvatarUrl(
   }
 
   if (user.avatarVersion.startsWith('preset:')) {
-    const presetId = user.avatarVersion.slice('preset:'.length);
-    return (
-      AVATAR_PRESETS.find((preset) => preset.id === presetId)?.imageUrl ?? null
-    );
+    return null;
   }
 
   return `${getUserUrl(user.id)}/avatar?v=${encodeURIComponent(user.avatarVersion)}`;

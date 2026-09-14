@@ -2,12 +2,14 @@
   width: min(1180px, 100%);
   display: grid;
   gap: 28px;
+  align-content: start;
   padding: clamp(28px, 5vw, 64px);
   margin: 0 auto;
 }
 
 .hero {
   position: relative;
+  min-height: 325px;
   display: flex;
   gap: 24px;
   align-items: end;
@@ -19,6 +21,10 @@
     linear-gradient(135deg, rgb(23 32 35 / 94%), rgb(8 13 16 / 96%)),
     var(--wc-color-surface-raised);
   box-shadow: 0 24px 60px rgb(0 0 0 / 30%);
+}
+
+.page[data-empty='true'] .hero {
+  min-height: 440px;
 }
 
 .hero:after {
@@ -60,8 +66,8 @@
   gap: 18px;
 }
 
-.gameCard,
 .state {
+  min-height: 325px;
   display: grid;
   gap: 20px;
   padding: 24px;
@@ -73,24 +79,6 @@
 
 .state button {
   justify-self: start;
-}
-
-.gameHeaderActions {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.gameHeader {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.gameHeader time {
-  color: var(--wc-color-text-muted);
-  font-size: 12px;
 }
 
 .openGameButton {
@@ -112,30 +100,6 @@
   stroke-width: 1.8;
 }
 
-.status {
-  color: var(--wc-color-cyan-soft);
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.status[data-status='waiting'] {
-  color: var(--wc-color-brass-bright);
-}
-
-.teams {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  gap: 12px;
-  align-items: center;
-}
-
-.teamSlot {
-  display: grid;
-  gap: 6px;
-}
-
 .playerIdentity {
   min-width: 0;
   display: flex;
@@ -145,24 +109,10 @@
 
 .playerIdentity strong {
   min-width: 0;
-}
-
-.teamSlot span {
-  color: var(--wc-color-text-muted);
-  font-size: 12px;
-}
-
-.teamSlot strong {
   overflow: hidden;
   color: var(--wc-color-text);
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.versus {
-  color: var(--wc-color-cyan);
-  font-family: var(--wc-font-display);
-  font-size: 12px;
 }
 
 .state {
@@ -200,30 +150,24 @@
   }
 
   .hero,
-  .gameCard,
   .state {
     padding: 20px;
   }
 
-  .teams {
-    grid-template-columns: 1fr;
+  .hero {
+    min-height: 261px;
   }
 
-  .versus {
-    display: none;
+  .page[data-empty='true'] .hero {
+    min-height: 379px;
+  }
+
+  .state {
+    min-height: 255px;
   }
 
   .state button,
   .hero button {
     width: 100%;
-  }
-
-  .gameHeader {
-    align-items: start;
-  }
-
-  .gameHeaderActions {
-    flex-direction: column;
-    align-items: end;
   }
 }

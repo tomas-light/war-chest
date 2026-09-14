@@ -10,6 +10,7 @@ import type {
   StartGameRequest,
   SurrenderGameRequest,
   SwapPlayerPositionsRequest,
+  UpdateGameSettingsRequest,
 } from '@war-chest/api-contracts';
 import type {
   FakeGame,
@@ -23,6 +24,7 @@ import {
   type GameState,
   type Viewer,
   applyEvent,
+  createDefaultGameSettings,
   createGame as createGameEvent,
   createViewFor,
   decide,
@@ -58,11 +60,13 @@ export function createFakeGameApi(userId: string): GameApi {
     startGame,
     surrenderGame,
     swapPlayerPositions,
+    updateGameSettings,
   };
 
   async function createGame(request: CreateGameRequest): Promise<GameResponse> {
     const database = await getFakeDatabase();
     const requestHash = await createRequestHash({
+      format: request.format,
       operation: 'CreateGame',
       userId,
     });
@@ -95,9 +99,12 @@ export function createFakeGameApi(userId: string): GameApi {
       );
     }
 
+    const featureFlags = await database.featureFlags.getApplication();
+
     const gameCreatedEvent = createGameEvent({
       creatorId: userId,
-      featureFlags: await database.featureFlags.getApplication(),
+      featureFlags,
+      settings: createDefaultGameSettings(request.format),
       type: 'CreateGame',
     });
     const createdAt = new Date();
@@ -112,9 +119,12 @@ export function createFakeGameApi(userId: string): GameApi {
       userId,
     };
     const game: FakeGame = {
+      cardSelectionMode: state.settings.cardSelectionMode,
       createdAt,
       currentVersion: state.lastEventSequence,
+      expansions: [...state.settings.expansions],
       finishedAt: null,
+      format: state.settings.format,
       id: gameId,
       startedAt: null,
       status: 'waiting',
@@ -198,6 +208,11 @@ export function createFakeGameApi(userId: string): GameApi {
         createdAt: game.createdAt.toISOString(),
         id: game.id,
         players,
+        settings: {
+          cardSelectionMode: game.cardSelectionMode,
+          expansions: [...game.expansions],
+          format: game.format,
+        },
         startedAt: game.startedAt?.toISOString() ?? null,
         status: game.status === 'active' ? 'active' : 'waiting',
       };
@@ -317,6 +332,22 @@ export function createFakeGameApi(userId: string): GameApi {
     });
   }
 
+  function updateGameSettings(
+    gameId: string,
+    request: UpdateGameSettingsRequest
+  ): Promise<GameResponse> {
+    return executeCommand({
+      command: {
+        cardSelectionMode: request.cardSelectionMode,
+        expansions: request.expansions,
+        type: 'UpdateGameSettings',
+      },
+      commandId: request.commandId,
+      expectedVersion: request.expectedVersion,
+      gameId,
+    });
+  }
+
   async function executeCommand(
     input: ExecuteCommandInput
   ): Promise<GameResponse> {
@@ -379,10 +410,14 @@ export function createFakeGameApi(userId: string): GameApi {
       }
     }
 
-    if (input.command.type === 'StartGame' && state.creatorId !== userId) {
+    if (
+      (input.command.type === 'StartGame' ||
+        input.command.type === 'UpdateGameSettings') &&
+      state.creatorId !== userId
+    ) {
       throw createFakeApiError(
         'game_command_forbidden',
-        'Only the creator can start the game.'
+        'Only the creator can perform this command.'
       );
     }
 
@@ -400,6 +435,7 @@ export function createFakeGameApi(userId: string): GameApi {
       input.command.type !== 'JoinGame' &&
       input.command.type !== 'StartGame' &&
       input.command.type !== 'SwapPlayerPositions' &&
+      input.command.type !== 'UpdateGameSettings' &&
       participant === null
     ) {
       throw createFakeApiError(
@@ -421,7 +457,9 @@ export function createFakeGameApi(userId: string): GameApi {
     const nextState = events.reduce(applyEvent, state);
     const nextGame: FakeGame = {
       ...game,
+      cardSelectionMode: nextState.settings.cardSelectionMode,
       currentVersion: nextState.lastEventSequence,
+      expansions: [...nextState.settings.expansions],
       finishedAt:
         nextState.status === 'finished' && game.finishedAt === null
           ? occurredAt

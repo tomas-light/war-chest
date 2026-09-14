@@ -1,7 +1,9 @@
+import { AVATAR_PRESETS } from '@war-chest/api-contracts';
 import clsx from 'clsx';
 import { useState } from 'react';
 import { getUserAvatarUrl } from '#/shared/api';
 import { useTranslation } from '#/shared/i18n/useTranslation';
+import { AvatarPresetImage } from './AvatarPresetImage';
 import classes from './UserAvatar.module.scss';
 
 interface AvatarUser {
@@ -21,9 +23,13 @@ export function UserAvatar(props: Props) {
   const { i18n, t } = useTranslation('entities/user', {
     keyPrefix: 'UserAvatar',
   });
-  const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);
+  const [failedAvatarKey, setFailedAvatarKey] = useState<string | null>(null);
+  const presetId = AVATAR_PRESETS.find(
+    (preset) => user.avatarVersion === `preset:${preset}`
+  );
   const avatarUrl = getUserAvatarUrl(user);
-  const shouldShowImage = avatarUrl !== null && avatarUrl !== failedAvatarUrl;
+  const avatarKey = presetId === undefined ? avatarUrl : user.avatarVersion;
+  const shouldShowImage = avatarKey !== failedAvatarKey;
 
   return (
     <span
@@ -32,10 +38,16 @@ export function UserAvatar(props: Props) {
       data-size={size}
       role="img"
     >
-      {shouldShowImage ? (
+      {shouldShowImage && presetId !== undefined ? (
+        <AvatarPresetImage
+          onError={() => setFailedAvatarKey(avatarKey)}
+          presetId={presetId}
+        />
+      ) : shouldShowImage && avatarUrl !== null ? (
         <img
           alt=""
-          onError={() => setFailedAvatarUrl(avatarUrl)}
+          className={classes.uploadedImage}
+          onError={() => setFailedAvatarKey(avatarKey)}
           src={avatarUrl}
         />
       ) : (

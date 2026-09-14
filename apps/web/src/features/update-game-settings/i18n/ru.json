@@ -1,0 +1,39 @@
+{
+  "UpdateGameSettingsForm": {
+    "expansions": {
+      "description": "Базовый набор включён всегда. Дополнения можно выбрать до начала партии.",
+      "nightfall": {
+        "description": "Новые тактические возможности Nightfall.",
+        "title": "Nightfall"
+      },
+      "nobility": {
+        "description": "Карты и правила дополнения Nobility.",
+        "title": "Nobility"
+      },
+      "siege": {
+        "description": "Карты и правила дополнения Siege.",
+        "title": "Siege"
+      },
+      "title": "Состав игры"
+    },
+    "select": "○ Выбрать",
+    "selected": "● Выбрано",
+    "selection": {
+      "description": "Определите, как участники получат карты юнитов.",
+      "draft": {
+        "description": "Игроки по очереди выбирают карты.",
+        "title": "Draft"
+      },
+      "eliminationDraft": {
+        "description": "Сначала исключение, затем выбор карт.",
+        "title": "Elimination Draft"
+      },
+      "random": {
+        "description": "Карты распределяет сервер.",
+        "title": "Random"
+      },
+      "title": "Выбор карт"
+    },
+    "unavailable": "Механика в разработке"
+  }
+}

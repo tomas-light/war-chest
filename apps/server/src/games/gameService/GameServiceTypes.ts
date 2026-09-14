@@ -5,6 +5,9 @@ import type {
 import type {
   GameCommandData,
   GameEventData,
+  GameExpansion,
+  GameFormat,
+  GamePreparationSettings,
   GameState,
   GameView,
   GameViewEventData,
@@ -18,6 +21,7 @@ import type { GameRepository, StoredParticipant } from '../GameRepository.js';
 
 export interface CreateGameInput {
   commandId: string;
+  format: GameFormat;
   userId: string;
 }
 
@@ -42,6 +46,7 @@ export interface ExecuteGameCommandInput {
 }
 
 export type CreateGameRequestIdentity = Pick<CreateGameInput, 'userId'> & {
+  format: GameFormat;
   operation: 'CreateGame';
 };
 
@@ -238,6 +243,8 @@ export interface ListLobbyGamesInput {
 
 export interface ProjectionChanges {
   gameChanges?: {
+    cardSelectionMode?: GamePreparationSettings['cardSelectionMode'];
+    expansions?: GameExpansion[];
     finishedAt?: Date;
     startedAt?: Date;
     status?: 'active' | 'finished';

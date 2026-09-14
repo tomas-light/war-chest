@@ -13,5 +13,6 @@ export function createFakeGameApiClient(): GameApi {
     startGame: client.startGame,
     surrenderGame: client.surrenderGame,
     swapPlayerPositions: client.swapPlayerPositions,
+    updateGameSettings: client.updateGameSettings,
   };
 }

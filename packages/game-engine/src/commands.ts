@@ -10,6 +10,7 @@ export type {
   StartGameCommandData,
   SurrenderGameCommandData,
   SwapPlayerPositionsCommandData,
+  UpdateGameSettingsCommandData,
 } from './command-data/LifecycleCommandData.js';
 export type {
   TestMoveCommandData,

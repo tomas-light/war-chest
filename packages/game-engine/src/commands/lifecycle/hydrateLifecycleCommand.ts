@@ -6,6 +6,7 @@ import { LeaveGameCommand } from './LeaveGameCommand.js';
 import { StartGameCommand } from './StartGameCommand.js';
 import { SurrenderGameCommand } from './SurrenderGameCommand.js';
 import { SwapPlayerPositionsCommand } from './SwapPlayerPositionsCommand.js';
+import { UpdateGameSettingsCommand } from './UpdateGameSettingsCommand.js';
 
 export function hydrateLifecycleCommand(
   data: GameCommandData
@@ -19,6 +20,8 @@ export function hydrateLifecycleCommand(
       return StartGameCommand.fromData(data);
     case 'SwapPlayerPositions':
       return SwapPlayerPositionsCommand.fromData(data);
+    case 'UpdateGameSettings':
+      return UpdateGameSettingsCommand.fromData(data);
     case 'FinishGame':
       return FinishGameCommand.fromData(data);
     case 'SurrenderGame':

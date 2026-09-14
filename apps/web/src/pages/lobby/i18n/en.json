@@ -13,7 +13,17 @@
   },
   "GameCard": {
     "blackTeam": "Black team",
+    "configuration": "{{format}} · {{selection}}",
+    "format": {
+      "duel": "Duel",
+      "team": "Team game"
+    },
     "openGame": "Open game",
+    "selection": {
+      "draft": "Draft",
+      "eliminationDraft": "Elimination draft",
+      "random": "Random cards"
+    },
     "statusActive": "In progress",
     "statusWaiting": "Waiting for players",
     "whiteTeam": "White team"

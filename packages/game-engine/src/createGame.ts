@@ -4,6 +4,7 @@ import {
   GAME_EVENT_VERSION,
   GAME_RULES_VERSION,
 } from './events.js';
+import { createGameSettings } from './GameSettings.js';
 
 export function createGame(
   command: CreateGameCommandData
@@ -13,6 +14,7 @@ export function createGame(
       creatorId: command.creatorId,
       featureFlags: { ...command.featureFlags },
       rulesVersion: GAME_RULES_VERSION,
+      settings: createGameSettings(command.settings),
     },
     sequence: 1,
     type: 'GameCreated',

@@ -3,10 +3,11 @@ import type { GameView, GameViewPlayer } from '@war-chest/game-engine';
 import { useState } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router';
 import { UserAvatar, UserProfileLink } from '#/entities/user';
-import { JoinGamePanel } from '#/features/join-game';
+import { JoinGameButton } from '#/features/join-game';
 import { LeaveGameButton } from '#/features/leave-game';
 import { StartGameButton } from '#/features/start-game';
 import { SwapPlayerPositionsButton } from '#/features/swap-player-positions';
+import { UpdateGameSettingsForm } from '#/features/update-game-settings';
 import { useApiErrorMessage } from '#/shared/api';
 import {
   appRoutes,
@@ -85,10 +86,10 @@ export function GamePage() {
   );
   const isPlayer = currentPlayer !== undefined;
   const isCreator = liveState.creatorId === userId;
-  const isReadyToStart = liveState.players.length === 2;
+  const requiredPlayerCount = liveState.settings.format === 'duel' ? 2 : 4;
+  const isReadyToStart = liveState.players.length === requiredPlayerCount;
   const hasAnotherPlayerGame =
     currentPlayerGameId !== null && currentPlayerGameId !== gameId;
-  const isPositionSelectionOpen = searchParams.get('mode') === 'join';
   const isSpectatorMode = searchParams.get('mode') === 'watch';
   const canChoosePosition =
     !isLobbyPending && !hasAnotherPlayerGame && !isReadyToStart;
@@ -97,7 +98,6 @@ export function GamePage() {
     !(isCreator && isReadyToStart) &&
     !hasAnotherPlayerGame &&
     !isLobbyPending &&
-    !isPositionSelectionOpen &&
     !isSpectatorMode;
 
   return (
@@ -121,18 +121,30 @@ export function GamePage() {
           <Button onClick={openLobby}>{t('backToLobby')}</Button>
         </header>
 
-        <div className={classes.positions}>
-          <PlayerPosition
-            player={liveState.players.find((player) => player.team === 'white')}
-            profile={playerProfiles.find((player) => player.team === 'white')}
-            team={t('whiteTeam')}
+        <p className={classes.formatLine}>
+          {t(`format.${liveState.settings.format}`)}
+        </p>
+
+        <div
+          className={classes.positions}
+          data-format={liveState.settings.format}
+        >
+          <TeamPositions
+            canJoin={canChoosePosition}
+            gameId={gameId}
+            onJoined={hydrateGame}
+            profiles={playerProfiles}
+            team="white"
             userId={userId}
+            view={liveState}
           />
           <div className={classes.versusActions}>
             <span aria-hidden="true" className={classes.versus}>
               VS
             </span>
-            {isCreator && isReadyToStart ? (
+            {isCreator &&
+            isReadyToStart &&
+            liveState.settings.format === 'duel' ? (
               <SwapPlayerPositionsButton
                 gameId={gameId}
                 onSwapped={hydrateGame}
@@ -140,13 +152,23 @@ export function GamePage() {
               />
             ) : null}
           </div>
-          <PlayerPosition
-            player={liveState.players.find((player) => player.team === 'black')}
-            profile={playerProfiles.find((player) => player.team === 'black')}
-            team={t('blackTeam')}
+          <TeamPositions
+            canJoin={canChoosePosition}
+            gameId={gameId}
+            onJoined={hydrateGame}
+            profiles={playerProfiles}
+            team="black"
             userId={userId}
+            view={liveState}
           />
         </div>
+
+        <UpdateGameSettingsForm
+          gameId={gameId}
+          isEditable={isCreator}
+          onUpdated={hydrateGame}
+          view={liveState}
+        />
 
         <div className={classes.runtimeStatus}>
           <span data-ready={synchronizationStatus === 'ready'}>
@@ -156,15 +178,6 @@ export function GamePage() {
             <p role="alert">{getApiErrorMessage(connectionError)}</p>
           )}
         </div>
-
-        {canChoosePosition && (isPlayer || isPositionSelectionOpen) ? (
-          <JoinGamePanel
-            gameId={gameId}
-            onJoined={hydrateGame}
-            userId={userId}
-            view={liveState}
-          />
-        ) : null}
 
         {isRoleSelectionOpen ? (
           <section className={classes.spectatorChoice}>
@@ -180,11 +193,6 @@ export function GamePage() {
               <Button onClick={openSpectatorMode} variant="secondary">
                 {t('watch')}
               </Button>
-              {canChoosePosition ? (
-                <Button onClick={openPositionSelection}>
-                  {t('selectSeat')}
-                </Button>
-              ) : null}
             </div>
           </section>
         ) : null}
@@ -253,24 +261,77 @@ export function GamePage() {
     setIsLeavingGame(false);
   }
 
-  function openPositionSelection(): void {
-    setSearchParams({ mode: 'join' });
-  }
-
   function openSpectatorMode(): void {
     setSearchParams({ mode: 'watch' });
   }
 }
 
+interface TeamPositionsProps {
+  canJoin: boolean;
+  gameId: string;
+  onJoined(this: void, view: GameView): void;
+  profiles: readonly LobbyGamePlayer[];
+  team: 'black' | 'white';
+  userId: string;
+  view: GameView;
+}
+
+function TeamPositions(props: TeamPositionsProps) {
+  const { canJoin, gameId, onJoined, profiles, team, userId, view } = props;
+  const { t } = useTranslation('pages/game', {
+    keyPrefix: 'GamePage',
+  });
+  const seatNumbers = view.settings.format === 'duel' ? [1] : [1, 2];
+
+  return (
+    <section className={classes.teamPositions}>
+      <h2>{team === 'white' ? t('whiteTeam') : t('blackTeam')}</h2>
+      {seatNumbers.map((seat) => (
+        <PlayerPosition
+          canJoin={canJoin}
+          gameId={gameId}
+          key={seat}
+          onJoined={onJoined}
+          player={view.players.find(
+            (player) => player.team === team && player.seat === seat
+          )}
+          profile={profiles.find(
+            (player) => player.team === team && player.seat === seat
+          )}
+          seat={seat}
+          team={team}
+          userId={userId}
+          view={view}
+        />
+      ))}
+    </section>
+  );
+}
+
 interface PlayerPositionProps {
+  canJoin: boolean;
+  gameId: string;
+  onJoined(this: void, view: GameView): void;
   player: GameViewPlayer | undefined;
   profile: LobbyGamePlayer | undefined;
-  team: string;
+  seat: number;
+  team: 'black' | 'white';
   userId: string;
+  view: GameView;
 }
 
 function PlayerPosition(props: PlayerPositionProps) {
-  const { player, profile, team, userId } = props;
+  const {
+    canJoin,
+    gameId,
+    onJoined,
+    player,
+    profile,
+    seat,
+    team,
+    userId,
+    view,
+  } = props;
   const { t } = useTranslation('pages/game', {
     keyPrefix: 'PlayerPosition',
   });
@@ -283,7 +344,7 @@ function PlayerPosition(props: PlayerPositionProps) {
 
   return (
     <article className={classes.position} data-occupied={player !== undefined}>
-      <span>{team}</span>
+      <span>{t('seat', { seat })}</span>
       <div className={classes.playerIdentity}>
         {profile === undefined ? null : (
           <UserAvatar size="medium" user={profile} />
@@ -301,8 +362,21 @@ function PlayerPosition(props: PlayerPositionProps) {
         </strong>
       </div>
       <small>
-        {player === undefined ? t('seat') : t(getPresenceLabelKey(player))}
+        {player === undefined
+          ? t('available')
+          : t(getPresenceLabelKey(player), { seat })}
       </small>
+      {player === undefined && canJoin ? (
+        <div className={classes.positionAction}>
+          <JoinGameButton
+            gameId={gameId}
+            onJoined={onJoined}
+            seat={seat}
+            team={team}
+            view={view}
+          />
+        </div>
+      ) : null}
     </article>
   );
 }
