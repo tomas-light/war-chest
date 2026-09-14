@@ -10,6 +10,8 @@ import { useTranslation } from '../../i18n/useTranslation';
 import { WarChestLogo } from '../war-chest-logo';
 import classes from './PlaceholderPage.module.scss';
 
+const ANIMATED_CONTENT_CLIP_GUARD_PX = 1;
+
 interface PlaceholderPageProps {
   children?: ReactNode;
   description: string;
@@ -68,7 +70,9 @@ function AnimatedContent(props: PropsWithChildren) {
 
     const resizeObserver = new ResizeObserver(([entry]) => {
       if (entry !== undefined) {
-        setContentHeight(Math.ceil(entry.contentRect.height));
+        setContentHeight(
+          Math.ceil(entry.contentRect.height) + ANIMATED_CONTENT_CLIP_GUARD_PX
+        );
       }
     });
 

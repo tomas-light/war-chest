@@ -1,3 +1,4 @@
+import type { GameFormat } from '../../GameSettings.js';
 import type { GameTeam } from '../../state.js';
 
 interface GamePosition {
@@ -5,17 +6,33 @@ interface GamePosition {
   team: GameTeam;
 }
 
-const GAME_POSITIONS: readonly GamePosition[] = [
+const DUEL_POSITIONS: readonly GamePosition[] = [
   { seat: 1, team: 'white' },
   { seat: 1, team: 'black' },
+];
+const TEAM_POSITIONS: readonly GamePosition[] = [
+  { seat: 1, team: 'white' },
+  { seat: 2, team: 'white' },
+  { seat: 1, team: 'black' },
+  { seat: 2, team: 'black' },
 ];
 
 export const FIRST_PLAYER_SEAT = 1;
 export const FIRST_PLAYER_TEAM: GameTeam = 'white';
-export const REQUIRED_PLAYER_COUNT = GAME_POSITIONS.length;
+export function getRequiredPlayerCount(format: GameFormat): number {
+  return getGamePositions(format).length;
+}
 
-export function isGamePosition(team: GameTeam, seat: number): boolean {
-  return GAME_POSITIONS.some(
+export function isGamePosition(
+  format: GameFormat,
+  team: GameTeam,
+  seat: number
+): boolean {
+  return getGamePositions(format).some(
     (position) => position.team === team && position.seat === seat
   );
+}
+
+function getGamePositions(format: GameFormat): readonly GamePosition[] {
+  return format === 'duel' ? DUEL_POSITIONS : TEAM_POSITIONS;
 }

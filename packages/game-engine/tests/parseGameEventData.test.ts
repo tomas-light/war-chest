@@ -16,9 +16,23 @@ const SUPPORTED_EVENTS: readonly GameEventData[] = [
         spectatorMode: false,
       },
       rulesVersion: GAME_RULES_VERSION,
+      settings: {
+        cardSelectionMode: 'random',
+        expansions: [],
+        format: 'duel',
+      },
     },
     sequence: 1,
     type: 'GameCreated',
+    version: GAME_EVENT_VERSION,
+  },
+  {
+    payload: {
+      cardSelectionMode: 'draft',
+      expansions: ['nobility'],
+    },
+    sequence: 2,
+    type: 'GameSettingsUpdated',
     version: GAME_EVENT_VERSION,
   },
   {
@@ -175,6 +189,11 @@ describe('parseGameEventData', () => {
             spectatorMode: 'enabled',
           },
           rulesVersion: GAME_RULES_VERSION,
+          settings: {
+            cardSelectionMode: 'random',
+            expansions: [],
+            format: 'duel',
+          },
         },
         sequence: 1,
         type: 'GameCreated',
@@ -189,6 +208,11 @@ describe('parseGameEventData', () => {
         payload: {
           featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
           rulesVersion: GAME_RULES_VERSION,
+          settings: {
+            cardSelectionMode: 'random',
+            expansions: [],
+            format: 'duel',
+          },
         },
         sequence: 1,
         type: 'GameCreated',

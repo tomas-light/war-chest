@@ -19,6 +19,11 @@ const USER_ID = '10000000-0000-4000-8000-000000000001';
 const GAME_ID = '20000000-0000-4000-8000-000000000001';
 const COMMAND_ID = '30000000-0000-4000-8000-000000000001';
 const AUTH_HEADERS = { cookie: 'war_chest_session=session-token' };
+const GAME_SETTINGS = {
+  cardSelectionMode: 'random',
+  expansions: [],
+  format: 'duel',
+} as const;
 const WAITING_VIEW: GameView = {
   creatorId: USER_ID,
   currentPlayerId: null,
@@ -27,7 +32,8 @@ const WAITING_VIEW: GameView = {
   moveCount: 0,
   players: [],
   privateMoves: [],
-  rulesVersion: 1,
+  rulesVersion: 2,
+  settings: GAME_SETTINGS,
   status: 'waiting',
   teams: { black: [], white: [] },
   winnerTeam: null,
@@ -112,7 +118,7 @@ describe('game creation HTTP routes', () => {
     });
 
     const response = await app.inject({
-      body: { commandId: COMMAND_ID },
+      body: { commandId: COMMAND_ID, format: 'duel' },
       headers: AUTH_HEADERS,
       method: 'POST',
       url: '/api/games',
@@ -120,6 +126,7 @@ describe('game creation HTTP routes', () => {
 
     expect(createGame).toHaveBeenCalledWith({
       commandId: COMMAND_ID,
+      format: 'duel',
       userId: USER_ID,
     });
     expect(response.statusCode).toBe(201);
@@ -143,6 +150,7 @@ describe('game creation HTTP routes', () => {
           team: 'white' as const,
         },
       ],
+      settings: WAITING_VIEW.settings,
       startedAt: null,
       status: 'waiting' as const,
     };
@@ -173,7 +181,7 @@ describe('game creation HTTP routes', () => {
     });
 
     const response = await app.inject({
-      body: { commandId: COMMAND_ID },
+      body: { commandId: COMMAND_ID, format: 'duel' },
       headers: AUTH_HEADERS,
       method: 'POST',
       url: '/api/games',

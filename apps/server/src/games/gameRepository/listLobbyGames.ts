@@ -18,7 +18,10 @@ export async function listLobbyGames(
 ): Promise<readonly StoredLobbyGame[]> {
   const gameRows = await database
     .select({
+      cardSelectionMode: games.cardSelectionMode,
       createdAt: games.createdAt,
+      expansions: games.expansions,
+      format: games.format,
       id: games.id,
       startedAt: games.startedAt,
       status: games.status,
@@ -65,8 +68,15 @@ export async function listLobbyGames(
   }
 
   return gameRows.map((game) => ({
-    ...game,
+    createdAt: game.createdAt,
+    id: game.id,
     players: playersByGameId.get(game.id) ?? [],
+    settings: {
+      cardSelectionMode: game.cardSelectionMode,
+      expansions: [...game.expansions],
+      format: game.format,
+    },
+    startedAt: game.startedAt,
     status: requireLobbyGameStatus(game.status, game.id),
   }));
 }

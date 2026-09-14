@@ -1,0 +1,354 @@
+{
+  "assets": {
+    "unitToken.brass.archer": {
+      "height": 280,
+      "width": 280,
+      "x": 2,
+      "y": 2
+    },
+    "unitToken.brass.berserker": {
+      "height": 280,
+      "width": 280,
+      "x": 286,
+      "y": 2
+    },
+    "unitToken.brass.cavalry": {
+      "height": 280,
+      "width": 280,
+      "x": 570,
+      "y": 2
+    },
+    "unitToken.brass.crossbowman": {
+      "height": 280,
+      "width": 280,
+      "x": 854,
+      "y": 2
+    },
+    "unitToken.brass.ensign": {
+      "height": 280,
+      "width": 280,
+      "x": 1138,
+      "y": 2
+    },
+    "unitToken.brass.footman": {
+      "height": 280,
+      "width": 280,
+      "x": 1422,
+      "y": 2
+    },
+    "unitToken.brass.knight": {
+      "height": 280,
+      "width": 280,
+      "x": 1706,
+      "y": 2
+    },
+    "unitToken.brass.lancer": {
+      "height": 280,
+      "width": 280,
+      "x": 2,
+      "y": 286
+    },
+    "unitToken.brass.lightCavalry": {
+      "height": 280,
+      "width": 280,
+      "x": 286,
+      "y": 286
+    },
+    "unitToken.brass.marshal": {
+      "height": 280,
+      "width": 280,
+      "x": 570,
+      "y": 286
+    },
+    "unitToken.brass.mercenary": {
+      "height": 280,
+      "width": 280,
+      "x": 854,
+      "y": 286
+    },
+    "unitToken.brass.pikeman": {
+      "height": 280,
+      "width": 280,
+      "x": 1138,
+      "y": 286
+    },
+    "unitToken.brass.royalGuard": {
+      "height": 280,
+      "width": 280,
+      "x": 1422,
+      "y": 286
+    },
+    "unitToken.brass.scout": {
+      "height": 280,
+      "width": 280,
+      "x": 1706,
+      "y": 286
+    },
+    "unitToken.brass.swordsman": {
+      "height": 280,
+      "width": 280,
+      "x": 2,
+      "y": 570
+    },
+    "unitToken.brass.warriorPriest": {
+      "height": 280,
+      "width": 280,
+      "x": 286,
+      "y": 570
+    },
+    "unitToken.cyan.archer": {
+      "height": 280,
+      "width": 280,
+      "x": 570,
+      "y": 570
+    },
+    "unitToken.cyan.berserker": {
+      "height": 280,
+      "width": 280,
+      "x": 854,
+      "y": 570
+    },
+    "unitToken.cyan.cavalry": {
+      "height": 280,
+      "width": 280,
+      "x": 1138,
+      "y": 570
+    },
+    "unitToken.cyan.crossbowman": {
+      "height": 280,
+      "width": 280,
+      "x": 1422,
+      "y": 570
+    },
+    "unitToken.cyan.ensign": {
+      "height": 280,
+      "width": 280,
+      "x": 1706,
+      "y": 570
+    },
+    "unitToken.cyan.footman": {
+      "height": 280,
+      "width": 280,
+      "x": 2,
+      "y": 854
+    },
+    "unitToken.cyan.knight": {
+      "height": 280,
+      "width": 280,
+      "x": 286,
+      "y": 854
+    },
+    "unitToken.cyan.lancer": {
+      "height": 280,
+      "width": 280,
+      "x": 570,
+      "y": 854
+    },
+    "unitToken.cyan.lightCavalry": {
+      "height": 280,
+      "width": 280,
+      "x": 854,
+      "y": 854
+    },
+    "unitToken.cyan.marshal": {
+      "height": 280,
+      "width": 280,
+      "x": 1138,
+      "y": 854
+    },
+    "unitToken.cyan.mercenary": {
+      "height": 280,
+      "width": 280,
+      "x": 1422,
+      "y": 854
+    },
+    "unitToken.cyan.pikeman": {
+      "height": 280,
+      "width": 280,
+      "x": 1706,
+      "y": 854
+    },
+    "unitToken.cyan.royalGuard": {
+      "height": 280,
+      "width": 280,
+      "x": 2,
+      "y": 1138
+    },
+    "unitToken.cyan.scout": {
+      "height": 280,
+      "width": 280,
+      "x": 286,
+      "y": 1138
+    },
+    "unitToken.cyan.swordsman": {
+      "height": 280,
+      "width": 280,
+      "x": 570,
+      "y": 1138
+    },
+    "unitToken.cyan.warriorPriest": {
+      "height": 280,
+      "width": 280,
+      "x": 854,
+      "y": 1138
+    },
+    "unitToken.red.archer": {
+      "height": 280,
+      "width": 280,
+      "x": 1138,
+      "y": 1138
+    },
+    "unitToken.red.berserker": {
+      "height": 280,
+      "width": 280,
+      "x": 1422,
+      "y": 1138
+    },
+    "unitToken.red.cavalry": {
+      "height": 280,
+      "width": 280,
+      "x": 1706,
+      "y": 1138
+    },
+    "unitToken.red.crossbowman": {
+      "height": 280,
+      "width": 280,
+      "x": 2,
+      "y": 1422
+    },
+    "unitToken.red.ensign": {
+      "height": 280,
+      "width": 280,
+      "x": 286,
+      "y": 1422
+    },
+    "unitToken.red.footman": {
+      "height": 280,
+      "width": 280,
+      "x": 570,
+      "y": 1422
+    },
+    "unitToken.red.knight": {
+      "height": 280,
+      "width": 280,
+      "x": 854,
+      "y": 1422
+    },
+    "unitToken.red.lancer": {
+      "height": 280,
+      "width": 280,
+      "x": 1138,
+      "y": 1422
+    },
+    "unitToken.red.lightCavalry": {
+      "height": 280,
+      "width": 280,
+      "x": 1422,
+      "y": 1422
+    },
+    "unitToken.red.marshal": {
+      "height": 280,
+      "width": 280,
+      "x": 1706,
+      "y": 1422
+    },
+    "unitToken.red.mercenary": {
+      "height": 280,
+      "width": 280,
+      "x": 2,
+      "y": 1706
+    },
+    "unitToken.red.pikeman": {
+      "height": 280,
+      "width": 280,
+      "x": 286,
+      "y": 1706
+    },
+    "unitToken.red.royalGuard": {
+      "height": 280,
+      "width": 280,
+      "x": 570,
+      "y": 1706
+    },
+    "unitToken.red.scout": {
+      "height": 280,
+      "width": 280,
+      "x": 854,
+      "y": 1706
+    },
+    "unitToken.red.swordsman": {
+      "height": 280,
+      "width": 280,
+      "x": 1138,
+      "y": 1706
+    },
+    "unitToken.red.warriorPriest": {
+      "height": 280,
+      "width": 280,
+      "x": 1422,
+      "y": 1706
+    },
+    "initiative": {
+      "height": 128,
+      "width": 128,
+      "x": 1706,
+      "y": 1706
+    },
+    "tokenBack": {
+      "height": 128,
+      "width": 128,
+      "x": 1838,
+      "y": 1706
+    },
+    "tokenBag": {
+      "height": 144,
+      "width": 144,
+      "x": 2,
+      "y": 1990
+    },
+    "heartIntact": {
+      "height": 24,
+      "width": 26,
+      "x": 150,
+      "y": 1990
+    },
+    "heartBroken": {
+      "height": 24,
+      "width": 26,
+      "x": 180,
+      "y": 1990
+    },
+    "fortification": {
+      "height": 280,
+      "width": 280,
+      "x": 210,
+      "y": 1990
+    },
+    "fortificationBroken": {
+      "height": 280,
+      "width": 280,
+      "x": 494,
+      "y": 1990
+    },
+    "oreNeutral": {
+      "height": 280,
+      "width": 280,
+      "x": 778,
+      "y": 1990
+    },
+    "oreCyan": {
+      "height": 280,
+      "width": 280,
+      "x": 1062,
+      "y": 1990
+    },
+    "oreRed": {
+      "height": 280,
+      "width": 280,
+      "x": 1346,
+      "y": 1990
+    }
+  },
+  "height": 2272,
+  "width": 1988
+}

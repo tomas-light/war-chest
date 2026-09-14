@@ -9,6 +9,7 @@ import {
   surrenderGameRequestSchema,
   swapPlayerPositionsRequestSchema,
   updateCurrentUserRequestSchema,
+  updateGameSettingsRequestSchema,
 } from '@war-chest/api-contracts';
 import { ApiClientError } from './ApiClientError';
 import { createFakeAuthApi } from './createFakeAuthApi';
@@ -363,6 +364,21 @@ async function dispatchRequest(
         request.payload,
         swapPlayerPositionsRequestSchema,
         'Invalid fake SwapPlayerPositions request.'
+      )
+    );
+
+    await broadcastGameUpdate(gameId);
+    return result;
+  }
+
+  if (request.operation === 'game.updateSettings') {
+    const gameId = readGameId(request.payload);
+    const result = await gameApi.updateGameSettings(
+      gameId,
+      readNestedRequest(
+        request.payload,
+        updateGameSettingsRequestSchema,
+        'Invalid fake UpdateGameSettings request.'
       )
     );
 

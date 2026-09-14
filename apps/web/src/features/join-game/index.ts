@@ -1,1 +1,1 @@
-export { JoinGamePanel } from './ui/JoinGamePanel';
+export { JoinGameButton } from './ui/JoinGameButton';

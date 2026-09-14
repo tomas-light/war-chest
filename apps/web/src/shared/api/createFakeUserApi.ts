@@ -163,6 +163,11 @@ async function createHistoryItem(
     id: game.id,
     participants,
     result: participant.team === game.winnerTeam ? 'victory' : 'defeat',
+    settings: {
+      cardSelectionMode: game.cardSelectionMode,
+      expansions: [...game.expansions],
+      format: game.format,
+    },
     team: participant.team,
     winnerTeam: game.winnerTeam,
   };

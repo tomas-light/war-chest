@@ -1,4 +1,5 @@
 import 'fake-indexeddb/auto';
+import { gameResponseSchema } from '@war-chest/api-contracts';
 import {
   type FakeDatabase,
   createFakeDatabase,
@@ -21,6 +22,15 @@ const SECOND_CREATE_COMMAND_ID = '30000000-0000-4000-8000-000000000007';
 const THIRD_JOIN_COMMAND_ID = '30000000-0000-4000-8000-000000000008';
 const LEAVE_COMMAND_ID = '30000000-0000-4000-8000-000000000009';
 const SURRENDER_COMMAND_ID = '30000000-0000-4000-8000-000000000010';
+const UPDATE_SETTINGS_COMMAND_ID = '30000000-0000-4000-8000-000000000011';
+const CREATE_GAME_REQUEST = {
+  commandId: CREATE_COMMAND_ID,
+  format: 'duel',
+} as const;
+const SECOND_CREATE_GAME_REQUEST = {
+  ...CREATE_GAME_REQUEST,
+  commandId: SECOND_CREATE_COMMAND_ID,
+};
 
 describe('fake game API lifecycle', () => {
   let database: FakeDatabase;
@@ -41,10 +51,9 @@ describe('fake game API lifecycle', () => {
   test('creates a waiting game without occupying a position', async () => {
     const gameApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.firstUser);
 
-    const createdGame = await gameApi.createGame({
-      commandId: CREATE_COMMAND_ID,
-    });
+    const createdGame = await gameApi.createGame(CREATE_GAME_REQUEST);
 
+    expect(gameResponseSchema.safeParse(createdGame).success).toBe(true);
     expect(createdGame.view).toMatchObject({
       lastEventSequence: 1,
       players: [],
@@ -52,12 +61,51 @@ describe('fake game API lifecycle', () => {
     });
   });
 
+  test('persists preparation settings changed by the creator', async () => {
+    const creatorApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.firstUser);
+    const spectatorApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.secondUser);
+    const createdGame = await creatorApi.createGame(CREATE_GAME_REQUEST);
+
+    await creatorApi.updateGameSettings(createdGame.gameId, {
+      cardSelectionMode: 'draft',
+      commandId: UPDATE_SETTINGS_COMMAND_ID,
+      expansions: [],
+      expectedVersion: createdGame.view.lastEventSequence,
+    });
+
+    await expect(
+      spectatorApi.getGame(createdGame.gameId)
+    ).resolves.toMatchObject({
+      view: {
+        lastEventSequence: 2,
+        settings: {
+          cardSelectionMode: 'draft',
+          expansions: [],
+          format: 'duel',
+        },
+      },
+    });
+  });
+
+  test('rejects preparation settings changed by a non-creator', async () => {
+    const creatorApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.firstUser);
+    const spectatorApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.secondUser);
+    const createdGame = await creatorApi.createGame(CREATE_GAME_REQUEST);
+
+    await expect(
+      spectatorApi.updateGameSettings(createdGame.gameId, {
+        cardSelectionMode: 'draft',
+        commandId: UPDATE_SETTINGS_COMMAND_ID,
+        expansions: [],
+        expectedVersion: createdGame.view.lastEventSequence,
+      })
+    ).rejects.toMatchObject({ code: 'game_command_forbidden' });
+  });
+
   test('lets a second user join the free team position', async () => {
     const creatorApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.firstUser);
     const secondPlayerApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.secondUser);
-    const createdGame = await creatorApi.createGame({
-      commandId: CREATE_COMMAND_ID,
-    });
+    const createdGame = await creatorApi.createGame(CREATE_GAME_REQUEST);
 
     const joinedGame = await secondPlayerApi.joinGame(createdGame.gameId, {
       commandId: FIRST_JOIN_COMMAND_ID,
@@ -75,9 +123,7 @@ describe('fake game API lifecycle', () => {
 
   test('lets a joined player move to the remaining free position', async () => {
     const gameApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.firstUser);
-    const createdGame = await gameApi.createGame({
-      commandId: CREATE_COMMAND_ID,
-    });
+    const createdGame = await gameApi.createGame(CREATE_GAME_REQUEST);
     const joinedGame = await gameApi.joinGame(createdGame.gameId, {
       commandId: FIRST_JOIN_COMMAND_ID,
       expectedVersion: createdGame.view.lastEventSequence,
@@ -103,9 +149,7 @@ describe('fake game API lifecycle', () => {
     const creatorApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.firstUser);
     const firstPlayerApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.secondUser);
     const secondPlayerApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.thirdUser);
-    const createdGame = await creatorApi.createGame({
-      commandId: CREATE_COMMAND_ID,
-    });
+    const createdGame = await creatorApi.createGame(CREATE_GAME_REQUEST);
     const firstPlayerJoinedGame = await firstPlayerApi.joinGame(
       createdGame.gameId,
       {
@@ -141,9 +185,7 @@ describe('fake game API lifecycle', () => {
   test('rejects start from a joined player who is not the creator', async () => {
     const creatorApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.firstUser);
     const secondPlayerApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.secondUser);
-    const createdGame = await creatorApi.createGame({
-      commandId: CREATE_COMMAND_ID,
-    });
+    const createdGame = await creatorApi.createGame(CREATE_GAME_REQUEST);
     const creatorJoinedGame = await creatorApi.joinGame(createdGame.gameId, {
       commandId: FIRST_JOIN_COMMAND_ID,
       expectedVersion: createdGame.view.lastEventSequence,
@@ -170,9 +212,7 @@ describe('fake game API lifecycle', () => {
   test('lets the creator swap both occupied positions', async () => {
     const creatorApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.firstUser);
     const secondPlayerApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.secondUser);
-    const createdGame = await creatorApi.createGame({
-      commandId: CREATE_COMMAND_ID,
-    });
+    const createdGame = await creatorApi.createGame(CREATE_GAME_REQUEST);
     const creatorJoinedGame = await creatorApi.joinGame(createdGame.gameId, {
       commandId: FIRST_JOIN_COMMAND_ID,
       expectedVersion: createdGame.view.lastEventSequence,
@@ -212,9 +252,7 @@ describe('fake game API lifecycle', () => {
   test('lets a joined player leave a waiting lobby', async () => {
     const creatorApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.firstUser);
     const secondPlayerApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.secondUser);
-    const createdGame = await creatorApi.createGame({
-      commandId: CREATE_COMMAND_ID,
-    });
+    const createdGame = await creatorApi.createGame(CREATE_GAME_REQUEST);
     const joinedGame = await secondPlayerApi.joinGame(createdGame.gameId, {
       commandId: FIRST_JOIN_COMMAND_ID,
       expectedVersion: createdGame.view.lastEventSequence,
@@ -240,9 +278,7 @@ describe('fake game API lifecycle', () => {
   test('deletes a waiting lobby when its creator closes it', async () => {
     const creatorApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.firstUser);
     const secondPlayerApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.secondUser);
-    const createdGame = await creatorApi.createGame({
-      commandId: CREATE_COMMAND_ID,
-    });
+    const createdGame = await creatorApi.createGame(CREATE_GAME_REQUEST);
     const joinedGame = await secondPlayerApi.joinGame(createdGame.gameId, {
       commandId: FIRST_JOIN_COMMAND_ID,
       expectedVersion: createdGame.view.lastEventSequence,
@@ -263,9 +299,7 @@ describe('fake game API lifecycle', () => {
   test('lets a non-current player surrender and awards victory to the opponent', async () => {
     const creatorApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.firstUser);
     const secondPlayerApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.secondUser);
-    const createdGame = await creatorApi.createGame({
-      commandId: CREATE_COMMAND_ID,
-    });
+    const createdGame = await creatorApi.createGame(CREATE_GAME_REQUEST);
     const creatorJoinedGame = await creatorApi.joinGame(createdGame.gameId, {
       commandId: FIRST_JOIN_COMMAND_ID,
       expectedVersion: createdGame.view.lastEventSequence,
@@ -309,9 +343,7 @@ describe('fake game API lifecycle', () => {
 
   test('does not create another game for a current player', async () => {
     const gameApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.firstUser);
-    const createdGame = await gameApi.createGame({
-      commandId: CREATE_COMMAND_ID,
-    });
+    const createdGame = await gameApi.createGame(CREATE_GAME_REQUEST);
     await gameApi.joinGame(createdGame.gameId, {
       commandId: FIRST_JOIN_COMMAND_ID,
       expectedVersion: createdGame.view.lastEventSequence,
@@ -320,25 +352,23 @@ describe('fake game API lifecycle', () => {
     });
 
     await expect(
-      gameApi.createGame({ commandId: SECOND_CREATE_COMMAND_ID })
+      gameApi.createGame(SECOND_CREATE_GAME_REQUEST)
     ).rejects.toMatchObject({ code: 'player_already_in_game' });
   });
 
   test('does not join a second game for a current player', async () => {
     const firstGameApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.firstUser);
     const secondGameApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.secondUser);
-    const firstGame = await firstGameApi.createGame({
-      commandId: CREATE_COMMAND_ID,
-    });
+    const firstGame = await firstGameApi.createGame(CREATE_GAME_REQUEST);
     await firstGameApi.joinGame(firstGame.gameId, {
       commandId: FIRST_JOIN_COMMAND_ID,
       expectedVersion: firstGame.view.lastEventSequence,
       seat: 1,
       team: 'white',
     });
-    const secondGame = await secondGameApi.createGame({
-      commandId: SECOND_CREATE_COMMAND_ID,
-    });
+    const secondGame = await secondGameApi.createGame(
+      SECOND_CREATE_GAME_REQUEST
+    );
 
     await expect(
       firstGameApi.joinGame(secondGame.gameId, {
@@ -352,9 +382,7 @@ describe('fake game API lifecycle', () => {
 
   test('reports the current player game in the lobby', async () => {
     const gameApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.firstUser);
-    const createdGame = await gameApi.createGame({
-      commandId: CREATE_COMMAND_ID,
-    });
+    const createdGame = await gameApi.createGame(CREATE_GAME_REQUEST);
     await gameApi.joinGame(createdGame.gameId, {
       commandId: FIRST_JOIN_COMMAND_ID,
       expectedVersion: createdGame.view.lastEventSequence,

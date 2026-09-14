@@ -24,16 +24,21 @@ const EMPTY_WAITING_GAME_TIMEOUT_MS = 10 * 60 * 1000;
 const RECONNECT_DEADLINE_RETRY_DELAY_MS = 1_000;
 const CURRENT_TIME = new Date('2026-08-16T12:00:00.000Z');
 const CREATE_REQUEST_HASH =
-  'bdea43dc54d89791fa249a3ef1786b10e6cfe2be12570ab18fbb1a77b5161e02';
+  'ec4ee19aafb259742b44e4cec7efd51a769d20dee80164c020608b4f09736de2';
 const GAME_CREATED_EVENT: GameEventData = {
   payload: {
     creatorId: FIRST_USER_ID,
     featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
-    rulesVersion: 1,
+    rulesVersion: 2,
+    settings: {
+      cardSelectionMode: 'random',
+      expansions: [],
+      format: 'duel',
+    },
   },
   sequence: 1,
   type: 'GameCreated',
-  version: 1,
+  version: 2,
 };
 
 describe('GameService createGame', () => {
@@ -98,6 +103,7 @@ describe('GameService createGame', () => {
 
     const result = await gameService.createGame({
       commandId: COMMAND_ID,
+      format: 'duel',
       userId: FIRST_USER_ID,
     });
 
@@ -135,10 +141,12 @@ describe('GameService createGame', () => {
 
     await gameService.createGame({
       commandId: COMMAND_ID,
+      format: 'duel',
       userId: FIRST_USER_ID,
     });
     await gameService.createGame({
       commandId: SECOND_COMMAND_ID,
+      format: 'duel',
       userId: FIRST_USER_ID,
     });
 
@@ -159,6 +167,7 @@ describe('GameService createGame', () => {
 
     await gameService.createGame({
       commandId: COMMAND_ID,
+      format: 'duel',
       userId: FIRST_USER_ID,
     });
 
@@ -181,6 +190,7 @@ describe('GameService createGame', () => {
     });
     await gameService.createGame({
       commandId: COMMAND_ID,
+      format: 'duel',
       userId: FIRST_USER_ID,
     });
     const deletionUpdate = new Promise<GameUpdate>((resolve) => {
@@ -214,6 +224,7 @@ describe('GameService createGame', () => {
     });
     await gameService.createGame({
       commandId: COMMAND_ID,
+      format: 'duel',
       userId: FIRST_USER_ID,
     });
 
@@ -246,6 +257,7 @@ describe('GameService createGame', () => {
       .mockResolvedValueOnce({ status: 'deleted' });
     await gameService.createGame({
       commandId: COMMAND_ID,
+      format: 'duel',
       userId: FIRST_USER_ID,
     });
     const deletionUpdate = new Promise<GameUpdate>((resolve) => {
@@ -277,6 +289,7 @@ describe('GameService createGame', () => {
 
     const result = await gameService.createGame({
       commandId: COMMAND_ID,
+      format: 'duel',
       userId: FIRST_USER_ID,
     });
 
@@ -299,6 +312,7 @@ describe('GameService createGame', () => {
 
     const result = await gameService.createGame({
       commandId: COMMAND_ID,
+      format: 'duel',
       userId: FIRST_USER_ID,
     });
 
@@ -314,6 +328,7 @@ describe('GameService createGame', () => {
 
     const result = await gameService.createGame({
       commandId: COMMAND_ID,
+      format: 'duel',
       userId: FIRST_USER_ID,
     });
 

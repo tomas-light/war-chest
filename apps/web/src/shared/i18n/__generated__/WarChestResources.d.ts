@@ -12,16 +12,6 @@ export interface WarChestResources {
       sessionErrorTitle: '';
     };
   };
-  'entities/game': {
-    GameSeatSelector: {
-      blackTeam: '';
-      freeSeat: '';
-      legend: '';
-      seat: '';
-      takenSeat: '';
-      whiteTeam: '';
-    };
-  };
   'entities/user': {
     UserAvatar: {
       label: '{{userName}}';
@@ -69,6 +59,19 @@ export interface WarChestResources {
       create: '';
       creating: '';
       description: '';
+      format: {
+        duel: {
+          description: '';
+          title: '';
+        };
+        legend: '';
+        team: {
+          description: '';
+          title: '';
+        };
+      };
+      select: '';
+      selected: '';
     };
   };
   'features/developer-tools': {
@@ -89,14 +92,8 @@ export interface WarChestResources {
     };
   };
   'features/join-game': {
-    JoinGamePanel: {
-      changeDescription: '';
-      changePosition: '';
-      changingPosition: '';
-      join: '';
-      joinDescription: '';
-      joining: '';
-      joinTitle: '';
+    JoinGameButton: {
+      label: '{{seat}}';
     };
   };
   'features/leave-game': {
@@ -122,6 +119,45 @@ export interface WarChestResources {
   'features/swap-player-positions': {
     SwapPlayerPositionsButton: {
       label: '';
+    };
+  };
+  'features/update-game-settings': {
+    UpdateGameSettingsForm: {
+      expansions: {
+        description: '';
+        nightfall: {
+          description: '';
+          title: '';
+        };
+        nobility: {
+          description: '';
+          title: '';
+        };
+        siege: {
+          description: '';
+          title: '';
+        };
+        title: '';
+      };
+      select: '';
+      selected: '';
+      selection: {
+        description: '';
+        draft: {
+          description: '';
+          title: '';
+        };
+        eliminationDraft: {
+          description: '';
+          title: '';
+        };
+        random: {
+          description: '';
+          title: '';
+        };
+        title: '';
+      };
+      unavailable: '';
     };
   };
   'pages/active-game': {
@@ -193,6 +229,10 @@ export interface WarChestResources {
       blackTeam: '';
       connecting: '';
       creatorReadyNotice: '';
+      format: {
+        duel: '';
+        team: '';
+      };
       gameLabel: '{{gameId}}';
       gameUnavailable: '';
       notSelected: '';
@@ -208,7 +248,6 @@ export interface WarChestResources {
       roleChoiceDescription: '';
       roleChoiceFullDescription: '';
       roleChoiceTitle: '';
-      selectSeat: '';
       spectatorReadyNotice: '';
       spectatorWaitingNotice: '';
       status: {
@@ -226,11 +265,11 @@ export interface WarChestResources {
     };
     PlayerPosition: {
       available: '';
-      connected: '';
+      connected: '{{seat}}';
       disconnected: '';
       left: '';
       playerFallback: '{{playerId}}';
-      seat: '';
+      seat: '{{seat}}';
       you: '';
       youLabel: '{{playerName}}';
     };
@@ -245,7 +284,17 @@ export interface WarChestResources {
   'pages/lobby': {
     GameCard: {
       blackTeam: '';
+      configuration: '{{format}} {{selection}}';
+      format: {
+        duel: '';
+        team: '';
+      };
       openGame: '';
+      selection: {
+        draft: '';
+        eliminationDraft: '';
+        random: '';
+      };
       statusActive: '';
       statusWaiting: '';
       whiteTeam: '';
@@ -286,7 +335,17 @@ export interface WarChestResources {
   'pages/user-game-history': {
     GameCard: {
       blackTeam: '';
+      configuration: '{{format}} {{selection}}';
       defeat: '';
+      format: {
+        duel: '';
+        team: '';
+      };
+      selection: {
+        draft: '';
+        eliminationDraft: '';
+        random: '';
+      };
       victory: '';
       viewGame: '';
       whiteTeam: '';
@@ -415,12 +474,6 @@ export interface WarChestTranslationParameters {
   'app/router.AppRouter.retry': null;
   'app/router.AppRouter.sessionErrorDescription': null;
   'app/router.AppRouter.sessionErrorTitle': null;
-  'entities/game.GameSeatSelector.blackTeam': null;
-  'entities/game.GameSeatSelector.freeSeat': null;
-  'entities/game.GameSeatSelector.legend': null;
-  'entities/game.GameSeatSelector.seat': null;
-  'entities/game.GameSeatSelector.takenSeat': null;
-  'entities/game.GameSeatSelector.whiteTeam': null;
   'entities/user.UserAvatar.label': { userName: unknown };
   'entities/user.UserProfileLink.label': { userName: unknown };
   'features/auth-login.CodeStage.changeEmail': null;
@@ -446,6 +499,13 @@ export interface WarChestTranslationParameters {
   'features/create-game.CreateGameForm.create': null;
   'features/create-game.CreateGameForm.creating': null;
   'features/create-game.CreateGameForm.description': null;
+  'features/create-game.CreateGameForm.format.duel.description': null;
+  'features/create-game.CreateGameForm.format.duel.title': null;
+  'features/create-game.CreateGameForm.format.legend': null;
+  'features/create-game.CreateGameForm.format.team.description': null;
+  'features/create-game.CreateGameForm.format.team.title': null;
+  'features/create-game.CreateGameForm.select': null;
+  'features/create-game.CreateGameForm.selected': null;
   'features/developer-tools.DeveloperBackendSelector.backend': null;
   'features/developer-tools.DeveloperBackendSelector.fakeApi': null;
   'features/developer-tools.DeveloperBackendSelector.realApi': null;
@@ -457,13 +517,7 @@ export interface WarChestTranslationParameters {
   'features/developer-tools.DeveloperPanel.featureFlagsLoading': null;
   'features/developer-tools.DeveloperPanel.label': null;
   'features/developer-tools.DeveloperPanel.title': null;
-  'features/join-game.JoinGamePanel.changeDescription': null;
-  'features/join-game.JoinGamePanel.changePosition': null;
-  'features/join-game.JoinGamePanel.changingPosition': null;
-  'features/join-game.JoinGamePanel.join': null;
-  'features/join-game.JoinGamePanel.joinDescription': null;
-  'features/join-game.JoinGamePanel.joining': null;
-  'features/join-game.JoinGamePanel.joinTitle': null;
+  'features/join-game.JoinGameButton.label': { seat: unknown };
   'features/leave-game.LeaveGameButton.close': null;
   'features/leave-game.LeaveGameButton.closing': null;
   'features/leave-game.LeaveGameButton.leave': null;
@@ -473,6 +527,25 @@ export interface WarChestTranslationParameters {
   'features/surrender-game.SurrenderGameButton.surrender': null;
   'features/surrender-game.SurrenderGameButton.surrendering': null;
   'features/swap-player-positions.SwapPlayerPositionsButton.label': null;
+  'features/update-game-settings.UpdateGameSettingsForm.expansions.description': null;
+  'features/update-game-settings.UpdateGameSettingsForm.expansions.nightfall.description': null;
+  'features/update-game-settings.UpdateGameSettingsForm.expansions.nightfall.title': null;
+  'features/update-game-settings.UpdateGameSettingsForm.expansions.nobility.description': null;
+  'features/update-game-settings.UpdateGameSettingsForm.expansions.nobility.title': null;
+  'features/update-game-settings.UpdateGameSettingsForm.expansions.siege.description': null;
+  'features/update-game-settings.UpdateGameSettingsForm.expansions.siege.title': null;
+  'features/update-game-settings.UpdateGameSettingsForm.expansions.title': null;
+  'features/update-game-settings.UpdateGameSettingsForm.select': null;
+  'features/update-game-settings.UpdateGameSettingsForm.selected': null;
+  'features/update-game-settings.UpdateGameSettingsForm.selection.description': null;
+  'features/update-game-settings.UpdateGameSettingsForm.selection.draft.description': null;
+  'features/update-game-settings.UpdateGameSettingsForm.selection.draft.title': null;
+  'features/update-game-settings.UpdateGameSettingsForm.selection.eliminationDraft.description': null;
+  'features/update-game-settings.UpdateGameSettingsForm.selection.eliminationDraft.title': null;
+  'features/update-game-settings.UpdateGameSettingsForm.selection.random.description': null;
+  'features/update-game-settings.UpdateGameSettingsForm.selection.random.title': null;
+  'features/update-game-settings.UpdateGameSettingsForm.selection.title': null;
+  'features/update-game-settings.UpdateGameSettingsForm.unavailable': null;
   'pages/active-game.ActiveGameHeader.backToLobby': null;
   'pages/active-game.ActiveGameHeader.finishedTitle': null;
   'pages/active-game.ActiveGameHeader.gameLabel': { gameId: unknown };
@@ -524,6 +597,8 @@ export interface WarChestTranslationParameters {
   'pages/game.GamePage.blackTeam': null;
   'pages/game.GamePage.connecting': null;
   'pages/game.GamePage.creatorReadyNotice': null;
+  'pages/game.GamePage.format.duel': null;
+  'pages/game.GamePage.format.team': null;
   'pages/game.GamePage.gameLabel': { gameId: unknown };
   'pages/game.GamePage.gameUnavailable': null;
   'pages/game.GamePage.notSelected': null;
@@ -537,7 +612,6 @@ export interface WarChestTranslationParameters {
   'pages/game.GamePage.roleChoiceDescription': null;
   'pages/game.GamePage.roleChoiceFullDescription': null;
   'pages/game.GamePage.roleChoiceTitle': null;
-  'pages/game.GamePage.selectSeat': null;
   'pages/game.GamePage.spectatorReadyNotice': null;
   'pages/game.GamePage.spectatorWaitingNotice': null;
   'pages/game.GamePage.status.active': null;
@@ -549,18 +623,24 @@ export interface WarChestTranslationParameters {
   'pages/game.GamePage.watch': null;
   'pages/game.GamePage.whiteTeam': null;
   'pages/game.PlayerPosition.available': null;
-  'pages/game.PlayerPosition.connected': null;
+  'pages/game.PlayerPosition.connected': { seat: unknown };
   'pages/game.PlayerPosition.disconnected': null;
   'pages/game.PlayerPosition.left': null;
   'pages/game.PlayerPosition.playerFallback': { playerId: unknown };
-  'pages/game.PlayerPosition.seat': null;
+  'pages/game.PlayerPosition.seat': { seat: unknown };
   'pages/game.PlayerPosition.you': null;
   'pages/game.PlayerPosition.youLabel': { playerName: unknown };
   'pages/game-history.GameHistoryPage.description': { gameId: unknown };
   'pages/game-history.GameHistoryPage.missingGame': null;
   'pages/game-history.GameHistoryPage.title': null;
   'pages/lobby.GameCard.blackTeam': null;
+  'pages/lobby.GameCard.configuration': { format: unknown; selection: unknown };
+  'pages/lobby.GameCard.format.duel': null;
+  'pages/lobby.GameCard.format.team': null;
   'pages/lobby.GameCard.openGame': null;
+  'pages/lobby.GameCard.selection.draft': null;
+  'pages/lobby.GameCard.selection.eliminationDraft': null;
+  'pages/lobby.GameCard.selection.random': null;
   'pages/lobby.GameCard.statusActive': null;
   'pages/lobby.GameCard.statusWaiting': null;
   'pages/lobby.GameCard.whiteTeam': null;
@@ -585,7 +665,16 @@ export interface WarChestTranslationParameters {
   'pages/new-game.NewGamePage.description': null;
   'pages/new-game.NewGamePage.title': null;
   'pages/user-game-history.GameCard.blackTeam': null;
+  'pages/user-game-history.GameCard.configuration': {
+    format: unknown;
+    selection: unknown;
+  };
   'pages/user-game-history.GameCard.defeat': null;
+  'pages/user-game-history.GameCard.format.duel': null;
+  'pages/user-game-history.GameCard.format.team': null;
+  'pages/user-game-history.GameCard.selection.draft': null;
+  'pages/user-game-history.GameCard.selection.eliminationDraft': null;
+  'pages/user-game-history.GameCard.selection.random': null;
   'pages/user-game-history.GameCard.victory': null;
   'pages/user-game-history.GameCard.viewGame': null;
   'pages/user-game-history.GameCard.whiteTeam': null;

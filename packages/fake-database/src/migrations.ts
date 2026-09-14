@@ -4,7 +4,7 @@ import {
   type FakeDatabaseSchema,
 } from './schema.js';
 
-export const FAKE_DATABASE_VERSION = 5;
+export const FAKE_DATABASE_VERSION = 7;
 
 type MigrationTransaction = IDBPTransaction<
   FakeDatabaseSchema,
@@ -23,6 +23,14 @@ export function migrateFakeDatabase(
 
   if (oldVersion < 4) {
     clearIncompatibleGameData(transaction);
+  }
+
+  if (oldVersion < 6) {
+    clearIncompatibleGameData(transaction);
+  }
+
+  if (oldVersion < 7) {
+    clearAllData(transaction);
   }
 }
 
@@ -58,4 +66,11 @@ function clearIncompatibleGameData(transaction: MigrationTransaction): void {
   void transaction.objectStore('gameParticipants').clear();
   void transaction.objectStore('games').clear();
   void transaction.objectStore('processedCommands').clear();
+}
+
+function clearAllData(transaction: MigrationTransaction): void {
+  clearIncompatibleGameData(transaction);
+  void transaction.objectStore('authSessions').clear();
+  void transaction.objectStore('runtimeFeatureFlags').clear();
+  void transaction.objectStore('users').clear();
 }

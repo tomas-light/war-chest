@@ -1,7 +1,17 @@
 {
   "GameCard": {
     "blackTeam": "Чёрные",
+    "configuration": "{{format}} · {{selection}}",
     "defeat": "Поражение",
+    "format": {
+      "duel": "Дуэль",
+      "team": "Командная игра"
+    },
+    "selection": {
+      "draft": "Драфт",
+      "eliminationDraft": "Драфт с исключением",
+      "random": "Случайные карты"
+    },
     "viewGame": "Открыть игру",
     "victory": "Победа",
     "whiteTeam": "Белые",

@@ -1,3 +1,4 @@
+import { cloneGameSettings } from './GameSettings.js';
 import {
   type GameState,
   type GameView,
@@ -33,6 +34,7 @@ export function createViewFor(state: GameState, viewer: Viewer): GameView {
         moveNumber: move.moveNumber,
       })) ?? [],
     rulesVersion: state.rulesVersion,
+    settings: cloneGameSettings(state.settings),
     status: state.status,
     teams: cloneGameTeams(state.teams),
     winnerTeam: state.winnerTeam,

@@ -6,6 +6,7 @@
     "avatars:build": "node tools/avatars/buildAvatarSprite.mjs",
     "build": "yarn locale:generate && vite build",
     "dev": "yarn locale:generate && concurrently --kill-others --names locale,vite \"yarn locale:watch\" \"vite\"",
+    "game-assets:build": "node tools/game-assets/buildGameAssetSprites.mjs",
     "locale:generate": "node tools/locale/generateLocaleResources.mjs",
     "locale:watch": "node tools/locale/generateLocaleResources.mjs --watch",
     "preview": "vite preview",

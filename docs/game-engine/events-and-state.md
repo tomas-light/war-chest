@@ -119,7 +119,8 @@ switch только его механики, а общий `hydrateEvent` мен
 
 | Событие                  | Данные                                               | Изменение состояния                                  |
 | ------------------------ | ---------------------------------------------------- | ---------------------------------------------------- |
-| `GameCreated`            | `creatorId`, `featureFlags`, `rulesVersion`          | Создаёт `waiting`, фиксирует создателя и флаги       |
+| `GameCreated`            | `creatorId`, `featureFlags`, `rulesVersion`, `settings` | Создаёт `waiting`, фиксирует создателя и настройки |
+| `GameSettingsUpdated`    | `cardSelectionMode`, `expansions`                    | Обновляет изменяемые настройки подготовки            |
 | `PlayerJoined`           | `playerId`, `team`, `seat`                           | Добавляет подключённого игрока на выбранную позицию  |
 | `PlayerLeft`             | `playerId`                                           | Удаляет игрока из ожидающей игры и её составов       |
 | `PlayerPositionChanged`  | `playerId`, `team`, `seat`                           | Переносит игрока на другую свободную позицию         |
@@ -142,17 +143,19 @@ Runtime-класс события не проверяет игровые пра�
 У события есть два разных числа:
 
 - `sequence` — позиция события внутри конкретной игры;
-- `version` — версия формата события. Сейчас `GAME_EVENT_VERSION` равна `1`.
+- `version` — версия формата события. Сейчас `GAME_EVENT_VERSION` равна `2`.
 
 `GameState.lastEventSequence` и `GameView.lastEventSequence` хранят `sequence`
 последнего применённого события. Новая команда получает следующий номер как
 `state.lastEventSequence + 1`; это поле не является отдельной версией.
 
 Presence timestamps сериализуются как канонические строки ISO 8601 UTC. В
-`GameCreated` дополнительно хранятся `creatorId` и `rulesVersion`. Сейчас
-`GAME_RULES_VERSION` также равна `1`. Feature flags копируются в событие, а
-затем в состояние, поэтому последующие команды и replay не читают актуальный
-runtime-файл повторно.
+`GameCreated` дополнительно хранит `creatorId`, `rulesVersion`, snapshot feature
+flags и начальные настройки: формат, случайный способ выбора карт, пустой список
+дополнений и идентификатор раскладки. Сейчас `GAME_RULES_VERSION` равна `1`.
+Feature flags копируются в событие и состояние, поэтому последующее изменение
+настроек через `GameSettingsUpdated` и replay не читают актуальный runtime-файл
+повторно. Формат и идентификатор раскладки после создания не изменяются.
 
 ## Восстановление
 

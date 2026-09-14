@@ -4,4 +4,4 @@ export {
   useGameQuery,
   useLobbyGamesQuery,
 } from './api/gameQueries';
-export { type GameTeam, GameSeatSelector } from './ui/GameSeatSelector';
+export { GameSetupOption } from './ui/GameSetupOption';

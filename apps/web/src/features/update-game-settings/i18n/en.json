@@ -1,0 +1,39 @@
+{
+  "UpdateGameSettingsForm": {
+    "expansions": {
+      "description": "The base set is always included. Expansions can be selected before the match starts.",
+      "nightfall": {
+        "description": "New tactical options from Nightfall.",
+        "title": "Nightfall"
+      },
+      "nobility": {
+        "description": "Cards and rules from Nobility.",
+        "title": "Nobility"
+      },
+      "siege": {
+        "description": "Cards and rules from Siege.",
+        "title": "Siege"
+      },
+      "title": "Game sets"
+    },
+    "select": "○ Select",
+    "selected": "● Selected",
+    "selection": {
+      "description": "Choose how players receive their unit cards.",
+      "draft": {
+        "description": "Players take turns selecting cards.",
+        "title": "Draft"
+      },
+      "eliminationDraft": {
+        "description": "Eliminate cards before selecting.",
+        "title": "Elimination Draft"
+      },
+      "random": {
+        "description": "The server distributes the cards.",
+        "title": "Random"
+      },
+      "title": "Card selection"
+    },
+    "unavailable": "Mechanic in development"
+  }
+}

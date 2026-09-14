@@ -1,0 +1,79 @@
+.ore {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  aspect-ratio: 1;
+  line-height: 0;
+}
+
+.compact {
+  width: 112px;
+}
+
+.large {
+  width: 140px;
+}
+
+.image,
+.fortification,
+.markers {
+  position: absolute;
+  width: 100%;
+  inset: 0;
+}
+
+.image {
+  z-index: 1;
+}
+
+.fortification {
+  z-index: 2;
+}
+
+.markers {
+  z-index: 0;
+  height: 100%;
+}
+
+.markers span {
+  position: absolute;
+  width: 7%;
+  border: 2px solid rgb(8 13 16 / 90%);
+  border-radius: 50%;
+  aspect-ratio: 1;
+  background: var(--wc-ore-marker);
+  box-shadow: 0 0 8px var(--wc-ore-marker);
+  transform: translate(-50%, -50%);
+}
+
+.markers span:nth-child(1) {
+  top: 7%;
+  left: 50%;
+}
+
+.markers span:nth-child(2) {
+  top: 50%;
+  left: 93%;
+}
+
+.markers span:nth-child(3) {
+  top: 93%;
+  left: 50%;
+}
+
+.markers span:nth-child(4) {
+  top: 50%;
+  left: 7%;
+}
+
+.cyan {
+  --wc-ore-marker: var(--wc-color-cyan);
+}
+
+.neutral {
+  --wc-ore-marker: var(--wc-color-text-muted);
+}
+
+.red {
+  --wc-ore-marker: var(--wc-color-red);
+}

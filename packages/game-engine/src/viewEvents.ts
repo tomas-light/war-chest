@@ -1,5 +1,6 @@
 import type { RuntimeFeatureFlags } from '@war-chest/feature-flags';
 import type { GAME_EVENT_VERSION, GAME_RULES_VERSION } from './events.js';
+import type { GamePreparationSettings, GameSettings } from './GameSettings.js';
 import type { GameTeam, JsonValue } from './state.js';
 
 interface EventMetadata {
@@ -12,8 +13,14 @@ export interface GameCreatedViewEventData extends EventMetadata {
     creatorId: string;
     featureFlags: RuntimeFeatureFlags;
     rulesVersion: typeof GAME_RULES_VERSION;
+    settings: GameSettings;
   };
   type: 'GameCreated';
+}
+
+export interface GameSettingsUpdatedViewEventData extends EventMetadata {
+  payload: GamePreparationSettings;
+  type: 'GameSettingsUpdated';
 }
 
 export interface PlayerJoinedViewEventData extends EventMetadata {
@@ -116,6 +123,7 @@ export type TestMovePerformedViewEventData =
 export type GameViewEventData =
   | GameCreatedViewEventData
   | GameFinishedViewEventData
+  | GameSettingsUpdatedViewEventData
   | GameStartedViewEventData
   | PlayerDefeatedViewEventData
   | PlayerDisconnectedViewEventData

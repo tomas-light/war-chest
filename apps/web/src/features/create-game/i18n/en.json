@@ -2,6 +2,19 @@
   "CreateGameForm": {
     "create": "Create game",
     "creating": "Creating game…",
-    "description": "The game will appear in the lobby with no occupied seats. You can choose a side on the next screen."
+    "description": "The game will appear in the lobby with no occupied seats. You can choose a side on the next screen.",
+    "format": {
+      "duel": {
+        "description": "2 players · 4 cards each",
+        "title": "Duel 1×1"
+      },
+      "legend": "Participants",
+      "team": {
+        "description": "4 players · 2 teams · 3 cards each",
+        "title": "Team 2×2"
+      }
+    },
+    "select": "○ Select",
+    "selected": "● Selected"
   }
 }

@@ -10,7 +10,12 @@ const WAITING_STATE: GameState = {
   lastEventSequence: 1,
   moveCount: 0,
   players: [],
-  rulesVersion: 1,
+  rulesVersion: 2,
+  settings: {
+    cardSelectionMode: 'random',
+    expansions: [],
+    format: 'duel',
+  },
   status: 'waiting',
   teams: { black: [], white: [] },
   winnerTeam: null,

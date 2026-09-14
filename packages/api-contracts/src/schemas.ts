@@ -1,7 +1,10 @@
 import { runtimeFeatureFlagsSchema } from '@war-chest/feature-flags';
 import {
   type JsonValue,
+  CARD_SELECTION_MODES,
   GAME_EVENT_VERSION,
+  GAME_EXPANSIONS,
+  GAME_FORMATS,
   GAME_RULES_VERSION,
 } from '@war-chest/game-engine';
 import { z } from 'zod';
@@ -32,6 +35,7 @@ import type {
   SurrenderGameRequest,
   SwapPlayerPositionsRequest,
   UpdateCurrentUserRequest,
+  UpdateGameSettingsRequest,
   UserGamesResponse,
   VerifyEmailCodeRequest,
   VerifyEmailCodeResponse,
@@ -56,6 +60,26 @@ const jsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
 );
 const gameIdSchema = z.uuid();
 const gameTeamSchema = z.enum(['black', 'white']);
+const gameFormatSchema = z.enum(GAME_FORMATS);
+const cardSelectionModeSchema = z.enum(CARD_SELECTION_MODES);
+const gameExpansionSchema = z.enum(GAME_EXPANSIONS);
+const gamePreparationSettingsShape = {
+  cardSelectionMode: cardSelectionModeSchema,
+  expansions: z
+    .array(gameExpansionSchema)
+    .max(GAME_EXPANSIONS.length)
+    .refine(
+      (expansions) => new Set(expansions).size === expansions.length,
+      'Game expansions must be unique.'
+    )
+    .readonly(),
+};
+const gameSettingsSchema = z
+  .object({
+    ...gamePreparationSettingsShape,
+    format: gameFormatSchema,
+  })
+  .strict();
 const eventMetadataSchema = z.object({
   sequence: z.number().int().positive(),
   version: z.literal(GAME_EVENT_VERSION),
@@ -89,6 +113,7 @@ export const userGamesResponseSchema: z.ZodType<UserGamesResponse> = z
             id: gameIdSchema,
             participants: z.array(userGameParticipantSchema).readonly(),
             result: z.enum(['defeat', 'victory']),
+            settings: gameSettingsSchema,
             team: gameTeamSchema,
             winnerTeam: gameTeamSchema,
           })
@@ -183,6 +208,7 @@ export const apiErrorSchema: z.ZodType<ApiError> = z
 export const createGameRequestSchema: z.ZodType<CreateGameRequest> = z
   .object({
     commandId: z.uuid(),
+    format: gameFormatSchema,
   })
   .strict();
 
@@ -230,6 +256,16 @@ export const swapPlayerPositionsRequestSchema: SwapPlayerPositionsSchema = z
   })
   .strict();
 
+type GameSettingsRequestSchema = z.ZodType<UpdateGameSettingsRequest>;
+
+export const updateGameSettingsRequestSchema: GameSettingsRequestSchema = z
+  .object({
+    ...gamePreparationSettingsShape,
+    commandId: z.uuid(),
+    expectedVersion: z.number().int().nonnegative(),
+  })
+  .strict();
+
 export const surrenderGameRequestSchema: z.ZodType<SurrenderGameRequest> = z
   .object({
     commandId: z.uuid(),
@@ -265,6 +301,7 @@ export const gameViewSchema = z
     players: z.array(gameViewPlayerSchema).readonly(),
     privateMoves: z.array(privateMoveSchema).readonly(),
     rulesVersion: z.literal(GAME_RULES_VERSION),
+    settings: gameSettingsSchema,
     status: z.enum(['waiting', 'active', 'finished']),
     teams: z
       .object({
@@ -283,9 +320,16 @@ const gameCreatedViewEventSchema = eventMetadataSchema
         creatorId: z.string(),
         featureFlags: runtimeFeatureFlagsSchema,
         rulesVersion: z.literal(GAME_RULES_VERSION),
+        settings: gameSettingsSchema,
       })
       .strict(),
     type: z.literal('GameCreated'),
+  })
+  .strict();
+const gameSettingsUpdatedViewEventSchema = eventMetadataSchema
+  .extend({
+    payload: z.object(gamePreparationSettingsShape).strict(),
+    type: z.literal('GameSettingsUpdated'),
   })
   .strict();
 const playerJoinedViewEventSchema = eventMetadataSchema
@@ -402,6 +446,7 @@ const viewSequenceAdvancedEventSchema = eventMetadataSchema
 
 export const gameViewEventSchema = z.discriminatedUnion('type', [
   gameCreatedViewEventSchema,
+  gameSettingsUpdatedViewEventSchema,
   playerJoinedViewEventSchema,
   playerLeftViewEventSchema,
   playerPositionChangedViewEventSchema,
@@ -443,6 +488,7 @@ export const lobbyGamesResponseSchema: z.ZodType<LobbyGamesResponse> = z
             createdAt: z.iso.datetime(),
             id: gameIdSchema,
             players: z.array(lobbyGamePlayerSchema).readonly(),
+            settings: gameSettingsSchema,
             startedAt: z.iso.datetime().nullable(),
             status: z.enum(['active', 'waiting']),
           })
@@ -476,6 +522,12 @@ const gameCommandSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('StartGame') }).strict(),
   z.object({ type: z.literal('SurrenderGame') }).strict(),
   z.object({ type: z.literal('SwapPlayerPositions') }).strict(),
+  z
+    .object({
+      ...gamePreparationSettingsShape,
+      type: z.literal('UpdateGameSettings'),
+    })
+    .strict(),
   z
     .object({
       privateData: jsonValueSchema.optional(),

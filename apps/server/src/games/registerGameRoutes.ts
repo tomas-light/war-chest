@@ -8,6 +8,7 @@ import { registerListGamesRoute } from './gameRoutes/registerListGamesRoute.js';
 import { registerStartGameRoute } from './gameRoutes/registerStartGameRoute.js';
 import { registerSurrenderGameRoute } from './gameRoutes/registerSurrenderGameRoute.js';
 import { registerSwapPlayerPositionsRoute } from './gameRoutes/registerSwapPlayerPositionsRoute.js';
+import { registerUpdateGameSettingsRoute } from './gameRoutes/registerUpdateGameSettingsRoute.js';
 
 export function registerGameRoutes(app: FastifyInstance): void {
   registerListGamesRoute(app);
@@ -18,5 +19,6 @@ export function registerGameRoutes(app: FastifyInstance): void {
   registerStartGameRoute(app);
   registerSurrenderGameRoute(app);
   registerSwapPlayerPositionsRoute(app);
+  registerUpdateGameSettingsRoute(app);
   registerGetGameEventsRoute(app);
 }

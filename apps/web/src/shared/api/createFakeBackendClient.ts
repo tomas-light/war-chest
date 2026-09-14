@@ -14,6 +14,7 @@ import {
   type StartGameRequest,
   type SurrenderGameRequest,
   type SwapPlayerPositionsRequest,
+  type UpdateGameSettingsRequest,
   type UserGamesResponse,
   gameErrorMessageSchema,
   gameResponseSchema,
@@ -132,6 +133,11 @@ export interface FakeBackendClient {
     gameId: string,
     request: SwapPlayerPositionsRequest
   ): Promise<GameResponse>;
+  updateGameSettings(
+    this: void,
+    gameId: string,
+    request: UpdateGameSettingsRequest
+  ): Promise<GameResponse>;
   synchronizeGameConnection(
     this: void,
     afterSequence: number,
@@ -181,6 +187,7 @@ export function createFakeBackendClient(): FakeBackendClient {
     subscribeToLobby,
     surrenderGame,
     swapPlayerPositions,
+    updateGameSettings,
     synchronizeGameConnection,
     unsubscribeFromLobby,
     updateDisplayName,
@@ -395,6 +402,20 @@ export function createFakeBackendClient(): FakeBackendClient {
       createSchemaParser(
         gameResponseSchema,
         'The fake backend returned an invalid game state.'
+      )
+    );
+  }
+
+  function updateGameSettings(
+    gameId: string,
+    request: UpdateGameSettingsRequest
+  ): Promise<GameResponse> {
+    return sendRequest(
+      'game.updateSettings',
+      { gameId, request },
+      createSchemaParser(
+        gameResponseSchema,
+        'The fake backend returned invalid updated game settings.'
       )
     );
   }

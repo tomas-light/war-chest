@@ -20,7 +20,12 @@ const GAME_RESPONSE: GameResponse = {
     moveCount: 0,
     players: [],
     privateMoves: [],
-    rulesVersion: 1,
+    rulesVersion: 2,
+    settings: {
+      cardSelectionMode: 'random',
+      expansions: [],
+      format: 'duel',
+    },
     status: 'waiting',
     teams: { black: [], white: [] },
     winnerTeam: null,

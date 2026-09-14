@@ -173,25 +173,32 @@ function GameCard(props: GameCardProps) {
       }),
     [i18n.resolvedLanguage]
   );
-  const whitePlayer = game.players.find((player) => player.team === 'white');
-  const blackPlayer = game.players.find((player) => player.team === 'black');
+  const seatNumbers = game.settings.format === 'duel' ? [1] : [1, 2];
   const teams: readonly [GameSummaryTeam, GameSummaryTeam] = [
     {
-      members: [
-        {
-          content: <LobbyPlayer player={whitePlayer} />,
-          id: whitePlayer?.id ?? 'white-available',
-        },
-      ],
+      members: seatNumbers.map((seat) => {
+        const player = game.players.find(
+          (item) => item.team === 'white' && item.seat === seat
+        );
+
+        return {
+          content: <LobbyPlayer player={player} />,
+          id: player?.id ?? `white-${seat}-available`,
+        };
+      }),
       name: t('whiteTeam'),
     },
     {
-      members: [
-        {
-          content: <LobbyPlayer player={blackPlayer} />,
-          id: blackPlayer?.id ?? 'black-available',
-        },
-      ],
+      members: seatNumbers.map((seat) => {
+        const player = game.players.find(
+          (item) => item.team === 'black' && item.seat === seat
+        );
+
+        return {
+          content: <LobbyPlayer player={player} />,
+          id: player?.id ?? `black-${seat}-available`,
+        };
+      }),
       name: t('blackTeam'),
     },
   ];
@@ -218,6 +225,14 @@ function GameCard(props: GameCardProps) {
       actionPlacement="header"
       dateLabel={dateFormatter.format(new Date(game.createdAt))}
       dateTime={game.createdAt}
+      description={
+        <p>
+          {t('configuration', {
+            format: t(`format.${game.settings.format}`),
+            selection: t(`selection.${game.settings.cardSelectionMode}`),
+          })}
+        </p>
+      }
       heading={
         game.status === 'waiting' ? t('statusWaiting') : t('statusActive')
       }

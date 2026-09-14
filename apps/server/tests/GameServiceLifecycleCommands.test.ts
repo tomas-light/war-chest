@@ -28,29 +28,34 @@ const GAME_CREATED_EVENT: GameEventData = {
   payload: {
     creatorId: FIRST_USER_ID,
     featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
-    rulesVersion: 1,
+    rulesVersion: 2,
+    settings: {
+      cardSelectionMode: 'random',
+      expansions: [],
+      format: 'duel',
+    },
   },
   sequence: 1,
   type: 'GameCreated',
-  version: 1,
+  version: 2,
 };
 const FIRST_PLAYER_JOINED_EVENT: GameEventData = {
   payload: { playerId: FIRST_USER_ID, seat: 1, team: 'white' },
   sequence: 2,
   type: 'PlayerJoined',
-  version: 1,
+  version: 2,
 };
 const SECOND_PLAYER_JOINED_EVENT: GameEventData = {
   payload: { playerId: SECOND_USER_ID, seat: 1, team: 'black' },
   sequence: 3,
   type: 'PlayerJoined',
-  version: 1,
+  version: 2,
 };
 const GAME_STARTED_EVENT: GameEventData = {
   payload: { firstPlayerId: FIRST_USER_ID },
   sequence: 4,
   type: 'GameStarted',
-  version: 1,
+  version: 2,
 };
 
 describe('GameService lifecycle commands', () => {
@@ -115,6 +120,45 @@ describe('GameService lifecycle commands', () => {
     });
 
     expect(result).toEqual({ status: 'gameCommandForbidden' });
+  });
+
+  test('persists preparation settings changed by the creator', async () => {
+    activeGames.store(GAME_ID, applyEvent(null, GAME_CREATED_EVENT));
+    vi.mocked(gameRepository.saveCommand).mockResolvedValue({
+      currentVersion: 2,
+      status: 'saved',
+    });
+
+    const result = await gameService.executeCommand({
+      command: {
+        cardSelectionMode: 'draft',
+        expansions: [],
+        type: 'UpdateGameSettings',
+      },
+      commandId: COMMAND_ID,
+      expectedVersion: 1,
+      gameId: GAME_ID,
+      userId: FIRST_USER_ID,
+    });
+
+    expect(gameRepository.saveCommand).toHaveBeenCalledWith(
+      expect.objectContaining({
+        gameChanges: {
+          cardSelectionMode: 'draft',
+          expansions: [],
+        },
+      })
+    );
+    expect(result).toMatchObject({
+      status: 'saved',
+      view: {
+        settings: {
+          cardSelectionMode: 'draft',
+          expansions: [],
+          format: 'duel',
+        },
+      },
+    });
   });
 
   test('deletes a waiting game when its creator closes the lobby', async () => {

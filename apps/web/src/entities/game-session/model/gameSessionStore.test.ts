@@ -16,6 +16,11 @@ describe('game session event synchronization', () => {
       players: [],
       privateMoves: [],
       rulesVersion: GAME_RULES_VERSION,
+      settings: {
+        cardSelectionMode: 'random',
+        expansions: [],
+        format: 'duel',
+      },
       status: 'waiting',
       teams: { black: [], white: [] },
       winnerTeam: null,
@@ -44,6 +49,11 @@ describe('game session event synchronization', () => {
       players: [],
       privateMoves: [],
       rulesVersion: GAME_RULES_VERSION,
+      settings: {
+        cardSelectionMode: 'random',
+        expansions: [],
+        format: 'duel',
+      },
       status: 'waiting',
       teams: { black: [], white: [] },
       winnerTeam: null,

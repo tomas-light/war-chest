@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, test } from 'vitest';
 import {
   type GameCommandData,
   type GameEventData,
+  type GameSettings,
   type GameState,
   type GameViewEventData,
   type Viewer,
@@ -16,6 +17,7 @@ import {
   createViewFor,
   decide,
   GAME_EVENT_VERSION,
+  GAME_RULES_VERSION,
   hydrateCommand,
   hydrateEvent,
   hydrateViewEvent,
@@ -24,6 +26,12 @@ import {
   restoreGame,
   restoreView,
 } from '../src/index.js';
+
+const DEFAULT_CREATE_GAME_SETTINGS: GameSettings = {
+  cardSelectionMode: 'random',
+  expansions: [],
+  format: 'duel',
+};
 
 describe('game creation', () => {
   test('returns null when restoring an empty game history', () => {
@@ -41,6 +49,7 @@ describe('game creation', () => {
     const event = createGame({
       creatorId: 'player-one',
       featureFlags,
+      settings: DEFAULT_CREATE_GAME_SETTINGS,
       type: 'CreateGame',
     });
 
@@ -48,7 +57,10 @@ describe('game creation', () => {
       payload: {
         creatorId: 'player-one',
         featureFlags,
-        rulesVersion: 1,
+        rulesVersion: GAME_RULES_VERSION,
+        settings: {
+          ...DEFAULT_CREATE_GAME_SETTINGS,
+        },
       },
       sequence: 1,
       type: 'GameCreated',
@@ -63,6 +75,7 @@ describe('game creation', () => {
     const event = createGame({
       creatorId: 'player-one',
       featureFlags,
+      settings: DEFAULT_CREATE_GAME_SETTINGS,
       type: 'CreateGame',
     });
 
@@ -77,6 +90,7 @@ describe('game creation', () => {
     const event = createGame({
       creatorId: 'player-one',
       featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+      settings: DEFAULT_CREATE_GAME_SETTINGS,
       type: 'CreateGame',
     });
 
@@ -84,6 +98,97 @@ describe('game creation', () => {
       black: [],
       white: [],
     });
+  });
+});
+
+describe('waiting game settings', () => {
+  let state: GameState;
+
+  beforeEach(() => {
+    const gameCreated = createGame({
+      creatorId: 'game-creator',
+      featureFlags: {
+        ...DEFAULT_RUNTIME_FEATURE_FLAGS,
+        nobilityExpansion: true,
+      },
+      settings: DEFAULT_CREATE_GAME_SETTINGS,
+      type: 'CreateGame',
+    });
+
+    state = applyEvent(null, gameCreated);
+  });
+
+  test('lets the creator change preparation settings', () => {
+    const [event] = decide(state, 'game-creator', {
+      cardSelectionMode: 'draft',
+      expansions: ['nobility'],
+      type: 'UpdateGameSettings',
+    });
+
+    expect(event).toEqual({
+      payload: {
+        cardSelectionMode: 'draft',
+        expansions: ['nobility'],
+      },
+      sequence: 2,
+      type: 'GameSettingsUpdated',
+      version: GAME_EVENT_VERSION,
+    });
+  });
+
+  test('applies updated settings to game and spectator views', () => {
+    const [event] = decide(state, 'game-creator', {
+      cardSelectionMode: 'draft',
+      expansions: ['nobility'],
+      type: 'UpdateGameSettings',
+    });
+
+    if (event === undefined) {
+      throw new Error('The settings update must emit an event.');
+    }
+
+    const nextState = applyEvent(state, event);
+    const view = createViewFor(state, { role: 'spectator' });
+    const viewEvent = createViewEventFor(event, { role: 'spectator' });
+
+    expect(nextState.settings).toEqual({
+      cardSelectionMode: 'draft',
+      expansions: ['nobility'],
+      format: 'duel',
+    });
+    expect(applyViewEvent(view, viewEvent).settings).toEqual(
+      nextState.settings
+    );
+  });
+
+  test('rejects settings changes from a non-creator', () => {
+    expect(
+      decide(state, 'other-player', {
+        cardSelectionMode: 'draft',
+        expansions: [],
+        type: 'UpdateGameSettings',
+      })
+    ).toEqual([]);
+  });
+
+  test('rejects an expansion disabled in the game snapshot', () => {
+    expect(
+      decide(state, 'game-creator', {
+        cardSelectionMode: 'random',
+        expansions: ['siege'],
+        type: 'UpdateGameSettings',
+      })
+    ).toEqual([]);
+  });
+
+  test('rejects duplicate expansions', () => {
+    expect(
+      decide(state, 'game-creator', {
+        cardSelectionMode: 'random',
+        expansions: ['nobility', 'nobility'],
+        type: 'UpdateGameSettings',
+      })
+    ).toEqual([]);
   });
 });
 
@@ -96,6 +201,7 @@ describe('technical scenario', () => {
     const gameCreatedEvent = createGame({
       creatorId: 'player-one',
       featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+      settings: DEFAULT_CREATE_GAME_SETTINGS,
       type: 'CreateGame',
     });
     commands = [
@@ -249,6 +355,7 @@ describe('commands rejected while waiting', () => {
     const gameCreated = createGame({
       creatorId: 'player-one',
       featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+      settings: DEFAULT_CREATE_GAME_SETTINGS,
       type: 'CreateGame',
     });
     waitingState = applyEvent(null, gameCreated);
@@ -315,6 +422,7 @@ describe('commands rejected while waiting', () => {
     const gameCreated = createGame({
       creatorId: 'game-creator',
       featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+      settings: DEFAULT_CREATE_GAME_SETTINGS,
       type: 'CreateGame',
     });
     let fullWaitingState = applyEvent(null, gameCreated);
@@ -402,6 +510,7 @@ describe('explicit player seat selection', () => {
     const gameCreated = createGame({
       creatorId: 'player-one',
       featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+      settings: DEFAULT_CREATE_GAME_SETTINGS,
       type: 'CreateGame',
     });
     waitingState = applyEvent(null, gameCreated);
@@ -513,6 +622,7 @@ describe('team formation from selected positions', () => {
     const gameCreated = createGame({
       creatorId: 'player-one',
       featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+      settings: DEFAULT_CREATE_GAME_SETTINGS,
       type: 'CreateGame',
     });
     const commands: readonly [string, GameCommandData][] = [
@@ -543,6 +653,87 @@ describe('team formation from selected positions', () => {
   });
 });
 
+describe('team game positions', () => {
+  const teamGameSettings: GameSettings = {
+    cardSelectionMode: 'draft',
+    expansions: [],
+    format: 'team',
+  };
+  let waitingState: GameState;
+
+  beforeEach(() => {
+    const gameCreated = createGame({
+      creatorId: 'game-creator',
+      featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+      settings: teamGameSettings,
+      type: 'CreateGame',
+    });
+    waitingState = applyEvent(null, gameCreated);
+  });
+
+  test('accepts the second seat on either team', () => {
+    const whitePlayerJoined = decide(waitingState, 'white-two', {
+      seat: 2,
+      team: 'white',
+      type: 'JoinGame',
+    });
+    waitingState = whitePlayerJoined.reduce(applyEvent, waitingState);
+
+    const blackPlayerJoined = decide(waitingState, 'black-two', {
+      seat: 2,
+      team: 'black',
+      type: 'JoinGame',
+    });
+
+    expect(whitePlayerJoined).toHaveLength(1);
+    expect(blackPlayerJoined).toHaveLength(1);
+  });
+
+  test('does not start before all four positions are occupied', () => {
+    const commands: readonly [string, GameCommandData][] = [
+      ['white-one', { seat: 1, team: 'white', type: 'JoinGame' }],
+      ['white-two', { seat: 2, team: 'white', type: 'JoinGame' }],
+      ['black-one', { seat: 1, team: 'black', type: 'JoinGame' }],
+    ];
+
+    for (const [playerId, command] of commands) {
+      waitingState = decide(waitingState, playerId, command).reduce(
+        applyEvent,
+        waitingState
+      );
+    }
+
+    expect(decide(waitingState, 'game-creator', { type: 'StartGame' })).toEqual(
+      []
+    );
+  });
+
+  test('starts after all four positions are occupied', () => {
+    const commands: readonly [string, GameCommandData][] = [
+      ['white-one', { seat: 1, team: 'white', type: 'JoinGame' }],
+      ['white-two', { seat: 2, team: 'white', type: 'JoinGame' }],
+      ['black-one', { seat: 1, team: 'black', type: 'JoinGame' }],
+      ['black-two', { seat: 2, team: 'black', type: 'JoinGame' }],
+    ];
+
+    for (const [playerId, command] of commands) {
+      waitingState = decide(waitingState, playerId, command).reduce(
+        applyEvent,
+        waitingState
+      );
+    }
+
+    expect(decide(waitingState, 'game-creator', { type: 'StartGame' })).toEqual(
+      [
+        expect.objectContaining({
+          payload: { firstPlayerId: 'white-one' },
+          type: 'GameStarted',
+        }),
+      ]
+    );
+  });
+});
+
 describe('commands rejected while active', () => {
   let activeState: GameState;
 
@@ -550,6 +741,7 @@ describe('commands rejected while active', () => {
     const gameCreated = createGame({
       creatorId: 'player-one',
       featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+      settings: DEFAULT_CREATE_GAME_SETTINGS,
       type: 'CreateGame',
     });
     const commands: readonly [string, GameCommandData][] = [
@@ -596,6 +788,7 @@ describe('waiting game departure', () => {
     const gameCreated = createGame({
       creatorId: 'player-one',
       featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+      settings: DEFAULT_CREATE_GAME_SETTINGS,
       type: 'CreateGame',
     });
     waitingState = applyEvent(null, gameCreated);
@@ -634,6 +827,7 @@ describe('player surrender', () => {
     const gameCreated = createGame({
       creatorId: 'player-one',
       featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+      settings: DEFAULT_CREATE_GAME_SETTINGS,
       type: 'CreateGame',
     });
     const commands: readonly [string, GameCommandData][] = [
@@ -710,6 +904,7 @@ describe('safe player and spectator views', () => {
     const gameCreated = createGame({
       creatorId: 'player-one',
       featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+      settings: DEFAULT_CREATE_GAME_SETTINGS,
       type: 'CreateGame',
     });
     const commands: readonly [string, GameCommandData][] = [
@@ -816,6 +1011,7 @@ test('advances a created view for a fully hidden event', () => {
   const gameCreated = createGame({
     creatorId: 'player-one',
     featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+    settings: DEFAULT_CREATE_GAME_SETTINGS,
     type: 'CreateGame',
   });
   const spectator: Viewer = { role: 'spectator' };
@@ -888,6 +1084,7 @@ describe('repeated GameCreated event', () => {
     const gameCreated = createGame({
       creatorId: 'player-one',
       featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+      settings: DEFAULT_CREATE_GAME_SETTINGS,
       type: 'CreateGame',
     });
 
@@ -900,6 +1097,7 @@ describe('repeated GameCreated event', () => {
     const gameCreated = createGame({
       creatorId: 'player-one',
       featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+      settings: DEFAULT_CREATE_GAME_SETTINGS,
       type: 'CreateGame',
     });
     const spectator: Viewer = { role: 'spectator' };

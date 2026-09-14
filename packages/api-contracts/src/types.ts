@@ -1,5 +1,8 @@
 import type {
   GameCommandData,
+  GameFormat,
+  GamePreparationSettings,
+  GameSettings,
   GameView,
   GameViewEventData,
 } from '@war-chest/game-engine';
@@ -47,6 +50,7 @@ export interface UserFinishedGame {
   id: string;
   participants: readonly UserGameParticipant[];
   result: 'defeat' | 'victory';
+  settings: GameSettings;
   team: 'black' | 'white';
   winnerTeam: 'black' | 'white';
 }
@@ -129,6 +133,7 @@ export interface ApiError {
 
 export interface CreateGameRequest {
   commandId: string;
+  format: GameFormat;
 }
 
 export interface GameResponse {
@@ -146,6 +151,7 @@ export interface LobbyGame {
   createdAt: string;
   id: string;
   players: readonly LobbyGamePlayer[];
+  settings: GameSettings;
   startedAt: string | null;
   status: 'active' | 'waiting';
 }
@@ -177,6 +183,11 @@ export interface StartGameRequest {
 }
 
 export interface SwapPlayerPositionsRequest {
+  commandId: string;
+  expectedVersion: number;
+}
+
+export interface UpdateGameSettingsRequest extends GamePreparationSettings {
   commandId: string;
   expectedVersion: number;
 }

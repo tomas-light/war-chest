@@ -29,23 +29,28 @@ const GAME_CREATED_EVENT: GameEventData = {
   payload: {
     creatorId: FIRST_USER_ID,
     featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
-    rulesVersion: 1,
+    rulesVersion: 2,
+    settings: {
+      cardSelectionMode: 'random',
+      expansions: [],
+      format: 'duel',
+    },
   },
   sequence: 1,
   type: 'GameCreated',
-  version: 1,
+  version: 2,
 };
 const FIRST_PLAYER_JOINED_EVENT: GameEventData = {
   payload: { playerId: FIRST_USER_ID, seat: 1, team: 'white' },
   sequence: 2,
   type: 'PlayerJoined',
-  version: 1,
+  version: 2,
 };
 const SECOND_PLAYER_JOINED_EVENT: GameEventData = {
   payload: { playerId: SECOND_USER_ID, seat: 1, team: 'black' },
   sequence: 3,
   type: 'PlayerJoined',
-  version: 1,
+  version: 2,
 };
 
 describe('GameService join and persistence', () => {

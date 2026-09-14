@@ -42,6 +42,11 @@ const SECOND_GAME_REQUEST_HASH = 'd'.repeat(64);
 const DEFAULT_CREATE_GAME_COMMAND = {
   creatorId: FIRST_USER_ID,
   featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+  settings: {
+    cardSelectionMode: 'random',
+    expansions: [],
+    format: 'duel',
+  },
   type: 'CreateGame',
 } as const;
 const DEFAULT_CREATE_GAME_EVENT = createGame(DEFAULT_CREATE_GAME_COMMAND);

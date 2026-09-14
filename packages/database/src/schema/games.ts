@@ -15,7 +15,12 @@ import {
 import { users } from './auth.js';
 
 export type JsonValue =
-  boolean | number | string | null | { [key: string]: JsonValue } | JsonValue[];
+  | boolean
+  | number
+  | string
+  | null
+  | { [key: string]: JsonValue }
+  | readonly JsonValue[];
 
 export const gameStatus = pgEnum('game_status', [
   'waiting',
@@ -24,11 +29,25 @@ export const gameStatus = pgEnum('game_status', [
 ]);
 
 export const gameTeam = pgEnum('game_team', ['black', 'white']);
+export const gameFormat = pgEnum('game_format', ['duel', 'team']);
+export const cardSelectionMode = pgEnum('card_selection_mode', [
+  'random',
+  'draft',
+  'eliminationDraft',
+]);
+
+export type DatabaseGameExpansion = 'nightfall' | 'nobility' | 'siege';
 
 export const games = pgTable(
   'games',
   {
+    cardSelectionMode: cardSelectionMode('card_selection_mode').notNull(),
     id: uuid('id').primaryKey().defaultRandom(),
+    expansions: text('expansions')
+      .array()
+      .$type<DatabaseGameExpansion[]>()
+      .notNull(),
+    format: gameFormat('format').notNull(),
     status: gameStatus('status').notNull().default('waiting'),
     winnerTeam: gameTeam('winner_team'),
     currentVersion: integer('current_version').notNull().default(0),

@@ -12,6 +12,7 @@ export type {
   SwapPlayerPositionsCommandData,
   TestMoveCommandData,
   TestScenarioCommandData,
+  UpdateGameSettingsCommandData,
 } from './commands.js';
 export { createGame } from './createGame.js';
 export { createViewEventFor } from './createViewEventFor.js';
@@ -27,10 +28,27 @@ export type {
 export { NullableGameStateError } from './errors/NullableGameStateError.js';
 export { NullableGameViewError } from './errors/NullableGameViewError.js';
 export { GAME_EVENT_VERSION, GAME_RULES_VERSION } from './events.js';
+export {
+  CARD_SELECTION_MODES,
+  cloneGamePreparationSettings,
+  cloneGameSettings,
+  createDefaultGameSettings,
+  createGameSettings,
+  GAME_EXPANSIONS,
+  GAME_FORMATS,
+} from './GameSettings.js';
+export type {
+  CardSelectionMode,
+  GameExpansion,
+  GameFormat,
+  GamePreparationSettings,
+  GameSettings,
+} from './GameSettings.js';
 export type {
   GameCreatedEventData,
   GameEventData,
   GameFinishedEventData,
+  GameSettingsUpdatedEventData,
   GameStartedEventData,
   PlayerDefeatedEventData,
   PlayerDisconnectedEventData,
@@ -67,6 +85,7 @@ export type {
 export type {
   GameCreatedViewEventData,
   GameFinishedViewEventData,
+  GameSettingsUpdatedViewEventData,
   GameStartedViewEventData,
   GameViewEventData,
   PlayerDefeatedViewEventData,

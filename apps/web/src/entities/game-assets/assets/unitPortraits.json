@@ -1,0 +1,102 @@
+{
+  "assets": {
+    "archer": {
+      "height": 224,
+      "width": 224,
+      "x": 2,
+      "y": 2
+    },
+    "berserker": {
+      "height": 224,
+      "width": 224,
+      "x": 230,
+      "y": 2
+    },
+    "cavalry": {
+      "height": 224,
+      "width": 224,
+      "x": 458,
+      "y": 2
+    },
+    "crossbowman": {
+      "height": 224,
+      "width": 224,
+      "x": 686,
+      "y": 2
+    },
+    "ensign": {
+      "height": 224,
+      "width": 224,
+      "x": 914,
+      "y": 2
+    },
+    "footman": {
+      "height": 224,
+      "width": 224,
+      "x": 1142,
+      "y": 2
+    },
+    "knight": {
+      "height": 224,
+      "width": 224,
+      "x": 1370,
+      "y": 2
+    },
+    "lancer": {
+      "height": 224,
+      "width": 224,
+      "x": 1598,
+      "y": 2
+    },
+    "lightCavalry": {
+      "height": 224,
+      "width": 224,
+      "x": 2,
+      "y": 230
+    },
+    "marshal": {
+      "height": 224,
+      "width": 224,
+      "x": 230,
+      "y": 230
+    },
+    "mercenary": {
+      "height": 224,
+      "width": 224,
+      "x": 458,
+      "y": 230
+    },
+    "pikeman": {
+      "height": 224,
+      "width": 224,
+      "x": 686,
+      "y": 230
+    },
+    "royalGuard": {
+      "height": 224,
+      "width": 224,
+      "x": 914,
+      "y": 230
+    },
+    "scout": {
+      "height": 224,
+      "width": 224,
+      "x": 1142,
+      "y": 230
+    },
+    "swordsman": {
+      "height": 224,
+      "width": 224,
+      "x": 1370,
+      "y": 230
+    },
+    "warriorPriest": {
+      "height": 224,
+      "width": 224,
+      "x": 1598,
+      "y": 230
+    }
+  },
+  "height": 456,
+  "width": 1824
+}

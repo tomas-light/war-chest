@@ -2,14 +2,19 @@ import type { Game, GameParticipant } from '@war-chest/database';
 import type {
   GameCreatedEventData,
   GameEventData,
+  GameExpansion,
+  GameSettings,
 } from '@war-chest/game-engine';
 
 export type GameTeam = NonNullable<GameParticipant['team']>;
 
 export interface StoredGame {
+  cardSelectionMode: GameSettings['cardSelectionMode'];
   createdAt: Date;
   currentVersion: number;
+  expansions: GameSettings['expansions'];
   finishedAt: Date | null;
+  format: GameSettings['format'];
   id: string;
   startedAt: Date | null;
   status: Game['status'];
@@ -35,6 +40,7 @@ export interface StoredLobbyGame {
   createdAt: Date;
   id: string;
   players: readonly StoredGamePlayer[];
+  settings: GameSettings;
   startedAt: Date | null;
   status: 'active' | 'waiting';
 }
@@ -47,6 +53,8 @@ export interface ProcessedCommandIdentity {
 }
 
 export interface GameProjectionChanges {
+  cardSelectionMode?: GameSettings['cardSelectionMode'];
+  expansions?: GameExpansion[];
   finishedAt?: Date | null;
   startedAt?: Date | null;
   status?: Game['status'];

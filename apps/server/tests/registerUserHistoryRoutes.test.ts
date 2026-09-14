@@ -105,6 +105,11 @@ describe('user history routes', () => {
             },
           ],
           result: 'victory',
+          settings: {
+            cardSelectionMode: 'random',
+            expansions: [],
+            format: 'duel',
+          },
           team: 'white',
           winnerTeam: 'white',
         },

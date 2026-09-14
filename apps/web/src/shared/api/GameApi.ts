@@ -8,6 +8,7 @@ import {
   type StartGameRequest,
   type SurrenderGameRequest,
   type SwapPlayerPositionsRequest,
+  type UpdateGameSettingsRequest,
   gameResponseSchema,
   leaveGameResponseSchema,
   lobbyGamesResponseSchema,
@@ -63,6 +64,11 @@ export interface GameApi {
     gameId: string,
     request: SwapPlayerPositionsRequest
   ): Promise<GameResponse>;
+  updateGameSettings(
+    this: void,
+    gameId: string,
+    request: UpdateGameSettingsRequest
+  ): Promise<GameResponse>;
 }
 
 export function createRealGameApi(): GameApi {
@@ -75,6 +81,7 @@ export function createRealGameApi(): GameApi {
     startGame,
     surrenderGame,
     swapPlayerPositions,
+    updateGameSettings,
   };
 
   function createGame(request: CreateGameRequest): Promise<GameResponse> {
@@ -165,6 +172,19 @@ export function createRealGameApi(): GameApi {
       method: 'POST',
       schema: gameResponseSchema,
       url: `${GAMES_API_URL}/${gameId}/surrender`,
+    });
+  }
+
+  function updateGameSettings(
+    gameId: string,
+    request: UpdateGameSettingsRequest
+  ): Promise<GameResponse> {
+    return requestJson({
+      body: request,
+      invalidResponseMessage: 'The server returned an invalid game state.',
+      method: 'POST',
+      schema: gameResponseSchema,
+      url: `${GAMES_API_URL}/${gameId}/settings`,
     });
   }
 }

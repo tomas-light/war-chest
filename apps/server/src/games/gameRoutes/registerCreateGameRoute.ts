@@ -25,6 +25,7 @@ export function registerCreateGameRoute(app: FastifyInstance): void {
 
     const result = await gameService.createGame({
       commandId: body.data.commandId,
+      format: body.data.format,
       userId: getAuthenticatedUserId(request),
     });
 

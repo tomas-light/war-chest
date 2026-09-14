@@ -11,6 +11,11 @@ export function createProjectionChanges(
   >[number][] = [];
 
   for (const event of events) {
+    if (event.type === 'GameSettingsUpdated') {
+      gameChanges.cardSelectionMode = event.payload.cardSelectionMode;
+      gameChanges.expansions = [...event.payload.expansions];
+    }
+
     if (event.type === 'PlayerJoined') {
       participantChanges.push({
         operation: 'addPlayer',

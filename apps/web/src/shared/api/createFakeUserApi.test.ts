@@ -101,18 +101,24 @@ describe('fake user API', () => {
 
     listGamesForUser.mockResolvedValue([
       {
+        cardSelectionMode: 'random',
         createdAt: new Date('2026-08-31T14:00:00.000Z'),
         currentVersion: 8,
+        expansions: [],
         finishedAt,
+        format: 'duel',
         id: gameId,
         startedAt: new Date('2026-08-31T14:05:00.000Z'),
         status: 'finished',
         winnerTeam: 'white',
       },
       {
+        cardSelectionMode: 'random',
         createdAt: new Date('2026-08-31T16:00:00.000Z'),
         currentVersion: 1,
+        expansions: [],
         finishedAt: null,
+        format: 'duel',
         id: '20000000-0000-4000-8000-000000000011',
         startedAt: null,
         status: 'waiting',
@@ -153,6 +159,11 @@ describe('fake user API', () => {
             },
           ],
           result: 'defeat',
+          settings: {
+            cardSelectionMode: 'random',
+            expansions: [],
+            format: 'duel',
+          },
           team: 'black',
           winnerTeam: 'white',
         },

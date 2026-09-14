@@ -18,21 +18,31 @@ const SPECTATOR_USER_ID = '10000000-0000-4000-8000-000000000003';
 const DISCONNECTED_PLAYER_TIMEOUT_MS = 15 * 60 * 1000;
 const EMPTY_WAITING_GAME_TIMEOUT_MS = 10 * 60 * 1000;
 const CURRENT_TIME = new Date('2026-08-16T12:00:00.000Z');
+const STORED_GAME_SETTINGS = {
+  cardSelectionMode: 'random',
+  expansions: [],
+  format: 'duel',
+} as const;
 const GAME_CREATED_EVENT: GameEventData = {
   payload: {
     creatorId: FIRST_USER_ID,
     featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
-    rulesVersion: 1,
+    rulesVersion: 2,
+    settings: {
+      cardSelectionMode: 'random',
+      expansions: [],
+      format: 'duel',
+    },
   },
   sequence: 1,
   type: 'GameCreated',
-  version: 1,
+  version: 2,
 };
 const FIRST_PLAYER_JOINED_EVENT: GameEventData = {
   payload: { playerId: FIRST_USER_ID, seat: 1, team: 'white' },
   sequence: 2,
   type: 'PlayerJoined',
-  version: 1,
+  version: 2,
 };
 
 describe('GameService runtime loading and queries', () => {
@@ -99,6 +109,7 @@ describe('GameService runtime loading and queries', () => {
             team: 'white',
           },
         ],
+        settings: STORED_GAME_SETTINGS,
         startedAt: null,
         status: 'waiting',
       },
@@ -121,6 +132,7 @@ describe('GameService runtime loading and queries', () => {
               team: 'white',
             },
           ],
+          settings: STORED_GAME_SETTINGS,
           startedAt: null,
           status: 'waiting',
         },
@@ -130,6 +142,7 @@ describe('GameService runtime loading and queries', () => {
 
   test('does not read runtime flags when restoring an existing game', async () => {
     vi.mocked(gameRepository.findGame).mockResolvedValue({
+      ...STORED_GAME_SETTINGS,
       createdAt: new Date(),
       currentVersion: 1,
       finishedAt: null,
@@ -224,6 +237,7 @@ describe('GameService runtime loading and queries', () => {
 
   test('caches a restored unfinished game', async () => {
     vi.mocked(gameRepository.findGame).mockResolvedValue({
+      ...STORED_GAME_SETTINGS,
       createdAt: new Date(),
       currentVersion: 1,
       finishedAt: null,
@@ -250,6 +264,7 @@ describe('GameService runtime loading and queries', () => {
 
   test('rejects a stored history with a sequence gap', async () => {
     vi.mocked(gameRepository.findGame).mockResolvedValue({
+      ...STORED_GAME_SETTINGS,
       createdAt: new Date(),
       currentVersion: 3,
       finishedAt: null,

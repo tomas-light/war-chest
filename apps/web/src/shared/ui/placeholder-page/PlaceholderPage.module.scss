@@ -186,6 +186,7 @@ a.logoFrame:focus-visible {
 .body {
   position: relative;
   z-index: 1;
+  min-width: 0;
   align-self: center;
 }
 
@@ -231,6 +232,7 @@ a.logoFrame:focus-visible {
 }
 
 .animatedContentInner {
+  min-width: 0;
   display: flow-root;
 }
 

@@ -1,4 +1,5 @@
 import type { RuntimeFeatureFlags } from '@war-chest/feature-flags';
+import type { GameSettings } from './GameSettings.js';
 
 export type JsonValue =
   boolean | number | string | null | { [key: string]: JsonValue } | JsonValue[];
@@ -32,6 +33,7 @@ export interface GameState {
   moveCount: number;
   players: readonly GamePlayer[];
   rulesVersion: number;
+  settings: GameSettings;
   status: GameStatus;
   teams: GameTeams;
   winnerTeam: GameTeam | null;
@@ -61,6 +63,7 @@ export interface GameView {
   players: readonly GameViewPlayer[];
   privateMoves: readonly PrivateMove[];
   rulesVersion: number;
+  settings: GameSettings;
   status: GameStatus;
   teams: GameTeams;
   winnerTeam: GameTeam | null;

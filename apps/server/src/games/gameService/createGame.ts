@@ -1,6 +1,7 @@
 import type { RuntimeFeatureFlags } from '@war-chest/feature-flags';
 import {
   applyEvent,
+  createDefaultGameSettings,
   createGame as createGameEvent,
   createViewFor,
 } from '@war-chest/game-engine';
@@ -17,6 +18,7 @@ export async function createGame(
   input: CreateGameInput
 ): Promise<CreateGameResult> {
   const requestHash = createRequestHash({
+    format: input.format,
     operation: 'CreateGame',
     userId: input.userId,
   });
@@ -54,6 +56,7 @@ export async function createGame(
   const gameCreatedEvent = createGameEvent({
     creatorId: input.userId,
     featureFlags,
+    settings: createDefaultGameSettings(input.format),
     type: 'CreateGame',
   });
   const result = await context.options.gameRepository.createGame({

@@ -13,7 +13,11 @@ export class JoinGameCommand implements DecidableCommand<JoinGameCommandData> {
 
   decide(state: GameState, playerId: string): GameEventData[] {
     const isWaitingGame = state.status === 'waiting';
-    const isSupportedPosition = isGamePosition(this.data.team, this.data.seat);
+    const isSupportedPosition = isGamePosition(
+      state.settings.format,
+      this.data.team,
+      this.data.seat
+    );
     const isAvailablePosition = !state.players.some(
       (player) =>
         player.id !== playerId &&

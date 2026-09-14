@@ -192,6 +192,11 @@ function GameCard(props: GameCardProps) {
           {t('yourTeam', {
             team: game.team === 'white' ? t('whiteTeam') : t('blackTeam'),
           })}
+          {' · '}
+          {t('configuration', {
+            format: t(`format.${game.settings.format}`),
+            selection: t(`selection.${game.settings.cardSelectionMode}`),
+          })}
         </p>
       }
       heading={game.result === 'victory' ? t('victory') : t('defeat')}

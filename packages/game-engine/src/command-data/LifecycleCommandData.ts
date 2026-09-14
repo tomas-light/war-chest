@@ -1,9 +1,11 @@
 import type { RuntimeFeatureFlags } from '@war-chest/feature-flags';
+import type { GamePreparationSettings, GameSettings } from '../GameSettings.js';
 import type { GameTeam } from '../state.js';
 
 export interface CreateGameCommandData {
   creatorId: string;
   featureFlags: RuntimeFeatureFlags;
+  settings: GameSettings;
   type: 'CreateGame';
 }
 
@@ -25,6 +27,10 @@ export interface SwapPlayerPositionsCommandData {
   type: 'SwapPlayerPositions';
 }
 
+export interface UpdateGameSettingsCommandData extends GamePreparationSettings {
+  type: 'UpdateGameSettings';
+}
+
 export interface FinishGameCommandData {
   type: 'FinishGame';
 }
@@ -39,4 +45,5 @@ export type LifecycleCommandData =
   | LeaveGameCommandData
   | StartGameCommandData
   | SurrenderGameCommandData
-  | SwapPlayerPositionsCommandData;
+  | SwapPlayerPositionsCommandData
+  | UpdateGameSettingsCommandData;

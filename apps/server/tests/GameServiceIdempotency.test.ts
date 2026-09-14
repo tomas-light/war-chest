@@ -25,33 +25,43 @@ const SPECTATOR_USER_ID = '10000000-0000-4000-8000-000000000003';
 const DISCONNECTED_PLAYER_TIMEOUT_MS = 15 * 60 * 1000;
 const EMPTY_WAITING_GAME_TIMEOUT_MS = 10 * 60 * 1000;
 const CURRENT_TIME = new Date('2026-08-16T12:00:00.000Z');
+const STORED_GAME_SETTINGS = {
+  cardSelectionMode: 'random',
+  expansions: [],
+  format: 'duel',
+} as const;
 const GAME_CREATED_EVENT: GameEventData = {
   payload: {
     creatorId: FIRST_USER_ID,
     featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
-    rulesVersion: 1,
+    rulesVersion: 2,
+    settings: {
+      cardSelectionMode: 'random',
+      expansions: [],
+      format: 'duel',
+    },
   },
   sequence: 1,
   type: 'GameCreated',
-  version: 1,
+  version: 2,
 };
 const FIRST_PLAYER_JOINED_EVENT: GameEventData = {
   payload: { playerId: FIRST_USER_ID, seat: 1, team: 'white' },
   sequence: 2,
   type: 'PlayerJoined',
-  version: 1,
+  version: 2,
 };
 const SECOND_PLAYER_JOINED_EVENT: GameEventData = {
   payload: { playerId: SECOND_USER_ID, seat: 1, team: 'black' },
   sequence: 3,
   type: 'PlayerJoined',
-  version: 1,
+  version: 2,
 };
 const GAME_STARTED_EVENT: GameEventData = {
   payload: { firstPlayerId: FIRST_USER_ID },
   sequence: 4,
   type: 'GameStarted',
-  version: 1,
+  version: 2,
 };
 const TEST_MOVE_EVENT: GameEventData = {
   payload: {
@@ -62,7 +72,7 @@ const TEST_MOVE_EVENT: GameEventData = {
   },
   sequence: 5,
   type: 'TestMovePerformed',
-  version: 1,
+  version: 2,
 };
 
 describe('GameService command idempotency', () => {
@@ -142,6 +152,7 @@ describe('GameService command idempotency', () => {
       userId: FIRST_USER_ID,
     });
     vi.mocked(gameRepository.findGame).mockResolvedValue({
+      ...STORED_GAME_SETTINGS,
       createdAt: new Date(),
       currentVersion: 2,
       finishedAt: null,
@@ -191,6 +202,7 @@ describe('GameService command idempotency', () => {
       status: 'duplicateCommand',
     });
     vi.mocked(gameRepository.findGame).mockResolvedValue({
+      ...STORED_GAME_SETTINGS,
       createdAt: new Date(),
       currentVersion: 2,
       finishedAt: null,
