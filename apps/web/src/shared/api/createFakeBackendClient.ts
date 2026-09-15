@@ -1,5 +1,7 @@
 import {
   type AvatarPresetId,
+  type CompleteCardSelectionRequest,
+  type ConfirmCardChoiceRequest,
   type CreateGameRequest,
   type GameErrorMessage,
   type GameResponse,
@@ -69,6 +71,16 @@ export type FakeBackendEvent =
     };
 
 export interface FakeBackendClient {
+  completeCardSelection(
+    this: void,
+    gameId: string,
+    request: CompleteCardSelectionRequest
+  ): Promise<GameResponse>;
+  confirmCardChoice(
+    this: void,
+    gameId: string,
+    request: ConfirmCardChoiceRequest
+  ): Promise<GameResponse>;
   createGame(this: void, request: CreateGameRequest): Promise<GameResponse>;
   disconnectGameConnection(this: void, subscriptionId: string): Promise<void>;
   getGame(this: void, gameId: string): Promise<GameResponse>;
@@ -165,6 +177,8 @@ export function createFakeBackendClient(): FakeBackendClient {
   worker.port.start();
 
   return {
+    completeCardSelection,
+    confirmCardChoice,
     createGame,
     disconnectGameConnection,
     getGame,
@@ -193,6 +207,34 @@ export function createFakeBackendClient(): FakeBackendClient {
     updateDisplayName,
     uploadAvatar,
   };
+
+  function completeCardSelection(
+    gameId: string,
+    request: CompleteCardSelectionRequest
+  ): Promise<GameResponse> {
+    return sendRequest(
+      'game.completeCardSelection',
+      { gameId, request },
+      createSchemaParser(
+        gameResponseSchema,
+        'The fake backend returned an invalid game state.'
+      )
+    );
+  }
+
+  function confirmCardChoice(
+    gameId: string,
+    request: ConfirmCardChoiceRequest
+  ): Promise<GameResponse> {
+    return sendRequest(
+      'game.confirmCardChoice',
+      { gameId, request },
+      createSchemaParser(
+        gameResponseSchema,
+        'The fake backend returned an invalid game state.'
+      )
+    );
+  }
 
   function createGame(request: CreateGameRequest): Promise<GameResponse> {
     return sendRequest(

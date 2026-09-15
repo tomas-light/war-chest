@@ -1,0 +1,9 @@
+{
+  "ConfirmCardChoiceButton": {
+    "confirmBan": "Подтвердить бан",
+    "confirmPick": "Подтвердить выбор",
+    "pending": "Подтверждаем…",
+    "selectBan": "Выберите карту для бана",
+    "selectCard": "Выберите карту"
+  }
+}

@@ -1,3 +1,4 @@
+import type { CardSelectionCommandData } from './command-data/CardSelectionCommandData.js';
 import type { LifecycleCommandData } from './command-data/LifecycleCommandData.js';
 import type { TestScenarioCommandData } from './command-data/TestScenarioCommandData.js';
 
@@ -17,4 +18,10 @@ export type {
   TestScenarioCommandData,
 } from './command-data/TestScenarioCommandData.js';
 
-export type GameCommandData = LifecycleCommandData | TestScenarioCommandData;
+export type GameCommandData =
+  CardSelectionCommandData | LifecycleCommandData | TestScenarioCommandData;
+export type {
+  CardSelectionCommandData,
+  CompleteCardSelectionCommandData,
+  ConfirmCardChoiceCommandData,
+} from './command-data/CardSelectionCommandData.js';

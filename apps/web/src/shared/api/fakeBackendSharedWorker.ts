@@ -1,5 +1,7 @@
 import {
   type GameResponse,
+  completeCardSelectionRequestSchema,
+  confirmCardChoiceRequestSchema,
   createGameRequestSchema,
   gameParamsSchema,
   joinGameRequestSchema,
@@ -284,6 +286,36 @@ async function dispatchRequest(
     );
 
     await broadcastGameUpdate(result.gameId);
+    return result;
+  }
+
+  if (request.operation === 'game.confirmCardChoice') {
+    const gameId = readGameId(request.payload);
+    const result = await gameApi.confirmCardChoice(
+      gameId,
+      readNestedRequest(
+        request.payload,
+        confirmCardChoiceRequestSchema,
+        'Invalid fake ConfirmCardChoice request.'
+      )
+    );
+
+    await broadcastGameUpdate(gameId);
+    return result;
+  }
+
+  if (request.operation === 'game.completeCardSelection') {
+    const gameId = readGameId(request.payload);
+    const result = await gameApi.completeCardSelection(
+      gameId,
+      readNestedRequest(
+        request.payload,
+        completeCardSelectionRequestSchema,
+        'Invalid fake CompleteCardSelection request.'
+      )
+    );
+
+    await broadcastGameUpdate(gameId);
     return result;
   }
 

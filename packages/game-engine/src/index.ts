@@ -1,6 +1,9 @@
 export { applyEvent } from './applyEvent.js';
 export { applyViewEvent } from './applyViewEvent.js';
 export type {
+  CardSelectionCommandData,
+  CompleteCardSelectionCommandData,
+  ConfirmCardChoiceCommandData,
   CreateGameCommandData,
   FinishGameCommandData,
   GameCommandData,
@@ -14,6 +17,18 @@ export type {
   TestScenarioCommandData,
   UpdateGameSettingsCommandData,
 } from './commands.js';
+export {
+  cloneCardSelection,
+  getCurrentCardSelectionPlayer,
+} from './CardSelection.js';
+export type {
+  CardSelection,
+  CardSelectionAction,
+  CardSelectionPhase,
+  ConfirmedCardChoice,
+  GameStartSelection,
+  PlayerUnitAssignment,
+} from './CardSelection.js';
 export { createGame } from './createGame.js';
 export { createViewEventFor } from './createViewEventFor.js';
 export { createViewFor } from './createViewFor.js';
@@ -45,6 +60,9 @@ export type {
   GameSettings,
 } from './GameSettings.js';
 export type {
+  CardChoiceConfirmedEventData,
+  CardSelectionCompletedEventData,
+  CardsPreparedEventData,
   GameCreatedEventData,
   GameEventData,
   GameFinishedEventData,
@@ -83,6 +101,9 @@ export type {
   Viewer,
 } from './state.js';
 export type {
+  CardChoiceConfirmedViewEventData,
+  CardSelectionCompletedViewEventData,
+  CardsPreparedViewEventData,
   GameCreatedViewEventData,
   GameFinishedViewEventData,
   GameSettingsUpdatedViewEventData,
@@ -100,3 +121,5 @@ export type {
   TestMovePerformedViewEventData,
   ViewSequenceAdvancedEventData,
 } from './viewEvents.js';
+export { UNIT_IDS } from './UnitId.js';
+export type { UnitId } from './UnitId.js';

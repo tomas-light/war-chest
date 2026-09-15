@@ -1,6 +1,12 @@
 import type { RuntimeFeatureFlags } from '@war-chest/feature-flags';
+import type {
+  CardSelectionAction,
+  CardSelectionPhase,
+  GameStartSelection,
+} from './CardSelection.js';
 import type { GamePreparationSettings, GameSettings } from './GameSettings.js';
 import type { GameTeam, JsonValue } from './state.js';
+import type { UnitId } from './UnitId.js';
 
 export const GAME_EVENT_VERSION = 2;
 export const GAME_RULES_VERSION = 2;
@@ -90,6 +96,31 @@ export interface GameStartedEventData extends EventMetadata {
   type: 'GameStarted';
 }
 
+export interface CardsPreparedEventData extends EventMetadata {
+  payload: {
+    playerOrder: readonly string[];
+    selection: GameStartSelection;
+  };
+  type: 'CardsPrepared';
+}
+
+export interface CardChoiceConfirmedEventData extends EventMetadata {
+  payload: {
+    action: CardSelectionAction;
+    isComplete: boolean;
+    nextPhase: CardSelectionPhase;
+    nextPlayerId: string | null;
+    playerId: string;
+    unitId: UnitId;
+  };
+  type: 'CardChoiceConfirmed';
+}
+
+export interface CardSelectionCompletedEventData extends EventMetadata {
+  payload: Record<string, never>;
+  type: 'CardSelectionCompleted';
+}
+
 export interface TestMovePerformedEventData extends EventMetadata {
   payload: {
     moveNumber: number;
@@ -108,6 +139,9 @@ export interface GameFinishedEventData extends EventMetadata {
 }
 
 export type GameEventData =
+  | CardChoiceConfirmedEventData
+  | CardSelectionCompletedEventData
+  | CardsPreparedEventData
   | GameCreatedEventData
   | GameFinishedEventData
   | GameSettingsUpdatedEventData

@@ -33,7 +33,7 @@ const OUTPUT_DIRECTORY = new URL(
 await buildGameAssetSprites();
 
 async function buildGameAssetSprites() {
-  const [, , sourceDirectory] = process.argv;
+  const [, , sourceDirectory, scope] = process.argv;
 
   if (sourceDirectory === undefined) {
     throw new Error(
@@ -42,20 +42,38 @@ async function buildGameAssetSprites() {
   }
 
   await mkdir(OUTPUT_DIRECTORY, { recursive: true });
-  await buildSprite({
-    entries: UNIT_IDS.map((unitId) => ({
-      height: 224,
-      key: unitId,
-      sourcePath: resolve(sourceDirectory, 'portraits', `${unitId}.png`),
-      width: 224,
-    })),
-    fileName: 'unitPortraits',
-  });
+  if (scope === '--compact-cards-only') {
+    await buildSprite({
+      entries: UNIT_IDS.map((unitId) => ({
+        height: 400,
+        key: unitId,
+        sourcePath: resolve(
+          sourceDirectory,
+          'cards-compact-ru',
+          `${unitId}.png`
+        ),
+        width: 300,
+      })),
+      fileName: 'unitCardsCompact.ru',
+    });
+    return;
+  }
+
+  if (scope !== '--cards-only') {
+    await buildSprite({
+      entries: UNIT_IDS.map((unitId) => ({
+        height: 224,
+        key: unitId,
+        sourcePath: resolve(sourceDirectory, 'portraits', `${unitId}.png`),
+        width: 224,
+      })),
+      fileName: 'unitPortraits',
+    });
+  }
   await buildSprite({
     entries: UNIT_IDS.map((unitId) => ({
       height: 534,
       key: unitId,
-      requiresTransparency: false,
       sourcePath: resolve(sourceDirectory, 'cards-en', `${unitId}.png`),
       width: 400,
     })),
@@ -65,16 +83,17 @@ async function buildGameAssetSprites() {
     entries: UNIT_IDS.map((unitId) => ({
       height: 534,
       key: unitId,
-      requiresTransparency: false,
       sourcePath: resolve(sourceDirectory, 'cards-ru', `${unitId}.png`),
       width: 400,
     })),
     fileName: 'unitCards.ru',
   });
-  await buildSprite({
-    entries: createGameplayEntries(sourceDirectory),
-    fileName: 'gameAssets',
-  });
+  if (scope !== '--cards-only') {
+    await buildSprite({
+      entries: createGameplayEntries(sourceDirectory),
+      fileName: 'gameAssets',
+    });
+  }
 }
 
 async function buildSprite(input) {

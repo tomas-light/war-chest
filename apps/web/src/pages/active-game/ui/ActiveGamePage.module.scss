@@ -4,6 +4,11 @@
   margin: 0 auto;
 }
 
+.selectionPage {
+  width: min(1248px, 100%);
+  padding: 42px 24px;
+}
+
 .state h1 {
   margin: 4px 0 8px;
   font-family: var(--wc-font-display);
@@ -76,7 +81,8 @@
 }
 
 @media (width <= 620px) {
-  .page {
+  .page,
+  .selectionPage {
     padding: 18px 14px 32px;
   }
 

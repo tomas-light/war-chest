@@ -1,0 +1,74 @@
+.card {
+  min-width: 0;
+  min-height: 366px;
+  display: flex;
+  gap: 8px;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid rgb(199 150 53 / 34%);
+  border-radius: 3px 20px;
+  background: var(--wc-color-ink);
+  color: var(--wc-color-text);
+  cursor: default;
+  text-align: left;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.card:enabled {
+  cursor: pointer;
+}
+
+.card:enabled:hover,
+.candidate {
+  border-color: var(--wc-color-cyan);
+  box-shadow: 0 0 18px rgb(21 217 237 / 20%);
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--wc-color-cyan);
+  outline-offset: 3px;
+}
+
+.artwork {
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.status {
+  width: 100%;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  overflow-wrap: anywhere;
+  text-transform: uppercase;
+}
+
+.picked .artwork,
+.banned .artwork {
+  opacity: 0.45;
+}
+
+.own {
+  border-color: var(--wc-color-cyan);
+  color: var(--wc-color-cyan);
+}
+
+.banned {
+  border-color: var(--wc-color-error);
+  color: var(--wc-color-error);
+}
+
+@media (width <= 620px) {
+  .card {
+    min-height: 304px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+}

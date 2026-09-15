@@ -1,3 +1,4 @@
+import { cloneCardSelection } from './CardSelection.js';
 import { cloneGameSettings } from './GameSettings.js';
 import {
   type GameState,
@@ -14,12 +15,16 @@ export function createViewFor(state: GameState, viewer: Viewer): GameView {
       : undefined;
 
   return {
+    cardSelection: cloneCardSelection(state.cardSelection),
     creatorId: state.creatorId,
     currentPlayerId: state.currentPlayerId,
     featureFlags: { ...state.featureFlags },
+    firstPlayerId: state.firstPlayerId,
+    initiativePlayerId: state.initiativePlayerId,
     lastEventSequence: state.lastEventSequence,
     moveCount: state.moveCount,
     players: state.players.map((player) => ({
+      cardIds: [...player.cardIds],
       defeatReason: player.defeatReason,
       id: player.id,
       moveCount: player.moveCount,

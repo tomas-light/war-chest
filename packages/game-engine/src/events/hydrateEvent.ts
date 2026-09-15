@@ -1,9 +1,11 @@
 import type { GameEventData } from '../events.js';
 import { type ApplicableEvent, type EventHydrator } from './ApplicableEvent.js';
+import { hydrateCardSelectionEvent } from './card-selection/hydrateCardSelectionEvent.js';
 import { hydrateLifecycleEvent } from './lifecycle/hydrateLifecycleEvent.js';
 import { hydrateTestScenarioEvent } from './test-scenario/hydrateTestScenarioEvent.js';
 
 const EVENT_HYDRATORS: readonly EventHydrator[] = [
+  hydrateCardSelectionEvent,
   hydrateLifecycleEvent,
   hydrateTestScenarioEvent,
 ];

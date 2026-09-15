@@ -11,6 +11,7 @@ import {
   GAME_FORMATS,
 } from './GameSettings.js';
 import type { JsonValue } from './state.js';
+import { UNIT_IDS } from './UnitId.js';
 
 const jsonPrimitiveSchema = z.union([
   z.boolean(),
@@ -26,6 +27,7 @@ const jsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
   ])
 );
 const gameTeamSchema = z.enum(['black', 'white']);
+const unitIdSchema = z.enum(UNIT_IDS);
 const gameSettingsSchema = z
   .object({
     cardSelectionMode: z.enum(CARD_SELECTION_MODES),
@@ -147,6 +149,58 @@ const gameEventDataSchema: z.ZodType<GameEventData> = z.discriminatedUnion(
       .extend({
         payload: z.object({ firstPlayerId: z.string() }).strict(),
         type: z.literal('GameStarted'),
+      })
+      .strict(),
+    eventMetadataSchema
+      .extend({
+        payload: z
+          .object({
+            playerOrder: z.array(z.string()),
+            selection: z.discriminatedUnion('mode', [
+              z
+                .object({
+                  assignments: z.array(
+                    z
+                      .object({
+                        playerId: z.string(),
+                        unitIds: z.array(unitIdSchema),
+                      })
+                      .strict()
+                  ),
+                  mode: z.literal('random'),
+                })
+                .strict(),
+              z
+                .object({
+                  mode: z.enum(['draft', 'eliminationDraft']),
+                  pool: z.array(unitIdSchema),
+                })
+                .strict(),
+            ]),
+          })
+          .strict(),
+        type: z.literal('CardsPrepared'),
+      })
+      .strict(),
+    eventMetadataSchema
+      .extend({
+        payload: z
+          .object({
+            action: z.enum(['ban', 'pick']),
+            isComplete: z.boolean(),
+            nextPhase: z.enum(['banning', 'complete', 'picking']),
+            nextPlayerId: z.string().nullable(),
+            playerId: z.string(),
+            unitId: unitIdSchema,
+          })
+          .strict(),
+        type: z.literal('CardChoiceConfirmed'),
+      })
+      .strict(),
+    eventMetadataSchema
+      .extend({
+        payload: z.object({}).strict(),
+        type: z.literal('CardSelectionCompleted'),
       })
       .strict(),
     eventMetadataSchema

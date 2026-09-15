@@ -1,4 +1,6 @@
 import type { FastifyInstance } from 'fastify';
+import { registerCompleteCardSelectionRoute } from './gameRoutes/registerCompleteCardSelectionRoute.js';
+import { registerConfirmCardChoiceRoute } from './gameRoutes/registerConfirmCardChoiceRoute.js';
 import { registerCreateGameRoute } from './gameRoutes/registerCreateGameRoute.js';
 import { registerGetGameEventsRoute } from './gameRoutes/registerGetGameEventsRoute.js';
 import { registerGetGameRoute } from './gameRoutes/registerGetGameRoute.js';
@@ -11,6 +13,8 @@ import { registerSwapPlayerPositionsRoute } from './gameRoutes/registerSwapPlaye
 import { registerUpdateGameSettingsRoute } from './gameRoutes/registerUpdateGameSettingsRoute.js';
 
 export function registerGameRoutes(app: FastifyInstance): void {
+  registerCompleteCardSelectionRoute(app);
+  registerConfirmCardChoiceRoute(app);
   registerListGamesRoute(app);
   registerCreateGameRoute(app);
   registerGetGameRoute(app);

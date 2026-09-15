@@ -1,12 +1,9 @@
+import { createGameStart } from '../../CardSelection.js';
 import type { StartGameCommandData } from '../../command-data/LifecycleCommandData.js';
 import { type GameEventData, GAME_EVENT_VERSION } from '../../events.js';
 import type { GameState } from '../../state.js';
 import type { DecidableCommand } from '../DecidableCommand.js';
-import {
-  FIRST_PLAYER_SEAT,
-  FIRST_PLAYER_TEAM,
-  getRequiredPlayerCount,
-} from './lifecycleRules.js';
+import { getRequiredPlayerCount } from './lifecycleRules.js';
 
 // eslint-disable-next-line max-len
 export class StartGameCommand implements DecidableCommand<StartGameCommandData> {
@@ -29,21 +26,28 @@ export class StartGameCommand implements DecidableCommand<StartGameCommandData> 
       return [];
     }
 
-    const firstPlayer = state.players.find(
-      (player) =>
-        player.team === FIRST_PLAYER_TEAM && player.seat === FIRST_PLAYER_SEAT
-    );
-    if (firstPlayer == null) {
-      return [];
-    }
+    const gameStart = createGameStart({
+      format: state.settings.format,
+      mode: state.settings.cardSelectionMode,
+      players: state.players,
+    });
 
     return [
       {
         payload: {
-          firstPlayerId: firstPlayer.id,
+          firstPlayerId: gameStart.firstPlayerId,
         },
         sequence: state.lastEventSequence + 1,
         type: 'GameStarted',
+        version: GAME_EVENT_VERSION,
+      },
+      {
+        payload: {
+          playerOrder: gameStart.playerOrder,
+          selection: gameStart.selection,
+        },
+        sequence: state.lastEventSequence + 2,
+        type: 'CardsPrepared',
         version: GAME_EVENT_VERSION,
       },
     ];

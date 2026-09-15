@@ -8,9 +8,12 @@ describe('game session event synchronization', () => {
     const store = createGameSessionStore();
 
     store.getState().hydrate({
+      cardSelection: null,
       creatorId: 'creator-1',
       currentPlayerId: null,
       featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+      firstPlayerId: null,
+      initiativePlayerId: null,
       lastEventSequence: 1,
       moveCount: 0,
       players: [],
@@ -41,9 +44,12 @@ describe('game session event synchronization', () => {
     const store = createGameSessionStore();
 
     store.getState().hydrate({
+      cardSelection: null,
       creatorId: 'creator-1',
       currentPlayerId: null,
       featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+      firstPlayerId: null,
+      initiativePlayerId: null,
       lastEventSequence: 1,
       moveCount: 0,
       players: [],

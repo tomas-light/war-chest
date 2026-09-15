@@ -54,6 +54,21 @@ export interface WarChestResources {
       russian: '';
     };
   };
+  'features/complete-card-selection': {
+    AutoCompleteCardSelection: {
+      pending: '';
+      retry: '';
+    };
+  };
+  'features/confirm-card-choice': {
+    ConfirmCardChoiceButton: {
+      confirmBan: '';
+      confirmPick: '';
+      pending: '';
+      selectBan: '';
+      selectCard: '';
+    };
+  };
   'features/create-game': {
     CreateGameForm: {
       create: '';
@@ -204,6 +219,83 @@ export interface WarChestResources {
       playerTop: '';
       tableArea: '';
       you: '';
+    };
+    CardSelectionPage: {
+      actionHint: '';
+      afterBansHint: '';
+      automaticTransitionHint: '';
+      available: '';
+      banCount: '{{count}}';
+      banned: '';
+      blackTeam: '';
+      candidate: '';
+      candidateHint: '{{unit}}';
+      candidateRepeatHint: '{{unit}}';
+      compactCount: '{{count}} {{total}}';
+      compactCurrentCount: '{{count}} {{total}}';
+      count: '{{count}} {{total}}';
+      currentCount: '{{count}} {{total}}';
+      currentCountMobile: '{{count}} {{total}}';
+      draftMode: '';
+      duelBanDescription: '{{number}} {{total}}';
+      duelDescription: '{{total}}';
+      duelEliminationDescription: '';
+      duelEliminationSequence: '';
+      duelEyebrow: '{{mode}}';
+      duelSequence: '';
+      eliminationDraftMode: '';
+      emptyCard: '';
+      forwardHint: '';
+      lastPick: '{{number}}';
+      lastRoundHint: '';
+      nextBan: '{{number}} {{player}}';
+      nextForwardHint: '';
+      nextPick: '{{number}} {{player}}';
+      nextReverseHint: '';
+      opponentBanTurn: '{{player}}';
+      opponentPickTurn: '{{player}}';
+      playerFallback: '{{playerId}}';
+      reverseHint: '';
+      selectedByAlly: '';
+      selectedByOpponent: '';
+      selectedByYou: '';
+      selectedCards: '';
+      teamBanDescription: '';
+      teamBanHint: '';
+      teamBanTurn: '{{number}} {{player}}';
+      teamBanTurnMobile: '{{number}} {{player}}';
+      teamDescription: '';
+      teamEliminationDescription: '';
+      teamEyebrow: '{{mode}}';
+      teamForwardTurn: '{{number}} {{player}}';
+      teamForwardTurnMobile: '{{number}} {{player}}';
+      teamReverseTurn: '{{number}} {{player}}';
+      teamReverseTurnMobile: '{{number}} {{player}}';
+      title: '';
+      units: {
+        archer: '';
+        berserker: '';
+        cavalry: '';
+        crossbowman: '';
+        ensign: '';
+        footman: '';
+        knight: '';
+        lancer: '';
+        lightCavalry: '';
+        marshal: '';
+        mercenary: '';
+        pikeman: '';
+        royalGuard: '';
+        scout: '';
+        swordsman: '';
+        warriorPriest: '';
+      };
+      waitHint: '';
+      whiteTeam: '';
+      you: '';
+      yourBanTurn: '';
+      yourPickTurn: '';
+      youSuffix: '';
     };
     GameError: {
       backToLobby: '';
@@ -496,6 +588,13 @@ export interface WarChestTranslationParameters {
   'features/change-language.LanguageSelector.english': null;
   'features/change-language.LanguageSelector.label': null;
   'features/change-language.LanguageSelector.russian': null;
+  'features/complete-card-selection.AutoCompleteCardSelection.pending': null;
+  'features/complete-card-selection.AutoCompleteCardSelection.retry': null;
+  'features/confirm-card-choice.ConfirmCardChoiceButton.confirmBan': null;
+  'features/confirm-card-choice.ConfirmCardChoiceButton.confirmPick': null;
+  'features/confirm-card-choice.ConfirmCardChoiceButton.pending': null;
+  'features/confirm-card-choice.ConfirmCardChoiceButton.selectBan': null;
+  'features/confirm-card-choice.ConfirmCardChoiceButton.selectCard': null;
   'features/create-game.CreateGameForm.create': null;
   'features/create-game.CreateGameForm.creating': null;
   'features/create-game.CreateGameForm.description': null;
@@ -582,6 +681,121 @@ export interface WarChestTranslationParameters {
   'pages/active-game.ActiveGameTable.playerTop': null;
   'pages/active-game.ActiveGameTable.tableArea': null;
   'pages/active-game.ActiveGameTable.you': null;
+  'pages/active-game.CardSelectionPage.actionHint': null;
+  'pages/active-game.CardSelectionPage.afterBansHint': null;
+  'pages/active-game.CardSelectionPage.automaticTransitionHint': null;
+  'pages/active-game.CardSelectionPage.available': null;
+  'pages/active-game.CardSelectionPage.banCount': { count: unknown };
+  'pages/active-game.CardSelectionPage.banned': null;
+  'pages/active-game.CardSelectionPage.blackTeam': null;
+  'pages/active-game.CardSelectionPage.candidate': null;
+  'pages/active-game.CardSelectionPage.candidateHint': { unit: unknown };
+  'pages/active-game.CardSelectionPage.candidateRepeatHint': { unit: unknown };
+  'pages/active-game.CardSelectionPage.compactCount': {
+    count: unknown;
+    total: unknown;
+  };
+  'pages/active-game.CardSelectionPage.compactCurrentCount': {
+    count: unknown;
+    total: unknown;
+  };
+  'pages/active-game.CardSelectionPage.count': {
+    count: unknown;
+    total: unknown;
+  };
+  'pages/active-game.CardSelectionPage.currentCount': {
+    count: unknown;
+    total: unknown;
+  };
+  'pages/active-game.CardSelectionPage.currentCountMobile': {
+    count: unknown;
+    total: unknown;
+  };
+  'pages/active-game.CardSelectionPage.draftMode': null;
+  'pages/active-game.CardSelectionPage.duelBanDescription': {
+    number: unknown;
+    total: unknown;
+  };
+  'pages/active-game.CardSelectionPage.duelDescription': { total: unknown };
+  'pages/active-game.CardSelectionPage.duelEliminationDescription': null;
+  'pages/active-game.CardSelectionPage.duelEliminationSequence': null;
+  'pages/active-game.CardSelectionPage.duelEyebrow': { mode: unknown };
+  'pages/active-game.CardSelectionPage.duelSequence': null;
+  'pages/active-game.CardSelectionPage.eliminationDraftMode': null;
+  'pages/active-game.CardSelectionPage.emptyCard': null;
+  'pages/active-game.CardSelectionPage.forwardHint': null;
+  'pages/active-game.CardSelectionPage.lastPick': { number: unknown };
+  'pages/active-game.CardSelectionPage.lastRoundHint': null;
+  'pages/active-game.CardSelectionPage.nextBan': {
+    number: unknown;
+    player: unknown;
+  };
+  'pages/active-game.CardSelectionPage.nextForwardHint': null;
+  'pages/active-game.CardSelectionPage.nextPick': {
+    number: unknown;
+    player: unknown;
+  };
+  'pages/active-game.CardSelectionPage.nextReverseHint': null;
+  'pages/active-game.CardSelectionPage.opponentBanTurn': { player: unknown };
+  'pages/active-game.CardSelectionPage.opponentPickTurn': { player: unknown };
+  'pages/active-game.CardSelectionPage.playerFallback': { playerId: unknown };
+  'pages/active-game.CardSelectionPage.reverseHint': null;
+  'pages/active-game.CardSelectionPage.selectedByAlly': null;
+  'pages/active-game.CardSelectionPage.selectedByOpponent': null;
+  'pages/active-game.CardSelectionPage.selectedByYou': null;
+  'pages/active-game.CardSelectionPage.selectedCards': null;
+  'pages/active-game.CardSelectionPage.teamBanDescription': null;
+  'pages/active-game.CardSelectionPage.teamBanHint': null;
+  'pages/active-game.CardSelectionPage.teamBanTurn': {
+    number: unknown;
+    player: unknown;
+  };
+  'pages/active-game.CardSelectionPage.teamBanTurnMobile': {
+    number: unknown;
+    player: unknown;
+  };
+  'pages/active-game.CardSelectionPage.teamDescription': null;
+  'pages/active-game.CardSelectionPage.teamEliminationDescription': null;
+  'pages/active-game.CardSelectionPage.teamEyebrow': { mode: unknown };
+  'pages/active-game.CardSelectionPage.teamForwardTurn': {
+    number: unknown;
+    player: unknown;
+  };
+  'pages/active-game.CardSelectionPage.teamForwardTurnMobile': {
+    number: unknown;
+    player: unknown;
+  };
+  'pages/active-game.CardSelectionPage.teamReverseTurn': {
+    number: unknown;
+    player: unknown;
+  };
+  'pages/active-game.CardSelectionPage.teamReverseTurnMobile': {
+    number: unknown;
+    player: unknown;
+  };
+  'pages/active-game.CardSelectionPage.title': null;
+  'pages/active-game.CardSelectionPage.units.archer': null;
+  'pages/active-game.CardSelectionPage.units.berserker': null;
+  'pages/active-game.CardSelectionPage.units.cavalry': null;
+  'pages/active-game.CardSelectionPage.units.crossbowman': null;
+  'pages/active-game.CardSelectionPage.units.ensign': null;
+  'pages/active-game.CardSelectionPage.units.footman': null;
+  'pages/active-game.CardSelectionPage.units.knight': null;
+  'pages/active-game.CardSelectionPage.units.lancer': null;
+  'pages/active-game.CardSelectionPage.units.lightCavalry': null;
+  'pages/active-game.CardSelectionPage.units.marshal': null;
+  'pages/active-game.CardSelectionPage.units.mercenary': null;
+  'pages/active-game.CardSelectionPage.units.pikeman': null;
+  'pages/active-game.CardSelectionPage.units.royalGuard': null;
+  'pages/active-game.CardSelectionPage.units.scout': null;
+  'pages/active-game.CardSelectionPage.units.swordsman': null;
+  'pages/active-game.CardSelectionPage.units.warriorPriest': null;
+  'pages/active-game.CardSelectionPage.waitHint': null;
+  'pages/active-game.CardSelectionPage.whiteTeam': null;
+  'pages/active-game.CardSelectionPage.you': null;
+  'pages/active-game.CardSelectionPage.yourBanTurn': null;
+  'pages/active-game.CardSelectionPage.yourPickTurn': null;
+  'pages/active-game.CardSelectionPage.youSuffix': null;
   'pages/active-game.GameError.backToLobby': null;
   'pages/active-game.GameError.title': null;
   'pages/active-game.PlayerPanel.blackTeam': null;

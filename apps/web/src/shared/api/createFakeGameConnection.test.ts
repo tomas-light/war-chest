@@ -13,9 +13,12 @@ const GAME_RESPONSE: GameResponse = {
   gameId: GAME_ID,
   players: [],
   view: {
+    cardSelection: null,
     creatorId: '10000000-0000-4000-8000-000000000001',
     currentPlayerId: null,
     featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+    firstPlayerId: null,
+    initiativePlayerId: null,
     lastEventSequence: 1,
     moveCount: 0,
     players: [],
