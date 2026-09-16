@@ -9,7 +9,7 @@ import {
   getBattlefieldLayout,
 } from '@war-chest/game-engine';
 import clsx from 'clsx';
-import { type ReactNode, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { Heart, Ore, UnitToken } from '#/entities/game-assets';
 import { useTranslation } from '#/shared/i18n/useTranslation';
 import classes from './BattlefieldBoard.module.scss';
@@ -43,6 +43,7 @@ const MIN_SCALE = 1;
 const MAX_SCALE = 2.4;
 const SCALE_STEP = 0.25;
 const LAST_CANONICAL_CELL_INDEX = 6;
+const DESKTOP_MEDIA_QUERY = '(min-width: 621px)';
 
 // Pixel-perfect cell centers measured in the corresponding Figma battlefield
 // frames and converted to percentages so they scale with the board canvas.
@@ -76,6 +77,27 @@ export function BattlefieldBoard(props: Props) {
 
   const [pan, setPan] = useState<Pan>({ x: 0, y: 0 });
   const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const desktopMediaQuery = window.matchMedia(DESKTOP_MEDIA_QUERY);
+
+    desktopMediaQuery.addEventListener('change', handleViewportChange);
+
+    return () => {
+      desktopMediaQuery.removeEventListener('change', handleViewportChange);
+    };
+
+    function handleViewportChange(event: MediaQueryListEvent): void {
+      if (!event.matches) {
+        return;
+      }
+
+      pointersRef.current.clear();
+      gestureRef.current = null;
+      setPan({ x: 0, y: 0 });
+      setScale(MIN_SCALE);
+    }
+  }, []);
 
   const layout = getBattlefieldLayout(format);
   const isFlipped = perspective === 'black';

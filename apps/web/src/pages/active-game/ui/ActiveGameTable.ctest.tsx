@@ -121,3 +121,24 @@ test('renders the complete team layout and mobile teammate switches', async ({
   await switchButtons.first().click();
   await expect(page.getByText('Дмитрий')).toBeVisible();
 });
+
+test('resets the mobile battlefield view when switching to desktop', async ({
+  page,
+}) => {
+  await page.setViewportSize({ height: 1200, width: 390 });
+  await page.goto(
+    '/?story=pages/active-game/ui/ActiveGameTable/DuelWhitePlayer'
+  );
+
+  const canvas = page.getByRole('gridcell').first().locator('..');
+
+  await page.getByRole('button', { name: 'Увеличить поле' }).click();
+  await expect(canvas).toHaveAttribute('style', /scale\(1\.25\)/);
+
+  await page.setViewportSize({ height: 1000, width: 1280 });
+
+  await expect(canvas).toHaveAttribute(
+    'style',
+    'transform: translate(0px, 0px) scale(1);'
+  );
+});
