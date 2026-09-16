@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="850" viewBox="0 0 1400 850" role="img" aria-labelledby="title description">
+  <title id="title">Приватный черновик и подтверждение полного хода</title>
+  <desc id="description">Игрок создаёт и изменяет черновик от подтверждённого состояния. Движок проверяет каждый шаг, а игрок и союзник видят проекцию на поле. Противники и зрители до подтверждения ничего не получают. Подтверждение атомарно сохраняет пакет событий, удаляет черновик и доставляет ход всем. Клиенты, уже видевшие финальную ревизию, не повторяют анимации; остальные проигрывают цепочку последовательно.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 Z" fill="#475569"/>
+    </marker>
+    <style>
+      .title { font: 700 28px Arial, sans-serif; fill: #0f172a; }
+      .heading { font: 700 20px Arial, sans-serif; fill: #0f172a; }
+      .text { font: 16px Arial, sans-serif; fill: #334155; }
+      .small { font: 14px Arial, sans-serif; fill: #475569; }
+      .center { text-anchor: middle; }
+      .panel { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 1.5; }
+      .team-panel { fill: #ecfeff; stroke: #0891b2; stroke-width: 2; }
+      .hidden-panel { fill: #fff7ed; stroke: #ea580c; stroke-width: 2; }
+      .fact-panel { fill: #f0fdf4; stroke: #16a34a; stroke-width: 2; }
+      .block { fill: #ffffff; stroke: #94a3b8; stroke-width: 1.5; }
+      .team-block { fill: #cffafe; stroke: #0891b2; stroke-width: 1.5; }
+      .fact-block { fill: #dcfce7; stroke: #16a34a; stroke-width: 1.5; }
+      .cancel-block { fill: #fef2f2; stroke: #dc2626; stroke-width: 1.5; }
+      .arrow { fill: none; stroke: #475569; stroke-width: 2.5; marker-end: url(#arrow); }
+      .loop { fill: none; stroke: #0891b2; stroke-width: 2; stroke-dasharray: 7 5; marker-end: url(#arrow); }
+    </style>
+  </defs>
+  <rect width="1400" height="850" fill="#ffffff"/>
+  <text x="32" y="44" class="title">Черновик полного хода: приватный план, публичный результат</text>
+  <text x="32" y="73" class="text">Намерения не входят в event log; только подтверждённая цепочка становится игровыми фактами.</text>
+
+  <rect x="28" y="102" width="1344" height="236" rx="18" class="team-panel"/>
+  <text x="52" y="135" class="heading">Командная область: действующий игрок и союзник</text>
+
+  <rect x="56" y="168" width="230" height="104" rx="14" class="block"/>
+  <text x="171" y="203" class="heading center">Подтверждённое</text>
+  <text x="171" y="229" class="text center">состояние партии</text>
+  <text x="171" y="253" class="small center">base sequence</text>
+
+  <rect x="344" y="168" width="250" height="104" rx="14" class="team-block"/>
+  <text x="469" y="202" class="heading center">Черновик хода</text>
+  <text x="469" y="228" class="text center">шаги и revision</text>
+  <text x="469" y="252" class="small center">один на игру</text>
+
+  <rect x="652" y="168" width="276" height="104" rx="14" class="team-block"/>
+  <text x="790" y="198" class="heading center">Проверка движком</text>
+  <text x="790" y="224" class="text center">проекция и следующие</text>
+  <text x="790" y="248" class="text center">допустимые цели</text>
+
+  <rect x="986" y="168" width="330" height="104" rx="14" class="team-block"/>
+  <text x="1151" y="198" class="heading center">Обычное игровое поле</text>
+  <text x="1151" y="224" class="text center">игрок управляет, союзник</text>
+  <text x="1151" y="248" class="text center">видит анимации и индикатор</text>
+
+  <path d="M 286 220 H 336" class="arrow"/>
+  <path d="M 594 220 H 644" class="arrow"/>
+  <path d="M 928 220 H 978" class="arrow"/>
+  <path d="M 1148 280 C 1080 322 700 323 505 280" class="loop"/>
+  <text x="822" y="325" class="small center">следующий шаг, замена или отмена части цепочки</text>
+
+  <rect x="28" y="368" width="414" height="150" rx="18" class="hidden-panel"/>
+  <text x="235" y="403" class="heading center">Противники и зрители</text>
+  <text x="235" y="437" class="text center">до подтверждения не получают шаги,</text>
+  <text x="235" y="463" class="text center">проекцию поля, цели и временный журнал</text>
+  <text x="235" y="491" class="small center">черновик остаётся скрытой командной информацией</text>
+
+  <rect x="500" y="368" width="272" height="150" rx="18" class="panel"/>
+  <text x="636" y="405" class="heading center">Решение игрока</text>
+  <rect x="516" y="434" width="112" height="52" rx="12" class="cancel-block"/>
+  <text x="572" y="466" class="text center">Отмена</text>
+  <rect x="642" y="434" width="120" height="52" rx="12" class="fact-block"/>
+  <text x="702" y="466" class="text center">Подтвердить</text>
+
+  <rect x="830" y="368" width="542" height="150" rx="18" class="fact-panel"/>
+  <text x="1101" y="405" class="heading center">Атомарная фиксация</text>
+  <text x="1101" y="437" class="text center">повторная проверка всей цепочки</text>
+  <text x="1101" y="463" class="text center">и упорядоченный пакет игровых событий</text>
+  <text x="1101" y="491" class="small center">после успеха активный черновик удаляется</text>
+
+  <path d="M 1151 272 V 350 H 636 V 380" class="arrow"/>
+  <path d="M 762 460 H 822" class="arrow"/>
+  <path d="M 516 460 V 460 H 470 V 350 H 171 V 280" class="arrow"/>
+  <text x="347" y="578" class="small center">отмена: подтверждённое состояние не меняется</text>
+
+  <rect x="28" y="616" width="1344" height="188" rx="18" class="panel"/>
+  <text x="52" y="650" class="heading">Доставка подтверждённого хода</text>
+
+  <rect x="72" y="680" width="566" height="88" rx="14" class="team-block"/>
+  <text x="355" y="712" class="heading center">Финальная revision уже показана</text>
+  <text x="355" y="740" class="text center">бесшовное подтверждение без повторного движения</text>
+
+  <rect x="762" y="680" width="566" height="88" rx="14" class="fact-block"/>
+  <text x="1045" y="712" class="heading center">Черновик не показывался или пропущен</text>
+  <text x="1045" y="740" class="text center">последовательное воспроизведение цепочки один раз</text>
+
+  <path d="M 1000 518 V 586 H 400 V 672" class="arrow"/>
+  <path d="M 1045 518 V 584 H 1045 V 672" class="arrow"/>
+</svg>
