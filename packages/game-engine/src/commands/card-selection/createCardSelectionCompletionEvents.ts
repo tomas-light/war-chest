@@ -1,3 +1,4 @@
+import { createInitialBattlefield } from '../../Battlefield.js';
 import {
   createNextCardChoice,
   getCurrentCardSelectionPlayer,
@@ -51,6 +52,34 @@ export function createCardSelectionCompletionEvents(
       version: GAME_EVENT_VERSION,
     });
   }
+
+  const players = state.players.map((player) => ({
+    ...player,
+    cardIds: [
+      ...player.cardIds,
+      ...events.flatMap((event) => {
+        if (
+          event.type === 'CardChoiceConfirmed' &&
+          event.payload.action === 'pick' &&
+          event.payload.playerId === player.id
+        ) {
+          return [event.payload.unitId];
+        }
+
+        return [];
+      }),
+    ],
+  }));
+
+  events.push({
+    payload: createInitialBattlefield({
+      format: state.settings.format,
+      players,
+    }),
+    sequence: state.lastEventSequence + events.length + 1,
+    type: 'BattlefieldPrepared',
+    version: GAME_EVENT_VERSION,
+  });
 
   events.push({
     payload: {},

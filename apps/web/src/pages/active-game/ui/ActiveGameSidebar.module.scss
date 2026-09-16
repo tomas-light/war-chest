@@ -1,9 +1,10 @@
 .sidebarEyebrow {
   margin: 0;
   color: var(--wc-color-cyan-soft);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 1.54px;
+  line-height: 16px;
   text-transform: uppercase;
 }
 
@@ -11,13 +12,15 @@
   position: sticky;
   top: 98px;
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   gap: 18px;
+  align-self: stretch;
 }
 
 .sidebarSection {
   display: grid;
   gap: 14px;
-  padding: 22px;
+  padding: 23px;
   border: 1px solid rgb(199 150 53 / 34%);
   border-radius: 3px 20px;
   background: linear-gradient(145deg, rgb(23 32 35 / 94%), rgb(8 13 16 / 96%));
@@ -33,11 +36,17 @@
   color: var(--wc-color-text);
   font-family: var(--wc-font-display);
   font-size: 20px;
+  line-height: 22px;
 }
 
 .sidebarSection > p:not(.sidebarEyebrow) {
   color: var(--wc-color-text-muted);
-  line-height: 1.5;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.historySection > button {
+  margin-top: auto;
 }
 
 .placeholderActions {
@@ -49,6 +58,7 @@
   .sidebar {
     position: static;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: none;
   }
 }
 

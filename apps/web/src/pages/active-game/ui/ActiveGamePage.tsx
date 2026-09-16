@@ -106,9 +106,10 @@ export function ActiveGamePage() {
         <div className={classes.layout}>
           <ActiveGameTable
             playerProfiles={playerProfiles}
-            players={liveState.players}
             userId={userId}
+            view={liveState}
           />
+
           <ActiveGameSidebar
             gameId={gameId}
             onSurrendered={hydrateGame}

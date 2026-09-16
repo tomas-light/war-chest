@@ -181,7 +181,7 @@ describe('fake game API lifecycle', () => {
 
     expect(startedGame.view).toMatchObject({
       creatorId: FAKE_SEED_IDENTIFIERS.firstUser,
-      lastEventSequence: 5,
+      lastEventSequence: 6,
       privateMoves: [],
       status: 'active',
     });
@@ -365,7 +365,7 @@ describe('fake game API lifecycle', () => {
       expect(confirmedGame.view).toMatchObject({
         status: 'active',
         cardSelection: null,
-        lastEventSequence: pendingGame.view.lastEventSequence + 3,
+        lastEventSequence: pendingGame.view.lastEventSequence + 4,
       });
     });
 

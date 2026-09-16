@@ -112,25 +112,43 @@
     "automaticTransitionHint": "Оставшаяся карта выдаётся автоматически — сразу после подтверждения откроется игровой стол."
   },
   "ActiveGameTable": {
-    "boardDescription": "Здесь будет размещено поле War Chest.",
-    "boardLabel": "Игровое поле",
+    "ally": "Союзник",
     "opponent": "Оппонент",
     "playerBottom": "Игрок снизу",
+    "playerFallback": "Игрок {{playerId}}",
     "playerTop": "Игрок сверху",
+    "preparing": "Подготавливаем игровое поле…",
+    "showTeammate": "Показать другого игрока команды",
     "tableArea": "Игровое поле",
     "you": "Вы"
+  },
+  "BattlefieldBoard": {
+    "cell": "Клетка {{cellId}}",
+    "controlPoint": "Точка руды на клетке {{cellId}}",
+    "initiative": "Инициатива · {{player}}",
+    "resetZoom": "Сбросить масштаб поля",
+    "unit": "{{unit}} на клетке {{cellId}}",
+    "zoomControls": "Масштаб игрового поля",
+    "zoomIn": "Увеличить поле",
+    "zoomOut": "Уменьшить поле"
   },
   "GameError": {
     "backToLobby": "Вернуться в лобби",
     "title": "Не удалось открыть игровой стол"
   },
   "PlayerPanel": {
+    "bag": "Мешок жетонов",
     "blackTeam": "Чёрная команда",
     "disconnected": "Соединение потеряно",
+    "eliminated": "Устранены",
     "empty": "Место свободно",
+    "hand": "Рука · {{count}}",
+    "initiative": "Владелец инициативы",
     "left": "Покинул игру",
     "noPlayer": "Нет игрока",
     "playerFallback": "Игрок {{playerId}}",
+    "supply": "Снабжение",
+    "unitCount": "{{count}} из {{total}}",
     "whiteTeam": "Белая команда"
   }
 }

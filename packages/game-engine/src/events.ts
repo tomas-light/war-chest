@@ -1,4 +1,5 @@
 import type { RuntimeFeatureFlags } from '@war-chest/feature-flags';
+import type { BattlefieldState } from './Battlefield.js';
 import type {
   CardSelectionAction,
   CardSelectionPhase,
@@ -121,6 +122,11 @@ export interface CardSelectionCompletedEventData extends EventMetadata {
   type: 'CardSelectionCompleted';
 }
 
+export interface BattlefieldPreparedEventData extends EventMetadata {
+  payload: BattlefieldState;
+  type: 'BattlefieldPrepared';
+}
+
 export interface TestMovePerformedEventData extends EventMetadata {
   payload: {
     moveNumber: number;
@@ -139,6 +145,7 @@ export interface GameFinishedEventData extends EventMetadata {
 }
 
 export type GameEventData =
+  | BattlefieldPreparedEventData
   | CardChoiceConfirmedEventData
   | CardSelectionCompletedEventData
   | CardsPreparedEventData

@@ -1,5 +1,25 @@
 export { applyEvent } from './applyEvent.js';
 export { applyViewEvent } from './applyViewEvent.js';
+export {
+  createInitialBattlefield,
+  DUEL_CELL_IDS,
+  getBattlefieldLayout,
+  TEAM_CELL_IDS,
+} from './Battlefield.js';
+export type {
+  BattlefieldCellKind,
+  BattlefieldCellZone,
+  BattlefieldControlPoint,
+  BattlefieldLayout,
+  BattlefieldLayoutCell,
+  BattlefieldState,
+  BattlefieldUnit,
+  CellId,
+  GameViewBattlefieldState,
+  GameViewPlayerBattlefieldResources,
+  PlayerBattlefieldResources,
+  PlayerUnitSupply,
+} from './Battlefield.js';
 export type {
   CardSelectionCommandData,
   CompleteCardSelectionCommandData,
@@ -60,6 +80,7 @@ export type {
   GameSettings,
 } from './GameSettings.js';
 export type {
+  BattlefieldPreparedEventData,
   CardChoiceConfirmedEventData,
   CardSelectionCompletedEventData,
   CardsPreparedEventData,
@@ -101,6 +122,7 @@ export type {
   Viewer,
 } from './state.js';
 export type {
+  BattlefieldPreparedViewEventData,
   CardChoiceConfirmedViewEventData,
   CardSelectionCompletedViewEventData,
   CardsPreparedViewEventData,

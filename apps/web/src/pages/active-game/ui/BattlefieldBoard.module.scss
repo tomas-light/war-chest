@@ -1,0 +1,202 @@
+@use 'sass:math';
+
+// Unitless reference measurements come from the 902 x 483 desktop battlefield
+// content area in Figma. Percentages are derived from them so the whole board
+// scales without hiding pixel-perfect values behind unexplained decimals.
+$battlefield-reference-width: 902;
+$battlefield-reference-height: 483;
+$duel-ground-cell-reference-width: 68.8226;
+$team-ground-cell-reference-width: 56.1946;
+$duel-control-point-reference-width: 84.5174;
+$team-control-point-reference-width: 67.65;
+
+// A regular flat-top hexagon has width / height = 2 / sqrt(3).
+$flat-top-hexagon-aspect-ratio: 1.1547;
+
+@function battlefield-width-percentage($reference-width) {
+  @return math.percentage(
+    math.div($reference-width, $battlefield-reference-width)
+  );
+}
+
+.boardSection {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--wc-color-brass);
+  border-radius: 18px;
+  background: var(--wc-color-surface-raised);
+}
+
+.initiative {
+  position: absolute;
+  z-index: 5;
+  top: 12px;
+  left: 50%;
+  margin: 0;
+  color: var(--wc-color-text-muted);
+  font-size: 12px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.viewport {
+  overflow: hidden;
+  margin: 15px 31px;
+  touch-action: none;
+}
+
+.canvas {
+  position: relative;
+  width: 100%;
+  aspect-ratio: #{$battlefield-reference-width} /
+    #{$battlefield-reference-height};
+  background:
+    radial-gradient(circle at 50% 45%, rgb(21 217 237 / 4%), transparent 48%),
+    var(--wc-color-surface-raised);
+  transform-origin: center;
+  transition: transform 160ms ease-out;
+}
+
+.cell,
+.unit {
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+
+.cell {
+  width: battlefield-width-percentage($duel-ground-cell-reference-width);
+  aspect-ratio: $flat-top-hexagon-aspect-ratio;
+}
+
+.compactCell {
+  width: battlefield-width-percentage($team-ground-cell-reference-width);
+}
+
+.controlPointCell {
+  z-index: 2;
+  width: battlefield-width-percentage($duel-control-point-reference-width);
+  aspect-ratio: 1;
+}
+
+.compactControlPointCell {
+  width: battlefield-width-percentage($team-control-point-reference-width);
+}
+
+.duelCell,
+.teamCoreCell,
+.teamZoneCell {
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
+
+.duelCell {
+  background-image: url('../assets/duelCell.svg');
+}
+
+.teamCoreCell {
+  background-image: url('../assets/teamCoreCell.svg');
+}
+
+.teamZoneCell {
+  background-image: url('../assets/teamZoneCell.svg');
+}
+
+.cell:focus-visible {
+  outline: 2px solid var(--wc-color-cyan);
+  outline-offset: 3px;
+}
+
+.controlPointCell > span {
+  width: 100%;
+}
+
+.unit {
+  z-index: 3;
+  display: grid;
+  place-items: center;
+}
+
+.heart {
+  position: absolute;
+  right: 4%;
+  bottom: 4%;
+}
+
+.effects {
+  position: absolute;
+  z-index: 4;
+  width: 100%;
+  height: 100%;
+  inset: 0;
+  pointer-events: none;
+}
+
+.controls {
+  position: absolute;
+  z-index: 6;
+  right: 10px;
+  bottom: 10px;
+  display: flex;
+  gap: 4px;
+}
+
+.controls button {
+  min-width: 36px;
+  height: 34px;
+  border: 1px solid rgb(199 150 53 / 64%);
+  border-radius: 8px;
+  background: rgb(8 13 16 / 92%);
+  color: var(--wc-color-text);
+  font: inherit;
+}
+
+.controls button:focus-visible {
+  outline: 2px solid var(--wc-color-cyan);
+  outline-offset: 2px;
+}
+
+.controls button:disabled {
+  opacity: 0.45;
+}
+
+@media (width > 620px) {
+  .initiative,
+  .controls {
+    display: none;
+  }
+}
+
+@media (width <= 620px) {
+  .boardSection {
+    // The mobile Figma frame is 362 x 245. Keeping the ratio makes the board
+    // responsive instead of locking every narrow viewport to 245px.
+    border-radius: 10px;
+    aspect-ratio: 362 / 245;
+  }
+
+  .initiative {
+    top: 8px;
+    line-height: 28px;
+  }
+
+  .viewport {
+    position: absolute;
+    top: 51px;
+    right: 11px;
+    bottom: 11px;
+    left: 11px;
+    margin: 0;
+  }
+
+  .canvas {
+    height: 100%;
+    aspect-ratio: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .canvas {
+    transition: none;
+  }
+}

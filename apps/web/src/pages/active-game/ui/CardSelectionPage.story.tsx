@@ -133,6 +133,7 @@ function SelectionStory(props: Props) {
   }));
 
   const view: GameView = {
+    battlefield: null,
     cardSelection: {
       choices,
       phase:

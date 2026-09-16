@@ -1,5 +1,6 @@
 import { runtimeFeatureFlagsSchema } from '@war-chest/feature-flags';
 import { z } from 'zod';
+import { TEAM_CELL_IDS } from './Battlefield.js';
 import {
   type GameEventData,
   GAME_EVENT_VERSION,
@@ -28,6 +29,50 @@ const jsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
 );
 const gameTeamSchema = z.enum(['black', 'white']);
 const unitIdSchema = z.enum(UNIT_IDS);
+const cellIdSchema = z.enum(TEAM_CELL_IDS);
+const battlefieldSchema = z
+  .object({
+    controlPoints: z.array(
+      z
+        .object({
+          cellId: cellIdSchema,
+          fortified: z.boolean(),
+          ownerTeam: gameTeamSchema.nullable(),
+        })
+        .strict()
+    ),
+    playerResources: z.array(
+      z
+        .object({
+          bag: z.array(unitIdSchema),
+          eliminated: z.array(unitIdSchema),
+          hand: z.array(unitIdSchema),
+          playerId: z.string(),
+          supply: z.array(
+            z
+              .object({
+                count: z.number().int().nonnegative(),
+                total: z.number().int().positive(),
+                unitId: unitIdSchema,
+              })
+              .strict()
+          ),
+        })
+        .strict()
+    ),
+    units: z.array(
+      z
+        .object({
+          bolstered: z.number().int().nonnegative(),
+          cellId: cellIdSchema,
+          id: z.string(),
+          ownerId: z.string(),
+          unitId: unitIdSchema,
+        })
+        .strict()
+    ),
+  })
+  .strict();
 const gameSettingsSchema = z
   .object({
     cardSelectionMode: z.enum(CARD_SELECTION_MODES),
@@ -43,6 +88,12 @@ const eventMetadataSchema = z.object({
 const gameEventDataSchema: z.ZodType<GameEventData> = z.discriminatedUnion(
   'type',
   [
+    eventMetadataSchema
+      .extend({
+        payload: battlefieldSchema,
+        type: z.literal('BattlefieldPrepared'),
+      })
+      .strict(),
     eventMetadataSchema
       .extend({
         payload: z

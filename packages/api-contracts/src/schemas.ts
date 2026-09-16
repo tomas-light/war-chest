@@ -6,6 +6,7 @@ import {
   GAME_EXPANSIONS,
   GAME_FORMATS,
   GAME_RULES_VERSION,
+  TEAM_CELL_IDS,
   UNIT_IDS,
 } from '@war-chest/game-engine';
 import { z } from 'zod';
@@ -64,6 +65,7 @@ const jsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
 const gameIdSchema = z.uuid();
 const gameTeamSchema = z.enum(['black', 'white']);
 const unitIdSchema = z.enum(UNIT_IDS);
+const cellIdSchema = z.enum(TEAM_CELL_IDS);
 const gameFormatSchema = z.enum(GAME_FORMATS);
 const cardSelectionModeSchema = z.enum(CARD_SELECTION_MODES);
 const gameExpansionSchema = z.enum(GAME_EXPANSIONS);
@@ -330,9 +332,53 @@ const privateMoveSchema = z
     moveNumber: z.number().int().positive(),
   })
   .strict();
+const playerUnitSupplySchema = z
+  .object({
+    count: z.number().int().nonnegative(),
+    total: z.number().int().positive(),
+    unitId: unitIdSchema,
+  })
+  .strict();
+const battlefieldControlPointSchema = z
+  .object({
+    cellId: cellIdSchema,
+    fortified: z.boolean(),
+    ownerTeam: gameTeamSchema.nullable(),
+  })
+  .strict();
+const battlefieldUnitSchema = z
+  .object({
+    bolstered: z.number().int().nonnegative(),
+    cellId: cellIdSchema,
+    id: z.string(),
+    ownerId: z.string(),
+    unitId: unitIdSchema,
+  })
+  .strict();
+const gameViewBattlefieldSchema = z
+  .object({
+    controlPoints: z.array(battlefieldControlPointSchema).readonly(),
+    playerResources: z
+      .array(
+        z
+          .object({
+            bagCount: z.number().int().nonnegative().nullable(),
+            eliminated: z.array(unitIdSchema).readonly(),
+            hand: z.array(unitIdSchema).readonly().nullable(),
+            handCount: z.number().int().nonnegative(),
+            playerId: z.string(),
+            supply: z.array(playerUnitSupplySchema).readonly(),
+          })
+          .strict()
+      )
+      .readonly(),
+    units: z.array(battlefieldUnitSchema).readonly(),
+  })
+  .strict();
 
 export const gameViewSchema = z
   .object({
+    battlefield: gameViewBattlefieldSchema.nullable().default(null),
     cardSelection: cardSelectionSchema.nullable(),
     creatorId: z.string(),
     currentPlayerId: z.string().nullable(),
@@ -518,6 +564,12 @@ const cardSelectionCompletedViewEventSchema = eventMetadataSchema
     type: z.literal('CardSelectionCompleted'),
   })
   .strict();
+const battlefieldPreparedViewEventSchema = eventMetadataSchema
+  .extend({
+    payload: gameViewBattlefieldSchema,
+    type: z.literal('BattlefieldPrepared'),
+  })
+  .strict();
 const testMovePerformedViewEventSchema = eventMetadataSchema
   .extend({
     payload: z
@@ -542,6 +594,7 @@ const viewSequenceAdvancedEventSchema = eventMetadataSchema
   .strict();
 
 export const gameViewEventSchema = z.discriminatedUnion('type', [
+  battlefieldPreparedViewEventSchema,
   cardsPreparedViewEventSchema,
   cardChoiceConfirmedViewEventSchema,
   cardSelectionCompletedViewEventSchema,

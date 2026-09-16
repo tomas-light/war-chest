@@ -34,6 +34,7 @@
 | `--wc-color-brass-bright`   | `#efc75e`         | светлая грань латуни и акцентная типографика                 |
 | `--wc-color-cyan`           | `#15d9ed`         | focus, активность, энергия и технические линии               |
 | `--wc-color-cyan-soft`      | `#82edf4`         | мягкая подсветка и вторичные cyan-детали                     |
+| `--wc-color-interaction-hover` | `#fff497`      | hover-рамка компактных вторичных контролов                   |
 | `--wc-color-text`           | `#eee5d2`         | основной тёплый текст                                        |
 | `--wc-color-text-muted`     | `#aaa18f`         | вторичный текст                                              |
 | `--wc-color-error`          | `#ff9d88`         | только ошибки и опасные состояния                            |

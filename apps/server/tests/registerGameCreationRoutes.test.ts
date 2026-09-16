@@ -25,9 +25,13 @@ const GAME_SETTINGS = {
   format: 'duel',
 } as const;
 const WAITING_VIEW: GameView = {
+  battlefield: null,
+  cardSelection: null,
   creatorId: USER_ID,
   currentPlayerId: null,
   featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+  firstPlayerId: null,
+  initiativePlayerId: null,
   lastEventSequence: 1,
   moveCount: 0,
   players: [],

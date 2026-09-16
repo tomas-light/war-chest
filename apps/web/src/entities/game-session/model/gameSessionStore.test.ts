@@ -8,6 +8,7 @@ describe('game session event synchronization', () => {
     const store = createGameSessionStore();
 
     store.getState().hydrate({
+      battlefield: null,
       cardSelection: null,
       creatorId: 'creator-1',
       currentPlayerId: null,
@@ -44,6 +45,7 @@ describe('game session event synchronization', () => {
     const store = createGameSessionStore();
 
     store.getState().hydrate({
+      battlefield: null,
       cardSelection: null,
       creatorId: 'creator-1',
       currentPlayerId: null,

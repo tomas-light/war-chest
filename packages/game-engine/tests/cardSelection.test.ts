@@ -6,6 +6,7 @@ import {
   type GameState,
   applyEvent,
   applyViewEvent,
+  createViewEventFor,
   createViewFor,
   decide,
   getCurrentCardSelectionPlayer,
@@ -270,8 +271,12 @@ describe.each([
         { type: 'CardChoiceConfirmed', sequence: state.lastEventSequence + 1 },
         { type: 'CardChoiceConfirmed', sequence: state.lastEventSequence + 2 },
         {
-          type: 'CardSelectionCompleted',
+          type: 'BattlefieldPrepared',
           sequence: state.lastEventSequence + 3,
+        },
+        {
+          type: 'CardSelectionCompleted',
+          sequence: state.lastEventSequence + 4,
         },
       ]);
     });
@@ -301,8 +306,11 @@ describe.each([
     test('applies the complete batch to the spectator view', () => {
       const spectator = { role: 'spectator' } as const;
       const view = createViewFor(state, spectator);
+      const viewEvents = finalEvents.map((event) =>
+        createViewEventFor(event, spectator)
+      );
 
-      expect(finalEvents.reduce(applyViewEvent, view)).toEqual(
+      expect(viewEvents.reduce(applyViewEvent, view)).toEqual(
         createViewFor(finalEvents.reduce(applyEvent, state), spectator)
       );
     });
@@ -458,6 +466,46 @@ describe('random card selection', () => {
       3, 3, 3, 3,
     ]);
     expect(new Set(assignedCards).size).toBe(12);
+    expect(
+      state.battlefield?.controlPoints.find((point) => point.cellId === 'F7')
+    ).toEqual({ cellId: 'F7', fortified: false, ownerTeam: 'black' });
+    expect(
+      state.battlefield?.controlPoints.find((point) => point.cellId === 'E4')
+    ).toEqual({ cellId: 'E4', fortified: false, ownerTeam: null });
+    expect(
+      state.battlefield?.controlPoints.find((point) => point.cellId === 'A3')
+    ).toEqual({ cellId: 'A3', fortified: false, ownerTeam: 'white' });
+    expect(state.battlefield?.units).toEqual([]);
+    expect(state.battlefield?.controlPoints).toHaveLength(14);
+    expect(
+      state.battlefield?.playerResources.map((resources) => ({
+        bag: resources.bag.length,
+        hand: resources.hand.length,
+        supply: resources.supply.length,
+      }))
+    ).toEqual(TEAM_PLAYERS.map(() => ({ bag: 3, hand: 3, supply: 3 })));
+
+    const spectatorView = createViewFor(state, { role: 'spectator' });
+    expect(
+      spectatorView.battlefield?.playerResources.map((resources) => ({
+        bagCount: resources.bagCount,
+        hand: resources.hand,
+      }))
+    ).toEqual(
+      TEAM_PLAYERS.map(() => ({
+        bagCount: null,
+        hand: null,
+      }))
+    );
+
+    const playerView = createViewFor(state, {
+      playerId: 'white-one',
+      role: 'player',
+    });
+    expect(playerView.battlefield?.playerResources[0]?.bagCount).toBe(3);
+    expect(playerView.battlefield?.playerResources[0]?.hand).toHaveLength(3);
+    expect(playerView.battlefield?.playerResources[1]?.bagCount).toBeNull();
+    expect(playerView.battlefield?.playerResources[1]?.hand).toBeNull();
   });
 });
 
@@ -469,6 +517,7 @@ interface CreateWaitingStateInput {
 
 function createWaitingState(input: CreateWaitingStateInput): GameState {
   return {
+    battlefield: null,
     cardSelection: null,
     creatorId: 'creator',
     currentPlayerId: null,

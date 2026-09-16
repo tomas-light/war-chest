@@ -1,4 +1,8 @@
 import type { RuntimeFeatureFlags } from '@war-chest/feature-flags';
+import type {
+  BattlefieldState,
+  GameViewBattlefieldState,
+} from './Battlefield.js';
 import type { CardSelection } from './CardSelection.js';
 import type { GameSettings } from './GameSettings.js';
 import type { UnitId } from './UnitId.js';
@@ -29,6 +33,7 @@ export interface GamePlayer {
 }
 
 export interface GameState {
+  battlefield: BattlefieldState | null;
   cardSelection: CardSelection | null;
   creatorId: string;
   currentPlayerId: string | null;
@@ -62,6 +67,7 @@ export interface PrivateMove {
 }
 
 export interface GameView {
+  battlefield: GameViewBattlefieldState | null;
   cardSelection: CardSelection | null;
   creatorId: string;
   currentPlayerId: string | null;

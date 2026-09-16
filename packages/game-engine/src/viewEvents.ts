@@ -1,4 +1,5 @@
 import type { RuntimeFeatureFlags } from '@war-chest/feature-flags';
+import type { GameViewBattlefieldState } from './Battlefield.js';
 import type {
   CardSelectionAction,
   CardSelectionPhase,
@@ -119,6 +120,11 @@ export interface CardSelectionCompletedViewEventData extends EventMetadata {
   type: 'CardSelectionCompleted';
 }
 
+export interface BattlefieldPreparedViewEventData extends EventMetadata {
+  payload: GameViewBattlefieldState;
+  type: 'BattlefieldPrepared';
+}
+
 interface PublicTestMoveData {
   moveNumber: number;
   nextPlayerId: string;
@@ -152,6 +158,7 @@ export type TestMovePerformedViewEventData =
   PrivateTestMovePerformedViewEventData | PublicTestMovePerformedViewEventData;
 
 export type GameViewEventData =
+  | BattlefieldPreparedViewEventData
   | CardChoiceConfirmedViewEventData
   | CardSelectionCompletedViewEventData
   | CardsPreparedViewEventData

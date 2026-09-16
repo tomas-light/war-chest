@@ -1,3 +1,4 @@
+import type { GameViewBattlefieldState } from './Battlefield.js';
 import { cloneCardSelection } from './CardSelection.js';
 import { cloneGameSettings } from './GameSettings.js';
 import {
@@ -15,6 +16,7 @@ export function createViewFor(state: GameState, viewer: Viewer): GameView {
       : undefined;
 
   return {
+    battlefield: createBattlefieldView(),
     cardSelection: cloneCardSelection(state.cardSelection),
     creatorId: state.creatorId,
     currentPlayerId: state.currentPlayerId,
@@ -44,4 +46,30 @@ export function createViewFor(state: GameState, viewer: Viewer): GameView {
     teams: cloneGameTeams(state.teams),
     winnerTeam: state.winnerTeam,
   };
+
+  function createBattlefieldView(): GameViewBattlefieldState | null {
+    if (state.battlefield === null || state.battlefield === undefined) {
+      return null;
+    }
+
+    return {
+      controlPoints: state.battlefield.controlPoints.map((point) => ({
+        ...point,
+      })),
+      playerResources: state.battlefield.playerResources.map((resources) => {
+        const canSeeHand =
+          viewer.role === 'player' && viewer.playerId === resources.playerId;
+
+        return {
+          bagCount: canSeeHand ? resources.bag.length : null,
+          eliminated: [...resources.eliminated],
+          hand: canSeeHand ? [...resources.hand] : null,
+          handCount: resources.hand.length,
+          playerId: resources.playerId,
+          supply: resources.supply.map((item) => ({ ...item })),
+        };
+      }),
+      units: state.battlefield.units.map((unit) => ({ ...unit })),
+    };
+  }
 }

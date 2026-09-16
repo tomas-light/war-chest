@@ -13,6 +13,7 @@ const GAME_RESPONSE: GameResponse = {
   gameId: GAME_ID,
   players: [],
   view: {
+    battlefield: null,
     cardSelection: null,
     creatorId: '10000000-0000-4000-8000-000000000001',
     currentPlayerId: null,

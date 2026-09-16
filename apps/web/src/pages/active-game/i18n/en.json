@@ -112,25 +112,43 @@
     "automaticTransitionHint": "The remaining card is assigned automatically — confirming this choice opens the game table immediately."
   },
   "ActiveGameTable": {
-    "boardDescription": "The War Chest board will be placed here.",
-    "boardLabel": "Game board",
+    "ally": "Ally",
     "opponent": "Opponent",
     "playerBottom": "Bottom player",
+    "playerFallback": "Player {{playerId}}",
     "playerTop": "Top player",
+    "preparing": "Preparing the battlefield…",
+    "showTeammate": "Show the other team player",
     "tableArea": "Game board",
     "you": "You"
+  },
+  "BattlefieldBoard": {
+    "cell": "Cell {{cellId}}",
+    "controlPoint": "Control point on cell {{cellId}}",
+    "initiative": "Initiative · {{player}}",
+    "resetZoom": "Reset board zoom",
+    "unit": "{{unit}} on cell {{cellId}}",
+    "zoomControls": "Game board zoom",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out"
   },
   "GameError": {
     "backToLobby": "Back to lobby",
     "title": "Could not open the game table"
   },
   "PlayerPanel": {
+    "bag": "Token bag",
     "blackTeam": "Black team",
     "disconnected": "Connection lost",
+    "eliminated": "Eliminated",
     "empty": "Seat available",
+    "hand": "Hand · {{count}}",
+    "initiative": "Initiative owner",
     "left": "Left the game",
     "noPlayer": "No player",
     "playerFallback": "Player {{playerId}}",
+    "supply": "Supply",
+    "unitCount": "{{count}} of {{total}}",
     "whiteTeam": "White team"
   }
 }

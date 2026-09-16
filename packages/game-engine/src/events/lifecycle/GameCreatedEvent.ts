@@ -27,6 +27,7 @@ export class GameCreatedEvent implements ApplicableEvent<GameCreatedEventData> {
     }
 
     return {
+      battlefield: null,
       cardSelection: null,
       creatorId: this.data.payload.creatorId,
       currentPlayerId: null,

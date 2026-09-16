@@ -1,3 +1,4 @@
+import { createInitialBattlefield } from '../../Battlefield.js';
 import { createGameStart } from '../../CardSelection.js';
 import type { StartGameCommandData } from '../../command-data/LifecycleCommandData.js';
 import { type GameEventData, GAME_EVENT_VERSION } from '../../events.js';
@@ -32,7 +33,7 @@ export class StartGameCommand implements DecidableCommand<StartGameCommandData> 
       players: state.players,
     });
 
-    return [
+    const events: GameEventData[] = [
       {
         payload: {
           firstPlayerId: gameStart.firstPlayerId,
@@ -51,6 +52,34 @@ export class StartGameCommand implements DecidableCommand<StartGameCommandData> 
         version: GAME_EVENT_VERSION,
       },
     ];
+
+    const { selection } = gameStart;
+
+    if (selection.mode === 'random') {
+      const players = state.players.map((player) => {
+        const assignment = selection.assignments.find(
+          (item) => item.playerId === player.id
+        );
+
+        if (assignment === undefined) {
+          return player;
+        }
+
+        return { ...player, cardIds: [...assignment.unitIds] };
+      });
+
+      events.push({
+        payload: createInitialBattlefield({
+          format: state.settings.format,
+          players,
+        }),
+        sequence: state.lastEventSequence + 3,
+        type: 'BattlefieldPrepared',
+        version: GAME_EVENT_VERSION,
+      });
+    }
+
+    return events;
   }
 
   toData(): StartGameCommandData {

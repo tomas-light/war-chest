@@ -1,0 +1,13 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="95.5403" height="82.74" viewBox="0 0 95.5403 82.74" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Cell geometry">
+<path id="Vector" d="M94.2702 41.37L71.0202 81.64H24.5202L1.27017 41.37L24.5202 1.1H71.0202L94.2702 41.37Z" fill="url(#paint0_linear_0_120)" stroke="#62838A" stroke-width="2.2"/>
+<path id="Vector_2" opacity="0.3" d="M88.7702 41.37L68.2702 76.88H27.2702L6.77017 41.37L27.2702 5.85998H68.2702L88.7702 41.37Z" stroke="#15D9ED"/>
+</g>
+<defs>
+<linearGradient id="paint0_linear_0_120" x1="1.27017" y1="1.1" x2="80.984" y2="93.1461" gradientUnits="userSpaceOnUse">
+<stop stop-color="#102126"/>
+<stop offset="0.55" stop-color="#091318"/>
+<stop offset="1" stop-color="#050A0D"/>
+</linearGradient>
+</defs>
+</svg>

@@ -26,6 +26,7 @@ export class GameCreatedViewEvent implements ApplicableViewEvent<GameCreatedView
     }
 
     return {
+      battlefield: null,
       cardSelection: null,
       creatorId: this.data.payload.creatorId,
       currentPlayerId: null,

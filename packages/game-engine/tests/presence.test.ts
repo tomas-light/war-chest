@@ -60,7 +60,7 @@ describe('player presence', () => {
         playerId: FIRST_PLAYER_ID,
         reconnectDeadline: RECONNECT_DEADLINE,
       },
-      sequence: 6,
+      sequence: 7,
       type: 'PlayerDisconnected',
       version: 2,
     });

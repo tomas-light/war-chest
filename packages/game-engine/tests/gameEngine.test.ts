@@ -237,6 +237,7 @@ describe('technical scenario', () => {
       'PlayerJoined',
       'GameStarted',
       'CardsPrepared',
+      'BattlefieldPrepared',
       'TestMovePerformed',
       'TestMovePerformed',
       'GameFinished',
@@ -245,7 +246,7 @@ describe('technical scenario', () => {
 
   test('assigns consecutive sequence numbers', () => {
     expect(events.map((event) => event.sequence)).toEqual([
-      1, 2, 3, 4, 5, 6, 7, 8,
+      1, 2, 3, 4, 5, 6, 7, 8, 9,
     ]);
   });
 
@@ -309,7 +310,7 @@ describe('technical scenario', () => {
     expect(state).toMatchObject({
       currentPlayerId: null,
       featureFlags: { gameHistory: true },
-      lastEventSequence: 8,
+      lastEventSequence: 9,
       moveCount: 2,
       status: 'finished',
     });
@@ -453,6 +454,7 @@ describe('commands rejected while waiting', () => {
     ).toEqual([
       expect.objectContaining({ type: 'GameStarted' }),
       expect.objectContaining({ type: 'CardsPrepared' }),
+      expect.objectContaining({ type: 'BattlefieldPrepared' }),
     ]);
   });
 
