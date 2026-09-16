@@ -3,7 +3,7 @@ import type { GameView } from '@war-chest/game-engine';
 import { getGameQueryKey, LOBBY_GAMES_QUERY_KEY } from '#/entities/game';
 import { createSelectedGameApi, useApiErrorMessage } from '#/shared/api';
 import { useTranslation } from '#/shared/i18n/useTranslation';
-import { Button } from '#/shared/ui/button';
+import { SwapPositionsButton } from '#/shared/ui/swap-positions-button';
 import classes from './SwapPlayerPositionsButton.module.scss';
 
 interface Props {
@@ -42,18 +42,12 @@ export function SwapPlayerPositionsButton(props: Props) {
 
   return (
     <div className={classes.action}>
-      <Button
+      <SwapPositionsButton
         aria-label={t('label')}
-        className={classes.button}
         disabled={swapMutation.isPending}
         onClick={() => swapMutation.mutate()}
         title={t('label')}
-        variant="secondary"
-      >
-        <svg aria-hidden="true" viewBox="0 0 24 24">
-          <path d="M7 7h11l-3-3M17 17H6l3 3M18 7l-3 3M6 17l3-3" />
-        </svg>
-      </Button>
+      />
 
       {swapMutation.error === null ? null : (
         <p role="alert">{getApiErrorMessage(swapMutation.error)}</p>

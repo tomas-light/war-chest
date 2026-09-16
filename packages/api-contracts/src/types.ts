@@ -5,6 +5,7 @@ import type {
   GameSettings,
   GameView,
   GameViewEventData,
+  UnitId,
 } from '@war-chest/game-engine';
 
 export const API_ERROR_CODES = [
@@ -178,6 +179,17 @@ export interface LeaveGameResponse {
 }
 
 export interface StartGameRequest {
+  commandId: string;
+  expectedVersion: number;
+}
+
+export interface ConfirmCardChoiceRequest {
+  commandId: string;
+  expectedVersion: number;
+  unitId: UnitId;
+}
+
+export interface CompleteCardSelectionRequest {
   commandId: string;
   expectedVersion: number;
 }

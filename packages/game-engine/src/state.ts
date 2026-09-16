@@ -1,10 +1,16 @@
 import type { RuntimeFeatureFlags } from '@war-chest/feature-flags';
+import type {
+  BattlefieldState,
+  GameViewBattlefieldState,
+} from './Battlefield.js';
+import type { CardSelection } from './CardSelection.js';
 import type { GameSettings } from './GameSettings.js';
+import type { UnitId } from './UnitId.js';
 
 export type JsonValue =
   boolean | number | string | null | { [key: string]: JsonValue } | JsonValue[];
 
-export type GameStatus = 'waiting' | 'active' | 'finished';
+export type GameStatus = 'waiting' | 'cardSelection' | 'active' | 'finished';
 export type GameTeam = 'black' | 'white';
 export type PlayerDefeatReason = 'disconnectTimeout' | 'surrender';
 export type PlayerPresence = 'connected' | 'defeated' | 'disconnected';
@@ -15,6 +21,7 @@ export interface GameTeams {
 }
 
 export interface GamePlayer {
+  cardIds: readonly UnitId[];
   defeatReason: PlayerDefeatReason | null;
   id: string;
   moveCount: number;
@@ -26,9 +33,13 @@ export interface GamePlayer {
 }
 
 export interface GameState {
+  battlefield: BattlefieldState | null;
+  cardSelection: CardSelection | null;
   creatorId: string;
   currentPlayerId: string | null;
   featureFlags: RuntimeFeatureFlags;
+  firstPlayerId: string | null;
+  initiativePlayerId: string | null;
   lastEventSequence: number;
   moveCount: number;
   players: readonly GamePlayer[];
@@ -40,6 +51,7 @@ export interface GameState {
 }
 
 export interface GameViewPlayer {
+  cardIds: readonly UnitId[];
   defeatReason: PlayerDefeatReason | null;
   id: string;
   moveCount: number;
@@ -55,9 +67,13 @@ export interface PrivateMove {
 }
 
 export interface GameView {
+  battlefield: GameViewBattlefieldState | null;
+  cardSelection: CardSelection | null;
   creatorId: string;
   currentPlayerId: string | null;
   featureFlags: RuntimeFeatureFlags;
+  firstPlayerId: string | null;
+  initiativePlayerId: string | null;
   lastEventSequence: number;
   moveCount: number;
   players: readonly GameViewPlayer[];

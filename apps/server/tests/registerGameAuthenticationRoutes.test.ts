@@ -29,9 +29,13 @@ const AUTHENTICATED_GAME_ROUTES = [
   { method: 'GET', url: `/api/games/${GAME_ID}/events` },
 ] satisfies readonly { method: HTTPMethods; url: string }[];
 const WAITING_VIEW: GameView = {
+  battlefield: null,
+  cardSelection: null,
   creatorId: USER_ID,
   currentPlayerId: null,
   featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+  firstPlayerId: null,
+  initiativePlayerId: null,
   lastEventSequence: 1,
   moveCount: 0,
   players: [],

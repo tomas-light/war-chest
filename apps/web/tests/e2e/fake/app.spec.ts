@@ -171,11 +171,7 @@ test('updates the lobby and moves role selection inside a waiting game', async (
     secondPage.getByRole('button', { name: 'Занять место' })
   ).toHaveCount(0);
 
-  await page.getByRole('button', { name: 'Занять место' }).click();
-  await page.getByRole('button', { name: 'Присоединиться как игрок' }).click();
-  await expect(
-    page.getByRole('heading', { name: 'Сменить место' })
-  ).toBeVisible();
+  await page.getByRole('button', { name: 'Занять место' }).first().click();
 
   await secondPage.getByRole('button', { name: 'Открыть игру' }).click();
 
@@ -190,9 +186,6 @@ test('updates the lobby and moves role selection inside a waiting game', async (
   ).toBeVisible();
 
   await secondPage.getByRole('button', { name: 'Занять место' }).click();
-  await secondPage
-    .getByRole('button', { name: 'Присоединиться как игрок' })
-    .click();
 
   await expect(
     secondPage.getByText('Ожидаем, пока создатель запустит игру.')
@@ -235,7 +228,9 @@ test('updates the lobby and moves role selection inside a waiting game', async (
   await page.getByRole('button', { name: 'Запустить игру' }).click();
 
   await expect(page).toHaveURL(/\/games\/play\//);
-  await expect(page.getByText('Игровое поле', { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('region', { name: 'Игровое поле' })
+  ).toBeVisible();
   await expect(
     page.getByRole('heading', { name: 'Доступные действия' })
   ).toBeVisible();
@@ -283,8 +278,6 @@ test('updates the lobby and moves role selection inside a waiting game', async (
     name: 'Игровое поле',
   });
 
-  await expect(finishedGameTable.getByText('Cavalry')).toBeVisible();
-  await expect(finishedGameTable.getByText('Archer')).toBeVisible();
   await expect(
     finishedGameTable.getByRole('img', {
       name: 'Аватар пользователя Cavalry',
@@ -295,8 +288,6 @@ test('updates the lobby and moves role selection inside a waiting game', async (
       name: 'Аватар пользователя Archer',
     })
   ).toBeVisible();
-  await expect(secondFinishedGameTable.getByText('Cavalry')).toBeVisible();
-  await expect(secondFinishedGameTable.getByText('Archer')).toBeVisible();
   await expect(
     secondFinishedGameTable.getByRole('img', {
       name: 'Аватар пользователя Cavalry',
@@ -373,7 +364,9 @@ test('updates the lobby and moves role selection inside a waiting game', async (
   ).toBeVisible();
 
   await page.setViewportSize({ height: 844, width: 390 });
-  await expect(page.getByText('Игровое поле', { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('region', { name: 'Игровое поле' })
+  ).toBeVisible();
   const hasHorizontalOverflow = await page.evaluate(
     () =>
       document.documentElement.scrollWidth >
@@ -405,9 +398,9 @@ test('lets a player leave and the creator close a waiting lobby', async ({
   await secondPage.goto('/');
   await signIn(secondPage, ARCHER_EMAIL);
   await secondPage.getByRole('button', { name: 'Открыть игру' }).click();
-  await secondPage.getByRole('button', { name: 'Занять место' }).click();
   await secondPage
-    .getByRole('button', { name: 'Присоединиться как игрок' })
+    .getByRole('button', { name: 'Занять место' })
+    .first()
     .click();
 
   await secondPage.getByRole('button', { name: 'Покинуть лобби' }).click();
@@ -418,9 +411,9 @@ test('lets a player leave and the creator close a waiting lobby', async ({
   ).toHaveCount(2);
 
   await secondPage.getByRole('button', { name: 'Открыть игру' }).click();
-  await secondPage.getByRole('button', { name: 'Занять место' }).click();
   await secondPage
-    .getByRole('button', { name: 'Присоединиться как игрок' })
+    .getByRole('button', { name: 'Занять место' })
+    .first()
     .click();
 
   await page.evaluate(() => {

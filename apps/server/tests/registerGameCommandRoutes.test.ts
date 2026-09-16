@@ -20,9 +20,13 @@ const GAME_ID = '20000000-0000-4000-8000-000000000001';
 const COMMAND_ID = '30000000-0000-4000-8000-000000000001';
 const AUTH_HEADERS = { cookie: 'war_chest_session=session-token' };
 const WAITING_VIEW: GameView = {
+  battlefield: null,
+  cardSelection: null,
   creatorId: USER_ID,
   currentPlayerId: null,
   featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+  firstPlayerId: null,
+  initiativePlayerId: null,
   lastEventSequence: 1,
   moveCount: 0,
   players: [],

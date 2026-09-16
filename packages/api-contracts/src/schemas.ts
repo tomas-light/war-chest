@@ -6,11 +6,15 @@ import {
   GAME_EXPANSIONS,
   GAME_FORMATS,
   GAME_RULES_VERSION,
+  TEAM_CELL_IDS,
+  UNIT_IDS,
 } from '@war-chest/game-engine';
 import { z } from 'zod';
 import type {
   ApiError,
+  CompleteCardSelectionRequest,
   CompleteEmailRegistrationRequest,
+  ConfirmCardChoiceRequest,
   CreateGameRequest,
   EmailCodeRequestedResponse,
   GameCommandMessage,
@@ -60,6 +64,8 @@ const jsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
 );
 const gameIdSchema = z.uuid();
 const gameTeamSchema = z.enum(['black', 'white']);
+const unitIdSchema = z.enum(UNIT_IDS);
+const cellIdSchema = z.enum(TEAM_CELL_IDS);
 const gameFormatSchema = z.enum(GAME_FORMATS);
 const cardSelectionModeSchema = z.enum(CARD_SELECTION_MODES);
 const gameExpansionSchema = z.enum(GAME_EXPANSIONS);
@@ -236,6 +242,23 @@ export const startGameRequestSchema: z.ZodType<StartGameRequest> = z
   })
   .strict();
 
+type ConfirmCardChoiceSchema = z.ZodType<ConfirmCardChoiceRequest>;
+export const confirmCardChoiceRequestSchema: ConfirmCardChoiceSchema = z
+  .object({
+    commandId: z.uuid(),
+    expectedVersion: z.number().int().nonnegative(),
+    unitId: unitIdSchema,
+  })
+  .strict();
+
+type CompleteCardSelectionSchema = z.ZodType<CompleteCardSelectionRequest>;
+export const completeCardSelectionRequestSchema: CompleteCardSelectionSchema = z
+  .object({
+    commandId: z.uuid(),
+    expectedVersion: z.number().int().nonnegative(),
+  })
+  .strict();
+
 export const leaveGameRequestSchema: z.ZodType<LeaveGameRequest> = z
   .object({
     commandId: z.uuid(),
@@ -275,6 +298,7 @@ export const surrenderGameRequestSchema: z.ZodType<SurrenderGameRequest> = z
 
 const gameViewPlayerSchema = z
   .object({
+    cardIds: z.array(unitIdSchema).readonly(),
     defeatReason: z.enum(['disconnectTimeout', 'surrender']).nullable(),
     id: z.string(),
     moveCount: z.number().int().nonnegative(),
@@ -284,25 +308,90 @@ const gameViewPlayerSchema = z
     team: gameTeamSchema,
   })
   .strict();
+const cardSelectionSchema = z
+  .object({
+    choices: z
+      .array(
+        z
+          .object({
+            action: z.enum(['ban', 'pick']),
+            playerId: z.string(),
+            unitId: unitIdSchema,
+          })
+          .strict()
+      )
+      .readonly(),
+    phase: z.enum(['banning', 'complete', 'picking']),
+    playerOrder: z.array(z.string()).readonly(),
+    pool: z.array(unitIdSchema).readonly(),
+  })
+  .strict();
 const privateMoveSchema = z
   .object({
     data: jsonValueSchema,
     moveNumber: z.number().int().positive(),
   })
   .strict();
+const playerUnitSupplySchema = z
+  .object({
+    count: z.number().int().nonnegative(),
+    total: z.number().int().positive(),
+    unitId: unitIdSchema,
+  })
+  .strict();
+const battlefieldControlPointSchema = z
+  .object({
+    cellId: cellIdSchema,
+    fortified: z.boolean(),
+    ownerTeam: gameTeamSchema.nullable(),
+  })
+  .strict();
+const battlefieldUnitSchema = z
+  .object({
+    bolstered: z.number().int().nonnegative(),
+    cellId: cellIdSchema,
+    id: z.string(),
+    ownerId: z.string(),
+    unitId: unitIdSchema,
+  })
+  .strict();
+const gameViewBattlefieldSchema = z
+  .object({
+    controlPoints: z.array(battlefieldControlPointSchema).readonly(),
+    playerResources: z
+      .array(
+        z
+          .object({
+            bagCount: z.number().int().nonnegative().nullable(),
+            eliminated: z.array(unitIdSchema).readonly(),
+            hand: z.array(unitIdSchema).readonly().nullable(),
+            handCount: z.number().int().nonnegative(),
+            playerId: z.string(),
+            supply: z.array(playerUnitSupplySchema).readonly(),
+          })
+          .strict()
+      )
+      .readonly(),
+    units: z.array(battlefieldUnitSchema).readonly(),
+  })
+  .strict();
 
 export const gameViewSchema = z
   .object({
+    battlefield: gameViewBattlefieldSchema.nullable().default(null),
+    cardSelection: cardSelectionSchema.nullable(),
     creatorId: z.string(),
     currentPlayerId: z.string().nullable(),
     featureFlags: runtimeFeatureFlagsSchema,
+    firstPlayerId: z.string().nullable(),
+    initiativePlayerId: z.string().nullable(),
     lastEventSequence: z.number().int().positive(),
     moveCount: z.number().int().nonnegative(),
     players: z.array(gameViewPlayerSchema).readonly(),
     privateMoves: z.array(privateMoveSchema).readonly(),
     rulesVersion: z.literal(GAME_RULES_VERSION),
     settings: gameSettingsSchema,
-    status: z.enum(['waiting', 'active', 'finished']),
+    status: z.enum(['waiting', 'cardSelection', 'active', 'finished']),
     teams: z
       .object({
         black: z.array(z.string()).readonly(),
@@ -421,6 +510,66 @@ const gameStartedViewEventSchema = eventMetadataSchema
     type: z.literal('GameStarted'),
   })
   .strict();
+const cardsPreparedViewEventSchema = eventMetadataSchema
+  .extend({
+    payload: z
+      .object({
+        playerOrder: z.array(z.string()).readonly(),
+        selection: z.discriminatedUnion('mode', [
+          z
+            .object({
+              assignments: z
+                .array(
+                  z
+                    .object({
+                      playerId: z.string(),
+                      unitIds: z.array(unitIdSchema).readonly(),
+                    })
+                    .strict()
+                )
+                .readonly(),
+              mode: z.literal('random'),
+            })
+            .strict(),
+          z
+            .object({
+              mode: z.enum(['draft', 'eliminationDraft']),
+              pool: z.array(unitIdSchema).readonly(),
+            })
+            .strict(),
+        ]),
+      })
+      .strict(),
+    type: z.literal('CardsPrepared'),
+  })
+  .strict();
+const cardChoiceConfirmedViewEventSchema = eventMetadataSchema
+  .extend({
+    payload: z
+      .object({
+        action: z.enum(['ban', 'pick']),
+        isComplete: z.boolean(),
+        nextPhase: z.enum(['banning', 'complete', 'picking']),
+        nextPlayerId: z.string().nullable(),
+        playerId: z.string(),
+        unitId: unitIdSchema,
+      })
+      .strict(),
+    type: z.literal('CardChoiceConfirmed'),
+  })
+  .strict();
+const cardSelectionCompletedViewEventSchema = eventMetadataSchema
+  .extend({
+    payload: z.object({}).strict(),
+    type: z.literal('CardSelectionCompleted'),
+  })
+  .strict();
+const battlefieldPreparedViewEventSchema = eventMetadataSchema
+  .extend({
+    payload: gameViewBattlefieldSchema,
+    type: z.literal('BattlefieldPrepared'),
+  })
+  .strict();
 const testMovePerformedViewEventSchema = eventMetadataSchema
   .extend({
     payload: z
@@ -445,6 +594,10 @@ const viewSequenceAdvancedEventSchema = eventMetadataSchema
   .strict();
 
 export const gameViewEventSchema = z.discriminatedUnion('type', [
+  battlefieldPreparedViewEventSchema,
+  cardsPreparedViewEventSchema,
+  cardChoiceConfirmedViewEventSchema,
+  cardSelectionCompletedViewEventSchema,
   gameCreatedViewEventSchema,
   gameSettingsUpdatedViewEventSchema,
   playerJoinedViewEventSchema,
@@ -510,6 +663,13 @@ export const gameEventsResponseSchema: z.ZodType<GameEventsResponse> = z
   .strict();
 
 const gameCommandSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('CompleteCardSelection') }).strict(),
+  z
+    .object({
+      type: z.literal('ConfirmCardChoice'),
+      unitId: unitIdSchema,
+    })
+    .strict(),
   z.object({ type: z.literal('FinishGame') }).strict(),
   z
     .object({

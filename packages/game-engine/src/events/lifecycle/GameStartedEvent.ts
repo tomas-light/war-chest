@@ -22,6 +22,8 @@ export class GameStartedEvent implements ApplicableEvent<GameStartedEventData> {
     return {
       ...state,
       currentPlayerId: this.data.payload.firstPlayerId,
+      firstPlayerId: this.data.payload.firstPlayerId,
+      initiativePlayerId: this.data.payload.firstPlayerId,
       lastEventSequence: this.data.sequence,
       status: 'active',
     };

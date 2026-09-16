@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 import { Navigate, useNavigate } from 'react-router';
 import { useApiErrorMessage } from '#/shared/api';
 import { appRoutes, getGamePageUrl } from '#/shared/config';
@@ -8,6 +9,7 @@ import { useGameRuntime } from '#/widgets/game-runtime';
 import { ActiveGameHeader } from './ActiveGameHeader';
 import { ActiveGameSidebar } from './ActiveGameSidebar';
 import { ActiveGameTable } from './ActiveGameTable';
+import { CardSelectionPage } from './CardSelectionPage';
 import classes from './ActiveGamePage.module.scss';
 
 export function ActiveGamePage() {
@@ -61,37 +63,61 @@ export function ActiveGamePage() {
   }
 
   return (
-    <main className={classes.page}>
-      <ActiveGameHeader
-        gameId={gameId}
-        onBack={openLobby}
-        playerProfiles={playerProfiles}
-        userId={userId}
-        view={liveState}
-      />
-
-      <div className={classes.runtimeStatus}>
-        <span data-ready={synchronizationStatus === 'ready'}>
-          {getSynchronizationLabel()}
-        </span>
-        {connectionError === null ? null : (
-          <p role="alert">{getApiErrorMessage(connectionError)}</p>
-        )}
-      </div>
-
-      <div className={classes.layout}>
-        <ActiveGameTable
-          playerProfiles={playerProfiles}
-          players={liveState.players}
-          userId={userId}
-        />
-        <ActiveGameSidebar
+    <main
+      className={clsx(classes.page, {
+        [classes.selectionPage]: liveState.status === 'cardSelection',
+      })}
+    >
+      {liveState.status === 'cardSelection' ? null : (
+        <ActiveGameHeader
           gameId={gameId}
-          onSurrendered={hydrateGame}
+          onBack={openLobby}
+          playerProfiles={playerProfiles}
           userId={userId}
           view={liveState}
         />
-      </div>
+      )}
+
+      {liveState.status !== 'cardSelection' ||
+      synchronizationStatus !== 'ready' ||
+      connectionError !== null ? (
+        <div className={classes.runtimeStatus}>
+          <span data-ready={synchronizationStatus === 'ready'}>
+            {getSynchronizationLabel()}
+          </span>
+          {connectionError === null ? null : (
+            <p role="alert">{getApiErrorMessage(connectionError)}</p>
+          )}
+        </div>
+      ) : null}
+
+      {liveState.status === 'cardSelection' ? (
+        <CardSelectionPage
+          gameId={gameId}
+          isConnectionReady={
+            synchronizationStatus === 'ready' && connectionError === null
+          }
+          onConfirmed={hydrateGame}
+          playerProfiles={playerProfiles}
+          userId={userId}
+          view={liveState}
+        />
+      ) : (
+        <div className={classes.layout}>
+          <ActiveGameTable
+            playerProfiles={playerProfiles}
+            userId={userId}
+            view={liveState}
+          />
+
+          <ActiveGameSidebar
+            gameId={gameId}
+            onSurrendered={hydrateGame}
+            userId={userId}
+            view={liveState}
+          />
+        </div>
+      )}
     </main>
   );
 

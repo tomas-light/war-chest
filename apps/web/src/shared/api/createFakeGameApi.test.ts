@@ -1,5 +1,9 @@
 import 'fake-indexeddb/auto';
-import { gameResponseSchema } from '@war-chest/api-contracts';
+import {
+  type ConfirmCardChoiceRequest,
+  type GameResponse,
+  gameResponseSchema,
+} from '@war-chest/api-contracts';
 import {
   type FakeDatabase,
   createFakeDatabase,
@@ -23,6 +27,7 @@ const THIRD_JOIN_COMMAND_ID = '30000000-0000-4000-8000-000000000008';
 const LEAVE_COMMAND_ID = '30000000-0000-4000-8000-000000000009';
 const SURRENDER_COMMAND_ID = '30000000-0000-4000-8000-000000000010';
 const UPDATE_SETTINGS_COMMAND_ID = '30000000-0000-4000-8000-000000000011';
+const CARD_CHOICE_COMMAND_ID = '30000000-0000-4000-8000-000000000012';
 const CREATE_GAME_REQUEST = {
   commandId: CREATE_COMMAND_ID,
   format: 'duel',
@@ -176,9 +181,75 @@ describe('fake game API lifecycle', () => {
 
     expect(startedGame.view).toMatchObject({
       creatorId: FAKE_SEED_IDENTIFIERS.firstUser,
-      lastEventSequence: 4,
+      lastEventSequence: 6,
       privateMoves: [],
       status: 'active',
+    });
+  });
+
+  test('persists a confirmed card choice from the current player', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.999);
+
+    const creatorApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.firstUser);
+    const secondPlayerApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.secondUser);
+
+    const createdGame = await creatorApi.createGame(CREATE_GAME_REQUEST);
+    const creatorJoinedGame = await creatorApi.joinGame(createdGame.gameId, {
+      commandId: FIRST_JOIN_COMMAND_ID,
+      expectedVersion: createdGame.view.lastEventSequence,
+      seat: 1,
+      team: 'white',
+    });
+    const secondPlayerJoinedGame = await secondPlayerApi.joinGame(
+      createdGame.gameId,
+      {
+        commandId: SECOND_JOIN_COMMAND_ID,
+        expectedVersion: creatorJoinedGame.view.lastEventSequence,
+        seat: 1,
+        team: 'black',
+      }
+    );
+    const configuredGame = await creatorApi.updateGameSettings(
+      createdGame.gameId,
+      {
+        cardSelectionMode: 'draft',
+        commandId: UPDATE_SETTINGS_COMMAND_ID,
+        expansions: [],
+        expectedVersion: secondPlayerJoinedGame.view.lastEventSequence,
+      }
+    );
+    const startedGame = await creatorApi.startGame(createdGame.gameId, {
+      commandId: START_COMMAND_ID,
+      expectedVersion: configuredGame.view.lastEventSequence,
+    });
+
+    const [unitId] = startedGame.view.cardSelection?.pool ?? [];
+
+    if (unitId === undefined) {
+      throw new Error('Draft must expose a card pool.');
+    }
+
+    const confirmedGame = await creatorApi.confirmCardChoice(
+      createdGame.gameId,
+      {
+        commandId: CARD_CHOICE_COMMAND_ID,
+        expectedVersion: startedGame.view.lastEventSequence,
+        unitId,
+      }
+    );
+
+    expect(confirmedGame.view).toMatchObject({
+      cardSelection: {
+        choices: [
+          {
+            action: 'pick',
+            playerId: FAKE_SEED_IDENTIFIERS.firstUser,
+            unitId,
+          },
+        ],
+      },
+      currentPlayerId: FAKE_SEED_IDENTIFIERS.secondUser,
+      lastEventSequence: 7,
     });
   });
 
@@ -207,6 +278,129 @@ describe('fake game API lifecycle', () => {
         expectedVersion: secondPlayerJoinedGame.view.lastEventSequence,
       })
     ).rejects.toMatchObject({ code: 'game_command_forbidden' });
+  });
+
+  describe('automatic draft completion', () => {
+    let pendingGame: GameResponse;
+    let confirmedGame: GameResponse;
+    let request: ConfirmCardChoiceRequest;
+
+    beforeEach(async () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.999);
+
+      const creatorApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.firstUser);
+      const secondPlayerApi = createFakeGameApi(
+        FAKE_SEED_IDENTIFIERS.secondUser
+      );
+
+      let game = await creatorApi.createGame(CREATE_GAME_REQUEST);
+
+      game = await creatorApi.updateGameSettings(game.gameId, {
+        cardSelectionMode: 'draft',
+        commandId: UPDATE_SETTINGS_COMMAND_ID,
+        expansions: [],
+        expectedVersion: game.view.lastEventSequence,
+      });
+      game = await creatorApi.joinGame(game.gameId, {
+        commandId: FIRST_JOIN_COMMAND_ID,
+        expectedVersion: game.view.lastEventSequence,
+        seat: 1,
+        team: 'white',
+      });
+      game = await secondPlayerApi.joinGame(game.gameId, {
+        commandId: SECOND_JOIN_COMMAND_ID,
+        expectedVersion: game.view.lastEventSequence,
+        seat: 1,
+        team: 'black',
+      });
+      game = await creatorApi.startGame(game.gameId, {
+        commandId: START_COMMAND_ID,
+        expectedVersion: game.view.lastEventSequence,
+      });
+
+      const pool = game.view.cardSelection?.pool ?? [];
+      const queue = [
+        creatorApi,
+        secondPlayerApi,
+        secondPlayerApi,
+        creatorApi,
+        creatorApi,
+        secondPlayerApi,
+      ];
+
+      for (const [index, api] of queue.entries()) {
+        const unitId = pool[index];
+
+        if (unitId === undefined) {
+          throw new Error('Expected a draft card.');
+        }
+
+        game = await api.confirmCardChoice(game.gameId, {
+          commandId: crypto.randomUUID(),
+          expectedVersion: game.view.lastEventSequence,
+          unitId,
+        });
+      }
+
+      const [, , , , , , unitId] = pool;
+
+      if (unitId === undefined) {
+        throw new Error('Expected the penultimate draft card.');
+      }
+
+      pendingGame = game;
+      request = {
+        commandId: CARD_CHOICE_COMMAND_ID,
+        expectedVersion: game.view.lastEventSequence,
+        unitId,
+      };
+
+      confirmedGame = await secondPlayerApi.confirmCardChoice(
+        game.gameId,
+        request
+      );
+    });
+
+    test('returns an active game in the response to the penultimate confirmation', () => {
+      expect(confirmedGame.view).toMatchObject({
+        status: 'active',
+        cardSelection: null,
+        lastEventSequence: pendingGame.view.lastEventSequence + 4,
+      });
+    });
+
+    test('persists the automatic card assignment for another participant', async () => {
+      const savedGame = await createFakeGameApi(
+        FAKE_SEED_IDENTIFIERS.firstUser
+      ).getGame(confirmedGame.gameId);
+
+      expect(savedGame.view.players.map((player) => player.cardIds)).toEqual(
+        confirmedGame.view.players.map((player) => player.cardIds)
+      );
+      expect(
+        savedGame.view.players.map((player) => player.cardIds.length)
+      ).toEqual([4, 4]);
+    });
+
+    test('publishes the active stage to a spectator snapshot', async () => {
+      const spectatorGame = await createFakeGameApi(
+        FAKE_SEED_IDENTIFIERS.thirdUser
+      ).getGame(confirmedGame.gameId);
+
+      expect(spectatorGame.view).toMatchObject({
+        status: 'active',
+        cardSelection: null,
+        currentPlayerId: FAKE_SEED_IDENTIFIERS.firstUser,
+      });
+    });
+
+    test('does not duplicate automatic events when the final command is retried', async () => {
+      const repeatedGame = await createFakeGameApi(
+        FAKE_SEED_IDENTIFIERS.secondUser
+      ).confirmCardChoice(confirmedGame.gameId, request);
+
+      expect(repeatedGame).toEqual(confirmedGame);
+    });
   });
 
   test('lets the creator swap both occupied positions', async () => {

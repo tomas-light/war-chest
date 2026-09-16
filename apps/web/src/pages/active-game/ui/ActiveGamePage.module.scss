@@ -1,7 +1,12 @@
 .page {
   width: min(1440px, 100%);
-  padding: clamp(22px, 4vw, 52px);
+  padding: clamp(22px, 2vw, 26px);
   margin: 0 auto;
+}
+
+.selectionPage {
+  width: min(1248px, 100%);
+  padding: 42px 24px;
 }
 
 .state h1 {
@@ -46,8 +51,8 @@
 
 .layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
-  gap: clamp(18px, 3vw, 32px);
+  grid-template-columns: minmax(0, 964px) minmax(320px, 400px);
+  gap: 24px;
   align-items: start;
 }
 
@@ -76,7 +81,8 @@
 }
 
 @media (width <= 620px) {
-  .page {
+  .page,
+  .selectionPage {
     padding: 18px 14px 32px;
   }
 

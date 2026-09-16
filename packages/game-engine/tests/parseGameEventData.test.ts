@@ -99,6 +99,37 @@ const SUPPORTED_EVENTS: readonly GameEventData[] = [
   },
   {
     payload: {
+      playerOrder: ['player-one', 'player-two'],
+      selection: {
+        mode: 'draft',
+        pool: ['archer', 'berserker'],
+      },
+    },
+    sequence: 9,
+    type: 'CardsPrepared',
+    version: GAME_EVENT_VERSION,
+  },
+  {
+    payload: {
+      action: 'pick',
+      isComplete: true,
+      nextPhase: 'complete',
+      nextPlayerId: null,
+      playerId: 'player-one',
+      unitId: 'archer',
+    },
+    sequence: 10,
+    type: 'CardChoiceConfirmed',
+    version: GAME_EVENT_VERSION,
+  },
+  {
+    payload: {},
+    sequence: 11,
+    type: 'CardSelectionCompleted',
+    version: GAME_EVENT_VERSION,
+  },
+  {
+    payload: {
       moveNumber: 1,
       nextPlayerId: 'player-two',
       playerId: 'player-one',

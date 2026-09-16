@@ -1,4 +1,6 @@
 import type {
+  CompleteCardSelectionRequest,
+  ConfirmCardChoiceRequest,
   CreateGameRequest,
   GameResponse,
   JoinGameRequest,
@@ -52,6 +54,8 @@ interface CreateStoredEventInput {
 
 export function createFakeGameApi(userId: string): GameApi {
   return {
+    completeCardSelection,
+    confirmCardChoice,
     createGame,
     getGame,
     joinGame,
@@ -62,6 +66,30 @@ export function createFakeGameApi(userId: string): GameApi {
     swapPlayerPositions,
     updateGameSettings,
   };
+
+  function completeCardSelection(
+    gameId: string,
+    request: CompleteCardSelectionRequest
+  ): Promise<GameResponse> {
+    return executeCommand({
+      command: { type: 'CompleteCardSelection' },
+      commandId: request.commandId,
+      expectedVersion: request.expectedVersion,
+      gameId,
+    });
+  }
+
+  function confirmCardChoice(
+    gameId: string,
+    request: ConfirmCardChoiceRequest
+  ): Promise<GameResponse> {
+    return executeCommand({
+      command: { type: 'ConfirmCardChoice', unitId: request.unitId },
+      commandId: request.commandId,
+      expectedVersion: request.expectedVersion,
+      gameId,
+    });
+  }
 
   async function createGame(request: CreateGameRequest): Promise<GameResponse> {
     const database = await getFakeDatabase();
@@ -465,10 +493,12 @@ export function createFakeGameApi(userId: string): GameApi {
           ? occurredAt
           : game.finishedAt,
       startedAt:
-        nextState.status === 'active' && game.startedAt === null
+        events.some((event) => event.type === 'GameStarted') &&
+        game.startedAt === null
           ? occurredAt
           : game.startedAt,
-      status: nextState.status,
+      status:
+        nextState.status === 'cardSelection' ? 'active' : nextState.status,
       winnerTeam: nextState.winnerTeam,
     };
     const changedPlayer = events.find(

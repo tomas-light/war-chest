@@ -1,7 +1,14 @@
 import type { RuntimeFeatureFlags } from '@war-chest/feature-flags';
+import type { GameViewBattlefieldState } from './Battlefield.js';
+import type {
+  CardSelectionAction,
+  CardSelectionPhase,
+  GameStartSelection,
+} from './CardSelection.js';
 import type { GAME_EVENT_VERSION, GAME_RULES_VERSION } from './events.js';
 import type { GamePreparationSettings, GameSettings } from './GameSettings.js';
 import type { GameTeam, JsonValue } from './state.js';
+import type { UnitId } from './UnitId.js';
 
 interface EventMetadata {
   sequence: number;
@@ -88,6 +95,36 @@ export interface GameStartedViewEventData extends EventMetadata {
   type: 'GameStarted';
 }
 
+export interface CardsPreparedViewEventData extends EventMetadata {
+  payload: {
+    playerOrder: readonly string[];
+    selection: GameStartSelection;
+  };
+  type: 'CardsPrepared';
+}
+
+export interface CardChoiceConfirmedViewEventData extends EventMetadata {
+  payload: {
+    action: CardSelectionAction;
+    isComplete: boolean;
+    nextPhase: CardSelectionPhase;
+    nextPlayerId: string | null;
+    playerId: string;
+    unitId: UnitId;
+  };
+  type: 'CardChoiceConfirmed';
+}
+
+export interface CardSelectionCompletedViewEventData extends EventMetadata {
+  payload: Record<string, never>;
+  type: 'CardSelectionCompleted';
+}
+
+export interface BattlefieldPreparedViewEventData extends EventMetadata {
+  payload: GameViewBattlefieldState;
+  type: 'BattlefieldPrepared';
+}
+
 interface PublicTestMoveData {
   moveNumber: number;
   nextPlayerId: string;
@@ -121,6 +158,10 @@ export type TestMovePerformedViewEventData =
   PrivateTestMovePerformedViewEventData | PublicTestMovePerformedViewEventData;
 
 export type GameViewEventData =
+  | BattlefieldPreparedViewEventData
+  | CardChoiceConfirmedViewEventData
+  | CardSelectionCompletedViewEventData
+  | CardsPreparedViewEventData
   | GameCreatedViewEventData
   | GameFinishedViewEventData
   | GameSettingsUpdatedViewEventData

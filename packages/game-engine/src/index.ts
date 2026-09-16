@@ -1,6 +1,29 @@
 export { applyEvent } from './applyEvent.js';
 export { applyViewEvent } from './applyViewEvent.js';
+export {
+  createInitialBattlefield,
+  DUEL_CELL_IDS,
+  getBattlefieldLayout,
+  TEAM_CELL_IDS,
+} from './Battlefield.js';
 export type {
+  BattlefieldCellKind,
+  BattlefieldCellZone,
+  BattlefieldControlPoint,
+  BattlefieldLayout,
+  BattlefieldLayoutCell,
+  BattlefieldState,
+  BattlefieldUnit,
+  CellId,
+  GameViewBattlefieldState,
+  GameViewPlayerBattlefieldResources,
+  PlayerBattlefieldResources,
+  PlayerUnitSupply,
+} from './Battlefield.js';
+export type {
+  CardSelectionCommandData,
+  CompleteCardSelectionCommandData,
+  ConfirmCardChoiceCommandData,
   CreateGameCommandData,
   FinishGameCommandData,
   GameCommandData,
@@ -14,6 +37,18 @@ export type {
   TestScenarioCommandData,
   UpdateGameSettingsCommandData,
 } from './commands.js';
+export {
+  cloneCardSelection,
+  getCurrentCardSelectionPlayer,
+} from './CardSelection.js';
+export type {
+  CardSelection,
+  CardSelectionAction,
+  CardSelectionPhase,
+  ConfirmedCardChoice,
+  GameStartSelection,
+  PlayerUnitAssignment,
+} from './CardSelection.js';
 export { createGame } from './createGame.js';
 export { createViewEventFor } from './createViewEventFor.js';
 export { createViewFor } from './createViewFor.js';
@@ -45,6 +80,10 @@ export type {
   GameSettings,
 } from './GameSettings.js';
 export type {
+  BattlefieldPreparedEventData,
+  CardChoiceConfirmedEventData,
+  CardSelectionCompletedEventData,
+  CardsPreparedEventData,
   GameCreatedEventData,
   GameEventData,
   GameFinishedEventData,
@@ -83,6 +122,10 @@ export type {
   Viewer,
 } from './state.js';
 export type {
+  BattlefieldPreparedViewEventData,
+  CardChoiceConfirmedViewEventData,
+  CardSelectionCompletedViewEventData,
+  CardsPreparedViewEventData,
   GameCreatedViewEventData,
   GameFinishedViewEventData,
   GameSettingsUpdatedViewEventData,
@@ -100,3 +143,5 @@ export type {
   TestMovePerformedViewEventData,
   ViewSequenceAdvancedEventData,
 } from './viewEvents.js';
+export { UNIT_IDS } from './UnitId.js';
+export type { UnitId } from './UnitId.js';

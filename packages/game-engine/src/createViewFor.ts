@@ -1,3 +1,5 @@
+import type { GameViewBattlefieldState } from './Battlefield.js';
+import { cloneCardSelection } from './CardSelection.js';
 import { cloneGameSettings } from './GameSettings.js';
 import {
   type GameState,
@@ -14,12 +16,17 @@ export function createViewFor(state: GameState, viewer: Viewer): GameView {
       : undefined;
 
   return {
+    battlefield: createBattlefieldView(),
+    cardSelection: cloneCardSelection(state.cardSelection),
     creatorId: state.creatorId,
     currentPlayerId: state.currentPlayerId,
     featureFlags: { ...state.featureFlags },
+    firstPlayerId: state.firstPlayerId,
+    initiativePlayerId: state.initiativePlayerId,
     lastEventSequence: state.lastEventSequence,
     moveCount: state.moveCount,
     players: state.players.map((player) => ({
+      cardIds: [...player.cardIds],
       defeatReason: player.defeatReason,
       id: player.id,
       moveCount: player.moveCount,
@@ -39,4 +46,30 @@ export function createViewFor(state: GameState, viewer: Viewer): GameView {
     teams: cloneGameTeams(state.teams),
     winnerTeam: state.winnerTeam,
   };
+
+  function createBattlefieldView(): GameViewBattlefieldState | null {
+    if (state.battlefield === null || state.battlefield === undefined) {
+      return null;
+    }
+
+    return {
+      controlPoints: state.battlefield.controlPoints.map((point) => ({
+        ...point,
+      })),
+      playerResources: state.battlefield.playerResources.map((resources) => {
+        const canSeeHand =
+          viewer.role === 'player' && viewer.playerId === resources.playerId;
+
+        return {
+          bagCount: canSeeHand ? resources.bag.length : null,
+          eliminated: [...resources.eliminated],
+          hand: canSeeHand ? [...resources.hand] : null,
+          handCount: resources.hand.length,
+          playerId: resources.playerId,
+          supply: resources.supply.map((item) => ({ ...item })),
+        };
+      }),
+      units: state.battlefield.units.map((unit) => ({ ...unit })),
+    };
+  }
 }

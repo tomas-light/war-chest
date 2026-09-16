@@ -5,6 +5,8 @@ export function createFakeGameApiClient(): GameApi {
   const client = getFakeBackendClient();
 
   return {
+    completeCardSelection: client.completeCardSelection,
+    confirmCardChoice: client.confirmCardChoice,
     createGame: client.createGame,
     getGame: client.getGame,
     joinGame: client.joinGame,

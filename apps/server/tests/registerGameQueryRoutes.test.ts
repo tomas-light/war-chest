@@ -1,3 +1,4 @@
+import { gameResponseSchema } from '@war-chest/api-contracts';
 import type { Auth, AuthSession } from '@war-chest/auth';
 import type { DatabaseConnection } from '@war-chest/database';
 import { DEFAULT_RUNTIME_FEATURE_FLAGS } from '@war-chest/feature-flags';
@@ -19,9 +20,13 @@ const USER_ID = '10000000-0000-4000-8000-000000000001';
 const GAME_ID = '20000000-0000-4000-8000-000000000001';
 const AUTH_HEADERS = { cookie: 'war_chest_session=session-token' };
 const WAITING_VIEW: GameView = {
+  battlefield: null,
+  cardSelection: null,
   creatorId: USER_ID,
   currentPlayerId: null,
   featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+  firstPlayerId: null,
+  initiativePlayerId: null,
   lastEventSequence: 1,
   moveCount: 0,
   players: [],
@@ -131,7 +136,9 @@ describe('game query HTTP routes', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toEqual({
+    const responseBody = response.json();
+
+    expect(responseBody).toEqual({
       gameId: GAME_ID,
       players: [
         {
@@ -144,6 +151,7 @@ describe('game query HTTP routes', () => {
       ],
       view: WAITING_VIEW,
     });
+    expect(() => gameResponseSchema.parse(responseBody)).not.toThrow();
   });
   test('returns safe events after the requested sequence', async () => {
     getEvents.mockResolvedValue({

@@ -27,9 +27,13 @@ export class GameCreatedEvent implements ApplicableEvent<GameCreatedEventData> {
     }
 
     return {
+      battlefield: null,
+      cardSelection: null,
       creatorId: this.data.payload.creatorId,
       currentPlayerId: null,
       featureFlags: { ...this.data.payload.featureFlags },
+      firstPlayerId: null,
+      initiativePlayerId: null,
       lastEventSequence: this.data.sequence,
       moveCount: 0,
       players: [],

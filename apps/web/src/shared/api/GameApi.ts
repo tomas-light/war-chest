@@ -1,4 +1,6 @@
 import {
+  type CompleteCardSelectionRequest,
+  type ConfirmCardChoiceRequest,
   type CreateGameRequest,
   type GameResponse,
   type JoinGameRequest,
@@ -36,6 +38,16 @@ interface ResponseSchema<Result> {
 }
 
 export interface GameApi {
+  completeCardSelection(
+    this: void,
+    gameId: string,
+    request: CompleteCardSelectionRequest
+  ): Promise<GameResponse>;
+  confirmCardChoice(
+    this: void,
+    gameId: string,
+    request: ConfirmCardChoiceRequest
+  ): Promise<GameResponse>;
   createGame(this: void, request: CreateGameRequest): Promise<GameResponse>;
   getGame(this: void, gameId: string): Promise<GameResponse>;
   joinGame(
@@ -73,6 +85,8 @@ export interface GameApi {
 
 export function createRealGameApi(): GameApi {
   return {
+    completeCardSelection,
+    confirmCardChoice,
     createGame,
     getGame,
     joinGame,
@@ -83,6 +97,32 @@ export function createRealGameApi(): GameApi {
     swapPlayerPositions,
     updateGameSettings,
   };
+
+  function completeCardSelection(
+    gameId: string,
+    request: CompleteCardSelectionRequest
+  ): Promise<GameResponse> {
+    return requestJson({
+      body: request,
+      invalidResponseMessage: 'The server returned an invalid game state.',
+      method: 'POST',
+      schema: gameResponseSchema,
+      url: `${GAMES_API_URL}/${gameId}/card-selection/complete`,
+    });
+  }
+
+  function confirmCardChoice(
+    gameId: string,
+    request: ConfirmCardChoiceRequest
+  ): Promise<GameResponse> {
+    return requestJson({
+      body: request,
+      invalidResponseMessage: 'The server returned an invalid game state.',
+      method: 'POST',
+      schema: gameResponseSchema,
+      url: `${GAMES_API_URL}/${gameId}/card-choice`,
+    });
+  }
 
   function createGame(request: CreateGameRequest): Promise<GameResponse> {
     return requestJson({

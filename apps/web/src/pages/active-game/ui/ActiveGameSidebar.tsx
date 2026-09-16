@@ -1,4 +1,5 @@
 import type { GameView } from '@war-chest/game-engine';
+import clsx from 'clsx';
 import { SurrenderGameButton } from '#/features/surrender-game';
 import { useTranslation } from '#/shared/i18n/useTranslation';
 import { Button } from '#/shared/ui/button';
@@ -19,12 +20,15 @@ export function ActiveGameSidebar(props: Props) {
   const isSpectator = !view.players.some((player) => player.id === userId);
 
   return (
-    <aside className={classes.sidebar}>
+    <aside className={classes.sidebar} data-spectator={isSpectator}>
       {view.status === 'active' ? (
-        <section className={classes.sidebarSection}>
+        <section
+          className={clsx(classes.sidebarSection, classes.actionsSection)}
+        >
           <p className={classes.sidebarEyebrow}>{t('turnEyebrow')}</p>
           <h2>{t('actionsTitle')}</h2>
           <p>{getTurnDescription()}</p>
+
           <div className={classes.placeholderActions}>
             <Button disabled>{t('chooseSquad')}</Button>
             <Button disabled variant="secondary">
@@ -41,10 +45,11 @@ export function ActiveGameSidebar(props: Props) {
         </section>
       ) : null}
 
-      <section className={classes.sidebarSection}>
+      <section className={clsx(classes.sidebarSection, classes.historySection)}>
         <p className={classes.sidebarEyebrow}>{t('historyEyebrow')}</p>
         <h2>{t('historyTitle')}</h2>
         <p>{t('historyDescription')}</p>
+
         <Button disabled variant="secondary">
           {t('openHistory')}
         </Button>

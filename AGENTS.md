@@ -143,6 +143,75 @@ function persistOrder(order: Order) {
 }
 ```
 
+- Не используй тернарный оператор непосредственно при передаче аргумента в
+  функцию, компонент или обработчик. Если передаваемое значение зависит от
+  условия, раскрой ветвление через `if/else` и вызови целевую функцию в каждой
+  ветке. Так каждую ветку проще читать и отлаживать.
+
+```tsx
+// ❌ Плохо: условие спрятано внутри передаваемого аргумента
+<Component
+  onChange={(values) => onChange(values?.length ? values : null)}
+/>
+
+// ✅ Хорошо: ветви вызова видны явно
+<Component
+  onChange={(values) => {
+    if (values?.length) {
+      onChange(values);
+    } else {
+      onChange(null);
+    }
+  }}
+/>
+```
+
+- Не ужимай код за счёт удаления пустых строк между смысловыми группами.
+  Сохраняй такие разделители при рефакторинге, если структура сценария не
+  изменилась.
+- В новом и изменяемом коде отделяй пустой строкой разные этапы функции,
+  например: извлечение аргументов, получение переводов и контекста, локальное
+  состояние, подготовку зависимых значений, запросы данных, вычисления и
+  возврат результата. Связанные инструкции оставляй вместе: пустая строка
+  нужна между смысловыми блоками, а не после каждой строки.
+- Удаление промежуточного значения или замена источника данных не является
+  причиной склеивать оставшиеся смысловые группы.
+
+```tsx
+// ❌ Плохо: разные этапы функции визуально склеены
+function Content(props: Props) {
+  const { value, onChange } = props;
+  const { t } = useTranslation('ui/category', {
+    keyPrefix: 'createCategoriesFilter',
+  });
+  const [searchQuery, setSearchQuery] = useSearchString();
+  const delayedSearchQuery = useDelayedSearchValue({ value: searchQuery });
+  const { data: categories } = useCategoriesQuery({
+    categoryName: delayedSearchQuery,
+  });
+
+  // ...
+}
+
+// ✅ Хорошо: пропсы, локализация, состояние и запрос читаются как отдельные этапы
+function Content(props: Props) {
+  const { value, onChange } = props;
+
+  const { t } = useTranslation('ui/category', {
+    keyPrefix: 'createCategoriesFilter',
+  });
+
+  const [searchQuery, setSearchQuery] = useSearchString();
+  const delayedSearchQuery = useDelayedSearchValue({ value: searchQuery });
+
+  const { data: categories } = useCategoriesQuery({
+    categoryName: delayedSearchQuery,
+  });
+
+  // ...
+}
+```
+
 - Если функция принимает больше трёх параметров, объединяй их в один
   аргумент-объект. В TypeScript описывай его именованным типом или интерфейсом,
   чтобы на месте вызова были видны имена передаваемых значений и их назначение.
@@ -174,6 +243,50 @@ sendMessage({
   urgent: true,
   userId: 'user-one',
 });
+```
+
+- Тип аргумента-объекта выноси в отдельный `type` или `interface`. Не описывай
+  его inline в сигнатуре функции, даже если у объекта мало полей или функция
+  принимает только один аргумент. Это правило относится и к callback-функциям.
+- Применяй это правило при написании нового кода или содержательном изменении
+  контракта. Не выноси уже существующий inline-тип аргумента в отдельный тип
+  только ради формального соблюдения правила, если сам контракт не меняется в
+  рамках задачи. Не создавай такой побочный рефакторинг в незатронутом коде.
+- Для аргумента `options` используй имя типа `Options`. Если в файле несколько
+  разных контрактов options, уточняй их назначение в имени, например
+  `SearchOptions` и `PaginationOptions`. Сохраняй необходимые generic-параметры.
+  Для пропсов компонентов следуй правилам раздела «Пропсы компонентов».
+
+```ts
+// ❌ Плохо: контракт options описан прямо в сигнатуре
+function createChecklistFilter(options: {
+  name: string;
+  enableSearch?: boolean;
+}) {
+  /* ... */
+}
+
+// ✅ Хорошо: контракт options объявлен отдельно
+type Options = {
+  name: string;
+  enableSearch?: boolean;
+};
+
+function createChecklistFilter(options: Options) {
+  /* ... */
+}
+```
+
+```ts
+// ✅ Оставляем существующий контракт без изменений, если задача его не затрагивает
+type UseCategoriesQuery = (options: {
+  categoryName?: string;
+  indicatorKind: IndicatorKind;
+}) => UseCategoriesQueryResult;
+
+type Options = {
+  useCategoriesQuery: UseCategoriesQuery;
+};
 ```
 
 ## Пропсы компонентов

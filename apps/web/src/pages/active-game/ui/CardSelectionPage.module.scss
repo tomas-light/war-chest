@@ -1,0 +1,283 @@
+.selection {
+  width: min(1200px, 100%);
+  display: flex;
+  gap: 24px;
+  flex-direction: column;
+  margin: 0 auto;
+  line-height: normal;
+}
+
+.heading {
+  display: flex;
+  gap: 8px;
+  flex-direction: column;
+}
+
+.eyebrow,
+.title,
+.description,
+.turnTitle,
+.turnHint,
+.nextTitle,
+.sequence,
+.actionHint {
+  margin: 0;
+}
+
+.eyebrow {
+  color: var(--wc-color-cyan);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.title {
+  font-family: var(--wc-font-display);
+  font-size: 52px;
+  line-height: 59px;
+}
+
+.description,
+.turnHint,
+.actionHint {
+  color: var(--wc-color-text-muted);
+  font-size: 14px;
+}
+
+.turn {
+  display: flex;
+  gap: 8px;
+  flex-direction: column;
+  padding: 14px;
+  border: 1px solid var(--wc-color-cyan);
+  border-radius: 2px 12px;
+  background: var(--wc-color-ink);
+}
+
+.turnTitle {
+  color: var(--wc-color-cyan);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.035em;
+}
+
+.mobileTurn {
+  display: none;
+}
+
+.players {
+  display: flex;
+  gap: 18px;
+  align-items: start;
+}
+
+.player {
+  flex: 1;
+}
+
+.teamSelection .players {
+  gap: 8px;
+}
+
+.teamSelection .turn {
+  border-radius: 0;
+}
+
+.teamSelection .turnTitle {
+  font-size: 14px;
+}
+
+.connector {
+  width: 24px;
+  height: 110px;
+  display: flex;
+  flex: 0 0 24px;
+  align-items: center;
+}
+
+.arrow {
+  width: 24px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.arrow:before {
+  height: 2px;
+  flex: 1;
+  background: var(--wc-color-cyan);
+  content: '';
+}
+
+.arrow:after {
+  width: 10px;
+  height: 16px;
+  background: url('../assets/draftArrowHead.svg') center / contain no-repeat;
+  content: '';
+}
+
+.connector[data-reverse='true'] .arrow {
+  transform: rotate(180deg);
+}
+
+.nextTurn {
+  display: flex;
+  gap: 4px;
+  flex-direction: column;
+  padding: 12px;
+  background: var(--wc-color-surface-raised);
+}
+
+.nextTitle {
+  color: var(--wc-color-brass-bright);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.035em;
+}
+
+.sequence {
+  color: var(--wc-color-text-muted);
+  font-size: 12px;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(4, 224px);
+  gap: 18px;
+  justify-content: center;
+}
+
+.cards[data-card-count='10'] {
+  grid-template-columns: repeat(5, 224px);
+}
+
+.cards[data-disabled='true'] {
+  opacity: 0.48;
+}
+
+.actions {
+  display: flex;
+  gap: 14px;
+  flex-direction: column;
+}
+
+.compactPlayers {
+  display: none;
+}
+
+@media (width <= 1220px) {
+  .cards[data-card-count] {
+    grid-template-columns: repeat(4, 224px);
+  }
+
+  .teamSelection .players {
+    flex-direction: column;
+  }
+
+  .teamSelection .player {
+    width: 100%;
+  }
+
+  .teamSelection .players > .connector {
+    display: none;
+  }
+
+  .teamSelection .player:not([data-current='true']) {
+    display: none;
+  }
+
+  .compactPlayers {
+    display: flex;
+    gap: 4px;
+  }
+
+  .compactPlayer {
+    min-width: 0;
+    min-height: 116px;
+    display: flex;
+    gap: 4px;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    padding: 4px;
+    border: 1px solid rgb(199 150 53 / 28%);
+    background: var(--wc-color-ink);
+    font-size: 12px;
+    text-align: center;
+  }
+
+  .compactPlayer[data-current='true'] {
+    border-color: var(--wc-color-cyan);
+  }
+
+  .compactNumber {
+    color: var(--wc-color-brass-bright);
+    letter-spacing: 0.16em;
+  }
+
+  .compactName,
+  .compactCount {
+    color: var(--wc-color-text-muted);
+    overflow-wrap: anywhere;
+  }
+
+  .compactPlayer[data-current='true'] .compactNumber,
+  .compactPlayer[data-current='true'] .compactCount {
+    color: var(--wc-color-cyan);
+  }
+
+  .compactName {
+    color: var(--wc-color-text);
+  }
+
+  .teamSelection .desktopTurn {
+    display: none;
+  }
+
+  .teamSelection .mobileTurn {
+    display: inline;
+    white-space: pre-line;
+  }
+
+  .compactPlayers .connector {
+    height: 116px;
+  }
+}
+
+@media (width <= 980px) {
+  .cards[data-card-count] {
+    grid-template-columns: repeat(3, 224px);
+  }
+}
+
+@media (width <= 740px) {
+  .players {
+    flex-direction: column;
+  }
+
+  .player {
+    width: 100%;
+  }
+
+  .cards[data-card-count] {
+    grid-template-columns: repeat(2, 224px);
+  }
+}
+
+@media (width <= 620px) {
+  .title {
+    font-size: 34px;
+    line-height: 38px;
+  }
+
+  .cards[data-card-count] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 14px;
+  }
+
+  .connector {
+    width: clamp(10px, 5.65vw, 22px);
+    flex-basis: clamp(10px, 5.65vw, 22px);
+  }
+}

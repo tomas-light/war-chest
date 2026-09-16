@@ -26,6 +26,7 @@ export class PlayerJoinedEvent implements ApplicableEvent<PlayerJoinedEventData>
       players: [
         ...state.players,
         {
+          cardIds: [],
           defeatReason: null,
           id: this.data.payload.playerId,
           moveCount: 0,

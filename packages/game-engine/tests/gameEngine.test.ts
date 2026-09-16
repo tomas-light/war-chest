@@ -2,7 +2,7 @@ import {
   type RuntimeFeatureFlags,
   DEFAULT_RUNTIME_FEATURE_FLAGS,
 } from '@war-chest/feature-flags';
-import { beforeEach, describe, expect, test } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import {
   type GameCommandData,
   type GameEventData,
@@ -25,6 +25,7 @@ import {
   NullableGameViewError,
   restoreGame,
   restoreView,
+  UNIT_IDS,
 } from '../src/index.js';
 
 const DEFAULT_CREATE_GAME_SETTINGS: GameSettings = {
@@ -32,6 +33,10 @@ const DEFAULT_CREATE_GAME_SETTINGS: GameSettings = {
   expansions: [],
   format: 'duel',
 };
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe('game creation', () => {
   test('returns null when restoring an empty game history', () => {
@@ -105,6 +110,7 @@ describe('waiting game settings', () => {
   let state: GameState;
 
   beforeEach(() => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.999);
     const gameCreated = createGame({
       creatorId: 'game-creator',
       featureFlags: {
@@ -198,6 +204,7 @@ describe('technical scenario', () => {
   let state: GameState;
 
   beforeEach(() => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.999);
     const gameCreatedEvent = createGame({
       creatorId: 'player-one',
       featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
@@ -229,6 +236,8 @@ describe('technical scenario', () => {
       'PlayerJoined',
       'PlayerJoined',
       'GameStarted',
+      'CardsPrepared',
+      'BattlefieldPrepared',
       'TestMovePerformed',
       'TestMovePerformed',
       'GameFinished',
@@ -237,7 +246,7 @@ describe('technical scenario', () => {
 
   test('assigns consecutive sequence numbers', () => {
     expect(events.map((event) => event.sequence)).toEqual([
-      1, 2, 3, 4, 5, 6, 7,
+      1, 2, 3, 4, 5, 6, 7, 8, 9,
     ]);
   });
 
@@ -301,7 +310,7 @@ describe('technical scenario', () => {
     expect(state).toMatchObject({
       currentPlayerId: null,
       featureFlags: { gameHistory: true },
-      lastEventSequence: 7,
+      lastEventSequence: 9,
       moveCount: 2,
       status: 'finished',
     });
@@ -321,6 +330,7 @@ describe('technical scenario', () => {
   test('stores each player private move history', () => {
     expect(state.players).toEqual([
       {
+        cardIds: UNIT_IDS.slice(0, 4),
         defeatReason: null,
         id: 'player-one',
         moveCount: 1,
@@ -331,6 +341,7 @@ describe('technical scenario', () => {
         team: 'white',
       },
       {
+        cardIds: UNIT_IDS.slice(4, 8),
         defeatReason: null,
         id: 'player-two',
         moveCount: 1,
@@ -440,7 +451,11 @@ describe('commands rejected while waiting', () => {
 
     expect(
       decide(fullWaitingState, 'game-creator', { type: 'StartGame' })
-    ).toEqual([expect.objectContaining({ type: 'GameStarted' })]);
+    ).toEqual([
+      expect.objectContaining({ type: 'GameStarted' }),
+      expect.objectContaining({ type: 'CardsPrepared' }),
+      expect.objectContaining({ type: 'BattlefieldPrepared' }),
+    ]);
   });
 
   test('allows the creator to swap two occupied positions', () => {
@@ -507,6 +522,7 @@ describe('explicit player seat selection', () => {
   let waitingState: GameState;
 
   beforeEach(() => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.999);
     const gameCreated = createGame({
       creatorId: 'player-one',
       featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
@@ -619,6 +635,7 @@ describe('team formation from selected positions', () => {
   let activeState: GameState;
 
   beforeEach(() => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.999);
     const gameCreated = createGame({
       creatorId: 'player-one',
       featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
@@ -641,8 +658,8 @@ describe('team formation from selected positions', () => {
     }
   });
 
-  test('starts with the player who selected the first seat', () => {
-    expect(activeState.currentPlayerId).toBe('player-two');
+  test('starts with the randomly selected first player', () => {
+    expect(activeState.currentPlayerId).toBe('player-one');
   });
 
   test('assigns teams from selected positions rather than join order', () => {
@@ -662,6 +679,7 @@ describe('team game positions', () => {
   let waitingState: GameState;
 
   beforeEach(() => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.999);
     const gameCreated = createGame({
       creatorId: 'game-creator',
       featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
@@ -723,14 +741,25 @@ describe('team game positions', () => {
       );
     }
 
-    expect(decide(waitingState, 'game-creator', { type: 'StartGame' })).toEqual(
-      [
-        expect.objectContaining({
-          payload: { firstPlayerId: 'white-one' },
-          type: 'GameStarted',
-        }),
-      ]
-    );
+    const [gameStarted, cardsPrepared] = decide(waitingState, 'game-creator', {
+      type: 'StartGame',
+    });
+
+    if (gameStarted?.type !== 'GameStarted') {
+      throw new Error('Starting a game must emit GameStarted first.');
+    }
+
+    if (cardsPrepared?.type !== 'CardsPrepared') {
+      throw new Error('Starting a game must emit CardsPrepared second.');
+    }
+
+    expect(gameStarted.payload.firstPlayerId).toBe('white-one');
+    expect(cardsPrepared.payload.playerOrder).toEqual([
+      'white-one',
+      'black-one',
+      'white-two',
+      'black-two',
+    ]);
   });
 });
 
@@ -738,6 +767,7 @@ describe('commands rejected while active', () => {
   let activeState: GameState;
 
   beforeEach(() => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.999);
     const gameCreated = createGame({
       creatorId: 'player-one',
       featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,

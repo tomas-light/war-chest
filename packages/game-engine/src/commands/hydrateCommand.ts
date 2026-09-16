@@ -1,4 +1,5 @@
 import type { GameCommandData } from '../commands.js';
+import { hydrateCardSelectionCommand } from './card-selection/hydrateCardSelectionCommand.js';
 import {
   type CommandHydrator,
   type DecidableCommand,
@@ -7,6 +8,7 @@ import { hydrateLifecycleCommand } from './lifecycle/hydrateLifecycleCommand.js'
 import { hydrateTestScenarioCommand } from './test-scenario/hydrateTestScenarioCommand.js';
 
 const COMMAND_HYDRATORS: readonly CommandHydrator[] = [
+  hydrateCardSelectionCommand,
   hydrateLifecycleCommand,
   hydrateTestScenarioCommand,
 ];

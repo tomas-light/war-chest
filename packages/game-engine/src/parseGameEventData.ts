@@ -1,5 +1,6 @@
 import { runtimeFeatureFlagsSchema } from '@war-chest/feature-flags';
 import { z } from 'zod';
+import { TEAM_CELL_IDS } from './Battlefield.js';
 import {
   type GameEventData,
   GAME_EVENT_VERSION,
@@ -11,6 +12,7 @@ import {
   GAME_FORMATS,
 } from './GameSettings.js';
 import type { JsonValue } from './state.js';
+import { UNIT_IDS } from './UnitId.js';
 
 const jsonPrimitiveSchema = z.union([
   z.boolean(),
@@ -26,6 +28,51 @@ const jsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
   ])
 );
 const gameTeamSchema = z.enum(['black', 'white']);
+const unitIdSchema = z.enum(UNIT_IDS);
+const cellIdSchema = z.enum(TEAM_CELL_IDS);
+const battlefieldSchema = z
+  .object({
+    controlPoints: z.array(
+      z
+        .object({
+          cellId: cellIdSchema,
+          fortified: z.boolean(),
+          ownerTeam: gameTeamSchema.nullable(),
+        })
+        .strict()
+    ),
+    playerResources: z.array(
+      z
+        .object({
+          bag: z.array(unitIdSchema),
+          eliminated: z.array(unitIdSchema),
+          hand: z.array(unitIdSchema),
+          playerId: z.string(),
+          supply: z.array(
+            z
+              .object({
+                count: z.number().int().nonnegative(),
+                total: z.number().int().positive(),
+                unitId: unitIdSchema,
+              })
+              .strict()
+          ),
+        })
+        .strict()
+    ),
+    units: z.array(
+      z
+        .object({
+          bolstered: z.number().int().nonnegative(),
+          cellId: cellIdSchema,
+          id: z.string(),
+          ownerId: z.string(),
+          unitId: unitIdSchema,
+        })
+        .strict()
+    ),
+  })
+  .strict();
 const gameSettingsSchema = z
   .object({
     cardSelectionMode: z.enum(CARD_SELECTION_MODES),
@@ -41,6 +88,12 @@ const eventMetadataSchema = z.object({
 const gameEventDataSchema: z.ZodType<GameEventData> = z.discriminatedUnion(
   'type',
   [
+    eventMetadataSchema
+      .extend({
+        payload: battlefieldSchema,
+        type: z.literal('BattlefieldPrepared'),
+      })
+      .strict(),
     eventMetadataSchema
       .extend({
         payload: z
@@ -147,6 +200,58 @@ const gameEventDataSchema: z.ZodType<GameEventData> = z.discriminatedUnion(
       .extend({
         payload: z.object({ firstPlayerId: z.string() }).strict(),
         type: z.literal('GameStarted'),
+      })
+      .strict(),
+    eventMetadataSchema
+      .extend({
+        payload: z
+          .object({
+            playerOrder: z.array(z.string()),
+            selection: z.discriminatedUnion('mode', [
+              z
+                .object({
+                  assignments: z.array(
+                    z
+                      .object({
+                        playerId: z.string(),
+                        unitIds: z.array(unitIdSchema),
+                      })
+                      .strict()
+                  ),
+                  mode: z.literal('random'),
+                })
+                .strict(),
+              z
+                .object({
+                  mode: z.enum(['draft', 'eliminationDraft']),
+                  pool: z.array(unitIdSchema),
+                })
+                .strict(),
+            ]),
+          })
+          .strict(),
+        type: z.literal('CardsPrepared'),
+      })
+      .strict(),
+    eventMetadataSchema
+      .extend({
+        payload: z
+          .object({
+            action: z.enum(['ban', 'pick']),
+            isComplete: z.boolean(),
+            nextPhase: z.enum(['banning', 'complete', 'picking']),
+            nextPlayerId: z.string().nullable(),
+            playerId: z.string(),
+            unitId: unitIdSchema,
+          })
+          .strict(),
+        type: z.literal('CardChoiceConfirmed'),
+      })
+      .strict(),
+    eventMetadataSchema
+      .extend({
+        payload: z.object({}).strict(),
+        type: z.literal('CardSelectionCompleted'),
       })
       .strict(),
     eventMetadataSchema
