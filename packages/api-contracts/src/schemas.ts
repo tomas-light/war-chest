@@ -26,11 +26,13 @@ import type {
   GameResponse,
   GameSnapshotMessage,
   GameSyncMessage,
+  GameTurnHistoryResponse,
   JoinGameRequest,
   LeaveGameRequest,
   LeaveGameResponse,
   LobbyGamesResponse,
   LobbyUpdatedMessage,
+  PassTurnRequest,
   PublicUser,
   RequestEmailCodeRequest,
   SelectAvatarPresetRequest,
@@ -65,6 +67,10 @@ const jsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
 const gameIdSchema = z.uuid();
 const gameTeamSchema = z.enum(['black', 'white']);
 const unitIdSchema = z.enum(UNIT_IDS);
+const gameCoinSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('royal') }).strict(),
+  z.object({ kind: z.literal('unit'), unitId: unitIdSchema }).strict(),
+]);
 const cellIdSchema = z.enum(TEAM_CELL_IDS);
 const gameFormatSchema = z.enum(GAME_FORMATS);
 const cardSelectionModeSchema = z.enum(CARD_SELECTION_MODES);
@@ -226,6 +232,31 @@ export const gameEventsQuerySchema = z
   })
   .strict();
 
+export const gameTurnHistoryQuerySchema = z
+  .object({
+    beforeSequence: z.coerce.number().int().positive().optional(),
+    limit: z.coerce.number().int().min(1).max(20),
+  })
+  .strict();
+
+export const gameTurnHistoryResponseSchema: z.ZodType<GameTurnHistoryResponse> =
+  z
+    .object({
+      items: z
+        .array(
+          z
+            .object({
+              action: z.literal('pass'),
+              playerId: z.string(),
+              sequence: z.number().int().positive(),
+            })
+            .strict()
+        )
+        .readonly(),
+      nextCursor: z.number().int().positive().nullable(),
+    })
+    .strict();
+
 export const joinGameRequestSchema: z.ZodType<JoinGameRequest> = z
   .object({
     commandId: z.uuid(),
@@ -291,6 +322,14 @@ export const updateGameSettingsRequestSchema: GameSettingsRequestSchema = z
 
 export const surrenderGameRequestSchema: z.ZodType<SurrenderGameRequest> = z
   .object({
+    commandId: z.uuid(),
+    expectedVersion: z.number().int().nonnegative(),
+  })
+  .strict();
+
+export const passTurnRequestSchema: z.ZodType<PassTurnRequest> = z
+  .object({
+    coinIndex: z.number().int().nonnegative(),
     commandId: z.uuid(),
     expectedVersion: z.number().int().nonnegative(),
   })
@@ -363,8 +402,18 @@ const gameViewBattlefieldSchema = z
         z
           .object({
             bagCount: z.number().int().nonnegative().nullable(),
+            discard: z
+              .array(
+                z
+                  .object({
+                    coin: gameCoinSchema.nullable(),
+                    faceUp: z.boolean(),
+                  })
+                  .strict()
+              )
+              .readonly(),
             eliminated: z.array(unitIdSchema).readonly(),
-            hand: z.array(unitIdSchema).readonly().nullable(),
+            hand: z.array(gameCoinSchema).readonly().nullable(),
             handCount: z.number().int().nonnegative(),
             playerId: z.string(),
             supply: z.array(playerUnitSupplySchema).readonly(),
@@ -372,6 +421,7 @@ const gameViewBattlefieldSchema = z
           .strict()
       )
       .readonly(),
+    round: z.number().int().positive(),
     units: z.array(battlefieldUnitSchema).readonly(),
   })
   .strict();
@@ -583,6 +633,20 @@ const testMovePerformedViewEventSchema = eventMetadataSchema
     type: z.literal('TestMovePerformed'),
   })
   .strict();
+const turnPassedViewEventSchema = eventMetadataSchema
+  .extend({
+    payload: z
+      .object({
+        battlefield: gameViewBattlefieldSchema,
+        coin: gameCoinSchema.nullable(),
+        moveNumber: z.number().int().positive(),
+        nextPlayerId: z.string(),
+        playerId: z.string(),
+      })
+      .strict(),
+    type: z.literal('TurnPassed'),
+  })
+  .strict();
 const gameFinishedViewEventSchema = eventMetadataSchema
   .extend({
     payload: z.object({ winnerTeam: gameTeamSchema }).strict(),
@@ -609,6 +673,7 @@ export const gameViewEventSchema = z.discriminatedUnion('type', [
   playerDefeatedViewEventSchema,
   gameStartedViewEventSchema,
   testMovePerformedViewEventSchema,
+  turnPassedViewEventSchema,
   gameFinishedViewEventSchema,
   viewSequenceAdvancedEventSchema,
 ]);
@@ -690,8 +755,8 @@ const gameCommandSchema = z.discriminatedUnion('type', [
     .strict(),
   z
     .object({
-      privateData: jsonValueSchema.optional(),
-      type: z.literal('TestMove'),
+      coinIndex: z.number().int().nonnegative(),
+      type: z.literal('PassTurn'),
     })
     .strict(),
 ]);

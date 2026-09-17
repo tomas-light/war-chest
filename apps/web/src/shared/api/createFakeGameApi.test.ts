@@ -28,6 +28,7 @@ const LEAVE_COMMAND_ID = '30000000-0000-4000-8000-000000000009';
 const SURRENDER_COMMAND_ID = '30000000-0000-4000-8000-000000000010';
 const UPDATE_SETTINGS_COMMAND_ID = '30000000-0000-4000-8000-000000000011';
 const CARD_CHOICE_COMMAND_ID = '30000000-0000-4000-8000-000000000012';
+const PASS_COMMAND_ID = '30000000-0000-4000-8000-000000000013';
 const CREATE_GAME_REQUEST = {
   commandId: CREATE_COMMAND_ID,
   format: 'duel',
@@ -185,6 +186,64 @@ describe('fake game API lifecycle', () => {
       privateMoves: [],
       status: 'active',
     });
+  });
+
+  test('persists a private face-down pass discard', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.999);
+
+    const firstPlayerApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.firstUser);
+    const secondPlayerApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.secondUser);
+    let game = await firstPlayerApi.createGame(CREATE_GAME_REQUEST);
+
+    game = await firstPlayerApi.joinGame(game.gameId, {
+      commandId: FIRST_JOIN_COMMAND_ID,
+      expectedVersion: game.view.lastEventSequence,
+      seat: 1,
+      team: 'white',
+    });
+    game = await secondPlayerApi.joinGame(game.gameId, {
+      commandId: SECOND_JOIN_COMMAND_ID,
+      expectedVersion: game.view.lastEventSequence,
+      seat: 1,
+      team: 'black',
+    });
+    game = await firstPlayerApi.startGame(game.gameId, {
+      commandId: START_COMMAND_ID,
+      expectedVersion: game.view.lastEventSequence,
+    });
+
+    const isFirstPlayerTurn =
+      game.view.currentPlayerId === FAKE_SEED_IDENTIFIERS.firstUser;
+    const currentPlayerApi = isFirstPlayerTurn
+      ? firstPlayerApi
+      : secondPlayerApi;
+    const opponentApi = isFirstPlayerTurn ? secondPlayerApi : firstPlayerApi;
+    const currentGame = await currentPlayerApi.getGame(game.gameId);
+    const currentResources = currentGame.view.battlefield?.playerResources.find(
+      (resources) => resources.playerId === currentGame.view.currentPlayerId
+    );
+    const selectedCoin = currentResources?.hand?.[0];
+
+    if (selectedCoin === undefined) {
+      throw new Error('The current player must have a coin to pass.');
+    }
+
+    const passedGame = await currentPlayerApi.passTurn(game.gameId, {
+      coinIndex: 0,
+      commandId: PASS_COMMAND_ID,
+      expectedVersion: currentGame.view.lastEventSequence,
+    });
+    const opponentGame = await opponentApi.getGame(game.gameId);
+    const playerId = currentGame.view.currentPlayerId;
+    const privateDiscard = passedGame.view.battlefield?.playerResources.find(
+      (resources) => resources.playerId === playerId
+    )?.discard;
+    const publicDiscard = opponentGame.view.battlefield?.playerResources.find(
+      (resources) => resources.playerId === playerId
+    )?.discard;
+
+    expect(privateDiscard).toEqual([{ coin: selectedCoin, faceUp: false }]);
+    expect(publicDiscard).toEqual([{ coin: null, faceUp: false }]);
   });
 
   test('persists a confirmed card choice from the current player', async () => {

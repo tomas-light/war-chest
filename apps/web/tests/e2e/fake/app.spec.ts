@@ -158,8 +158,8 @@ test('updates the lobby and moves role selection inside a waiting game', async (
   await page.getByRole('button', { name: 'Создать игру' }).click();
 
   await expect(
-    page.getByRole('heading', { name: 'Как открыть игру?' })
-  ).toBeVisible();
+    page.getByRole('button', { name: 'Выберите свободное место' })
+  ).toBeDisabled();
 
   await expect(
     secondPage.getByRole('button', { name: 'Открыть игру' })
@@ -176,8 +176,8 @@ test('updates the lobby and moves role selection inside a waiting game', async (
   await secondPage.getByRole('button', { name: 'Открыть игру' }).click();
 
   await expect(
-    secondPage.getByRole('heading', { name: 'Как открыть игру?' })
-  ).toBeVisible();
+    secondPage.getByRole('button', { name: 'Выберите свободное место' })
+  ).toBeDisabled();
   await expect(
     secondPage.getByRole('button', { name: 'Смотреть' })
   ).toBeVisible();
@@ -188,8 +188,8 @@ test('updates the lobby and moves role selection inside a waiting game', async (
   await secondPage.getByRole('button', { name: 'Занять место' }).click();
 
   await expect(
-    secondPage.getByText('Ожидаем, пока создатель запустит игру.')
-  ).toBeVisible();
+    secondPage.getByRole('button', { name: 'Ожидаем запуска игры' })
+  ).toBeDisabled();
   await expect(
     secondPage.getByRole('button', { name: 'Запустить игру' })
   ).toHaveCount(0);
@@ -200,7 +200,7 @@ test('updates the lobby and moves role selection inside a waiting game', async (
     page.getByRole('button', { name: 'Поменять игроков местами' })
   ).toBeVisible();
 
-  await page.getByRole('button', { name: 'Вернуться в лобби' }).click();
+  await page.getByRole('button', { name: 'Назад в лобби' }).click();
   await expect(
     page.getByRole('button', { name: 'Вернуться в игру' })
   ).toBeVisible();
@@ -232,10 +232,7 @@ test('updates the lobby and moves role selection inside a waiting game', async (
     page.getByRole('region', { name: 'Игровое поле' })
   ).toBeVisible();
   await expect(
-    page.getByRole('heading', { name: 'Доступные действия' })
-  ).toBeVisible();
-  await expect(
-    page.getByRole('heading', { name: 'История ходов' })
+    page.getByRole('complementary', { name: 'Очередь ходов' })
   ).toBeVisible();
   await expect(secondPage).toHaveURL(/\/games\/play\//);
   await expect(page.getByRole('button', { name: 'Сдаться' })).toBeVisible();
@@ -249,23 +246,37 @@ test('updates the lobby and moves role selection inside a waiting game', async (
 
   expect(hasReturnedToPreparation).toBe(false);
 
+  const turnQueue = secondPage.getByRole('complementary', {
+    name: 'Очередь ходов',
+  });
+
+  await expect(turnQueue.locator('li')).toHaveCount(10);
+  await expect(
+    turnQueue.locator('li').first().getByRole('button')
+  ).toHaveAccessibleName('Сейчас ходит Archer');
+
+  await startBlankScreenMonitor(secondPage);
+  await secondPage
+    .getByRole('button', { name: /^Жетон / })
+    .first()
+    .click();
+  await expectNoBlankScreen(secondPage);
+  await secondPage.getByRole('button', { name: 'Пас', exact: true }).click();
+
+  await expect(turnQueue.locator('li')).toHaveCount(11);
+  await expect(
+    turnQueue.locator('li').first().getByRole('button')
+  ).toHaveAccessibleName('Archer спасовал');
+
   await page.getByRole('button', { name: 'Сдаться' }).click();
   await expect(page.getByRole('heading', { name: 'Вы сдались' })).toBeVisible();
   await expect(
     secondPage.getByRole('heading', { name: 'Оппонент сдался' })
   ).toBeVisible();
-  await expect(
-    page.getByRole('heading', { name: 'Доступные действия' })
-  ).toHaveCount(0);
-  await expect(
-    secondPage.getByRole('heading', { name: 'Доступные действия' })
-  ).toHaveCount(0);
-  await expect(
-    page.getByRole('heading', { name: 'История ходов' })
-  ).toBeVisible();
-  await expect(
-    secondPage.getByRole('heading', { name: 'История ходов' })
-  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Сдаться' })).toHaveCount(0);
+  await expect(secondPage.getByRole('button', { name: 'Сдаться' })).toHaveCount(
+    0
+  );
   await Promise.all([page.reload(), secondPage.reload()]);
   await expect(page.getByRole('heading', { name: 'Вы сдались' })).toBeVisible();
   await expect(
@@ -357,11 +368,11 @@ test('updates the lobby and moves role selection inside a waiting game', async (
     spectatorPage.getByRole('heading', { name: 'Победитель: Archer' })
   ).toBeVisible();
   await expect(
-    spectatorPage.getByRole('heading', { name: 'Доступные действия' })
+    spectatorPage.getByRole('button', { name: 'Сдаться' })
   ).toHaveCount(0);
   await expect(
-    spectatorPage.getByRole('heading', { name: 'История ходов' })
-  ).toBeVisible();
+    spectatorPage.getByRole('complementary', { name: 'Очередь ходов' })
+  ).toHaveCount(0);
 
   await page.setViewportSize({ height: 844, width: 390 });
   await expect(
@@ -374,6 +385,77 @@ test('updates the lobby and moves role selection inside a waiting game', async (
   );
 
   expect(hasHorizontalOverflow).toBe(false);
+});
+
+test('lets a non-current player surrender during card selection', async ({
+  context,
+  page,
+}) => {
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'war-chest-dev-backend',
+      JSON.stringify({ state: { backend: 'fake' }, version: 0 })
+    );
+  });
+  await page.goto('/');
+  await signIn(page, CAVALRY_EMAIL);
+
+  const secondPage = await context.newPage();
+  await secondPage.goto('/');
+  await signIn(secondPage, ARCHER_EMAIL);
+
+  await page.getByRole('button', { name: 'Новая игра' }).click();
+  await page.getByRole('button', { name: 'Создать игру' }).click();
+  await page.getByRole('button', { name: 'Занять место' }).first().click();
+
+  const draftOption = page.getByRole('radio', {
+    name: /Draft Игроки по очереди выбирают карты/,
+  });
+
+  await draftOption.click();
+  await expect(draftOption).toBeChecked();
+
+  await secondPage.getByRole('button', { name: 'Открыть игру' }).click();
+  await secondPage.getByRole('button', { name: 'Занять место' }).click();
+  await page.getByRole('button', { name: 'Запустить игру' }).click();
+
+  await expect(page.getByRole('heading', { name: 'Выбор карт' })).toBeVisible();
+  const currentSelectionButton = page.getByRole('button', {
+    name: /сейчас выбирает карту$/,
+  });
+
+  await expect(currentSelectionButton).toBeVisible();
+  const currentSelectionLabel =
+    await currentSelectionButton.getAttribute('aria-label');
+  let currentPlayerPage: Page = secondPage;
+  let nonCurrentPlayerPage: Page = page;
+
+  if (currentSelectionLabel?.startsWith('Cavalry')) {
+    currentPlayerPage = page;
+    nonCurrentPlayerPage = secondPage;
+  }
+
+  await startBlankScreenMonitor(currentPlayerPage);
+  await currentPlayerPage
+    .getByRole('button', { name: / · Доступно$/ })
+    .first()
+    .click();
+  await expect(
+    currentPlayerPage.getByRole('button', { name: 'Подтвердить выбор' })
+  ).toBeVisible();
+  await expectNoBlankScreen(currentPlayerPage);
+
+  await nonCurrentPlayerPage.getByRole('button', { name: 'Сдаться' }).click();
+
+  await expect(
+    nonCurrentPlayerPage.getByRole('heading', { name: 'Вы сдались' })
+  ).toBeVisible();
+  await expect(
+    currentPlayerPage.getByRole('heading', { name: 'Оппонент сдался' })
+  ).toBeVisible();
+  await expect(
+    nonCurrentPlayerPage.getByText('Команда отклонена правилами игры.')
+  ).toHaveCount(0);
 });
 
 test('lets a player leave and the creator close a waiting lobby', async ({
@@ -452,4 +534,31 @@ async function signIn(page: Page, email: string): Promise<void> {
   await page.getByRole('button', { name: 'Получить код' }).click();
   await page.getByLabel('Код из письма').fill('123456');
   await page.getByRole('button', { name: 'Войти' }).click();
+}
+
+async function startBlankScreenMonitor(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    sessionStorage.setItem('war-chest-blank-screen-shown', 'false');
+    const root = document.querySelector('#root');
+
+    if (root === null) {
+      throw new Error('Application root was not found.');
+    }
+
+    const observer = new MutationObserver(() => {
+      if (root.childElementCount === 0) {
+        sessionStorage.setItem('war-chest-blank-screen-shown', 'true');
+      }
+    });
+
+    observer.observe(root, { childList: true });
+  });
+}
+
+async function expectNoBlankScreen(page: Page): Promise<void> {
+  const hasShownBlankScreen = await page.evaluate(
+    () => sessionStorage.getItem('war-chest-blank-screen-shown') === 'true'
+  );
+
+  expect(hasShownBlankScreen).toBe(false);
 }

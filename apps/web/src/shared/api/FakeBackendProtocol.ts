@@ -13,6 +13,8 @@ export const FAKE_BACKEND_OPERATIONS = [
   'game.join',
   'game.leave',
   'game.listLobby',
+  'game.listTurnHistory',
+  'game.passTurn',
   'game.start',
   'game.surrender',
   'game.swapPositions',

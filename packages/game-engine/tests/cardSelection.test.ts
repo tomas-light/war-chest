@@ -483,7 +483,7 @@ describe('random card selection', () => {
         hand: resources.hand.length,
         supply: resources.supply.length,
       }))
-    ).toEqual(TEAM_PLAYERS.map(() => ({ bag: 3, hand: 3, supply: 3 })));
+    ).toEqual(TEAM_PLAYERS.map(() => ({ bag: 4, hand: 3, supply: 3 })));
 
     const spectatorView = createViewFor(state, { role: 'spectator' });
     expect(
@@ -502,7 +502,7 @@ describe('random card selection', () => {
       playerId: 'white-one',
       role: 'player',
     });
-    expect(playerView.battlefield?.playerResources[0]?.bagCount).toBe(3);
+    expect(playerView.battlefield?.playerResources[0]?.bagCount).toBe(4);
     expect(playerView.battlefield?.playerResources[0]?.hand).toHaveLength(3);
     expect(playerView.battlefield?.playerResources[1]?.bagCount).toBeNull();
     expect(playerView.battlefield?.playerResources[1]?.hand).toBeNull();

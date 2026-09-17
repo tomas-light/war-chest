@@ -21,6 +21,13 @@ export type {
   PlayerUnitSupply,
 } from './Battlefield.js';
 export type {
+  DiscardedCoin,
+  GameCoin,
+  GameViewDiscardedCoin,
+  RoyalCoin,
+  UnitCoin,
+} from './GameCoin.js';
+export type {
   CardSelectionCommandData,
   CompleteCardSelectionCommandData,
   ConfirmCardChoiceCommandData,
@@ -30,11 +37,13 @@ export type {
   JoinGameCommandData,
   LeaveGameCommandData,
   LifecycleCommandData,
+  PassTurnCommandData,
   StartGameCommandData,
   SurrenderGameCommandData,
   SwapPlayerPositionsCommandData,
   TestMoveCommandData,
   TestScenarioCommandData,
+  TurnCommandData,
   UpdateGameSettingsCommandData,
 } from './commands.js';
 export {
@@ -97,6 +106,7 @@ export type {
   PlayerPositionsSwappedEventData,
   PlayerReconnectedEventData,
   TestMovePerformedEventData,
+  TurnPassedEventData,
 } from './events.js';
 export { hydrateEvent } from './events/hydrateEvent.js';
 export type { ApplicableEvent } from './events/ApplicableEvent.js';
@@ -141,6 +151,7 @@ export type {
   PrivateTestMovePerformedViewEventData,
   PublicTestMovePerformedViewEventData,
   TestMovePerformedViewEventData,
+  TurnPassedViewEventData,
   ViewSequenceAdvancedEventData,
 } from './viewEvents.js';
 export { UNIT_IDS } from './UnitId.js';

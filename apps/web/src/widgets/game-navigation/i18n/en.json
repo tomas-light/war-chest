@@ -1,0 +1,14 @@
+{
+  "GameHeader": {
+    "back": "Back to lobby",
+    "closeMenu": "Close menu",
+    "devTools": "Developer tools",
+    "lobby": "Lobby",
+    "logout": "Sign out",
+    "menu": "Open game menu",
+    "navigation": "Game navigation",
+    "profile": "Profile",
+    "rules": "Rules",
+    "rulesUnavailable": "Rules are not available yet"
+  }
+}

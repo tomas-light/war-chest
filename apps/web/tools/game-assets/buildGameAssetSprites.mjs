@@ -43,19 +43,8 @@ async function buildGameAssetSprites() {
 
   await mkdir(OUTPUT_DIRECTORY, { recursive: true });
   if (scope === '--compact-cards-only') {
-    await buildSprite({
-      entries: UNIT_IDS.map((unitId) => ({
-        height: 400,
-        key: unitId,
-        sourcePath: resolve(
-          sourceDirectory,
-          'cards-compact-ru',
-          `${unitId}.png`
-        ),
-        width: 300,
-      })),
-      fileName: 'unitCardsCompact.ru',
-    });
+    await buildCompactCards('en');
+    await buildCompactCards('ru');
     return;
   }
 
@@ -88,10 +77,30 @@ async function buildGameAssetSprites() {
     })),
     fileName: 'unitCards.ru',
   });
+  await buildCompactCards('en');
+  await buildCompactCards('ru');
+
   if (scope !== '--cards-only') {
     await buildSprite({
       entries: createGameplayEntries(sourceDirectory),
       fileName: 'gameAssets',
+    });
+  }
+
+  async function buildCompactCards(language) {
+    await buildSprite({
+      entries: UNIT_IDS.map((unitId) => ({
+        height: 400,
+        key: unitId,
+        requiresTransparency: false,
+        sourcePath: resolve(
+          sourceDirectory,
+          `cards-compact-${language}`,
+          `${unitId}.png`
+        ),
+        width: 300,
+      })),
+      fileName: `unitCardsCompact.${language}`,
     });
   }
 }

@@ -6,11 +6,13 @@ import {
 } from './DecidableCommand.js';
 import { hydrateLifecycleCommand } from './lifecycle/hydrateLifecycleCommand.js';
 import { hydrateTestScenarioCommand } from './test-scenario/hydrateTestScenarioCommand.js';
+import { hydrateTurnCommand } from './turn/hydrateTurnCommand.js';
 
 const COMMAND_HYDRATORS: readonly CommandHydrator[] = [
   hydrateCardSelectionCommand,
   hydrateLifecycleCommand,
   hydrateTestScenarioCommand,
+  hydrateTurnCommand,
 ];
 
 export function hydrateCommand(data: GameCommandData): DecidableCommand {

@@ -40,10 +40,18 @@ function cloneViewBattlefield(
     controlPoints: battlefield.controlPoints.map((point) => ({ ...point })),
     playerResources: battlefield.playerResources.map((resources) => ({
       ...resources,
+      discard: resources.discard.map((discardedCoin) => ({
+        coin: discardedCoin.coin === null ? null : { ...discardedCoin.coin },
+        faceUp: discardedCoin.faceUp,
+      })),
       eliminated: [...resources.eliminated],
-      hand: resources.hand === null ? null : [...resources.hand],
+      hand:
+        resources.hand === null
+          ? null
+          : resources.hand.map((coin) => ({ ...coin })),
       supply: resources.supply.map((item) => ({ ...item })),
     })),
+    round: battlefield.round,
     units: battlefield.units.map((unit) => ({ ...unit })),
   };
 }

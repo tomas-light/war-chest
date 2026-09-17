@@ -6,11 +6,14 @@ import {
   type GameErrorMessage,
   type GameResponse,
   type GameSnapshotMessage,
+  type GameTurnHistoryQuery,
+  type GameTurnHistoryResponse,
   type JoinGameRequest,
   type LeaveGameRequest,
   type LeaveGameResponse,
   type LobbyGamesResponse,
   type LobbyUpdatedMessage,
+  type PassTurnRequest,
   type PublicUser,
   type SessionResponse,
   type StartGameRequest,
@@ -21,6 +24,7 @@ import {
   gameErrorMessageSchema,
   gameResponseSchema,
   gameSnapshotMessageSchema,
+  gameTurnHistoryResponseSchema,
   leaveGameResponseSchema,
   lobbyGamesResponseSchema,
   lobbyUpdatedMessageSchema,
@@ -110,6 +114,16 @@ export interface FakeBackendClient {
     subscriptionId: string
   ): Promise<void>;
   listLobbyGames(this: void): Promise<LobbyGamesResponse>;
+  listTurnHistory(
+    this: void,
+    gameId: string,
+    query: GameTurnHistoryQuery
+  ): Promise<GameTurnHistoryResponse>;
+  passTurn(
+    this: void,
+    gameId: string,
+    request: PassTurnRequest
+  ): Promise<GameResponse>;
   listFinishedGames(
     this: void,
     userId: string,
@@ -189,6 +203,8 @@ export function createFakeBackendClient(): FakeBackendClient {
     leaveGame,
     leaveGameConnection,
     listLobbyGames,
+    listTurnHistory,
+    passTurn,
     listFinishedGames,
     login,
     loginExisting,
@@ -336,6 +352,34 @@ export function createFakeBackendClient(): FakeBackendClient {
       createSchemaParser(
         lobbyGamesResponseSchema,
         'The fake backend returned an invalid game list.'
+      )
+    );
+  }
+
+  function listTurnHistory(
+    gameId: string,
+    query: GameTurnHistoryQuery
+  ): Promise<GameTurnHistoryResponse> {
+    return sendRequest(
+      'game.listTurnHistory',
+      { gameId, query },
+      createSchemaParser(
+        gameTurnHistoryResponseSchema,
+        'The fake backend returned invalid turn history.'
+      )
+    );
+  }
+
+  function passTurn(
+    gameId: string,
+    request: PassTurnRequest
+  ): Promise<GameResponse> {
+    return sendRequest(
+      'game.passTurn',
+      { gameId, request },
+      createSchemaParser(
+        gameResponseSchema,
+        'The fake backend returned an invalid game state.'
       )
     );
   }

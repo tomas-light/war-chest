@@ -1,4 +1,5 @@
 import { DEFAULT_RUNTIME_FEATURE_FLAGS } from '@war-chest/feature-flags';
+import { GAME_RULES_VERSION } from '@war-chest/game-engine';
 import { describe, expect, test } from 'vitest';
 import { gameViewSchema } from '../src/schemas.js';
 
@@ -15,7 +16,7 @@ describe('gameViewSchema', () => {
       moveCount: 0,
       players: [],
       privateMoves: [],
-      rulesVersion: 2,
+      rulesVersion: GAME_RULES_VERSION,
       settings: {
         cardSelectionMode: 'random',
         expansions: [],

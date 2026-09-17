@@ -1,0 +1,10 @@
+{
+  "PassTurnAction": {
+    "coin": "Coin {{number}}",
+    "pass": "Pass",
+    "passing": "Passing…",
+    "royalCoin": "Royal Coin",
+    "selectCoin": "Choose a coin to discard face down",
+    "unitCoin": "{{unitId}} unit coin"
+  }
+}

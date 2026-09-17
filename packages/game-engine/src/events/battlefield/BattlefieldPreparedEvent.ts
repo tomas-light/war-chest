@@ -1,4 +1,4 @@
-import { cloneBattlefield } from '../../Battlefield.js';
+import { cloneBattlefield, createBattlefieldView } from '../../Battlefield.js';
 import { NullableGameStateError } from '../../errors/NullableGameStateError.js';
 import type { BattlefieldPreparedEventData } from '../../events.js';
 import type { GameState, Viewer } from '../../state.js';
@@ -36,25 +36,7 @@ export class BattlefieldPreparedEvent implements ApplicableEvent<EventData> {
   toViewData(viewer: Viewer): BattlefieldPreparedViewEventData {
     return {
       ...this.data,
-      payload: {
-        controlPoints: this.data.payload.controlPoints.map((point) => ({
-          ...point,
-        })),
-        playerResources: this.data.payload.playerResources.map((resources) => {
-          const canSeeHand =
-            viewer.role === 'player' && viewer.playerId === resources.playerId;
-
-          return {
-            bagCount: canSeeHand ? resources.bag.length : null,
-            eliminated: [...resources.eliminated],
-            hand: canSeeHand ? [...resources.hand] : null,
-            handCount: resources.hand.length,
-            playerId: resources.playerId,
-            supply: resources.supply.map((item) => ({ ...item })),
-          };
-        }),
-        units: this.data.payload.units.map((unit) => ({ ...unit })),
-      },
+      payload: createBattlefieldView(this.data.payload, viewer),
     };
   }
 }

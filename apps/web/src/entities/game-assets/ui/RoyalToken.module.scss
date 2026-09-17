@@ -1,0 +1,29 @@
+.token {
+  display: inline-grid;
+  border: 2px solid var(--wc-color-brass-bright);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 34% 28%, rgb(239 199 94 / 42%), transparent 24%),
+    linear-gradient(145deg, #9f6f20, #2e2418 68%, #0d1113);
+  box-shadow:
+    inset 0 0 0 3px rgb(8 13 16 / 54%),
+    inset 0 0 14px rgb(239 199 94 / 22%),
+    0 0 9px rgb(21 217 237 / 16%);
+  color: var(--wc-color-brass-bright);
+  font-family: var(--wc-font-display);
+  line-height: 1;
+  place-items: center;
+  text-shadow: 0 1px 2px var(--wc-color-ink);
+}
+
+.compact {
+  width: 32px;
+  height: 32px;
+  font-size: 18px;
+}
+
+.regular {
+  width: 64px;
+  height: 64px;
+  font-size: 34px;
+}

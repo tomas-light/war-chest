@@ -8,11 +8,14 @@ import { type ReactNode, useState } from 'react';
 import { useTranslation } from '#/shared/i18n/useTranslation';
 import { BattlefieldBoard } from './BattlefieldBoard';
 import { GamePlayerSwitchButton } from './GamePlayerSwitchButton';
+import type { HandCoinClickInput } from './PlayerPanel';
 import { PlayerPanel } from './PlayerPanel';
 import classes from './ActiveGameTable.module.scss';
 
 interface Props {
+  onHandCoinClick(this: void, input: HandCoinClickInput): void;
   playerProfiles: readonly LobbyGamePlayer[];
+  selectedCoinIndex: number | null;
   userId: string;
   view: GameView;
 }
@@ -25,7 +28,8 @@ interface TeamPanelsProps {
 }
 
 export function ActiveGameTable(props: Props) {
-  const { playerProfiles, userId, view } = props;
+  const { onHandCoinClick, playerProfiles, selectedCoinIndex, userId, view } =
+    props;
 
   const { t } = useTranslation('pages/active-game', {
     keyPrefix: 'ActiveGameTable',
@@ -117,11 +121,15 @@ export function ActiveGameTable(props: Props) {
               isCurrent={player.id === currentPlayer?.id}
               label={getPlayerLabel(player, position, isSpectator)}
               mobileSwitchControl={mobileSwitchControl}
+              onHandCoinClick={getHandCoinClickHandler(player)}
               player={player}
               profile={findProfile(player)}
               resources={view.battlefield?.playerResources.find(
                 (resources) => resources.playerId === player.id
               )}
+              selectedCoinIndex={
+                player.id === userId ? selectedCoinIndex : null
+              }
             />
           </div>
         ))}
@@ -134,6 +142,14 @@ export function ActiveGameTable(props: Props) {
       } else {
         setSelectedIndex(0);
       }
+    }
+
+    function getHandCoinClickHandler(player: GameViewPlayer) {
+      if (view.status !== 'active' || player.id !== userId) {
+        return undefined;
+      }
+
+      return onHandCoinClick;
     }
   }
 

@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { GameView } from '@war-chest/game-engine';
+import type { ReactNode } from 'react';
 import { getGameQueryKey, LOBBY_GAMES_QUERY_KEY } from '#/entities/game';
 import {
   ApiClientError,
@@ -16,11 +17,26 @@ interface Props {
   onLeaving(this: void): void;
   onLeaveFailed(this: void): void;
   onLeft(this: void): void;
+  renderTrigger?(this: void, props: TriggerProps): ReactNode;
   view: GameView;
 }
 
+interface TriggerProps {
+  disabled: boolean;
+  label: string;
+  onClick(this: void): void;
+}
+
 export function LeaveGameButton(props: Props) {
-  const { gameId, isCreator, onLeaving, onLeaveFailed, onLeft, view } = props;
+  const {
+    gameId,
+    isCreator,
+    onLeaving,
+    onLeaveFailed,
+    onLeft,
+    renderTrigger,
+    view,
+  } = props;
 
   const { t } = useTranslation('features/leave-game', {
     keyPrefix: 'LeaveGameButton',
@@ -44,21 +60,38 @@ export function LeaveGameButton(props: Props) {
 
   return (
     <div className={classes.action}>
-      <Button
-        disabled={leaveGameMutation.isPending}
-        onClick={() => leaveGameMutation.mutate()}
-        variant="secondary"
-      >
-        {leaveGameMutation.isPending
-          ? t(isCreator ? 'closing' : 'leaving')
-          : t(isCreator ? 'close' : 'leave')}
-      </Button>
+      {renderButton()}
 
       {leaveGameMutation.error === null ? null : (
         <p role="alert">{getApiErrorMessage(leaveGameMutation.error)}</p>
       )}
     </div>
   );
+
+  function renderButton(): ReactNode {
+    const label = leaveGameMutation.isPending
+      ? t(isCreator ? 'closing' : 'leaving')
+      : t(isCreator ? 'close' : 'leave');
+    const triggerProps: TriggerProps = {
+      disabled: leaveGameMutation.isPending,
+      label,
+      onClick: () => leaveGameMutation.mutate(),
+    };
+
+    if (renderTrigger !== undefined) {
+      return renderTrigger(triggerProps);
+    }
+
+    return (
+      <Button
+        disabled={triggerProps.disabled}
+        onClick={triggerProps.onClick}
+        variant="secondary"
+      >
+        {triggerProps.label}
+      </Button>
+    );
+  }
 
   async function leaveGame(): Promise<void> {
     const gameApi = await createSelectedGameApi();

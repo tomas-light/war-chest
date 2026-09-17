@@ -1,5 +1,6 @@
 import type { GameView } from '@war-chest/game-engine';
 import clsx from 'clsx';
+import { PassTurnAction } from '#/features/pass-turn';
 import { SurrenderGameButton } from '#/features/surrender-game';
 import { useTranslation } from '#/shared/i18n/useTranslation';
 import { Button } from '#/shared/ui/button';
@@ -7,13 +8,13 @@ import classes from './ActiveGameSidebar.module.scss';
 
 interface Props {
   gameId: string;
-  onSurrendered(this: void, view: GameView): void;
+  onViewChanged(this: void, view: GameView): void;
   userId: string;
   view: GameView;
 }
 
 export function ActiveGameSidebar(props: Props) {
-  const { gameId, onSurrendered, userId, view } = props;
+  const { gameId, onViewChanged, userId, view } = props;
   const { t } = useTranslation('pages/active-game', {
     keyPrefix: 'ActiveGameSidebar',
   });
@@ -26,18 +27,26 @@ export function ActiveGameSidebar(props: Props) {
           className={clsx(classes.sidebarSection, classes.actionsSection)}
         >
           <p className={classes.sidebarEyebrow}>{t('turnEyebrow')}</p>
-          <h2>{t('actionsTitle')}</h2>
+          <h2>
+            {t('actionsTitle')} ·{' '}
+            {t('round', { round: view.battlefield?.round ?? 1 })}
+          </h2>
           <p>{getTurnDescription()}</p>
 
           <div className={classes.placeholderActions}>
-            <Button disabled>{t('chooseSquad')}</Button>
-            <Button disabled variant="secondary">
-              {t('finishAction')}
-            </Button>
+            {isSpectator || view.settings.format !== 'duel' ? null : (
+              <PassTurnAction
+                gameId={gameId}
+                onPassed={onViewChanged}
+                userId={userId}
+                view={view}
+              />
+            )}
+            <Button disabled>{t('unitActionsUnavailable')}</Button>
             {isSpectator ? null : (
               <SurrenderGameButton
                 gameId={gameId}
-                onSurrendered={onSurrendered}
+                onSurrendered={onViewChanged}
                 view={view}
               />
             )}

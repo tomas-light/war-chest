@@ -1,0 +1,13 @@
+{
+  "GameActions": {
+    "close": "Close action wheel",
+    "deploy": "Deploy",
+    "initiative": "Initiative",
+    "maneuver": "Maneuver",
+    "pass": "Pass",
+    "passing": "Passing…",
+    "recruit": "Recruit",
+    "reinforce": "Reinforce",
+    "unavailable": "This action is not available yet"
+  }
+}

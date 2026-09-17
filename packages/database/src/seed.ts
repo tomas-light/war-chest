@@ -112,7 +112,7 @@ async function seedDatabase(): Promise<void> {
           payload: {
             creatorId: SEED_IDENTIFIERS.firstUser,
             featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
-            rulesVersion: 2,
+            rulesVersion: 3,
             settings: {
               cardSelectionMode: 'random',
               expansions: [],

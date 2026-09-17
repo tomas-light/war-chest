@@ -1,24 +1,82 @@
 .action {
-  display: grid;
-  gap: 10px;
-  justify-items: start;
+  position: absolute;
+  z-index: 3;
+  top: 20px;
+  left: 8px;
 }
 
 .button {
-  width: 320px;
-  max-width: 100%;
-  font-size: 16px;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  padding: 0;
+  border: 1px solid var(--wc-color-cyan);
+  border-radius: 50%;
+  background: rgb(8 13 16 / 94%);
+  box-shadow: 0 0 14px rgb(21 217 237 / 38%);
+  color: var(--wc-color-cyan-soft);
+  cursor: pointer;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1;
+  place-items: center;
 }
 
-.action p {
+.button img {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
+.button[data-action='ban'] {
+  border-color: var(--wc-color-red);
+  box-shadow: 0 0 14px rgb(255 59 66 / 24%);
+  color: var(--wc-color-red);
+}
+
+.button:hover {
+  background: var(--wc-color-surface-raised);
+}
+
+.button:focus-visible {
+  background: rgb(8 13 16 / 94%);
+  outline: 2px solid var(--wc-color-text);
+  outline-offset: 2px;
+}
+
+.button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.error {
+  position: absolute;
+  top: 48px;
+  left: 0;
+  width: min(240px, 70vw);
+  padding: 7px 9px;
+  border: 1px solid var(--wc-color-error);
+  border-radius: 4px;
   margin: 0;
+  background: var(--wc-color-ink);
   color: var(--wc-color-error);
-  font-size: 14px;
+  font-size: 12px;
 }
 
 @media (width <= 620px) {
-  .action,
   .button {
-    width: 100%;
+    width: 32px;
+    height: 32px;
+    font-size: 19px;
+  }
+
+  .button img {
+    width: 20px;
+    height: 20px;
+  }
+
+  .action {
+    top: 10px;
+    left: 4px;
   }
 }

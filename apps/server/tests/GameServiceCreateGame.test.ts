@@ -1,5 +1,10 @@
 import { DEFAULT_RUNTIME_FEATURE_FLAGS } from '@war-chest/feature-flags';
-import { type GameEventData, applyEvent } from '@war-chest/game-engine';
+import {
+  type GameEventData,
+  applyEvent,
+  GAME_EVENT_VERSION,
+  GAME_RULES_VERSION,
+} from '@war-chest/game-engine';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import type { FeatureFlagsService } from '../src/featureFlags/FeatureFlagsService.js';
 import {
@@ -29,7 +34,7 @@ const GAME_CREATED_EVENT: GameEventData = {
   payload: {
     creatorId: FIRST_USER_ID,
     featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
-    rulesVersion: 2,
+    rulesVersion: GAME_RULES_VERSION,
     settings: {
       cardSelectionMode: 'random',
       expansions: [],
@@ -38,7 +43,7 @@ const GAME_CREATED_EVENT: GameEventData = {
   },
   sequence: 1,
   type: 'GameCreated',
-  version: 2,
+  version: GAME_EVENT_VERSION,
 };
 
 describe('GameService createGame', () => {

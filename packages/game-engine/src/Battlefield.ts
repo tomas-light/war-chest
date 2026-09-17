@@ -1,5 +1,12 @@
+import {
+  type DiscardedCoin,
+  type GameCoin,
+  type GameViewDiscardedCoin,
+  cloneDiscardedCoin,
+  cloneGameCoin,
+} from './GameCoin.js';
 import type { GameFormat } from './GameSettings.js';
-import type { GamePlayer, GameTeam } from './state.js';
+import type { GamePlayer, GameTeam, Viewer } from './state.js';
 import { getUnitDefinition } from './UnitDefinition.js';
 import type { UnitId } from './UnitId.js';
 
@@ -116,9 +123,10 @@ export type PlayerUnitSupply = {
 };
 
 export type PlayerBattlefieldResources = {
-  bag: UnitId[];
+  bag: GameCoin[];
+  discard: DiscardedCoin[];
   eliminated: UnitId[];
-  hand: UnitId[];
+  hand: GameCoin[];
   playerId: string;
   supply: PlayerUnitSupply[];
 };
@@ -126,13 +134,15 @@ export type PlayerBattlefieldResources = {
 export type BattlefieldState = {
   controlPoints: BattlefieldControlPoint[];
   playerResources: PlayerBattlefieldResources[];
+  round: number;
   units: BattlefieldUnit[];
 };
 
 export interface GameViewPlayerBattlefieldResources {
   bagCount: number | null;
+  discard: readonly GameViewDiscardedCoin[];
   eliminated: readonly UnitId[];
-  hand: readonly UnitId[] | null;
+  hand: readonly GameCoin[] | null;
   handCount: number;
   playerId: string;
   supply: readonly PlayerUnitSupply[];
@@ -141,6 +151,7 @@ export interface GameViewPlayerBattlefieldResources {
 export interface GameViewBattlefieldState {
   controlPoints: readonly BattlefieldControlPoint[];
   playerResources: readonly GameViewPlayerBattlefieldResources[];
+  round: number;
   units: readonly BattlefieldUnit[];
 }
 
@@ -242,6 +253,7 @@ export function createInitialBattlefield(
     playerResources: input.players.map((player) =>
       createInitialPlayerResources(player)
     ),
+    round: 1,
     units: [],
   };
 }
@@ -252,12 +264,45 @@ export function cloneBattlefield(
   return {
     controlPoints: battlefield.controlPoints.map((point) => ({ ...point })),
     playerResources: battlefield.playerResources.map((resources) => ({
-      bag: [...resources.bag],
+      bag: resources.bag.map(cloneGameCoin),
+      discard: resources.discard.map(cloneDiscardedCoin),
       eliminated: [...resources.eliminated],
-      hand: [...resources.hand],
+      hand: resources.hand.map(cloneGameCoin),
       playerId: resources.playerId,
       supply: resources.supply.map((item) => ({ ...item })),
     })),
+    round: battlefield.round,
+    units: battlefield.units.map((unit) => ({ ...unit })),
+  };
+}
+
+export function createBattlefieldView(
+  battlefield: BattlefieldState,
+  viewer: Viewer
+): GameViewBattlefieldState {
+  return {
+    controlPoints: battlefield.controlPoints.map((point) => ({ ...point })),
+    playerResources: battlefield.playerResources.map((resources) => {
+      const canSeePrivateResources =
+        viewer.role === 'player' && viewer.playerId === resources.playerId;
+
+      return {
+        bagCount: canSeePrivateResources ? resources.bag.length : null,
+        discard: resources.discard.map((discardedCoin) => ({
+          coin:
+            canSeePrivateResources || discardedCoin.faceUp
+              ? cloneGameCoin(discardedCoin.coin)
+              : null,
+          faceUp: discardedCoin.faceUp,
+        })),
+        eliminated: [...resources.eliminated],
+        hand: canSeePrivateResources ? resources.hand.map(cloneGameCoin) : null,
+        handCount: resources.hand.length,
+        playerId: resources.playerId,
+        supply: resources.supply.map((item) => ({ ...item })),
+      };
+    }),
+    round: battlefield.round,
     units: battlefield.units.map((unit) => ({ ...unit })),
   };
 }
@@ -272,11 +317,16 @@ function createControlPoint(
 function createInitialPlayerResources(
   player: GamePlayer
 ): PlayerBattlefieldResources {
-  const bag = shuffle(player.cardIds.flatMap((unitId) => [unitId, unitId]));
+  const unitCoins = player.cardIds.flatMap<GameCoin>((unitId) => [
+    { kind: 'unit', unitId },
+    { kind: 'unit', unitId },
+  ]);
+  const bag = shuffle<GameCoin>([{ kind: 'royal' }, ...unitCoins]);
   const hand = bag.slice(0, 3);
 
   return {
     bag: bag.slice(3),
+    discard: [],
     eliminated: [],
     hand,
     playerId: player.id,

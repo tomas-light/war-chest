@@ -1,13 +1,15 @@
 import type { LobbyGamePlayer } from '@war-chest/api-contracts';
 import type { UnitId } from '@war-chest/game-engine';
 import clsx from 'clsx';
-import { VerticalUnitCardImage } from '#/entities/game-assets';
+import type { ReactNode } from 'react';
+import { VerticalUnitCardArtwork } from '#/entities/game-assets';
 import { UserAvatar } from '#/entities/user';
 import { useTranslation } from '#/shared/i18n/useTranslation';
 import classes from './CardSelectionCard.module.scss';
 
 interface Props {
   action: 'ban' | 'pick' | undefined;
+  confirmationControl?: ReactNode;
   disabled: boolean;
   isAlly: boolean;
   isCandidate: boolean;
@@ -20,6 +22,7 @@ interface Props {
 export function CardSelectionCard(props: Props) {
   const {
     action,
+    confirmationControl,
     disabled,
     isAlly,
     isCandidate,
@@ -37,29 +40,38 @@ export function CardSelectionCard(props: Props) {
   const status = getStatus();
 
   return (
-    <button
-      aria-label={`${t(`units.${unitId}`)} · ${status}`}
-      aria-pressed={isCandidate}
-      className={clsx(classes.card, {
-        [classes.candidate]: isCandidate,
-        [classes.banned]: action === 'ban',
-        [classes.picked]: action === 'pick',
-        [classes.own]: action === 'pick' && isOwn,
-      })}
-      disabled={disabled}
-      onClick={onSelect}
-      type="button"
-    >
-      <VerticalUnitCardImage
-        alt=""
-        className={classes.artwork}
-        language={language}
-        size="responsive"
-        unit={unitId}
-      />
-      <span className={classes.status}>{status}</span>
-      {owner === undefined ? null : <UserAvatar user={owner} />}
-    </button>
+    <div className={classes.container} data-card-selection-option>
+      <button
+        aria-label={`${t(`units.${unitId}`)} · ${status}`}
+        aria-pressed={isCandidate}
+        className={clsx(classes.card, {
+          [classes.candidate]: isCandidate,
+          [classes.banned]: action === 'ban',
+          [classes.picked]: action === 'pick',
+        })}
+        disabled={disabled}
+        onClick={onSelect}
+        type="button"
+      >
+        <VerticalUnitCardArtwork
+          alt=""
+          className={classes.artwork}
+          language={language}
+          size="responsive"
+          unit={unitId}
+        />
+        <span aria-hidden="true" className={classes.frame} />
+      </button>
+      {owner === undefined ? null : (
+        <span className={classes.confirmedOwner} data-action={action}>
+          <UserAvatar size="medium" user={owner} />
+          <span aria-hidden="true" className={classes.actionBadge}>
+            {action === 'ban' ? '×' : '✓'}
+          </span>
+        </span>
+      )}
+      {confirmationControl}
+    </div>
   );
 
   function getStatus(): string {

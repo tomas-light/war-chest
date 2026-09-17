@@ -259,6 +259,32 @@ describe('game command HTTP routes', () => {
     expect(response.statusCode).toBe(200);
   });
 
+  test('executes pass with the selected hand position', async () => {
+    executeCommand.mockResolvedValue({
+      currentVersion: 7,
+      events: [],
+      previousVersion: 6,
+      status: 'saved',
+      view: { ...WAITING_VIEW, lastEventSequence: 7, status: 'active' },
+    });
+
+    const response = await app.inject({
+      body: { coinIndex: 2, commandId: COMMAND_ID, expectedVersion: 6 },
+      headers: AUTH_HEADERS,
+      method: 'POST',
+      url: `/api/games/${GAME_ID}/pass`,
+    });
+
+    expect(executeCommand).toHaveBeenCalledWith({
+      command: { coinIndex: 2, type: 'PassTurn' },
+      commandId: COMMAND_ID,
+      expectedVersion: 6,
+      gameId: GAME_ID,
+      userId: USER_ID,
+    });
+    expect(response.statusCode).toBe(200);
+  });
+
   test.each([
     { expectedCode: 'game_command_forbidden', status: 'gameCommandForbidden' },
     { expectedCode: 'game_position_occupied', status: 'gamePositionOccupied' },

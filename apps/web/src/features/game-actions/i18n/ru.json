@@ -1,0 +1,13 @@
+{
+  "GameActions": {
+    "close": "Закрыть колесо действий",
+    "deploy": "Разыграть",
+    "initiative": "Инициатива",
+    "maneuver": "Манёвр",
+    "pass": "Пас",
+    "passing": "Пас…",
+    "recruit": "Нанять",
+    "reinforce": "Усилить",
+    "unavailable": "Действие пока недоступно"
+  }
+}

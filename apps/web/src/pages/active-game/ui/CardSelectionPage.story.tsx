@@ -1,7 +1,13 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DEFAULT_RUNTIME_FEATURE_FLAGS } from '@war-chest/feature-flags';
-import { type GameView, type UnitId } from '@war-chest/game-engine';
+import {
+  type GameView,
+  type UnitId,
+  GAME_RULES_VERSION,
+} from '@war-chest/game-engine';
+import { useState } from 'react';
 import { CardSelectionPage } from './CardSelectionPage';
+import { TurnQueue } from './TurnQueue';
 import classes from './ActiveGamePage.module.scss';
 
 const QUERY_CLIENT = new QueryClient();
@@ -37,6 +43,22 @@ const TEAM_ORDER = [0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3];
 
 export function StartDuelDraft() {
   return <SelectionStory />;
+}
+
+export function AdvancingDuelDraft() {
+  const [picks, setPicks] = useState(0);
+
+  return (
+    <>
+      <button
+        onClick={() => setPicks((currentPicks) => currentPicks + 1)}
+        type="button"
+      >
+        Следующий выбор
+      </button>
+      <SelectionStory picks={picks} />
+    </>
+  );
 }
 
 export function WaitingDuelDraft() {
@@ -167,7 +189,7 @@ function SelectionStory(props: Props) {
       team: player.team,
     })),
     privateMoves: [],
-    rulesVersion: 2,
+    rulesVersion: GAME_RULES_VERSION,
     settings: {
       cardSelectionMode: bans === undefined ? 'draft' : 'eliminationDraft',
       expansions: [],
@@ -188,14 +210,21 @@ function SelectionStory(props: Props) {
   return (
     <QueryClientProvider client={QUERY_CLIENT}>
       <main className={classes.selectionPage} style={{ margin: '0 auto' }}>
-        <CardSelectionPage
-          gameId="00000000-0000-4000-8000-000000000001"
-          isConnectionReady={connected}
-          onConfirmed={ignoreConfirmation}
-          playerProfiles={playerProfiles}
-          userId={userId}
-          view={view}
-        />
+        <div className={classes.stageLayout}>
+          <TurnQueue
+            gameId="00000000-0000-4000-8000-000000000001"
+            playerProfiles={playerProfiles}
+            view={view}
+          />
+          <CardSelectionPage
+            gameId="00000000-0000-4000-8000-000000000001"
+            isConnectionReady={connected}
+            onConfirmed={ignoreConfirmation}
+            playerProfiles={playerProfiles}
+            userId={userId}
+            view={view}
+          />
+        </div>
       </main>
     </QueryClientProvider>
   );

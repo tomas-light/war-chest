@@ -51,7 +51,21 @@
 
 .layout {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.finishedLayout {
+  display: grid;
   grid-template-columns: minmax(0, 964px) minmax(320px, 400px);
+  gap: 24px;
+  align-items: start;
+}
+
+.stageLayout {
+  display: grid;
+  grid-template-columns: 80px minmax(0, 1fr);
   gap: 24px;
   align-items: start;
 }
@@ -75,7 +89,8 @@
 }
 
 @media (width <= 900px) {
-  .layout {
+  .layout,
+  .finishedLayout {
     grid-template-columns: 1fr;
   }
 }
@@ -93,5 +108,10 @@
 
   .state button {
     width: 100%;
+  }
+
+  .stageLayout {
+    grid-template-columns: 68px minmax(0, 1fr);
+    gap: 10px;
   }
 }

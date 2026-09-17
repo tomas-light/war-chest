@@ -8,12 +8,14 @@ import { hydrateCardSelectionViewEvent } from './card-selection/hydrateCardSelec
 import { hydrateLifecycleViewEvent } from './lifecycle/hydrateLifecycleViewEvent.js';
 import { hydrateSynchronizationViewEvent } from './synchronization/hydrateSynchronizationViewEvent.js';
 import { hydrateTestScenarioViewEvent } from './test-scenario/hydrateTestScenarioViewEvent.js';
+import { hydrateTurnViewEvent } from './turn/hydrateTurnViewEvent.js';
 
 const VIEW_EVENT_HYDRATORS: readonly ViewEventHydrator[] = [
   hydrateBattlefieldViewEvent,
   hydrateCardSelectionViewEvent,
   hydrateLifecycleViewEvent,
   hydrateTestScenarioViewEvent,
+  hydrateTurnViewEvent,
   hydrateSynchronizationViewEvent,
 ];
 

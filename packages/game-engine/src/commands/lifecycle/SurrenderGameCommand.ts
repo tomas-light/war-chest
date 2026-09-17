@@ -12,7 +12,7 @@ export class SurrenderGameCommand implements DecidableCommand<SurrenderGameComma
   }
 
   decide(state: GameState, playerId: string): GameEventData[] {
-    if (state.status !== 'active') {
+    if (state.status !== 'active' && state.status !== 'cardSelection') {
       return [];
     }
 
