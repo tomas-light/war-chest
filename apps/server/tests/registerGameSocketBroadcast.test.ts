@@ -9,7 +9,11 @@ import type {
 import type { Auth, AuthSession } from '@war-chest/auth';
 import type { DatabaseConnection } from '@war-chest/database';
 import { DEFAULT_RUNTIME_FEATURE_FLAGS } from '@war-chest/feature-flags';
-import type { GameView } from '@war-chest/game-engine';
+import {
+  type GameView,
+  GAME_EVENT_VERSION,
+  GAME_RULES_VERSION,
+} from '@war-chest/game-engine';
 import type { FastifyInstance } from 'fastify';
 import { type Socket as ClientSocket, io } from 'socket.io-client';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
@@ -41,7 +45,7 @@ const WAITING_VIEW: GameView = {
   moveCount: 0,
   players: [],
   privateMoves: [],
-  rulesVersion: 2,
+  rulesVersion: GAME_RULES_VERSION,
   settings: {
     cardSelectionMode: 'random',
     expansions: [],
@@ -163,22 +167,10 @@ describe('game Socket.IO broadcasts', () => {
         synchronization: {
           events: [
             {
-              payload:
-                userId === FIRST_USER_ID
-                  ? {
-                      moveNumber: 1,
-                      nextPlayerId: SECOND_USER_ID,
-                      playerId: FIRST_USER_ID,
-                      privateData: { card: 'hidden' },
-                    }
-                  : {
-                      moveNumber: 1,
-                      nextPlayerId: SECOND_USER_ID,
-                      playerId: FIRST_USER_ID,
-                    },
+              payload: createTurnPassedPayload(userId),
               sequence: 2,
-              type: 'TestMovePerformed',
-              version: 2,
+              type: 'TurnPassed',
+              version: GAME_EVENT_VERSION,
             },
           ],
           type: 'events',
@@ -197,7 +189,7 @@ describe('game Socket.IO broadcasts', () => {
     const secondEvents = waitForGameEvents(secondClient);
 
     firstClient.emit('game:command', {
-      command: { privateData: { card: 'hidden' }, type: 'TestMove' },
+      command: { coinIndex: 0, type: 'PassTurn' },
       commandId: COMMAND_ID,
       expectedVersion: 1,
       gameId: GAME_ID,
@@ -218,9 +210,9 @@ describe('game Socket.IO broadcasts', () => {
       secondEvents,
     ]);
     expect(firstMessage.events[0]).toMatchObject({
-      payload: { privateData: { card: 'hidden' } },
+      payload: { coin: { kind: 'unit', unitId: 'archer' } },
     });
-    expect(secondMessage.events[0]).not.toHaveProperty('payload.privateData');
+    expect(secondMessage.events[0]).toMatchObject({ payload: { coin: null } });
     expect(synchronize).toHaveBeenCalledTimes(2);
   });
 
@@ -267,6 +259,47 @@ describe('game Socket.IO broadcasts', () => {
     });
   });
 });
+
+function createTurnPassedPayload(viewerId: string) {
+  const canSeePrivateResources = viewerId === FIRST_USER_ID;
+
+  return {
+    battlefield: {
+      controlPoints: [],
+      playerResources: [
+        {
+          bagCount: canSeePrivateResources ? 5 : null,
+          discard: [
+            {
+              coin: canSeePrivateResources
+                ? { kind: 'unit' as const, unitId: 'archer' as const }
+                : null,
+              faceUp: false,
+            },
+          ],
+          eliminated: [],
+          hand: canSeePrivateResources
+            ? [
+                { kind: 'unit' as const, unitId: 'cavalry' as const },
+                { kind: 'royal' as const },
+              ]
+            : null,
+          handCount: 2,
+          playerId: FIRST_USER_ID,
+          supply: [],
+        },
+      ],
+      round: 1,
+      units: [],
+    },
+    coin: canSeePrivateResources
+      ? { kind: 'unit' as const, unitId: 'archer' as const }
+      : null,
+    moveNumber: 1,
+    nextPlayerId: SECOND_USER_ID,
+    playerId: FIRST_USER_ID,
+  };
+}
 
 function connectClient(
   serverUrl: string,

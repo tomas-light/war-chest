@@ -5,6 +5,8 @@ import { UNIT_IDS } from '../model/gameAssetTypes';
 import GAME_ASSETS_LAYOUT from './gameAssets.json';
 import ENGLISH_CARDS_LAYOUT from './unitCards.en.json';
 import RUSSIAN_CARDS_LAYOUT from './unitCards.ru.json';
+import COMPACT_ENGLISH_CARDS_LAYOUT from './unitCardsCompact.en.json';
+import COMPACT_RUSSIAN_CARDS_LAYOUT from './unitCardsCompact.ru.json';
 import UNIT_PORTRAITS_LAYOUT from './unitPortraits.json';
 
 describe('game sprite manifests', () => {
@@ -15,6 +17,8 @@ describe('game sprite manifests', () => {
   test('contains the same complete unit set in each localized card sprite', () => {
     expect(Object.keys(ENGLISH_CARDS_LAYOUT.assets)).toEqual(UNIT_IDS);
     expect(Object.keys(RUSSIAN_CARDS_LAYOUT.assets)).toEqual(UNIT_IDS);
+    expect(Object.keys(COMPACT_ENGLISH_CARDS_LAYOUT.assets)).toEqual(UNIT_IDS);
+    expect(Object.keys(COMPACT_RUSSIAN_CARDS_LAYOUT.assets)).toEqual(UNIT_IDS);
   });
 
   test('contains every unit token in every supported color', () => {
@@ -58,6 +62,17 @@ describe('game sprite manifests', () => {
     for (const layout of [ENGLISH_CARDS_LAYOUT, RUSSIAN_CARDS_LAYOUT]) {
       for (const asset of Object.values(layout.assets)) {
         expect(asset).toMatchObject({ height: 534, width: 400 });
+      }
+    }
+  });
+
+  test('stores compact cards at twice their 150 pixel source width', () => {
+    for (const layout of [
+      COMPACT_ENGLISH_CARDS_LAYOUT,
+      COMPACT_RUSSIAN_CARDS_LAYOUT,
+    ]) {
+      for (const asset of Object.values(layout.assets)) {
+        expect(asset).toMatchObject({ height: 400, width: 300 });
       }
     }
   });
@@ -106,6 +121,8 @@ describe('game sprite manifests', () => {
       GAME_ASSETS_LAYOUT,
       ENGLISH_CARDS_LAYOUT,
       RUSSIAN_CARDS_LAYOUT,
+      COMPACT_ENGLISH_CARDS_LAYOUT,
+      COMPACT_RUSSIAN_CARDS_LAYOUT,
       UNIT_PORTRAITS_LAYOUT,
     ];
 
@@ -123,6 +140,8 @@ describe('game sprite images', () => {
     ['gameAssets', GAME_ASSETS_LAYOUT],
     ['unitCards.en', ENGLISH_CARDS_LAYOUT],
     ['unitCards.ru', RUSSIAN_CARDS_LAYOUT],
+    ['unitCardsCompact.en', COMPACT_ENGLISH_CARDS_LAYOUT],
+    ['unitCardsCompact.ru', COMPACT_RUSSIAN_CARDS_LAYOUT],
     ['unitPortraits', UNIT_PORTRAITS_LAYOUT],
   ])(
     'matches the generated %s manifest dimensions',
@@ -136,6 +155,44 @@ describe('game sprite images', () => {
       expect(metadata.hasAlpha).toBe(true);
       expect(metadata.width).toBe(layout.width);
       expect(metadata.height).toBe(layout.height);
+    }
+  );
+
+  test.each([
+    ['unitCards.en', ENGLISH_CARDS_LAYOUT],
+    ['unitCards.ru', RUSSIAN_CARDS_LAYOUT],
+    ['unitCardsCompact.en', COMPACT_ENGLISH_CARDS_LAYOUT],
+    ['unitCardsCompact.ru', COMPACT_RUSSIAN_CARDS_LAYOUT],
+  ])(
+    'stores artwork without the brass frame and divider in %s',
+    async (fileName, layout) => {
+      const bytes = await readFile(
+        new URL(`./${fileName}.webp`, import.meta.url)
+      );
+      const { data, info } = await sharp(bytes)
+        .ensureAlpha()
+        .raw()
+        .toBuffer({ resolveWithObject: true });
+
+      for (const asset of Object.values(layout.assets)) {
+        const centerX = asset.x + Math.floor(asset.width / 2);
+        const centerY = asset.y + Math.floor(asset.height / 2);
+        const dividerY = asset.y + (asset.width === 400 ? 80 : 60);
+        const dividerX = asset.x + Math.floor(asset.width * 0.75);
+
+        expect(getRed(centerX, asset.y + 1)).toBeLessThan(120);
+        expect(getRed(asset.x + 1, centerY)).toBeLessThan(120);
+        expect(getRed(dividerX, dividerY)).toBeLessThan(120);
+        expect(getAlpha(centerX, centerY)).toBe(255);
+      }
+
+      function getRed(x: number, y: number) {
+        return data[(y * info.width + x) * info.channels];
+      }
+
+      function getAlpha(x: number, y: number) {
+        return data[(y * info.width + x) * info.channels + 3];
+      }
     }
   );
 

@@ -35,6 +35,13 @@ export function AppRouter() {
         <Route path={appRoutes.login.url()} element={<LoginPage />} />
       </Route>
       <Route element={<AuthenticatedRoute />}>
+        <Route element={<GameRuntimeProvider />}>
+          <Route path={appRoutes.games.gameId().url()} element={<GamePage />} />
+          <Route
+            path={appRoutes.games.play.gameId().url()}
+            element={<ActiveGamePage />}
+          />
+        </Route>
         <Route element={<SessionNavigation />}>
           <Route
             index
@@ -42,16 +49,6 @@ export function AppRouter() {
           />
           <Route path={appRoutes.lobby.url()} element={<LobbyPage />} />
           <Route path={appRoutes.games.new.url()} element={<NewGamePage />} />
-          <Route element={<GameRuntimeProvider />}>
-            <Route
-              path={appRoutes.games.gameId().url()}
-              element={<GamePage />}
-            />
-            <Route
-              path={appRoutes.games.play.gameId().url()}
-              element={<ActiveGamePage />}
-            />
-          </Route>
           <Route path={appRoutes.profile.url()} element={<UserProfilePage />} />
           <Route
             path={appRoutes.users.userId().url()}

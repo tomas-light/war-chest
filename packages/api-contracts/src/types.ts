@@ -209,9 +209,31 @@ export interface SurrenderGameRequest {
   expectedVersion: number;
 }
 
+export interface PassTurnRequest {
+  coinIndex: number;
+  commandId: string;
+  expectedVersion: number;
+}
+
 export interface GameEventsResponse {
   events: readonly GameViewEventData[];
   gameId: string;
+}
+
+export interface GameTurnHistoryItem {
+  action: 'pass';
+  playerId: string;
+  sequence: number;
+}
+
+export interface GameTurnHistoryResponse {
+  items: readonly GameTurnHistoryItem[];
+  nextCursor: number | null;
+}
+
+export interface GameTurnHistoryQuery {
+  beforeSequence?: number;
+  limit: number;
 }
 
 export interface GameJoinMessage {

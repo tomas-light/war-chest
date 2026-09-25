@@ -4,7 +4,7 @@ import {
   type FakeDatabaseSchema,
 } from './schema.js';
 
-export const FAKE_DATABASE_VERSION = 7;
+export const FAKE_DATABASE_VERSION = 8;
 
 type MigrationTransaction = IDBPTransaction<
   FakeDatabaseSchema,
@@ -31,6 +31,10 @@ export function migrateFakeDatabase(
 
   if (oldVersion < 7) {
     clearAllData(transaction);
+  }
+
+  if (oldVersion < 8) {
+    clearIncompatibleGameData(transaction);
   }
 }
 

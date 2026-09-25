@@ -15,6 +15,13 @@
       "when": 1789333688633,
       "tag": "0001_swift_pandemic",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789606800000,
+      "tag": "0002_clear_incompatible_games",
+      "breakpoints": true
     }
   ]
 }

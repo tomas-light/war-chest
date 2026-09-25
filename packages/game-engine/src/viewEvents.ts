@@ -6,6 +6,7 @@ import type {
   GameStartSelection,
 } from './CardSelection.js';
 import type { GAME_EVENT_VERSION, GAME_RULES_VERSION } from './events.js';
+import type { GameCoin } from './GameCoin.js';
 import type { GamePreparationSettings, GameSettings } from './GameSettings.js';
 import type { GameTeam, JsonValue } from './state.js';
 import type { UnitId } from './UnitId.js';
@@ -125,6 +126,17 @@ export interface BattlefieldPreparedViewEventData extends EventMetadata {
   type: 'BattlefieldPrepared';
 }
 
+export interface TurnPassedViewEventData extends EventMetadata {
+  payload: {
+    battlefield: GameViewBattlefieldState;
+    coin: GameCoin | null;
+    moveNumber: number;
+    nextPlayerId: string;
+    playerId: string;
+  };
+  type: 'TurnPassed';
+}
+
 interface PublicTestMoveData {
   moveNumber: number;
   nextPlayerId: string;
@@ -174,4 +186,5 @@ export type GameViewEventData =
   | PlayerPositionsSwappedViewEventData
   | PlayerReconnectedViewEventData
   | TestMovePerformedViewEventData
+  | TurnPassedViewEventData
   | ViewSequenceAdvancedEventData;

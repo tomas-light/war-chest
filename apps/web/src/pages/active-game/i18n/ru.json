@@ -15,6 +15,11 @@
     "connecting": "Подключаемся к игровому столу…",
     "gameUnavailable": "Состояние игры недоступно.",
     "notSelected": "Игра не выбрана.",
+    "stage": {
+      "active": "",
+      "cardSelection": "Выбор карт",
+      "finished": "Партия завершена"
+    },
     "synchronization": {
       "desynchronized": "Восстанавливаем синхронизацию…",
       "pending": "Ожидаем состояние…",
@@ -26,13 +31,13 @@
     "actionsDescriptionSpectator": "Действия недоступны в режиме зрителя.",
     "actionsDescriptionYou": "Сейчас ваш ход.",
     "actionsTitle": "Доступные действия",
-    "chooseSquad": "Выбрать отряд",
-    "finishAction": "Завершить действие",
+    "round": "Раунд {{round}}",
     "historyDescription": "Панель истории появится здесь после реализации игровых ходов.",
     "historyEyebrow": "Журнал",
     "historyTitle": "История ходов",
     "openHistory": "Открыть историю",
-    "turnEyebrow": "Ход"
+    "turnEyebrow": "Ход",
+    "unitActionsUnavailable": "Действия отрядов пока недоступны"
   },
   "CardSelectionPage": {
     "title": "Выбор карт",
@@ -140,6 +145,7 @@
     "bag": "Мешок жетонов",
     "blackTeam": "Чёрная команда",
     "disconnected": "Соединение потеряно",
+    "discard": "Сброс",
     "eliminated": "Устранены",
     "empty": "Место свободно",
     "hand": "Рука · {{count}}",
@@ -147,8 +153,35 @@
     "left": "Покинул игру",
     "noPlayer": "Нет игрока",
     "playerFallback": "Игрок {{playerId}}",
+    "royalCoin": "Королевский жетон {{number}}",
     "supply": "Снабжение",
+    "unitCoin": "Жетон {{unitId}} {{number}}",
     "unitCount": "{{count}} из {{total}}",
     "whiteTeam": "Белая команда"
+  },
+  "TurnQueue": {
+    "label": "Очередь ходов",
+    "loadPrevious": "Загрузить предыдущие ходы",
+    "playerFallback": "Игрок {{playerId}}",
+    "summary": {
+      "current": {
+        "ban": "{{playerName}} сейчас банит карту",
+        "pass": "{{playerName}} сейчас пасует",
+        "pick": "{{playerName}} сейчас выбирает карту",
+        "turn": "Сейчас ходит {{playerName}}"
+      },
+      "done": {
+        "ban": "{{playerName}} забанил карту",
+        "pass": "{{playerName}} спасовал",
+        "pick": "{{playerName}} выбрал карту",
+        "turn": "Ход {{playerName}} завершён"
+      },
+      "upcoming": {
+        "ban": "{{playerName}} будет банить карту",
+        "pass": "{{playerName}} будет пасовать",
+        "pick": "{{playerName}} будет выбирать карту",
+        "turn": "Следующий ход: {{playerName}}"
+      }
+    }
   }
 }

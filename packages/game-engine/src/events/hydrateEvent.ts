@@ -4,12 +4,14 @@ import { hydrateBattlefieldEvent } from './battlefield/hydrateBattlefieldEvent.j
 import { hydrateCardSelectionEvent } from './card-selection/hydrateCardSelectionEvent.js';
 import { hydrateLifecycleEvent } from './lifecycle/hydrateLifecycleEvent.js';
 import { hydrateTestScenarioEvent } from './test-scenario/hydrateTestScenarioEvent.js';
+import { hydrateTurnEvent } from './turn/hydrateTurnEvent.js';
 
 const EVENT_HYDRATORS: readonly EventHydrator[] = [
   hydrateBattlefieldEvent,
   hydrateCardSelectionEvent,
   hydrateLifecycleEvent,
   hydrateTestScenarioEvent,
+  hydrateTurnEvent,
 ];
 
 export function hydrateEvent(data: GameEventData): ApplicableEvent {

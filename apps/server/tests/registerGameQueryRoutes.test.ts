@@ -2,7 +2,7 @@ import { gameResponseSchema } from '@war-chest/api-contracts';
 import type { Auth, AuthSession } from '@war-chest/auth';
 import type { DatabaseConnection } from '@war-chest/database';
 import { DEFAULT_RUNTIME_FEATURE_FLAGS } from '@war-chest/feature-flags';
-import type { GameView } from '@war-chest/game-engine';
+import { type GameView, GAME_RULES_VERSION } from '@war-chest/game-engine';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { createApp } from '../src/createApp.js';
@@ -31,7 +31,7 @@ const WAITING_VIEW: GameView = {
   moveCount: 0,
   players: [],
   privateMoves: [],
-  rulesVersion: 2,
+  rulesVersion: GAME_RULES_VERSION,
   settings: {
     cardSelectionMode: 'random',
     expansions: [],
@@ -136,7 +136,7 @@ describe('game query HTTP routes', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    const responseBody = response.json();
+    const responseBody: unknown = response.json();
 
     expect(responseBody).toEqual({
       gameId: GAME_ID,

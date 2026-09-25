@@ -1,5 +1,7 @@
 import type { LobbyGamePlayer } from '@war-chest/api-contracts';
 import type {
+  GameCoin,
+  GameViewDiscardedCoin,
   GameViewPlayer,
   GameViewPlayerBattlefieldResources,
   UnitId,
@@ -10,6 +12,7 @@ import {
   GameTokenBack,
   GameTokenBag,
   InitiativeToken,
+  RoyalToken,
   UnitToken,
 } from '#/entities/game-assets';
 import { UserAvatar, UserProfileLink } from '#/entities/user';
@@ -23,9 +26,17 @@ interface Props {
   isCurrent?: boolean;
   label: string;
   mobileSwitchControl?: ReactNode;
+  onHandCoinClick?(this: void, input: HandCoinClickInput): void;
   player: GameViewPlayer | undefined;
   profile: LobbyGamePlayer | undefined;
   resources: GameViewPlayerBattlefieldResources | undefined;
+  selectedCoinIndex?: number | null;
+}
+
+export interface HandCoinClickInput {
+  anchorElement: HTMLButtonElement;
+  coin: GameCoin;
+  index: number;
 }
 
 export function PlayerPanel(props: Props) {
@@ -34,9 +45,11 @@ export function PlayerPanel(props: Props) {
     isCurrent = false,
     label,
     mobileSwitchControl,
+    onHandCoinClick,
     player,
     profile,
     resources,
+    selectedCoinIndex = null,
   } = props;
   const { t } = useTranslation('pages/active-game', {
     keyPrefix: 'PlayerPanel',
@@ -93,12 +106,14 @@ export function PlayerPanel(props: Props) {
             <div className={classes.handSlots}>
               {Array.from({ length: 3 }, (_, index) => (
                 <HandSlot
+                  coin={resources?.hand?.[index]}
                   index={index}
                   isPrivate={
                     resources?.hand !== null && resources?.hand !== undefined
                   }
                   key={index}
-                  unitId={resources?.hand?.[index]}
+                  onCoinClick={onHandCoinClick}
+                  selected={selectedCoinIndex === index}
                   visibleCount={resources?.handCount ?? 0}
                 />
               ))}
@@ -114,6 +129,9 @@ export function PlayerPanel(props: Props) {
             label={t('supply')}
             variant="supply"
           />
+          {resources.discard.length === 0 ? null : (
+            <DiscardSection items={resources.discard} label={t('discard')} />
+          )}
           {resources.eliminated.length === 0 ? null : (
             <ResourceSection
               items={resources.supply
@@ -152,17 +170,42 @@ export function PlayerPanel(props: Props) {
 }
 
 interface HandSlotProps {
+  coin: GameCoin | undefined;
   index: number;
   isPrivate: boolean;
-  unitId: UnitId | undefined;
+  onCoinClick?(this: void, input: HandCoinClickInput): void;
+  selected: boolean;
   visibleCount: number;
 }
 
 function HandSlot(props: HandSlotProps) {
-  const { index, isPrivate, unitId, visibleCount } = props;
+  const { coin, index, isPrivate, onCoinClick, selected, visibleCount } = props;
+  const { t } = useTranslation('pages/active-game', {
+    keyPrefix: 'PlayerPanel',
+  });
 
-  if (unitId !== undefined) {
-    return <UnitToken color="brass" size="regular" unit={unitId} />;
+  if (coin !== undefined) {
+    if (onCoinClick === undefined) {
+      return <CoinToken coin={coin} />;
+    }
+
+    return (
+      <button
+        aria-label={getCoinLabel()}
+        aria-pressed={selected}
+        className={classes.handCoinButton}
+        onClick={(event) =>
+          onCoinClick({
+            anchorElement: event.currentTarget,
+            coin,
+            index,
+          })
+        }
+        type="button"
+      >
+        <CoinToken coin={coin} />
+      </button>
+    );
   }
 
   if (!isPrivate && index < visibleCount) {
@@ -170,6 +213,54 @@ function HandSlot(props: HandSlotProps) {
   }
 
   return <img alt="" className={classes.emptyHandSlot} src={emptyHandSlot} />;
+
+  function getCoinLabel(): string {
+    if (coin?.kind === 'royal') {
+      return t('royalCoin', { number: index + 1 });
+    }
+
+    return t('unitCoin', { number: index + 1, unitId: coin?.unitId ?? '' });
+  }
+}
+
+interface CoinTokenProps {
+  coin: GameCoin;
+}
+
+function CoinToken(props: CoinTokenProps) {
+  const { coin } = props;
+
+  if (coin.kind === 'royal') {
+    return <RoyalToken />;
+  }
+
+  return <UnitToken color="brass" size="regular" unit={coin.unitId} />;
+}
+
+interface DiscardSectionProps {
+  items: readonly GameViewDiscardedCoin[];
+  label: string;
+}
+
+function DiscardSection(props: DiscardSectionProps) {
+  const { items, label } = props;
+  const topItem = items.at(-1);
+
+  return (
+    <section className={clsx(classes.resourceSection, classes.discardSection)}>
+      <h3>{label}</h3>
+      <span className={classes.discardPile}>
+        <span className={classes.discardCoin}>
+          {topItem?.coin === null || topItem === undefined ? (
+            <GameTokenBack />
+          ) : (
+            <CoinToken coin={topItem.coin} />
+          )}
+        </span>
+        <strong>{items.length}</strong>
+      </span>
+    </section>
+  );
 }
 
 interface ResourceItem {

@@ -1,6 +1,7 @@
 import type { CardSelectionCommandData } from './command-data/CardSelectionCommandData.js';
 import type { LifecycleCommandData } from './command-data/LifecycleCommandData.js';
 import type { TestScenarioCommandData } from './command-data/TestScenarioCommandData.js';
+import type { TurnCommandData } from './command-data/TurnCommandData.js';
 
 export type {
   CreateGameCommandData,
@@ -19,9 +20,16 @@ export type {
 } from './command-data/TestScenarioCommandData.js';
 
 export type GameCommandData =
-  CardSelectionCommandData | LifecycleCommandData | TestScenarioCommandData;
+  | CardSelectionCommandData
+  | LifecycleCommandData
+  | TestScenarioCommandData
+  | TurnCommandData;
 export type {
   CardSelectionCommandData,
   CompleteCardSelectionCommandData,
   ConfirmCardChoiceCommandData,
 } from './command-data/CardSelectionCommandData.js';
+export type {
+  PassTurnCommandData,
+  TurnCommandData,
+} from './command-data/TurnCommandData.js';

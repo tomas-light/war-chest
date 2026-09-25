@@ -18,6 +18,7 @@ import {
   decide,
   GAME_EVENT_VERSION,
   GAME_RULES_VERSION,
+  getCurrentCardSelectionPlayer,
   hydrateCommand,
   hydrateEvent,
   hydrateViewEvent,
@@ -898,6 +899,55 @@ describe('player surrender', () => {
       expect(finishedState).toMatchObject({ status: 'finished', winnerTeam });
     }
   );
+
+  test('finishes the game when the non-current draft player surrenders', () => {
+    const gameCreated = createGame({
+      creatorId: 'player-one',
+      featureFlags: DEFAULT_RUNTIME_FEATURE_FLAGS,
+      settings: {
+        ...DEFAULT_CREATE_GAME_SETTINGS,
+        cardSelectionMode: 'draft',
+      },
+      type: 'CreateGame',
+    });
+    const commands: readonly [string, GameCommandData][] = [
+      ['player-one', { seat: 1, team: 'white', type: 'JoinGame' }],
+      ['player-two', { seat: 1, team: 'black', type: 'JoinGame' }],
+      ['player-one', { type: 'StartGame' }],
+    ];
+    let cardSelectionState = applyEvent(null, gameCreated);
+
+    for (const [playerId, command] of commands) {
+      cardSelectionState = decide(cardSelectionState, playerId, command).reduce(
+        applyEvent,
+        cardSelectionState
+      );
+    }
+
+    expect(cardSelectionState).toMatchObject({
+      status: 'cardSelection',
+    });
+
+    if (cardSelectionState.cardSelection === null) {
+      throw new Error('Draft must create card selection state.');
+    }
+
+    const currentPlayerId = getCurrentCardSelectionPlayer(
+      cardSelectionState.cardSelection
+    );
+    const surrenderingPlayerId =
+      currentPlayerId === 'player-one' ? 'player-two' : 'player-one';
+    const events = decide(cardSelectionState, surrenderingPlayerId, {
+      type: 'SurrenderGame',
+    });
+    const finishedState = events.reduce(applyEvent, cardSelectionState);
+
+    expect(events.map((event) => event.type)).toEqual([
+      'PlayerDefeated',
+      'GameFinished',
+    ]);
+    expect(finishedState.status).toBe('finished');
+  });
 
   test('rejects surrender from a spectator', () => {
     expect(decide(activeState, 'spectator', { type: 'SurrenderGame' })).toEqual(

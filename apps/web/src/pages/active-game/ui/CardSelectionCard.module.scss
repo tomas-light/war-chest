@@ -1,30 +1,55 @@
+.container,
 .card {
+  width: 200px;
+  height: 266px;
+}
+
+.container {
+  position: relative;
   min-width: 0;
-  min-height: 366px;
-  display: flex;
-  gap: 8px;
-  flex-direction: column;
-  align-items: center;
-  padding: 12px;
-  border: 1px solid rgb(199 150 53 / 34%);
-  border-radius: 3px 20px;
-  background: var(--wc-color-ink);
-  color: var(--wc-color-text);
+}
+
+.card {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
   cursor: default;
-  text-align: left;
-  transition:
-    border-color 140ms ease,
-    box-shadow 140ms ease;
 }
 
 .card:enabled {
   cursor: pointer;
 }
 
-.card:enabled:hover,
-.candidate {
-  border-color: var(--wc-color-cyan);
-  box-shadow: 0 0 18px rgb(21 217 237 / 20%);
+.artwork {
+  width: 200px;
+  height: 266px;
+  transition:
+    opacity 140ms ease,
+    filter 140ms ease;
+}
+
+.frame {
+  position: absolute;
+  background-image: url('../assets/cardFrameDesktopBrass.svg');
+  background-size: 100% 100%;
+  inset: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease;
+}
+
+.candidate .frame,
+.card:enabled:hover .frame,
+.card:focus-visible .frame {
+  background-image: url('../assets/cardFrameDesktopCyan.svg');
+}
+
+.card:enabled:hover .artwork,
+.candidate .artwork {
+  filter: drop-shadow(0 0 7px rgb(21 217 237 / 52%));
 }
 
 .card:focus-visible {
@@ -32,43 +57,97 @@
   outline-offset: 3px;
 }
 
-.artwork {
-  width: 100%;
-  flex-shrink: 0;
-}
-
-.status {
-  width: 100%;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  overflow-wrap: anywhere;
-  text-transform: uppercase;
-}
-
-.picked .artwork,
-.banned .artwork {
+.picked .artwork {
   opacity: 0.45;
 }
 
-.own {
-  border-color: var(--wc-color-cyan);
-  color: var(--wc-color-cyan);
+.picked .frame {
+  opacity: 0.45;
 }
 
-.banned {
-  border-color: var(--wc-color-error);
-  color: var(--wc-color-error);
+.banned .artwork {
+  opacity: 0.25;
+}
+
+.banned .frame {
+  opacity: 0.25;
+}
+
+.confirmedOwner {
+  position: absolute;
+  z-index: 2;
+  top: 20px;
+  left: 8px;
+  width: 42px;
+  height: 42px;
+  display: block;
+}
+
+.actionBadge {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 21px;
+  height: 21px;
+  display: grid;
+  border: 1px solid var(--wc-color-cyan);
+  border-radius: 50%;
+  background: var(--wc-color-ink);
+  color: var(--wc-color-cyan);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  place-items: center;
+}
+
+.confirmedOwner[data-action='ban'] .actionBadge {
+  border-color: var(--wc-color-red);
+  color: var(--wc-color-red);
 }
 
 @media (width <= 620px) {
-  .card {
-    min-height: 304px;
+  .container,
+  .card,
+  .artwork {
+    width: 131px;
+    height: 174px;
+  }
+
+  .confirmedOwner {
+    top: 10px;
+    left: 4px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .frame {
+    background-image: url('../assets/cardFrameMobileBrass.svg');
+  }
+
+  .candidate .frame,
+  .card:enabled:hover .frame,
+  .card:focus-visible .frame {
+    background-image: url('../assets/cardFrameMobileCyan.svg');
+  }
+
+  .confirmedOwner > span:first-child {
+    width: 32px;
+    height: 32px;
+  }
+
+  .actionBadge {
+    width: 16px;
+    height: 16px;
+    font-size: 11px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .card {
+  .artwork {
+    transition: none;
+  }
+
+  .frame {
     transition: none;
   }
 }

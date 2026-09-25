@@ -1,0 +1,177 @@
+.queue {
+  position: sticky;
+  top: 88px;
+  width: 80px;
+  height: min(570px, calc(100vh - 112px));
+  display: grid;
+  grid-template-rows: 28px minmax(0, 1fr) 28px;
+  align-self: start;
+  overflow: hidden;
+  padding: 14px;
+  border: 1px solid var(--wc-color-brass);
+  border-radius: 50px;
+  background: var(--wc-color-ink);
+  justify-items: center;
+}
+
+.ornament {
+  width: 52px;
+  height: 28px;
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+button.ornament {
+  cursor: pointer;
+}
+
+button.ornament:disabled {
+  cursor: default;
+}
+
+button.ornament:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--wc-color-cyan);
+  outline-offset: 1px;
+}
+
+.ornament img {
+  width: 52px;
+  height: 28px;
+  display: block;
+}
+
+.steps {
+  width: 52px;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 0;
+  margin: 0;
+  scrollbar-width: none;
+}
+
+.stepsContent {
+  position: relative;
+  width: 52px;
+}
+
+.steps:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--wc-color-cyan);
+  outline: none;
+}
+
+.steps::-webkit-scrollbar {
+  display: none;
+}
+
+.step {
+  position: absolute;
+  left: 2px;
+  width: 48px;
+  height: 48px;
+}
+
+.avatarButton {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  padding: 0;
+  border: 1px solid var(--wc-color-brass);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  place-items: center;
+  transition:
+    border-color 360ms ease,
+    border-width 360ms ease,
+    box-shadow 360ms ease;
+}
+
+.avatarButton > span:first-child {
+  width: 40px;
+  height: 40px;
+}
+
+.step[data-state='current'] .avatarButton {
+  border: 3px solid var(--wc-color-cyan);
+  box-shadow: 0 0 0 3px
+    color-mix(in sRGB, var(--wc-color-cyan) 20%, transparent);
+}
+
+.step[data-state='done'] .avatarButton {
+  border-color: rgb(199 150 53 / 65%);
+}
+
+.step[data-state='done'] .avatarButton > span:first-child {
+  opacity: 0.35;
+}
+
+.step[data-state='upcoming'] .avatarButton > span:first-child {
+  opacity: 0.75;
+}
+
+.avatarButton > span:first-child {
+  transition: opacity 360ms ease;
+}
+
+.avatarButton:focus-visible {
+  outline: 2px solid var(--wc-color-cyan-soft);
+  outline-offset: 3px;
+}
+
+.actionBadge {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--wc-color-ink);
+  color: var(--wc-color-red);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  place-items: center;
+}
+
+.summary {
+  position: fixed;
+  z-index: 80;
+  width: max-content;
+  padding: 8px 10px;
+  border: 1px solid var(--wc-color-brass);
+  border-radius: 4px 12px;
+  background: var(--wc-color-ink);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 48%);
+  color: var(--wc-color-text);
+  font-size: 12px;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+@media (width <= 620px) {
+  .queue {
+    top: 76px;
+    width: 68px;
+    height: min(514px, calc(100vh - 94px));
+    gap: 0;
+    padding: 8px;
+  }
+
+  .steps {
+    gap: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .avatarButton,
+  .avatarButton > span:first-child {
+    transition: none;
+  }
+}

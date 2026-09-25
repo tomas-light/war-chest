@@ -20,6 +20,7 @@ import {
 } from '../src/index.js';
 
 const LEGACY_DATABASE_VERSION = 6;
+const PREVIOUS_DATABASE_VERSION = 7;
 const LEGACY_SESSION_ID = 'legacy-session';
 const LEGACY_GAME_ID = 'legacy-game';
 const LEGACY_CREATED_AT = new Date('2026-09-14T16:00:00.000Z');
@@ -171,5 +172,100 @@ describe('fake database schema 6 migration', () => {
     await expect(
       database.sessions.getById(LEGACY_SESSION_ID)
     ).resolves.toBeNull();
+  });
+});
+
+describe('fake database schema 7 migration', () => {
+  let database: FakeDatabase;
+  let databaseName: string;
+
+  beforeEach(async () => {
+    databaseName = `war-chest-migration-${randomUUID()}`;
+    const previousDatabase = await openDB<LegacyDatabaseSchema>(
+      databaseName,
+      PREVIOUS_DATABASE_VERSION,
+      {
+        upgrade(connection) {
+          connection.createObjectStore('users', { keyPath: 'id' });
+          connection.createObjectStore('authSessions', { keyPath: 'id' });
+          connection.createObjectStore('games', { keyPath: 'id' });
+          connection.createObjectStore('gameParticipants', {
+            keyPath: ['gameId', 'userId'],
+          });
+          connection.createObjectStore('processedCommands', {
+            keyPath: 'id',
+          });
+          const gameEvents = connection.createObjectStore('gameEvents', {
+            keyPath: 'id',
+          });
+          gameEvents.createIndex('by-game-sequence', ['gameId', 'sequence'], {
+            unique: true,
+          });
+          connection.createObjectStore('runtimeFeatureFlags', {
+            keyPath: 'id',
+          });
+        },
+      }
+    );
+    const previousTransaction = previousDatabase.transaction(
+      ['authSessions', 'games', 'runtimeFeatureFlags', 'users'],
+      'readwrite'
+    );
+
+    await previousTransaction.objectStore('users').put({
+      createdAt: LEGACY_CREATED_AT,
+      displayName: 'Persisted Archer',
+      email: 'persisted-archer@example.com',
+      id: FAKE_SEED_IDENTIFIERS.firstUser,
+    });
+    await previousTransaction.objectStore('authSessions').put({
+      createdAt: LEGACY_CREATED_AT,
+      expiresAt: new Date('2026-09-18T16:00:00.000Z'),
+      id: LEGACY_SESSION_ID,
+      revokedAt: null,
+      userId: FAKE_SEED_IDENTIFIERS.firstUser,
+    });
+    await previousTransaction.objectStore('games').put({
+      cardSelectionMode: 'random',
+      createdAt: LEGACY_CREATED_AT,
+      currentVersion: 1,
+      expansions: [],
+      finishedAt: null,
+      format: 'duel',
+      id: LEGACY_GAME_ID,
+      startedAt: null,
+      status: 'waiting',
+      winnerTeam: null,
+    });
+    await previousTransaction.objectStore('runtimeFeatureFlags').put({
+      featureFlags: {
+        ...DEFAULT_RUNTIME_FEATURE_FLAGS,
+        gameHistory: false,
+      },
+      id: 'application',
+      updatedAt: LEGACY_CREATED_AT,
+    });
+    await previousTransaction.done;
+    previousDatabase.close();
+
+    database = await createFakeDatabase({ name: databaseName });
+  });
+
+  afterEach(async () => {
+    database.close();
+    await deleteFakeDatabase({ name: databaseName });
+  });
+
+  test('clears incompatible games and preserves account data', async () => {
+    await expect(database.game.getAll()).resolves.toEqual([]);
+    await expect(
+      database.users.getById(FAKE_SEED_IDENTIFIERS.firstUser)
+    ).resolves.toMatchObject({ displayName: 'Persisted Archer' });
+    await expect(
+      database.sessions.getById(LEGACY_SESSION_ID)
+    ).resolves.not.toBeNull();
+    await expect(database.featureFlags.getApplication()).resolves.toMatchObject(
+      { gameHistory: false }
+    );
   });
 });

@@ -54,6 +54,12 @@
   gap: 10px;
 }
 
+.placeholderActions > button,
+.placeholderActions > div > button {
+  width: 100%;
+  white-space: normal;
+}
+
 @media (width <= 900px) {
   .sidebar {
     position: static;

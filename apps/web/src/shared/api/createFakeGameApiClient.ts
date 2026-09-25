@@ -12,6 +12,8 @@ export function createFakeGameApiClient(): GameApi {
     joinGame: client.joinGame,
     leaveGame: client.leaveGame,
     listLobbyGames: client.listLobbyGames,
+    listTurnHistory: client.listTurnHistory,
+    passTurn: client.passTurn,
     startGame: client.startGame,
     surrenderGame: client.surrenderGame,
     swapPlayerPositions: client.swapPlayerPositions,

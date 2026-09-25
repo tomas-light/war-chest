@@ -47,7 +47,9 @@ for (const viewport of [
       await page.getByLabel('Код из письма').fill('123456');
       await page.getByRole('button', { name: 'Войти', exact: true }).click();
       await expect(page).toHaveURL(/\/lobby$/);
-      await page.getByRole('link', { name: 'Профиль', exact: true }).click();
+      await page
+        .getByRole('link', { name: /Аватар пользователя Archer/ })
+        .click();
 
       const presetButtons = page.locator('button[aria-pressed]');
       await expect(presetButtons).toHaveCount(16);

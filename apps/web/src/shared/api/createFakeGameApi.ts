@@ -3,12 +3,15 @@ import type {
   ConfirmCardChoiceRequest,
   CreateGameRequest,
   GameResponse,
+  GameTurnHistoryQuery,
+  GameTurnHistoryResponse,
   JoinGameRequest,
   LeaveGameRequest,
   LeaveGameResponse,
   LobbyGame,
   LobbyGamePlayer,
   LobbyGamesResponse,
+  PassTurnRequest,
   StartGameRequest,
   SurrenderGameRequest,
   SwapPlayerPositionsRequest,
@@ -61,6 +64,8 @@ export function createFakeGameApi(userId: string): GameApi {
     joinGame,
     leaveGame,
     listLobbyGames,
+    listTurnHistory,
+    passTurn,
     startGame,
     surrenderGame,
     swapPlayerPositions,
@@ -245,6 +250,64 @@ export function createFakeGameApi(userId: string): GameApi {
         status: game.status === 'active' ? 'active' : 'waiting',
       };
     }
+  }
+
+  async function listTurnHistory(
+    gameId: string,
+    query: GameTurnHistoryQuery
+  ): Promise<GameTurnHistoryResponse> {
+    const database = await getFakeDatabase();
+    const game = await database.games.getById(gameId);
+
+    if (game === null) {
+      throw createFakeApiError('game_not_found', 'Game was not found.');
+    }
+
+    const storedEvents = await database.games.getEvents(gameId);
+    const history = storedEvents.flatMap((storedEvent) => {
+      const event = parseGameEventData({
+        payload: storedEvent.payload,
+        sequence: storedEvent.sequence,
+        type: storedEvent.type,
+        version: storedEvent.version,
+      });
+
+      if (
+        event.type !== 'TurnPassed' ||
+        (query.beforeSequence !== undefined &&
+          event.sequence >= query.beforeSequence)
+      ) {
+        return [];
+      }
+
+      return [event];
+    });
+    history.reverse();
+    const hasNextPage = history.length > query.limit;
+    const page = history.slice(0, query.limit);
+    const lastItem = page.at(-1);
+
+    return {
+      items: page.map((event) => ({
+        action: 'pass',
+        playerId: event.payload.playerId,
+        sequence: event.sequence,
+      })),
+      nextCursor:
+        hasNextPage && lastItem !== undefined ? lastItem.sequence : null,
+    };
+  }
+
+  function passTurn(
+    gameId: string,
+    request: PassTurnRequest
+  ): Promise<GameResponse> {
+    return executeCommand({
+      command: { coinIndex: request.coinIndex, type: 'PassTurn' },
+      commandId: request.commandId,
+      expectedVersion: request.expectedVersion,
+      gameId,
+    });
   }
 
   async function leaveGame(

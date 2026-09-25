@@ -3,15 +3,19 @@ import {
   type ConfirmCardChoiceRequest,
   type CreateGameRequest,
   type GameResponse,
+  type GameTurnHistoryQuery,
+  type GameTurnHistoryResponse,
   type JoinGameRequest,
   type LeaveGameRequest,
   type LeaveGameResponse,
   type LobbyGamesResponse,
+  type PassTurnRequest,
   type StartGameRequest,
   type SurrenderGameRequest,
   type SwapPlayerPositionsRequest,
   type UpdateGameSettingsRequest,
   gameResponseSchema,
+  gameTurnHistoryResponseSchema,
   leaveGameResponseSchema,
   lobbyGamesResponseSchema,
 } from '@war-chest/api-contracts';
@@ -60,7 +64,17 @@ export interface GameApi {
     gameId: string,
     request: LeaveGameRequest
   ): Promise<LeaveGameResponse>;
+  listTurnHistory(
+    this: void,
+    gameId: string,
+    query: GameTurnHistoryQuery
+  ): Promise<GameTurnHistoryResponse>;
   listLobbyGames(this: void): Promise<LobbyGamesResponse>;
+  passTurn(
+    this: void,
+    gameId: string,
+    request: PassTurnRequest
+  ): Promise<GameResponse>;
   startGame(
     this: void,
     gameId: string,
@@ -92,6 +106,8 @@ export function createRealGameApi(): GameApi {
     joinGame,
     leaveGame,
     listLobbyGames,
+    listTurnHistory,
+    passTurn,
     startGame,
     surrenderGame,
     swapPlayerPositions,
@@ -160,6 +176,36 @@ export function createRealGameApi(): GameApi {
       invalidResponseMessage: 'The server returned an invalid game list.',
       schema: lobbyGamesResponseSchema,
       url: GAMES_API_URL,
+    });
+  }
+
+  function listTurnHistory(
+    gameId: string,
+    query: GameTurnHistoryQuery
+  ): Promise<GameTurnHistoryResponse> {
+    const searchParams = new URLSearchParams({ limit: String(query.limit) });
+
+    if (query.beforeSequence !== undefined) {
+      searchParams.set('beforeSequence', String(query.beforeSequence));
+    }
+
+    return requestJson({
+      invalidResponseMessage: 'The server returned invalid turn history.',
+      schema: gameTurnHistoryResponseSchema,
+      url: `${GAMES_API_URL}/${gameId}/turn-history?${searchParams}`,
+    });
+  }
+
+  function passTurn(
+    gameId: string,
+    request: PassTurnRequest
+  ): Promise<GameResponse> {
+    return requestJson({
+      body: request,
+      invalidResponseMessage: 'The server returned an invalid game state.',
+      method: 'POST',
+      schema: gameResponseSchema,
+      url: `${GAMES_API_URL}/${gameId}/pass`,
     });
   }
 

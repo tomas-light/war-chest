@@ -30,6 +30,10 @@ const jsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
 const gameTeamSchema = z.enum(['black', 'white']);
 const unitIdSchema = z.enum(UNIT_IDS);
 const cellIdSchema = z.enum(TEAM_CELL_IDS);
+const gameCoinSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('royal') }).strict(),
+  z.object({ kind: z.literal('unit'), unitId: unitIdSchema }).strict(),
+]);
 const battlefieldSchema = z
   .object({
     controlPoints: z.array(
@@ -44,9 +48,17 @@ const battlefieldSchema = z
     playerResources: z.array(
       z
         .object({
-          bag: z.array(unitIdSchema),
+          bag: z.array(gameCoinSchema),
+          discard: z.array(
+            z
+              .object({
+                coin: gameCoinSchema,
+                faceUp: z.boolean(),
+              })
+              .strict()
+          ),
           eliminated: z.array(unitIdSchema),
-          hand: z.array(unitIdSchema),
+          hand: z.array(gameCoinSchema),
           playerId: z.string(),
           supply: z.array(
             z
@@ -60,6 +72,7 @@ const battlefieldSchema = z
         })
         .strict()
     ),
+    round: z.number().int().positive(),
     units: z.array(
       z
         .object({
@@ -265,6 +278,20 @@ const gameEventDataSchema: z.ZodType<GameEventData> = z.discriminatedUnion(
           })
           .strict(),
         type: z.literal('TestMovePerformed'),
+      })
+      .strict(),
+    eventMetadataSchema
+      .extend({
+        payload: z
+          .object({
+            battlefield: battlefieldSchema,
+            coin: gameCoinSchema,
+            moveNumber: z.number().int().positive(),
+            nextPlayerId: z.string(),
+            playerId: z.string(),
+          })
+          .strict(),
+        type: z.literal('TurnPassed'),
       })
       .strict(),
     eventMetadataSchema

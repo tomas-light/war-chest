@@ -15,6 +15,11 @@
     "connecting": "Connecting to the game table…",
     "gameUnavailable": "The game state is unavailable.",
     "notSelected": "No game was selected.",
+    "stage": {
+      "active": "",
+      "cardSelection": "Card selection",
+      "finished": "Game finished"
+    },
     "synchronization": {
       "desynchronized": "Restoring synchronization…",
       "pending": "Waiting for state…",
@@ -26,13 +31,13 @@
     "actionsDescriptionSpectator": "Actions are unavailable in spectator mode.",
     "actionsDescriptionYou": "It is your turn.",
     "actionsTitle": "Available actions",
-    "chooseSquad": "Choose a unit",
-    "finishAction": "Finish action",
+    "round": "Round {{round}}",
     "historyDescription": "The move history panel will appear here after game moves are implemented.",
     "historyEyebrow": "Log",
     "historyTitle": "Move history",
     "openHistory": "Open history",
-    "turnEyebrow": "Turn"
+    "turnEyebrow": "Turn",
+    "unitActionsUnavailable": "Unit actions are not available yet"
   },
   "CardSelectionPage": {
     "title": "Card selection",
@@ -140,6 +145,7 @@
     "bag": "Token bag",
     "blackTeam": "Black team",
     "disconnected": "Connection lost",
+    "discard": "Discard",
     "eliminated": "Eliminated",
     "empty": "Seat available",
     "hand": "Hand · {{count}}",
@@ -147,8 +153,35 @@
     "left": "Left the game",
     "noPlayer": "No player",
     "playerFallback": "Player {{playerId}}",
+    "royalCoin": "Royal coin {{number}}",
     "supply": "Supply",
+    "unitCoin": "{{unitId}} coin {{number}}",
     "unitCount": "{{count}} of {{total}}",
     "whiteTeam": "White team"
+  },
+  "TurnQueue": {
+    "label": "Turn queue",
+    "loadPrevious": "Load previous turns",
+    "playerFallback": "Player {{playerId}}",
+    "summary": {
+      "current": {
+        "ban": "{{playerName}} is banning a card",
+        "pass": "{{playerName}} is passing",
+        "pick": "{{playerName}} is choosing a card",
+        "turn": "{{playerName}} is taking the current turn"
+      },
+      "done": {
+        "ban": "{{playerName}} banned a card",
+        "pass": "{{playerName}} passed",
+        "pick": "{{playerName}} chose a card",
+        "turn": "{{playerName}} completed the turn"
+      },
+      "upcoming": {
+        "ban": "{{playerName}} will ban a card",
+        "pass": "{{playerName}} will pass",
+        "pick": "{{playerName}} will choose a card",
+        "turn": "Next turn: {{playerName}}"
+      }
+    }
   }
 }

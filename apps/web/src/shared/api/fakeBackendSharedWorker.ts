@@ -4,8 +4,10 @@ import {
   confirmCardChoiceRequestSchema,
   createGameRequestSchema,
   gameParamsSchema,
+  gameTurnHistoryQuerySchema,
   joinGameRequestSchema,
   leaveGameRequestSchema,
+  passTurnRequestSchema,
   selectAvatarPresetRequestSchema,
   startGameRequestSchema,
   surrenderGameRequestSchema,
@@ -328,6 +330,14 @@ async function dispatchRequest(
     return gameApi.listLobbyGames();
   }
 
+  if (request.operation === 'game.listTurnHistory') {
+    const gameId = readGameId(request.payload);
+    const payload = requireRecord(request.payload);
+    const query = parsePayload(gameTurnHistoryQuerySchema, payload.query);
+
+    return gameApi.listTurnHistory(gameId, query);
+  }
+
   if (request.operation === 'game.join') {
     const gameId = readGameId(request.payload);
     const result = await gameApi.joinGame(
@@ -351,6 +361,21 @@ async function dispatchRequest(
         request.payload,
         leaveGameRequestSchema,
         'Invalid fake LeaveGame request.'
+      )
+    );
+
+    await broadcastGameUpdate(gameId);
+    return result;
+  }
+
+  if (request.operation === 'game.passTurn') {
+    const gameId = readGameId(request.payload);
+    const result = await gameApi.passTurn(
+      gameId,
+      readNestedRequest(
+        request.payload,
+        passTurnRequestSchema,
+        'Invalid fake PassTurn request.'
       )
     );
 

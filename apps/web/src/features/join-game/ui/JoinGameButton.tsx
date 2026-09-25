@@ -4,6 +4,7 @@ import { getGameQueryKey, LOBBY_GAMES_QUERY_KEY } from '#/entities/game';
 import { createSelectedGameApi, useApiErrorMessage } from '#/shared/api';
 import { useTranslation } from '#/shared/i18n/useTranslation';
 import { Button } from '#/shared/ui/button';
+import SEAT_ACTION_JOIN from '../assets/seatActionJoin.svg';
 import classes from './JoinGameButton.module.scss';
 
 interface Props {
@@ -50,7 +51,7 @@ export function JoinGameButton(props: Props) {
         title={t('label', { seat })}
         variant="secondary"
       >
-        <span aria-hidden="true" className={classes.plus} />
+        <img alt="" className={classes.icon} src={SEAT_ACTION_JOIN} />
       </Button>
       {joinMutation.error === null ? null : (
         <span className={classes.error} role="alert">

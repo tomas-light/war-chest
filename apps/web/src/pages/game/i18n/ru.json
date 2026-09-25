@@ -14,6 +14,8 @@
     "ownGameDescription": "Пока текущая партия не завершена, занять место в другой игре нельзя.",
     "ownGameTitle": "Вы смотрите как зритель",
     "returnToOwnGame": "Вернуться в свою игру",
+    "selectFreeSeat": "Выберите свободное место",
+    "stage": "Подготовка",
     "role": {
       "creator": "Вы создали игру",
       "participant": "Вы участвуете в игре",
@@ -36,6 +38,8 @@
       "ready": "Состояние синхронизировано"
     },
     "watch": "Смотреть",
+    "waitingForStart": "Ожидаем запуска игры",
+    "waitingPlayers": "Ожидаем игроков · {{count}}/{{total}}",
     "whiteTeam": "Белая команда"
   },
   "GameError": {
@@ -44,12 +48,14 @@
   },
   "PlayerPosition": {
     "available": "Свободно",
+    "blackTeam": "Чёрная команда",
     "connected": "В сети · место {{seat}}",
     "disconnected": "Соединение потеряно",
     "left": "Покинул игру",
     "playerFallback": "Игрок {{playerId}}",
     "seat": "Место {{seat}}",
     "you": "Вы",
+    "whiteTeam": "Белая команда",
     "youLabel": "{{playerName}} · Вы"
   }
 }

@@ -5,12 +5,13 @@ import type {
   CardSelectionPhase,
   GameStartSelection,
 } from './CardSelection.js';
+import type { GameCoin } from './GameCoin.js';
 import type { GamePreparationSettings, GameSettings } from './GameSettings.js';
 import type { GameTeam, JsonValue } from './state.js';
 import type { UnitId } from './UnitId.js';
 
 export const GAME_EVENT_VERSION = 2;
-export const GAME_RULES_VERSION = 2;
+export const GAME_RULES_VERSION = 3;
 
 interface EventMetadata {
   sequence: number;
@@ -127,6 +128,17 @@ export interface BattlefieldPreparedEventData extends EventMetadata {
   type: 'BattlefieldPrepared';
 }
 
+export interface TurnPassedEventData extends EventMetadata {
+  payload: {
+    battlefield: BattlefieldState;
+    coin: GameCoin;
+    moveNumber: number;
+    nextPlayerId: string;
+    playerId: string;
+  };
+  type: 'TurnPassed';
+}
+
 export interface TestMovePerformedEventData extends EventMetadata {
   payload: {
     moveNumber: number;
@@ -160,4 +172,5 @@ export type GameEventData =
   | PlayerPositionChangedEventData
   | PlayerPositionsSwappedEventData
   | PlayerReconnectedEventData
-  | TestMovePerformedEventData;
+  | TestMovePerformedEventData
+  | TurnPassedEventData;

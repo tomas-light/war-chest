@@ -1,0 +1,10 @@
+{
+  "PassTurnAction": {
+    "coin": "Жетон {{number}}",
+    "pass": "Пас",
+    "passing": "Пас…",
+    "royalCoin": "Королевский жетон",
+    "selectCoin": "Выберите жетон для закрытого сброса",
+    "unitCoin": "Жетон отряда {{unitId}}"
+  }
+}
