@@ -1,4 +1,3 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { GameCoin, GameView } from '@war-chest/game-engine';
 import {
   type CSSProperties,
@@ -9,15 +8,14 @@ import {
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { getGameQueryKey } from '#/entities/game';
 import {
   Heart,
   InitiativeToken,
   RoyalToken,
   UnitToken,
 } from '#/entities/game-assets';
-import { createSelectedGameApi, useApiErrorMessage } from '#/shared/api';
 import { useTranslation } from '#/shared/i18n/useTranslation';
+import { useGameActionMutation } from '../api/useGameActionMutation';
 import deployIcon from '../assets/deployIcon.png';
 import maneuverIcon from '../assets/maneuverIcon.png';
 import passIcon from '../assets/passIcon.png';
@@ -84,20 +82,21 @@ function GameActionsContent(props: Props) {
   const { t } = useTranslation('features/game-actions', {
     keyPrefix: 'GameActions',
   });
-  const getApiErrorMessage = useApiErrorMessage();
-  const queryClient = useQueryClient();
   const wheelRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<WheelPosition>(() =>
     getWheelPosition(anchorElement)
   );
 
-  const mutation = useMutation({
-    mutationFn: passTurn,
-    onSuccess(game) {
-      onPassed(game.view);
-      queryClient.setQueryData(getGameQueryKey(gameId), game);
-      onClose();
-    },
+  const {
+    error: actionError,
+    isPending: isActionPending,
+    mutate: performAction,
+  } = useGameActionMutation({
+    coinIndex,
+    gameId,
+    onClose,
+    onPassed,
+    view,
   });
 
   useLayoutEffect(() => {
@@ -168,7 +167,7 @@ function GameActionsContent(props: Props) {
             aria-label={t(action.id)}
             className={classes.action}
             data-action={action.id}
-            disabled={!action.enabled || mutation.isPending}
+            disabled={!action.enabled || isActionPending}
             key={action.id}
             onClick={() => handleAction(action)}
             style={geometry.buttonStyle}
@@ -191,6 +190,7 @@ function GameActionsContent(props: Props) {
           </button>
         );
       })}
+
       <svg
         aria-hidden="true"
         className={classes.dividers}
@@ -214,6 +214,7 @@ function GameActionsContent(props: Props) {
           );
         })}
       </svg>
+
       <button
         aria-label={t('close')}
         className={classes.selectedCoin}
@@ -222,9 +223,10 @@ function GameActionsContent(props: Props) {
       >
         {renderCoin()}
       </button>
-      {mutation.error === null ? null : (
+
+      {actionError && (
         <p className={classes.error} role="alert">
-          {getApiErrorMessage(mutation.error)}
+          {actionError}
         </p>
       )}
     </div>,
@@ -237,18 +239,8 @@ function GameActionsContent(props: Props) {
     }
 
     if (action.id === 'pass') {
-      mutation.mutate();
+      performAction();
     }
-  }
-
-  async function passTurn() {
-    const gameApi = await createSelectedGameApi();
-
-    return gameApi.passTurn(gameId, {
-      coinIndex,
-      commandId: crypto.randomUUID(),
-      expectedVersion: view.lastEventSequence,
-    });
   }
 
   function renderCoin() {
@@ -260,7 +252,7 @@ function GameActionsContent(props: Props) {
   }
 
   function getActionLabel(action: GameWheelAction): string {
-    if (action.id === 'pass' && mutation.isPending) {
+    if (action.id === 'pass' && isActionPending) {
       return t('passing');
     }
 

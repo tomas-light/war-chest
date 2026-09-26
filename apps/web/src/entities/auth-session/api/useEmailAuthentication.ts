@@ -37,19 +37,21 @@ type AuthenticationResult =
 export function useEmailAuthentication(): EmailAuthentication {
   const authClientPromise = useAuthClient();
   const queryClient = useQueryClient();
-  const mutation = useMutation({ mutationFn: authenticate });
+  const { mutateAsync: authenticateAsync } = useMutation({
+    mutationFn: authenticate,
+  });
 
   const requestEmailCode = useCallback(
     async (email: string) =>
-      mutation.mutateAsync(async (authClient) =>
+      authenticateAsync(async (authClient) =>
         authClient.requestEmailCode(email)
       ) as Promise<EmailCodeRequestedResponse>,
-    [mutation]
+    [authenticateAsync]
   );
 
   const verifyEmailCode = useCallback(
     async (email: string, code: string) =>
-      mutation.mutateAsync(async (authClient) => {
+      authenticateAsync(async (authClient) => {
         const result = await authClient.verifyEmailCode(email, code);
 
         if (result.status === 'authenticated') {
@@ -58,12 +60,12 @@ export function useEmailAuthentication(): EmailAuthentication {
 
         return result;
       }) as Promise<VerifyEmailCodeResponse>,
-    [mutation, queryClient]
+    [authenticateAsync, queryClient]
   );
 
   const completeEmailRegistration = useCallback(
     async (registrationToken: string, displayName: string) =>
-      mutation.mutateAsync(async (authClient) => {
+      authenticateAsync(async (authClient) => {
         const session = await authClient.completeEmailRegistration(
           registrationToken,
           displayName
@@ -72,7 +74,7 @@ export function useEmailAuthentication(): EmailAuthentication {
         saveSession(queryClient, authClient.backend, session);
         return session;
       }) as Promise<SessionResponse>,
-    [mutation, queryClient]
+    [authenticateAsync, queryClient]
   );
 
   return {

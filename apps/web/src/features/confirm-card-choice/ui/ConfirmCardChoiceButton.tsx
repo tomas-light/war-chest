@@ -1,9 +1,7 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { GameView, UnitId } from '@war-chest/game-engine';
 import { Suspense } from 'react';
-import { getGameQueryKey } from '#/entities/game';
-import { createSelectedGameApi, useApiErrorMessage } from '#/shared/api';
 import { useTranslation } from '#/shared/i18n/useTranslation';
+import { useConfirmCardChoiceMutation } from '../api/useConfirmCardChoiceMutation';
 import draftBanIcon from '../assets/draftBanIcon.svg';
 import classes from './ConfirmCardChoiceButton.module.scss';
 
@@ -30,27 +28,15 @@ function ConfirmCardChoiceButtonContent(props: Props) {
     keyPrefix: 'ConfirmCardChoiceButton',
   });
 
-  const getApiErrorMessage = useApiErrorMessage();
-  const queryClient = useQueryClient();
-
-  const mutation = useMutation({
-    mutationFn: async () => {
-      if (unitId === null) {
-        throw new Error('A unit must be selected before confirmation.');
-      }
-
-      const gameApi = await createSelectedGameApi();
-
-      return gameApi.confirmCardChoice(gameId, {
-        commandId: crypto.randomUUID(),
-        expectedVersion: view.lastEventSequence,
-        unitId,
-      });
-    },
-    onSuccess(game) {
-      onConfirmed(game.view);
-      queryClient.setQueryData(getGameQueryKey(gameId), game);
-    },
+  const {
+    error,
+    isPending,
+    mutate: confirm,
+  } = useConfirmCardChoiceMutation({
+    gameId,
+    onConfirmed,
+    unitId,
+    view,
   });
 
   const isBanning = view.cardSelection?.phase === 'banning';
@@ -62,8 +48,8 @@ function ConfirmCardChoiceButtonContent(props: Props) {
         aria-label={getButtonLabel()}
         className={classes.button}
         data-action={action}
-        disabled={disabled || mutation.isPending}
-        onClick={() => mutation.mutate()}
+        disabled={disabled || isPending}
+        onClick={() => confirm()}
         title={getButtonLabel()}
         type="button"
       >
@@ -73,16 +59,16 @@ function ConfirmCardChoiceButtonContent(props: Props) {
           <span aria-hidden="true">✓</span>
         )}
       </button>
-      {mutation.error === null ? null : (
+      {error && (
         <p className={classes.error} role="alert">
-          {getApiErrorMessage(mutation.error)}
+          {error}
         </p>
       )}
     </div>
   );
 
   function getButtonLabel(): string {
-    if (mutation.isPending) {
+    if (isPending) {
       return t('pending');
     }
 

@@ -1,0 +1,41 @@
+{
+  "ActiveGameTable": {
+    "ally": "Ally",
+    "opponent": "Opponent",
+    "playerBottom": "Bottom player",
+    "playerFallback": "Player {{playerId}}",
+    "playerTop": "Top player",
+    "preparing": "Preparing the battlefield…",
+    "showTeammate": "Show the other team player",
+    "tableArea": "Game board",
+    "you": "You"
+  },
+  "BattlefieldBoard": {
+    "cell": "Cell {{cellId}}",
+    "controlPoint": "Control point on cell {{cellId}}",
+    "initiative": "Initiative · {{player}}",
+    "resetZoom": "Reset board zoom",
+    "unit": "{{unit}} on cell {{cellId}}",
+    "zoomControls": "Game board zoom",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out"
+  },
+  "PlayerPanel": {
+    "bag": "Token bag",
+    "blackTeam": "Black team",
+    "disconnected": "Connection lost",
+    "discard": "Discard",
+    "eliminated": "Eliminated",
+    "empty": "Seat available",
+    "hand": "Hand · {{count}}",
+    "initiative": "Initiative owner",
+    "left": "Left the game",
+    "noPlayer": "No player",
+    "playerFallback": "Player {{playerId}}",
+    "royalCoin": "Royal coin {{number}}",
+    "supply": "Supply",
+    "unitCoin": "{{unitId}} coin {{number}}",
+    "unitCount": "{{count}} of {{total}}",
+    "whiteTeam": "White team"
+  }
+}

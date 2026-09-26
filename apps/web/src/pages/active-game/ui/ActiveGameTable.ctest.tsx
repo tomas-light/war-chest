@@ -277,6 +277,67 @@ test('animates the short queue when the active turn advances', async ({
   ).toHaveCSS('transition-duration', /0\.36s/);
 });
 
+test('keeps smooth scrolling when the history query rolls over after each turn', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.setViewportSize({ height: 480, width: 320 });
+  await page.goto(
+    '/?story=pages/active-game/ui/ActiveGameTable/DuelQueueRollingHistory'
+  );
+
+  const queue = page.getByRole('complementary', { name: 'Очередь ходов' });
+  const list = queue.getByRole('list');
+  const advanceButton = page.getByRole('button', { name: 'Передать ход' });
+
+  await list.evaluate((element) => {
+    element.dataset.scrollEnds = '0';
+    element.addEventListener('scrollend', () => {
+      element.dataset.scrollEnds = String(
+        Number(element.dataset.scrollEnds) + 1
+      );
+    });
+  });
+
+  await advanceButton.click();
+  await expect
+    .poll(() => list.evaluate((element) => Number(element.dataset.scrollEnds)))
+    .toBeGreaterThan(0);
+
+  const firstScrollEndCount = await list.evaluate((element) =>
+    Number(element.dataset.scrollEnds)
+  );
+  const firstScrollTop = await list.evaluate((element) => element.scrollTop);
+
+  await list.evaluate((element) => {
+    element.dataset.scrollSamples = '';
+    element.addEventListener('scroll', () => {
+      element.dataset.scrollSamples += `${element.scrollTop},`;
+    });
+  });
+
+  await advanceButton.click();
+  await expect
+    .poll(() => list.evaluate((element) => Number(element.dataset.scrollEnds)))
+    .toBeGreaterThan(firstScrollEndCount);
+
+  const finalScrollTop = await list.evaluate((element) => element.scrollTop);
+  const scrollSamples = await list.evaluate((element) =>
+    (element.dataset.scrollSamples ?? '').split(',').filter(Boolean).map(Number)
+  );
+
+  expect(finalScrollTop).toBeGreaterThan(firstScrollTop + 40);
+  expect(
+    scrollSamples.some(
+      (scrollTop) =>
+        scrollTop > firstScrollTop + 2 && scrollTop < finalScrollTop - 2
+    )
+  ).toBe(true);
+  await expect(
+    queue.getByRole('button', { name: 'Сейчас ходит Марина' }).locator('..')
+  ).toHaveAttribute('aria-posinset', '5');
+});
+
 test('moves the next avatar upward before delayed history arrives', async ({
   page,
 }) => {

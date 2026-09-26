@@ -53,7 +53,7 @@ export async function createSelectedLobbyConnection(
 
     if (readDevBackend() === 'fake') {
       const { createFakeLobbyConnection } =
-        await import('./createFakeLobbyConnection');
+        await import('./fake/createFakeLobbyConnection');
 
       return createFakeLobbyConnection(handlers);
     }

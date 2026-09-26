@@ -1,7 +1,6 @@
 {
   "GamePage": {
     "backToLobby": "Вернуться в лобби",
-    "blackTeam": "Чёрная команда",
     "connecting": "Подключаемся к игре…",
     "creatorReadyNotice": "Все места заняты. Ожидаем, пока создатель запустит игру.",
     "gameLabel": "Игра {{gameId}}",
@@ -39,23 +38,10 @@
     },
     "watch": "Смотреть",
     "waitingForStart": "Ожидаем запуска игры",
-    "waitingPlayers": "Ожидаем игроков · {{count}}/{{total}}",
-    "whiteTeam": "Белая команда"
+    "waitingPlayers": "Ожидаем игроков · {{count}}/{{total}}"
   },
   "GameError": {
     "backToLobby": "Вернуться в лобби",
     "title": "Не удалось открыть игру"
-  },
-  "PlayerPosition": {
-    "available": "Свободно",
-    "blackTeam": "Чёрная команда",
-    "connected": "В сети · место {{seat}}",
-    "disconnected": "Соединение потеряно",
-    "left": "Покинул игру",
-    "playerFallback": "Игрок {{playerId}}",
-    "seat": "Место {{seat}}",
-    "you": "Вы",
-    "whiteTeam": "Белая команда",
-    "youLabel": "{{playerName}} · Вы"
   }
 }

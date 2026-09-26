@@ -1,13 +1,12 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type {
   CardSelectionMode,
   GameExpansion,
   GameView,
 } from '@war-chest/game-engine';
 import type { ReactNode } from 'react';
-import { GameSetupOption, getGameQueryKey } from '#/entities/game';
-import { createSelectedGameApi, useApiErrorMessage } from '#/shared/api';
+import { GameSetupOption } from '#/entities/game';
 import { useTranslation } from '#/shared/i18n/useTranslation';
+import { useUpdateGameSettingsMutation } from '../api/useUpdateGameSettingsMutation';
 import classes from './UpdateGameSettingsForm.module.scss';
 
 interface Props {
@@ -29,30 +28,19 @@ export function UpdateGameSettingsForm(props: Props) {
   const { t } = useTranslation('features/update-game-settings', {
     keyPrefix: 'UpdateGameSettingsForm',
   });
-  const getApiErrorMessage = useApiErrorMessage();
-  const queryClient = useQueryClient();
-  const updateMutation = useMutation({
-    mutationFn: async (settings: {
-      cardSelectionMode: CardSelectionMode;
-      expansions: readonly GameExpansion[];
-    }) => {
-      const gameApi = await createSelectedGameApi();
-
-      return gameApi.updateGameSettings(gameId, {
-        ...settings,
-        commandId: crypto.randomUUID(),
-        expectedVersion: view.lastEventSequence,
-      });
-    },
-    onSuccess: (game) => {
-      queryClient.setQueryData(getGameQueryKey(gameId), game);
-      onUpdated(game.view);
-    },
+  const {
+    error: updateError,
+    isPending: isUpdating,
+    mutate: updateGameSettings,
+  } = useUpdateGameSettingsMutation({
+    gameId,
+    onUpdated,
+    view,
   });
-  const isDisabled = !isEditable || updateMutation.isPending;
+  const isDisabled = !isEditable || isUpdating;
 
   return (
-    <section aria-busy={updateMutation.isPending} className={classes.settings}>
+    <section aria-busy={isUpdating} className={classes.settings}>
       <SettingsGroup
         description={t('expansions.description')}
         title={t('expansions.title')}
@@ -103,9 +91,9 @@ export function UpdateGameSettingsForm(props: Props) {
         })}
       </SettingsGroup>
 
-      {updateMutation.error === null ? null : (
+      {updateError && (
         <p className={classes.error} role="alert">
-          {getApiErrorMessage(updateMutation.error)}
+          {updateError}
         </p>
       )}
     </section>
@@ -119,7 +107,7 @@ export function UpdateGameSettingsForm(props: Props) {
       ? view.settings.expansions.filter((item) => item !== expansion)
       : [...view.settings.expansions, expansion];
 
-    updateMutation.mutate({
+    updateGameSettings({
       cardSelectionMode: view.settings.cardSelectionMode,
       expansions,
     });
@@ -127,7 +115,7 @@ export function UpdateGameSettingsForm(props: Props) {
 
   function updateCardSelectionMode(mode: CardSelectionMode): void {
     if (mode !== view.settings.cardSelectionMode) {
-      updateMutation.mutate({
+      updateGameSettings({
         cardSelectionMode: mode,
         expansions: view.settings.expansions,
       });

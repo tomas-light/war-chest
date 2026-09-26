@@ -6,7 +6,7 @@ import type {
   VerifyEmailCodeResponse,
 } from '@war-chest/api-contracts';
 import { ApiClientError } from '#/shared/api';
-import { getFakeBackendClient } from '#/shared/api/getFakeBackendClient';
+import { getFakeBackendClient } from '#/shared/api/fake/getFakeBackendClient';
 import {
   type FakeSessionLock,
   acquireFakeSessionLock,

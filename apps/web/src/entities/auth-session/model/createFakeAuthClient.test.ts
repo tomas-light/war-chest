@@ -1,11 +1,11 @@
 import type { SessionResponse } from '@war-chest/api-contracts';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import type { FakeBackendClient } from '#/shared/api/createFakeBackendClient';
-import { getFakeBackendClient } from '#/shared/api/getFakeBackendClient';
+import type { FakeBackendClient } from '#/shared/api/fake/createFakeBackendClient';
+import { getFakeBackendClient } from '#/shared/api/fake/getFakeBackendClient';
 import { acquireFakeSessionLock } from './acquireFakeSessionLock';
 import { createFakeAuthClient } from './createFakeAuthClient';
 
-vi.mock('#/shared/api/getFakeBackendClient', () => ({
+vi.mock('#/shared/api/fake/getFakeBackendClient', () => ({
   getFakeBackendClient: vi.fn(),
 }));
 vi.mock('./acquireFakeSessionLock', () => ({

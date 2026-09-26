@@ -1,15 +1,9 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { GameView } from '@war-chest/game-engine';
 import clsx from 'clsx';
 import type { ReactNode } from 'react';
-import { getGameQueryKey, LOBBY_GAMES_QUERY_KEY } from '#/entities/game';
-import {
-  ApiClientError,
-  createSelectedGameApi,
-  useApiErrorMessage,
-} from '#/shared/api';
 import { useTranslation } from '#/shared/i18n/useTranslation';
 import { Button } from '#/shared/ui/button';
+import { useSurrenderGameMutation } from '../api/useSurrenderGameMutation';
 import classes from './SurrenderGameButton.module.scss';
 
 interface Props {
@@ -32,18 +26,14 @@ export function SurrenderGameButton(props: Props) {
     keyPrefix: 'SurrenderGameButton',
   });
 
-  const getApiErrorMessage = useApiErrorMessage();
-  const queryClient = useQueryClient();
-
-  const surrenderGameMutation = useMutation({
-    mutationFn: surrenderGame,
-    onSuccess: async (game) => {
-      onSurrendered(game.view);
-      queryClient.setQueryData(getGameQueryKey(gameId), game);
-      await queryClient.invalidateQueries({
-        queryKey: LOBBY_GAMES_QUERY_KEY,
-      });
-    },
+  const {
+    error: surrenderError,
+    isPending: isSurrendering,
+    mutate: surrenderGame,
+  } = useSurrenderGameMutation({
+    gameId,
+    onSurrendered,
+    view,
   });
 
   return (
@@ -54,20 +44,16 @@ export function SurrenderGameButton(props: Props) {
     >
       {renderButton()}
 
-      {surrenderGameMutation.error === null ? null : (
-        <p role="alert">{getApiErrorMessage(surrenderGameMutation.error)}</p>
-      )}
+      {surrenderError && <p role="alert">{surrenderError}</p>}
     </div>
   );
 
   function renderButton(): ReactNode {
-    const label = surrenderGameMutation.isPending
-      ? t('surrendering')
-      : t('surrender');
+    const label = isSurrendering ? t('surrendering') : t('surrender');
     const triggerProps: TriggerProps = {
-      disabled: surrenderGameMutation.isPending,
+      disabled: isSurrendering,
       label,
-      onClick: () => surrenderGameMutation.mutate(),
+      onClick: () => surrenderGame(),
     };
 
     if (renderTrigger !== undefined) {
@@ -83,29 +69,5 @@ export function SurrenderGameButton(props: Props) {
         {triggerProps.label}
       </Button>
     );
-  }
-
-  async function surrenderGame() {
-    const gameApi = await createSelectedGameApi();
-
-    try {
-      return await gameApi.surrenderGame(gameId, {
-        commandId: crypto.randomUUID(),
-        expectedVersion: view.lastEventSequence,
-      });
-    } catch (error: unknown) {
-      if (
-        !(error instanceof ApiClientError) ||
-        error.code !== 'game_version_conflict'
-      ) {
-        throw error;
-      }
-
-      const currentGame = await gameApi.getGame(gameId);
-      return gameApi.surrenderGame(gameId, {
-        commandId: crypto.randomUUID(),
-        expectedVersion: currentGame.view.lastEventSequence,
-      });
-    }
   }
 }

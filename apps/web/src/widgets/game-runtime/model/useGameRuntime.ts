@@ -1,39 +1,38 @@
-import { type QueryClient, useQueryClient } from '@tanstack/react-query';
-import type { GameResponse } from '@war-chest/api-contracts';
+import { useQueryClient } from '@tanstack/react-query';
 import type { GameView } from '@war-chest/game-engine';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useStore } from 'zustand';
 import {
-  getGameQueryKey,
-  LOBBY_GAMES_QUERY_KEY,
+  cacheGameView,
+  invalidateLobbyGames,
+  useGameConnection,
   useGameQuery,
   useLobbyGamesQuery,
 } from '#/entities/game';
 import { createGameSessionStore } from '#/entities/game-session';
-import {
-  type ApiClientError,
-  type GameConnection,
-  createApiClientError,
-  createSelectedGameConnection,
-} from '#/shared/api';
+import { type ApiClientError, createApiClientError } from '#/shared/api';
 
 interface Input {
   gameId: string;
   userId: string;
 }
 
-interface CacheGameInput {
-  gameId: string;
-  queryClient: QueryClient;
-  view: GameView;
-}
-
 export function useGameRuntimeState(input: Input) {
   const queryClient = useQueryClient();
-  const gameQuery = useGameQuery(input.gameId);
-  const lobbyGamesQuery = useLobbyGamesQuery();
+  const {
+    data: game,
+    error: gameError,
+    isError: isGameError,
+    isPending: isGamePending,
+  } = useGameQuery(input.gameId);
+
+  const { data: lobbyGames, isPending: isLobbyPending } = useLobbyGamesQuery();
+
+  const [connectionError, setConnectionError] = useState<ApiClientError | null>(
+    null
+  );
+
   const gameSessionStore = useMemo(() => createGameSessionStore(), []);
-  const connectionRef = useRef<GameConnection | null>(null);
   const liveState = useStore(gameSessionStore, (state) => state.liveState);
   const retainedPlayerProfiles = useStore(
     gameSessionStore,
@@ -43,104 +42,63 @@ export function useGameRuntimeState(input: Input) {
     gameSessionStore,
     (state) => state.synchronizationStatus
   );
-  const [connectionError, setConnectionError] = useState<ApiClientError | null>(
-    null
-  );
-  const currentLobbyGame = lobbyGamesQuery.data?.items.find(
+
+  const currentLobbyGame = lobbyGames?.items.find(
     (game) => game.id === input.gameId
   );
   const playerProfiles =
-    currentLobbyGame?.players ??
-    gameQuery.data?.players ??
-    retainedPlayerProfiles;
+    currentLobbyGame?.players ?? game?.players ?? retainedPlayerProfiles;
 
   useEffect(() => {
-    const profiles = currentLobbyGame?.players ?? gameQuery.data?.players;
+    const profiles = currentLobbyGame?.players ?? game?.players;
 
     if (profiles !== undefined) {
       gameSessionStore.getState().retainPlayerProfiles(profiles);
     }
-  }, [currentLobbyGame, gameQuery.data?.players, gameSessionStore]);
+  }, [currentLobbyGame, game?.players, gameSessionStore]);
 
   useEffect(() => {
-    if (gameQuery.data !== undefined) {
-      gameSessionStore.getState().hydrate(gameQuery.data.view);
+    if (game !== undefined) {
+      gameSessionStore.getState().hydrate(game.view);
     }
-  }, [gameQuery.data, gameSessionStore]);
+  }, [game, gameSessionStore]);
 
-  useEffect(() => {
-    if (input.gameId === '' || input.userId === '') {
-      return;
-    }
+  const { synchronize } = useGameConnection({
+    gameId: input.gameId,
+    onError(message) {
+      setConnectionError(
+        createApiClientError({
+          code: message.code,
+          diagnosticMessage: message.message,
+        })
+      );
+    },
+    onEvents(message) {
+      gameSessionStore.getState().applyEvents(message.events);
+      const nextView = gameSessionStore.getState().liveState;
 
-    const currentGameId = input.gameId;
-    let isCancelled = false;
-
-    void connectToGame();
-
-    return () => {
-      isCancelled = true;
-      connectionRef.current?.leave(currentGameId);
-      connectionRef.current?.disconnect();
-      connectionRef.current = null;
-    };
-
-    async function connectToGame(): Promise<void> {
-      const connection = await createSelectedGameConnection({
-        onError(message) {
-          setConnectionError(
-            createApiClientError({
-              code: message.code,
-              diagnosticMessage: message.message,
-            })
-          );
-        },
-        onEvents(message) {
-          if (message.gameId === currentGameId) {
-            gameSessionStore.getState().applyEvents(message.events);
-            const nextView = gameSessionStore.getState().liveState;
-
-            if (nextView !== null) {
-              cacheGame({
-                gameId: currentGameId,
-                queryClient,
-                view: nextView,
-              });
-            }
-
-            refreshLobby();
-          }
-        },
-        onSnapshot(message) {
-          if (message.gameId === currentGameId) {
-            setConnectionError(null);
-            gameSessionStore.getState().hydrate(message.view);
-            cacheGame({
-              gameId: currentGameId,
-              queryClient,
-              view: message.view,
-            });
-            refreshLobby();
-          }
-        },
-      });
-
-      if (isCancelled) {
-        connection.disconnect();
-        return;
+      if (nextView !== null) {
+        cacheGameView({
+          gameId: message.gameId,
+          queryClient,
+          view: nextView,
+        });
       }
 
-      connectionRef.current = connection;
-      connection.connect();
-      connection.join(currentGameId);
-    }
-
-    function refreshLobby(): void {
-      void queryClient.invalidateQueries({
-        queryKey: LOBBY_GAMES_QUERY_KEY,
+      void invalidateLobbyGames(queryClient);
+    },
+    onSnapshot(message) {
+      setConnectionError(null);
+      gameSessionStore.getState().hydrate(message.view);
+      cacheGameView({
+        gameId: message.gameId,
+        queryClient,
+        view: message.view,
       });
-    }
-  }, [gameSessionStore, input.gameId, input.userId, queryClient]);
+      void invalidateLobbyGames(queryClient);
+    },
+    userId: input.userId,
+  });
 
   useEffect(() => {
     if (synchronizationStatus !== 'desynchronized' || input.gameId === '') {
@@ -150,15 +108,17 @@ export function useGameRuntimeState(input: Input) {
     const lastSequence =
       gameSessionStore.getState().liveState?.lastEventSequence ?? 0;
 
-    connectionRef.current?.synchronize(input.gameId, lastSequence);
-  }, [gameSessionStore, input.gameId, synchronizationStatus]);
+    synchronize(lastSequence);
+  }, [gameSessionStore, input.gameId, synchronizationStatus, synchronize]);
 
   return {
     connectionError,
-    currentPlayerGameId: lobbyGamesQuery.data?.currentPlayerGameId ?? null,
-    gameQuery,
+    currentPlayerGameId: lobbyGames?.currentPlayerGameId ?? null,
+    gameError,
     hydrateGame,
-    isLobbyPending: lobbyGamesQuery.isPending,
+    isGameError,
+    isGamePending,
+    isLobbyPending,
     liveState,
     playerProfiles,
     synchronizationStatus,
@@ -166,28 +126,11 @@ export function useGameRuntimeState(input: Input) {
 
   function hydrateGame(view: GameView): void {
     gameSessionStore.getState().hydrate(view);
-    cacheGame({
+    cacheGameView({
       gameId: input.gameId,
       queryClient,
       view,
     });
-    void queryClient.invalidateQueries({
-      queryKey: LOBBY_GAMES_QUERY_KEY,
-    });
+    void invalidateLobbyGames(queryClient);
   }
-}
-
-function cacheGame(input: CacheGameInput): void {
-  if (input.gameId === '') {
-    return;
-  }
-
-  input.queryClient.setQueryData<GameResponse>(
-    getGameQueryKey(input.gameId),
-    (cachedGame) => ({
-      gameId: input.gameId,
-      players: cachedGame?.players ?? [],
-      view: input.view,
-    })
-  );
 }

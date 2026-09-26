@@ -1,0 +1,18 @@
+{
+  "TeamPositions": {
+    "blackTeam": "Чёрная команда",
+    "whiteTeam": "Белая команда"
+  },
+  "PlayerPosition": {
+    "available": "Свободно",
+    "blackTeam": "Чёрная команда",
+    "connected": "В сети · место {{seat}}",
+    "disconnected": "Соединение потеряно",
+    "left": "Покинул игру",
+    "playerFallback": "Игрок {{playerId}}",
+    "seat": "Место {{seat}}",
+    "you": "Вы",
+    "whiteTeam": "Белая команда",
+    "youLabel": "{{playerName}} · Вы"
+  }
+}

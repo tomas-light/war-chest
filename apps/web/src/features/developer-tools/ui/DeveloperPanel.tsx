@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 import type { MouseEvent } from 'react';
-import { useFeatureFlags } from '#/shared/api';
+import { useFeatureFlags } from '#/entities/feature-flags';
 import { useDevBackendStore } from '#/shared/config';
 import { useTranslation } from '#/shared/i18n/useTranslation';
 import { Button } from '#/shared/ui/button';
@@ -20,7 +20,11 @@ export function DeveloperPanel(props: Props) {
     keyPrefix: 'DeveloperPanel',
   });
   const backend = useDevBackendStore((state) => state.backend);
-  const featureFlagsQuery = useFeatureFlags(backend);
+  const {
+    data: featureFlags,
+    isError: isFeatureFlagsError,
+    isPending: isFeatureFlagsPending,
+  } = useFeatureFlags(backend);
 
   if (!import.meta.env.DEV) {
     return null;
@@ -52,21 +56,21 @@ export function DeveloperPanel(props: Props) {
         <section className={classes.featureFlags}>
           <h3 className={classes.sectionTitle}>{t('featureFlags')}</h3>
 
-          {featureFlagsQuery.isPending ? (
+          {isFeatureFlagsPending ? (
             <p className={classes.message} role="status">
               {t('featureFlagsLoading')}
             </p>
           ) : null}
 
-          {featureFlagsQuery.isError ? (
+          {isFeatureFlagsError ? (
             <p className={classes.error} role="alert">
               {t('featureFlagsError')}
             </p>
           ) : null}
 
-          {featureFlagsQuery.data === undefined ? null : (
+          {featureFlags === undefined ? null : (
             <ul className={classes.featureFlagList}>
-              {Object.entries(featureFlagsQuery.data).map(
+              {Object.entries(featureFlags).map(
                 ([featureFlagName, isEnabled]) => (
                   <li className={classes.featureFlag} key={featureFlagName}>
                     <span

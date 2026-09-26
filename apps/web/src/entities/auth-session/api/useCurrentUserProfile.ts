@@ -17,38 +17,38 @@ export function useCurrentUserProfile(): CurrentUserProfile {
   const authClientPromise = useAuthClient();
   const queryClient = useQueryClient();
   const sessionQuery = sessionQueryOptions(authClientPromise);
-  const mutation = useMutation({ mutationFn: updateProfile });
+  const { mutateAsync: updateProfileAsync } = useMutation({
+    mutationFn: updateProfile,
+  });
 
   const removeAvatar = useCallback(
     () =>
-      mutation.mutateAsync(
-        async (authClient) => await authClient.removeAvatar()
-      ),
-    [mutation]
+      updateProfileAsync(async (authClient) => await authClient.removeAvatar()),
+    [updateProfileAsync]
   );
 
   const selectAvatarPreset = useCallback(
     (presetId: AvatarPresetId) =>
-      mutation.mutateAsync(
+      updateProfileAsync(
         async (authClient) => await authClient.selectAvatarPreset(presetId)
       ),
-    [mutation]
+    [updateProfileAsync]
   );
 
   const updateDisplayName = useCallback(
     (displayName: string) =>
-      mutation.mutateAsync(
+      updateProfileAsync(
         async (authClient) => await authClient.updateDisplayName(displayName)
       ),
-    [mutation]
+    [updateProfileAsync]
   );
 
   const uploadAvatar = useCallback(
     (file: File) =>
-      mutation.mutateAsync(
+      updateProfileAsync(
         async (authClient) => await authClient.uploadAvatar(file)
       ),
-    [mutation]
+    [updateProfileAsync]
   );
 
   return {

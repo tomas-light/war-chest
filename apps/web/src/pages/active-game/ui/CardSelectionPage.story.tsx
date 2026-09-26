@@ -6,8 +6,8 @@ import {
   GAME_RULES_VERSION,
 } from '@war-chest/game-engine';
 import { useState } from 'react';
+import { TurnQueue } from '#/widgets/turn-queue';
 import { CardSelectionPage } from './CardSelectionPage';
-import { TurnQueue } from './TurnQueue';
 import classes from './ActiveGamePage.module.scss';
 
 const QUERY_CLIENT = new QueryClient();

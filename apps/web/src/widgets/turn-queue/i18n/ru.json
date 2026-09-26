@@ -1,0 +1,27 @@
+{
+  "TurnQueue": {
+    "label": "Очередь ходов",
+    "loadPrevious": "Загрузить предыдущие ходы",
+    "playerFallback": "Игрок {{playerId}}",
+    "summary": {
+      "current": {
+        "ban": "{{playerName}} сейчас банит карту",
+        "pass": "{{playerName}} сейчас пасует",
+        "pick": "{{playerName}} сейчас выбирает карту",
+        "turn": "Сейчас ходит {{playerName}}"
+      },
+      "done": {
+        "ban": "{{playerName}} забанил карту",
+        "pass": "{{playerName}} спасовал",
+        "pick": "{{playerName}} выбрал карту",
+        "turn": "Ход {{playerName}} завершён"
+      },
+      "upcoming": {
+        "ban": "{{playerName}} будет банить карту",
+        "pass": "{{playerName}} будет пасовать",
+        "pick": "{{playerName}} будет выбирать карту",
+        "turn": "Следующий ход: {{playerName}}"
+      }
+    }
+  }
+}

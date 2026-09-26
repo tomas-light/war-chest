@@ -1,7 +1,6 @@
 {
   "GamePage": {
     "backToLobby": "Back to lobby",
-    "blackTeam": "Black team",
     "connecting": "Connecting to the game…",
     "creatorReadyNotice": "All seats are taken. Waiting for the creator to start the game.",
     "gameLabel": "Game {{gameId}}",
@@ -39,23 +38,10 @@
     },
     "watch": "Watch",
     "waitingForStart": "Waiting for the game to start",
-    "waitingPlayers": "Waiting for players · {{count}}/{{total}}",
-    "whiteTeam": "White team"
+    "waitingPlayers": "Waiting for players · {{count}}/{{total}}"
   },
   "GameError": {
     "backToLobby": "Back to lobby",
     "title": "Could not open the game"
-  },
-  "PlayerPosition": {
-    "available": "Available",
-    "blackTeam": "Black team",
-    "connected": "Online · seat {{seat}}",
-    "disconnected": "Connection lost",
-    "left": "Left the game",
-    "playerFallback": "Player {{playerId}}",
-    "seat": "Seat {{seat}}",
-    "you": "You",
-    "whiteTeam": "White team",
-    "youLabel": "{{playerName}} · You"
   }
 }
