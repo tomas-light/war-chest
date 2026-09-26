@@ -80,7 +80,7 @@ export async function createSelectedGameConnection(
 
     if (readDevBackend() === 'fake') {
       const { createFakeGameConnection } =
-        await import('./createFakeGameConnection');
+        await import('./fake/createFakeGameConnection');
 
       return createFakeGameConnection(handlers);
     }

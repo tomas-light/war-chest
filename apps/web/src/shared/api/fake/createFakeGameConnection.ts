@@ -1,5 +1,5 @@
-import { ApiClientError } from './ApiClientError';
-import type { GameConnection, GameConnectionHandlers } from './gameConnection';
+import { ApiClientError } from '../ApiClientError';
+import type { GameConnection, GameConnectionHandlers } from '../gameConnection';
 import { getFakeBackendClient } from './getFakeBackendClient';
 
 export function createFakeGameConnection(

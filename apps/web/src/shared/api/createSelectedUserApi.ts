@@ -6,7 +6,7 @@ export async function createSelectedUserApi(): Promise<UserApi> {
 
     if (readDevBackend() === 'fake') {
       const { createFakeUserApiClient } =
-        await import('./createFakeUserApiClient');
+        await import('./fake/createFakeUserApiClient');
 
       return createFakeUserApiClient();
     }

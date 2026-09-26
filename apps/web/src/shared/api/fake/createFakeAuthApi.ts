@@ -4,7 +4,7 @@ import {
   type FakeDatabase,
   type FakeUser,
 } from '@war-chest/fake-database';
-import { ApiClientError } from './ApiClientError';
+import { ApiClientError } from '../ApiClientError';
 import { createFakePublicUser } from './createFakePublicUser';
 import type { FakeLoginResult } from './FakeBackendProtocol';
 import { getFakeDatabase } from './getFakeDatabase';

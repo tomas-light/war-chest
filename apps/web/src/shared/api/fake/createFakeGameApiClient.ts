@@ -1,4 +1,4 @@
-import type { GameApi } from './GameApi';
+import type { GameApi } from '../GameApi';
 import { getFakeBackendClient } from './getFakeBackendClient';
 
 export function createFakeGameApiClient(): GameApi {

@@ -36,7 +36,7 @@ import {
   type RuntimeFeatureFlags,
   runtimeFeatureFlagsSchema,
 } from '@war-chest/feature-flags';
-import { ApiClientError, createApiClientError } from './ApiClientError';
+import { ApiClientError, createApiClientError } from '../ApiClientError';
 import {
   type FakeBackendEventEnvelope,
   type FakeBackendOperation,

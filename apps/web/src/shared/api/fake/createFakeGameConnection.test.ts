@@ -1,9 +1,9 @@
 import type { GameResponse } from '@war-chest/api-contracts';
 import { DEFAULT_RUNTIME_FEATURE_FLAGS } from '@war-chest/feature-flags';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import type { GameConnection } from '../gameConnection';
 import type { FakeBackendClient } from './createFakeBackendClient';
 import { createFakeGameConnection } from './createFakeGameConnection';
-import type { GameConnection } from './gameConnection';
 import { getFakeBackendClient } from './getFakeBackendClient';
 
 vi.mock('./getFakeBackendClient', { spy: true });

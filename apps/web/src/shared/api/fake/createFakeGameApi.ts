@@ -36,9 +36,9 @@ import {
   parseGameEventData,
   restoreGame,
 } from '@war-chest/game-engine';
-import { type ApiClientErrorCode, ApiClientError } from './ApiClientError';
+import { type ApiClientErrorCode, ApiClientError } from '../ApiClientError';
+import type { GameApi } from '../GameApi';
 import { createFakePublicUser } from './createFakePublicUser';
-import type { GameApi } from './GameApi';
 import { getFakeDatabase } from './getFakeDatabase';
 
 interface ExecuteCommandInput {

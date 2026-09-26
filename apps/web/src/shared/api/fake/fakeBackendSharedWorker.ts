@@ -15,7 +15,7 @@ import {
   updateCurrentUserRequestSchema,
   updateGameSettingsRequestSchema,
 } from '@war-chest/api-contracts';
-import { ApiClientError } from './ApiClientError';
+import { ApiClientError } from '../ApiClientError';
 import { createFakeAuthApi } from './createFakeAuthApi';
 import { createFakeGameApi } from './createFakeGameApi';
 import { createFakeUserApi } from './createFakeUserApi';

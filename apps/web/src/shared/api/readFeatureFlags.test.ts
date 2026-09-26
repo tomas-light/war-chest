@@ -1,10 +1,12 @@
 import { DEFAULT_RUNTIME_FEATURE_FLAGS } from '@war-chest/feature-flags';
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import type { FakeBackendClient } from './createFakeBackendClient';
-import { getFakeBackendClient } from './getFakeBackendClient';
+import type { FakeBackendClient } from './fake/createFakeBackendClient';
+import { getFakeBackendClient } from './fake/getFakeBackendClient';
 import { readFeatureFlags } from './readFeatureFlags';
 
-vi.mock('./getFakeBackendClient', () => ({ getFakeBackendClient: vi.fn() }));
+vi.mock('./fake/getFakeBackendClient', () => ({
+  getFakeBackendClient: vi.fn(),
+}));
 
 afterEach(() => {
   vi.clearAllMocks();

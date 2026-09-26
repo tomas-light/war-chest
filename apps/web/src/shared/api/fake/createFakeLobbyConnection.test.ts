@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import type { LobbyConnection } from '../lobbyConnection';
 import type {
   FakeBackendClient,
   FakeBackendEvent,
 } from './createFakeBackendClient';
 import { createFakeLobbyConnection } from './createFakeLobbyConnection';
 import { getFakeBackendClient } from './getFakeBackendClient';
-import type { LobbyConnection } from './lobbyConnection';
 
 vi.mock('./getFakeBackendClient', { spy: true });
 

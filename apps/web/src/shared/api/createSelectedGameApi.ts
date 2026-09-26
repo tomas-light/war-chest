@@ -6,7 +6,7 @@ export async function createSelectedGameApi(): Promise<GameApi> {
 
     if (readDevBackend() === 'fake') {
       const { createFakeGameApiClient } =
-        await import('./createFakeGameApiClient');
+        await import('./fake/createFakeGameApiClient');
 
       return createFakeGameApiClient();
     }

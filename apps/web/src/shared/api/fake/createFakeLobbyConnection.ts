@@ -1,8 +1,8 @@
-import { getFakeBackendClient } from './getFakeBackendClient';
 import {
   type LobbyConnection,
   type LobbyConnectionHandlers,
-} from './lobbyConnection';
+} from '../lobbyConnection';
+import { getFakeBackendClient } from './getFakeBackendClient';
 
 export function createFakeLobbyConnection(
   handlers: LobbyConnectionHandlers

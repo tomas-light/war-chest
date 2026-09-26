@@ -11,7 +11,7 @@ import type {
   FakeGameParticipant,
   FakeUser,
 } from '@war-chest/fake-database';
-import { ApiClientError } from './ApiClientError';
+import { ApiClientError } from '../ApiClientError';
 import { createFakePublicUser } from './createFakePublicUser';
 import { getFakeDatabase } from './getFakeDatabase';
 
