@@ -145,27 +145,35 @@ export function DuelQueueDelayedHistory() {
   return <TurnAdvanceStory deferHistory initialHistoryCount={4} />;
 }
 
+export function DuelQueueRollingHistory() {
+  return <TurnAdvanceStory initialHistoryCount={2} rollingHistory />;
+}
+
 interface TurnAdvanceStoryProps {
   deferHistory?: boolean;
   initialHistoryCount: number;
+  rollingHistory?: boolean;
 }
 
 function TurnAdvanceStory(props: TurnAdvanceStoryProps) {
-  const { deferHistory = false, initialHistoryCount } = props;
+  const {
+    deferHistory = false,
+    initialHistoryCount,
+    rollingHistory = false,
+  } = props;
 
   const initialHistoryItems = HISTORY_ITEMS.slice(0, initialHistoryCount);
   const [queryClient] = useState(() =>
     createAdvancingQueryClient(initialHistoryItems)
   );
-  const [advanced, setAdvanced] = useState(false);
+  const [advanceCount, setAdvanceCount] = useState(0);
   const players = createPlayers('duel');
   const state = createState('duel', players);
-  state.lastEventSequence = initialHistoryCount;
+  state.lastEventSequence = initialHistoryCount + advanceCount;
+  state.moveCount += advanceCount;
 
-  if (advanced) {
+  if (advanceCount % 2 === 1) {
     state.currentPlayerId = 'player-two';
-    state.moveCount += 1;
-    state.lastEventSequence += 1;
   }
 
   const view = createViewFor(state, {
@@ -181,8 +189,8 @@ function TurnAdvanceStory(props: TurnAdvanceStoryProps) {
         </button>
         {deferHistory ? (
           <button
-            disabled={!advanced}
-            onClick={synchronizeHistory}
+            disabled={advanceCount === 0}
+            onClick={() => synchronizeHistory(advanceCount)}
             type="button"
           >
             Загрузить историю
@@ -198,26 +206,34 @@ function TurnAdvanceStory(props: TurnAdvanceStoryProps) {
   );
 
   function advanceTurn(): void {
+    const nextAdvanceCount = advanceCount + 1;
+
     if (!deferHistory) {
-      synchronizeHistory();
+      synchronizeHistory(nextAdvanceCount);
     }
 
-    setAdvanced(true);
+    setAdvanceCount(nextAdvanceCount);
   }
 
-  function synchronizeHistory(): void {
+  function synchronizeHistory(completedTurns: number): void {
+    const completedHistoryItems: GameTurnHistoryItem[] = Array.from(
+      { length: completedTurns },
+      (_, index) => ({
+        action: 'pass',
+        playerId: PLAYER_IDS[index % 2] ?? 'player-one',
+        sequence: initialHistoryCount + index + 1,
+      })
+    );
+    const allHistoryItems = [...initialHistoryItems, ...completedHistoryItems];
+    const visibleHistoryItems = rollingHistory
+      ? allHistoryItems.slice(-2)
+      : allHistoryItems;
+
     queryClient.setQueryData(['game-turn-history', GAME_ID, 2], {
       pageParams: [undefined],
       pages: [
         {
-          items: [
-            ...initialHistoryItems,
-            {
-              action: 'pass',
-              playerId: 'player-one',
-              sequence: initialHistoryCount + 1,
-            },
-          ],
+          items: visibleHistoryItems,
           nextCursor: null,
         },
       ],

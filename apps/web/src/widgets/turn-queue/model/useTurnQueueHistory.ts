@@ -1,5 +1,6 @@
+import type { GameTurnHistoryItem } from '@war-chest/api-contracts';
 import type { GameView } from '@war-chest/game-engine';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useGameTurnHistoryQuery } from '#/entities/game';
 import { type PendingTurn, getQueueSteps } from './getQueueSteps';
 
@@ -39,12 +40,32 @@ export function useTurnQueueHistory(input: Input) {
     initialPageSize,
   });
 
-  const historyItems = [
-    ...(historyData?.pages.flatMap((page) => page.items) ?? []),
-  ].sort((first, second) => first.sequence - second.sequence);
+  const fetchedHistoryItems = useMemo(
+    () => historyData?.pages.flatMap((page) => page.items) ?? [],
+    [historyData]
+  );
+  const [cachedHistory, setCachedHistory] = useState({
+    gameId,
+    items: fetchedHistoryItems,
+    source: historyData,
+  });
+
+  if (cachedHistory.gameId !== gameId || cachedHistory.source !== historyData) {
+    const previousItems =
+      cachedHistory.gameId === gameId ? cachedHistory.items : [];
+
+    setCachedHistory({
+      gameId,
+      items: mergeHistoryItems(previousItems, fetchedHistoryItems),
+      source: historyData,
+    });
+  }
+
+  const historyItems = cachedHistory.items;
   const latestHistorySequence = historyItems.at(-1)?.sequence ?? 0;
+  const historySequences = new Set(historyItems.map((item) => item.sequence));
   const visiblePendingTurns = pendingTurns.filter(
-    (turn) => turn.sequence > latestHistorySequence
+    (turn) => !historySequences.has(turn.sequence)
   );
   const steps = getQueueSteps(view, historyItems, visiblePendingTurns);
   const currentStepIndex = steps.findIndex((step) => step.state === 'current');
@@ -113,4 +134,21 @@ export function useTurnQueueHistory(input: Input) {
     isFetchingPreviousSteps,
     steps,
   };
+}
+
+function mergeHistoryItems(
+  previousItems: readonly GameTurnHistoryItem[],
+  fetchedItems: readonly GameTurnHistoryItem[]
+): GameTurnHistoryItem[] {
+  const itemsBySequence = new Map(
+    previousItems.map((item) => [item.sequence, item])
+  );
+
+  for (const item of fetchedItems) {
+    itemsBySequence.set(item.sequence, item);
+  }
+
+  return [...itemsBySequence.values()].sort(
+    (first, second) => first.sequence - second.sequence
+  );
 }

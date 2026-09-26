@@ -30,21 +30,30 @@ export function getQueueSteps(
   }
 
   if (view.status === 'active') {
-    return [
+    const completedSteps = [
       ...historyItems.map((item) => ({
-        action: item.action,
-        key: `history-${item.sequence}`,
-        playerId: item.playerId,
-        state: 'done' as const,
+        sequence: item.sequence,
+        step: {
+          action: item.action,
+          key: `history-${item.sequence}`,
+          playerId: item.playerId,
+          state: 'done' as const,
+        },
       })),
       ...pendingTurns.map((turn) => ({
-        action: 'turn' as const,
-        key: `history-${turn.sequence}`,
-        playerId: turn.playerId,
-        state: 'done' as const,
+        sequence: turn.sequence,
+        step: {
+          action: 'turn' as const,
+          key: `history-${turn.sequence}`,
+          playerId: turn.playerId,
+          state: 'done' as const,
+        },
       })),
-      ...getActiveGameSteps(view),
-    ];
+    ]
+      .sort((first, second) => first.sequence - second.sequence)
+      .map((item) => item.step);
+
+    return [...completedSteps, ...getActiveGameSteps(view)];
   }
 
   return [];
