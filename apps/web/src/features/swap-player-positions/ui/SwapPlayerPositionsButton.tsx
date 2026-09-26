@@ -1,9 +1,7 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { GameView } from '@war-chest/game-engine';
-import { getGameQueryKey, LOBBY_GAMES_QUERY_KEY } from '#/entities/game';
-import { createSelectedGameApi, useApiErrorMessage } from '#/shared/api';
 import { useTranslation } from '#/shared/i18n/useTranslation';
 import { SwapPositionsButton } from '#/shared/ui/swap-positions-button';
+import { useSwapPlayerPositionsMutation } from '../api/useSwapPlayerPositionsMutation';
 import classes from './SwapPlayerPositionsButton.module.scss';
 
 interface Props {
@@ -19,39 +17,26 @@ export function SwapPlayerPositionsButton(props: Props) {
     keyPrefix: 'SwapPlayerPositionsButton',
   });
 
-  const getApiErrorMessage = useApiErrorMessage();
-  const queryClient = useQueryClient();
-
-  const swapMutation = useMutation({
-    mutationFn: async () => {
-      const gameApi = await createSelectedGameApi();
-
-      return gameApi.swapPlayerPositions(gameId, {
-        commandId: crypto.randomUUID(),
-        expectedVersion: view.lastEventSequence,
-      });
-    },
-    onSuccess: async (game) => {
-      onSwapped(game.view);
-      queryClient.setQueryData(getGameQueryKey(gameId), game);
-      await queryClient.invalidateQueries({
-        queryKey: LOBBY_GAMES_QUERY_KEY,
-      });
-    },
+  const {
+    error: swapError,
+    isPending: isSwapping,
+    mutate: swapPlayerPositions,
+  } = useSwapPlayerPositionsMutation({
+    gameId,
+    onSwapped,
+    view,
   });
 
   return (
     <div className={classes.action}>
       <SwapPositionsButton
         aria-label={t('label')}
-        disabled={swapMutation.isPending}
-        onClick={() => swapMutation.mutate()}
+        disabled={isSwapping}
+        onClick={() => swapPlayerPositions()}
         title={t('label')}
       />
 
-      {swapMutation.error === null ? null : (
-        <p role="alert">{getApiErrorMessage(swapMutation.error)}</p>
-      )}
+      {swapError && <p role="alert">{swapError}</p>}
     </div>
   );
 }

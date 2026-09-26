@@ -3,12 +3,9 @@ import type { LobbyGame, LobbyGamePlayer } from '@war-chest/api-contracts';
 import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuthSession } from '#/entities/auth-session';
-import { LOBBY_GAMES_QUERY_KEY, useLobbyGamesQuery } from '#/entities/game';
+import { invalidateLobbyGames, useLobbyGamesQuery } from '#/entities/game';
 import { UserAvatar, UserProfileLink } from '#/entities/user';
-import {
-  createSelectedLobbyConnection,
-  useApiErrorMessage,
-} from '#/shared/api';
+import { createSelectedLobbyConnection } from '#/shared/api';
 import {
   appRoutes,
   getActiveGamePageUrl,
@@ -27,14 +24,21 @@ export function LobbyPage() {
   const { t } = useTranslation('pages/lobby', {
     keyPrefix: 'LobbyPage',
   });
-  const getApiErrorMessage = useApiErrorMessage();
+
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
   const { session } = useAuthSession();
   const userId = session?.user.id ?? '';
-  const lobbyGamesQuery = useLobbyGamesQuery();
-  const games = lobbyGamesQuery.data?.items ?? [];
-  const currentPlayerGameId = lobbyGamesQuery.data?.currentPlayerGameId ?? null;
+  const {
+    data: lobbyGames,
+    error: lobbyGamesError,
+    isError: isLobbyGamesError,
+    isPending: isLobbyGamesPending,
+    refetch: refetchLobbyGames,
+  } = useLobbyGamesQuery();
+  const games = lobbyGames?.items ?? [];
+  const currentPlayerGameId = lobbyGames?.currentPlayerGameId ?? null;
   const currentPlayerGame = games.find(
     (game) => game.id === currentPlayerGameId
   );
@@ -69,9 +73,7 @@ export function LobbyPage() {
       connection.connect();
 
       function refreshLobby(): void {
-        void queryClient.invalidateQueries({
-          queryKey: LOBBY_GAMES_QUERY_KEY,
-        });
+        void invalidateLobbyGames(queryClient);
       }
     }
   }, [queryClient, userId]);
@@ -80,9 +82,7 @@ export function LobbyPage() {
     <main
       className={classes.page}
       data-empty={
-        !lobbyGamesQuery.isPending &&
-        !lobbyGamesQuery.isError &&
-        games.length === 0
+        !isLobbyGamesPending && !isLobbyGamesError && games.length === 0
       }
     >
       <section className={classes.hero}>
@@ -110,24 +110,22 @@ export function LobbyPage() {
         )}
       </section>
 
-      {lobbyGamesQuery.isPending ? (
+      {isLobbyGamesPending ? (
         <section className={classes.state}>
           <LoadingIndicator label={t('loading')} />
         </section>
       ) : null}
 
-      {lobbyGamesQuery.isError ? (
+      {isLobbyGamesError ? (
         <section className={classes.state}>
           <p className={classes.error} role="alert">
-            {getApiErrorMessage(lobbyGamesQuery.error)}
+            {lobbyGamesError}
           </p>
-          <Button onClick={() => void lobbyGamesQuery.refetch()}>
-            {t('retry')}
-          </Button>
+          <Button onClick={() => void refetchLobbyGames()}>{t('retry')}</Button>
         </section>
       ) : null}
 
-      {!lobbyGamesQuery.isPending && !lobbyGamesQuery.isError ? (
+      {!isLobbyGamesPending && !isLobbyGamesError ? (
         games.length === 0 ? (
           <section className={classes.state}>
             <h2>{t('emptyTitle')}</h2>

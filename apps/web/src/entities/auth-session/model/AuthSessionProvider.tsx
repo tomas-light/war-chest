@@ -26,7 +26,7 @@ interface AuthSessionContextValue {
     registrationToken: string,
     displayName: string
   ): Promise<SessionResponse>;
-  error: Error | null;
+  error: string | null;
   logout(this: void): Promise<void>;
   removeAvatar(this: void): Promise<PublicUser>;
   requestEmailCode(
@@ -49,12 +49,16 @@ interface AuthSessionContextValue {
 const AuthSessionContext = createContext<AuthSessionContextValue | null>(null);
 
 export function AuthSessionProvider({ children }: PropsWithChildren) {
-  const sessionQuery = useSessionQuery();
+  const {
+    data,
+    error,
+    isError,
+    isPending,
+    refetch: refetchSession,
+  } = useSessionQuery();
   const emailAuthentication = useEmailAuthentication();
   const currentUserProfile = useCurrentUserProfile();
   const logout = useLogout();
-
-  const { refetch: refetchSession, data, error } = sessionQuery;
 
   const refetch = useCallback(async () => {
     await refetchSession();
@@ -63,7 +67,7 @@ export function AuthSessionProvider({ children }: PropsWithChildren) {
   const backend = data?.backend ?? null;
   const session = data?.session ?? null;
 
-  const status = getSessionStatus(sessionQuery);
+  const status = getSessionStatus({ data, isError, isPending });
 
   const contextValue = useMemo<AuthSessionContextValue>(
     () => ({

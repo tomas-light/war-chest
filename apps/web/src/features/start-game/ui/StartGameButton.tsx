@@ -1,9 +1,7 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { GameView } from '@war-chest/game-engine';
-import { getGameQueryKey, LOBBY_GAMES_QUERY_KEY } from '#/entities/game';
-import { createSelectedGameApi, useApiErrorMessage } from '#/shared/api';
 import { useTranslation } from '#/shared/i18n/useTranslation';
 import { Button } from '#/shared/ui/button';
+import { useStartGameMutation } from '../api/useStartGameMutation';
 import classes from './StartGameButton.module.scss';
 
 interface Props {
@@ -19,39 +17,19 @@ export function StartGameButton(props: Props) {
     keyPrefix: 'StartGameButton',
   });
 
-  const getApiErrorMessage = useApiErrorMessage();
-  const queryClient = useQueryClient();
-
-  const startGameMutation = useMutation({
-    mutationFn: async () => {
-      const gameApi = await createSelectedGameApi();
-
-      return gameApi.startGame(gameId, {
-        commandId: crypto.randomUUID(),
-        expectedVersion: view.lastEventSequence,
-      });
-    },
-    onSuccess: async (game) => {
-      onStarted(game.view);
-      queryClient.setQueryData(getGameQueryKey(gameId), game);
-      await queryClient.invalidateQueries({
-        queryKey: LOBBY_GAMES_QUERY_KEY,
-      });
-    },
-  });
+  const {
+    error: startError,
+    isPending: isStarting,
+    mutate: startGame,
+  } = useStartGameMutation({ gameId, onStarted, view });
 
   return (
     <div className={classes.action}>
-      <Button
-        disabled={startGameMutation.isPending}
-        onClick={() => startGameMutation.mutate()}
-      >
-        {startGameMutation.isPending ? t('starting') : t('start')}
+      <Button disabled={isStarting} onClick={() => startGame()}>
+        {isStarting ? t('starting') : t('start')}
       </Button>
 
-      {startGameMutation.error === null ? null : (
-        <p role="alert">{getApiErrorMessage(startGameMutation.error)}</p>
-      )}
+      {startError && <p role="alert">{startError}</p>}
     </div>
   );
 }

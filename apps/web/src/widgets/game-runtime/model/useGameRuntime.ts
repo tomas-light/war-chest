@@ -1,11 +1,10 @@
-import { type QueryClient, useQueryClient } from '@tanstack/react-query';
-import type { GameResponse } from '@war-chest/api-contracts';
+import { useQueryClient } from '@tanstack/react-query';
 import type { GameView } from '@war-chest/game-engine';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from 'zustand';
 import {
-  getGameQueryKey,
-  LOBBY_GAMES_QUERY_KEY,
+  cacheGameView,
+  invalidateLobbyGames,
   useGameQuery,
   useLobbyGamesQuery,
 } from '#/entities/game';
@@ -22,18 +21,23 @@ interface Input {
   userId: string;
 }
 
-interface CacheGameInput {
-  gameId: string;
-  queryClient: QueryClient;
-  view: GameView;
-}
-
 export function useGameRuntimeState(input: Input) {
   const queryClient = useQueryClient();
-  const gameQuery = useGameQuery(input.gameId);
-  const lobbyGamesQuery = useLobbyGamesQuery();
-  const gameSessionStore = useMemo(() => createGameSessionStore(), []);
+  const {
+    data: game,
+    error: gameError,
+    isError: isGameError,
+    isPending: isGamePending,
+  } = useGameQuery(input.gameId);
+
+  const { data: lobbyGames, isPending: isLobbyPending } = useLobbyGamesQuery();
+
   const connectionRef = useRef<GameConnection | null>(null);
+  const [connectionError, setConnectionError] = useState<ApiClientError | null>(
+    null
+  );
+
+  const gameSessionStore = useMemo(() => createGameSessionStore(), []);
   const liveState = useStore(gameSessionStore, (state) => state.liveState);
   const retainedPlayerProfiles = useStore(
     gameSessionStore,
@@ -43,30 +47,26 @@ export function useGameRuntimeState(input: Input) {
     gameSessionStore,
     (state) => state.synchronizationStatus
   );
-  const [connectionError, setConnectionError] = useState<ApiClientError | null>(
-    null
-  );
-  const currentLobbyGame = lobbyGamesQuery.data?.items.find(
+
+  const currentLobbyGame = lobbyGames?.items.find(
     (game) => game.id === input.gameId
   );
   const playerProfiles =
-    currentLobbyGame?.players ??
-    gameQuery.data?.players ??
-    retainedPlayerProfiles;
+    currentLobbyGame?.players ?? game?.players ?? retainedPlayerProfiles;
 
   useEffect(() => {
-    const profiles = currentLobbyGame?.players ?? gameQuery.data?.players;
+    const profiles = currentLobbyGame?.players ?? game?.players;
 
     if (profiles !== undefined) {
       gameSessionStore.getState().retainPlayerProfiles(profiles);
     }
-  }, [currentLobbyGame, gameQuery.data?.players, gameSessionStore]);
+  }, [currentLobbyGame, game?.players, gameSessionStore]);
 
   useEffect(() => {
-    if (gameQuery.data !== undefined) {
-      gameSessionStore.getState().hydrate(gameQuery.data.view);
+    if (game !== undefined) {
+      gameSessionStore.getState().hydrate(game.view);
     }
-  }, [gameQuery.data, gameSessionStore]);
+  }, [game, gameSessionStore]);
 
   useEffect(() => {
     if (input.gameId === '' || input.userId === '') {
@@ -101,7 +101,7 @@ export function useGameRuntimeState(input: Input) {
             const nextView = gameSessionStore.getState().liveState;
 
             if (nextView !== null) {
-              cacheGame({
+              cacheGameView({
                 gameId: currentGameId,
                 queryClient,
                 view: nextView,
@@ -115,7 +115,7 @@ export function useGameRuntimeState(input: Input) {
           if (message.gameId === currentGameId) {
             setConnectionError(null);
             gameSessionStore.getState().hydrate(message.view);
-            cacheGame({
+            cacheGameView({
               gameId: currentGameId,
               queryClient,
               view: message.view,
@@ -136,9 +136,7 @@ export function useGameRuntimeState(input: Input) {
     }
 
     function refreshLobby(): void {
-      void queryClient.invalidateQueries({
-        queryKey: LOBBY_GAMES_QUERY_KEY,
-      });
+      void invalidateLobbyGames(queryClient);
     }
   }, [gameSessionStore, input.gameId, input.userId, queryClient]);
 
@@ -155,10 +153,12 @@ export function useGameRuntimeState(input: Input) {
 
   return {
     connectionError,
-    currentPlayerGameId: lobbyGamesQuery.data?.currentPlayerGameId ?? null,
-    gameQuery,
+    currentPlayerGameId: lobbyGames?.currentPlayerGameId ?? null,
+    gameError,
     hydrateGame,
-    isLobbyPending: lobbyGamesQuery.isPending,
+    isGameError,
+    isGamePending,
+    isLobbyPending,
     liveState,
     playerProfiles,
     synchronizationStatus,
@@ -166,28 +166,11 @@ export function useGameRuntimeState(input: Input) {
 
   function hydrateGame(view: GameView): void {
     gameSessionStore.getState().hydrate(view);
-    cacheGame({
+    cacheGameView({
       gameId: input.gameId,
       queryClient,
       view,
     });
-    void queryClient.invalidateQueries({
-      queryKey: LOBBY_GAMES_QUERY_KEY,
-    });
+    void invalidateLobbyGames(queryClient);
   }
-}
-
-function cacheGame(input: CacheGameInput): void {
-  if (input.gameId === '') {
-    return;
-  }
-
-  input.queryClient.setQueryData<GameResponse>(
-    getGameQueryKey(input.gameId),
-    (cachedGame) => ({
-      gameId: input.gameId,
-      players: cachedGame?.players ?? [],
-      view: input.view,
-    })
-  );
 }

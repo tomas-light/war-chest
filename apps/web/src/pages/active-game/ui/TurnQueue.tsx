@@ -1,9 +1,6 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import type {
   GameTurnHistoryItem,
-  GameTurnHistoryQuery,
-  GameTurnHistoryResponse,
   LobbyGamePlayer,
 } from '@war-chest/api-contracts';
 import type {
@@ -21,8 +18,8 @@ import {
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { useGameTurnHistoryQuery } from '#/entities/game';
 import { UserAvatar } from '#/entities/user';
-import { createSelectedGameApi } from '#/shared/api';
 import { useTranslation } from '#/shared/i18n/useTranslation';
 import QUEUE_SCROLL_BOUNDARY_DOWN from '../assets/queueScrollBoundaryDown.svg';
 import QUEUE_SCROLL_BOUNDARY_UP from '../assets/queueScrollBoundaryUp.svg';
@@ -107,27 +104,20 @@ export function TurnQueue(props: Props) {
   const followCurrentRef = useRef(true);
 
   const initialPageSize = view.settings.format === 'duel' ? 2 : 4;
-  const historyQuery = useInfiniteQuery<GameTurnHistoryResponse>({
+  const {
+    data: historyData,
+    fetchNextPage: fetchPreviousSteps,
+    hasNextPage: hasPreviousSteps,
+    isFetchingNextPage: isFetchingPreviousSteps,
+    refetch: refetchHistory,
+  } = useGameTurnHistoryQuery({
     enabled: view.status === 'active',
-    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
-    initialPageParam: undefined as number | undefined,
-    queryFn: async ({ pageParam }) => {
-      const gameApi = await createSelectedGameApi();
-      const query: GameTurnHistoryQuery = {
-        limit: initialPageSize,
-      };
-
-      if (typeof pageParam === 'number') {
-        query.beforeSequence = pageParam;
-      }
-
-      return gameApi.listTurnHistory(gameId, query);
-    },
-    queryKey: ['game-turn-history', gameId, initialPageSize],
+    gameId,
+    initialPageSize,
   });
 
   const historyItems = [
-    ...(historyQuery.data?.pages.flatMap((page) => page.items) ?? []),
+    ...(historyData?.pages.flatMap((page) => page.items) ?? []),
   ].sort((first, second) => first.sequence - second.sequence);
 
   const latestHistorySequence = historyItems.at(-1)?.sequence ?? 0;
@@ -150,14 +140,13 @@ export function TurnQueue(props: Props) {
   });
   const virtualItems = virtualizer.getVirtualItems();
 
-  const canScrollUp = scrollAvailability.up || historyQuery.hasNextPage;
+  const canScrollUp = scrollAvailability.up || hasPreviousSteps;
   const topOrnament = canScrollUp
     ? QUEUE_SCROLL_CAN_SCROLL_UP
     : QUEUE_SCROLL_BOUNDARY_UP;
   const bottomOrnament = scrollAvailability.down
     ? QUEUE_SCROLL_CAN_SCROLL_DOWN
     : QUEUE_SCROLL_BOUNDARY_DOWN;
-  const refetchHistory = historyQuery.refetch;
 
   useLayoutEffect(() => {
     updateScrollAvailability();
@@ -355,7 +344,7 @@ export function TurnQueue(props: Props) {
           aria-label={t('loadPrevious')}
           className={classes.ornament}
           data-edge="top"
-          disabled={!canScrollUp || historyQuery.isFetchingNextPage}
+          disabled={!canScrollUp || isFetchingPreviousSteps}
           onClick={handleTopOrnamentClick}
           type="button"
         >
@@ -507,12 +496,12 @@ export function TurnQueue(props: Props) {
   }
 
   async function loadPreviousSteps(): Promise<void> {
-    if (!historyQuery.hasNextPage || historyQuery.isFetchingNextPage) {
+    if (!hasPreviousSteps || isFetchingPreviousSteps) {
       return;
     }
 
     const previousScrollHeight = stepsRef.current?.scrollHeight ?? 0;
-    await historyQuery.fetchNextPage();
+    await fetchPreviousSteps();
 
     requestAnimationFrame(() => {
       if (stepsRef.current !== null) {

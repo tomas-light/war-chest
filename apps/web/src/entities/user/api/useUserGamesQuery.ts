@@ -1,27 +1,9 @@
-import {
-  queryOptions,
-  useInfiniteQuery,
-  useQuery,
-} from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import type { UserGamesResponse } from '@war-chest/api-contracts';
-import { createSelectedUserApi } from '#/shared/api';
-
-export function usePublicUserQuery(userId: string) {
-  return useQuery(
-    queryOptions({
-      enabled: userId !== '',
-      queryFn: async () => {
-        const userApi = await createSelectedUserApi();
-
-        return userApi.getPublicUser(userId);
-      },
-      queryKey: ['users', userId, 'profile'],
-    })
-  );
-}
+import { createSelectedUserApi, useTranslatedApiResult } from '#/shared/api';
 
 export function useUserGamesQuery(userId: string) {
-  return useInfiniteQuery({
+  const query = useInfiniteQuery({
     enabled: userId !== '',
     getNextPageParam: (lastPage: UserGamesResponse) =>
       lastPage.nextCursor ?? undefined,
@@ -33,4 +15,6 @@ export function useUserGamesQuery(userId: string) {
     },
     queryKey: ['users', userId, 'games'],
   });
+
+  return useTranslatedApiResult(query);
 }

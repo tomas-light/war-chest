@@ -20,8 +20,16 @@ export function UserProfilePage() {
   const { t } = useTranslation('pages/user-profile', {
     keyPrefix: 'UserProfilePage',
   });
+
   const { userId } = useParams();
-  const publicUserQuery = usePublicUserQuery(userId ?? '');
+  const {
+    data: publicUser,
+    error: publicUserError,
+    isError: isPublicUserError,
+    isPending: isPublicUserPending,
+    refetch: refetchPublicUser,
+  } = usePublicUserQuery(userId ?? '');
+
   const {
     removeAvatar: removeCurrentUserAvatar,
     selectAvatarPreset,
@@ -29,6 +37,7 @@ export function UserProfilePage() {
     updateDisplayName,
     uploadAvatar: uploadCurrentUserAvatar,
   } = useAuthSession();
+
   const getApiErrorMessage = useApiErrorMessage();
   const [displayName, setDisplayName] = useState(
     session?.user.displayName ?? ''
@@ -38,7 +47,7 @@ export function UserProfilePage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   if (userId !== undefined) {
-    if (publicUserQuery.isPending) {
+    if (isPublicUserPending) {
       return (
         <ProfileState>
           <LoadingIndicator label={t('loadingProfile')} />
@@ -46,21 +55,17 @@ export function UserProfilePage() {
       );
     }
 
-    if (publicUserQuery.isError) {
+    if (isPublicUserError) {
       return (
         <ProfileState>
           <h1>{t('errorTitle')}</h1>
           <p className={classes.error} role="alert">
-            {getApiErrorMessage(publicUserQuery.error)}
+            {publicUserError}
           </p>
-          <Button onClick={() => void publicUserQuery.refetch()}>
-            {t('retry')}
-          </Button>
+          <Button onClick={() => void refetchPublicUser()}>{t('retry')}</Button>
         </ProfileState>
       );
     }
-
-    const publicUser = publicUserQuery.data;
 
     return (
       <main className={classes.page}>

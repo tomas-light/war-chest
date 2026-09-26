@@ -36,8 +36,10 @@ export function ActiveGamePage() {
   const {
     connectionError,
     gameId,
-    gameQuery,
+    gameError,
     hydrateGame,
+    isGameError,
+    isGamePending,
     liveState,
     playerProfiles,
     synchronizationStatus,
@@ -48,7 +50,7 @@ export function ActiveGamePage() {
     return <GameError message={t('notSelected')} onBack={openLobby} />;
   }
 
-  if (liveState === null && gameQuery.isPending) {
+  if (liveState === null && isGamePending) {
     return (
       <>
         <GameHeader
@@ -66,10 +68,10 @@ export function ActiveGamePage() {
     );
   }
 
-  if (liveState === null && gameQuery.isError) {
+  if (liveState === null && isGameError) {
     return (
       <GameError
-        message={getApiErrorMessage(gameQuery.error)}
+        message={gameError ?? t('gameUnavailable')}
         onBack={openLobby}
       />
     );

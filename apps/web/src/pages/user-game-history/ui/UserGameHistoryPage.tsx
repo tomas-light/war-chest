@@ -10,7 +10,6 @@ import {
   UserProfileLink,
   useUserGamesQuery,
 } from '#/entities/user';
-import { useApiErrorMessage } from '#/shared/api';
 import { appRoutes } from '#/shared/config';
 import { useTranslation } from '#/shared/i18n/useTranslation';
 import { Button } from '#/shared/ui/button';
@@ -25,10 +24,27 @@ export function UserGameHistoryPage() {
   const { i18n, t } = useTranslation('pages/user-game-history', {
     keyPrefix: 'UserGameHistoryPage',
   });
-  const getApiErrorMessage = useApiErrorMessage();
+
   const { userId = '' } = useParams();
-  const userQuery = usePublicUserQuery(userId);
-  const gamesQuery = useUserGamesQuery(userId);
+  const {
+    data: user,
+    error: userError,
+    isError: isUserError,
+    isPending: isUserPending,
+    refetch: refetchUser,
+  } = usePublicUserQuery(userId);
+
+  const {
+    data: gamesData,
+    error: gamesError,
+    fetchNextPage,
+    hasNextPage,
+    isError: isGamesError,
+    isFetchingNextPage,
+    isPending: isGamesPending,
+    refetch: refetchGames,
+  } = useUserGamesQuery(userId);
+
   const dateFormatter = useMemo(
     () =>
       new Intl.DateTimeFormat(i18n.resolvedLanguage, {
@@ -37,43 +53,38 @@ export function UserGameHistoryPage() {
       }),
     [i18n.resolvedLanguage]
   );
-  const games = gamesQuery.data?.pages.flatMap((page) => page.items) ?? [];
+  const games = gamesData?.pages.flatMap((page) => page.items) ?? [];
 
   if (userId === '') {
     return <HistoryError message={t('missingUser')} onRetry={undefined} />;
   }
 
-  if (userQuery.isPending) {
+  if (isUserPending) {
     return <HistoryLoading label={t('loadingProfile')} />;
   }
 
-  if (userQuery.isError) {
+  if (isUserError) {
     return (
-      <HistoryError
-        message={getApiErrorMessage(userQuery.error)}
-        onRetry={() => void userQuery.refetch()}
-      />
+      <HistoryError message={userError} onRetry={() => void refetchUser()} />
     );
   }
-
-  const user = userQuery.data;
 
   return (
     <main
       className={classes.page}
-      data-empty={
-        !gamesQuery.isPending && !gamesQuery.isError && games.length === 0
-      }
+      data-empty={!isGamesPending && !isGamesError && games.length === 0}
     >
       <header className={classes.header}>
         <div className={classes.profileIdentity}>
           <UserAvatar size="large" user={user} />
+
           <div>
             <p className={classes.eyebrow}>{t('eyebrow')}</p>
             <h1>{t('title', { userName: user.displayName })}</h1>
             <p className={classes.description}>{t('description')}</p>
           </div>
         </div>
+
         <Link
           className={classes.secondaryAction}
           to={appRoutes.users.userId(user.id).url()}
@@ -83,24 +94,22 @@ export function UserGameHistoryPage() {
       </header>
 
       <section aria-label={t('gamesList')} className={classes.history}>
-        {gamesQuery.isPending ? (
+        {isGamesPending ? (
           <HistoryInlineState>
             <LoadingIndicator label={t('loadingHistory')} />
           </HistoryInlineState>
         ) : null}
 
-        {gamesQuery.isError && games.length === 0 ? (
+        {isGamesError && games.length === 0 ? (
           <HistoryInlineState>
             <p className={classes.error} role="alert">
-              {getApiErrorMessage(gamesQuery.error)}
+              {gamesError}
             </p>
-            <Button onClick={() => void gamesQuery.refetch()}>
-              {t('retry')}
-            </Button>
+            <Button onClick={() => void refetchGames()}>{t('retry')}</Button>
           </HistoryInlineState>
         ) : null}
 
-        {!gamesQuery.isPending && !gamesQuery.isError && games.length === 0 ? (
+        {!isGamesPending && !isGamesError && games.length === 0 ? (
           <HistoryInlineState>
             <h2>{t('emptyTitle')}</h2>
             <p>{t('emptyDescription')}</p>
@@ -111,25 +120,23 @@ export function UserGameHistoryPage() {
           <GameCard dateFormatter={dateFormatter} game={game} key={game.id} />
         ))}
 
-        {gamesQuery.isError && games.length > 0 ? (
+        {isGamesError && games.length > 0 ? (
           <div className={classes.paginationState}>
             <p className={classes.error} role="alert">
-              {getApiErrorMessage(gamesQuery.error)}
+              {gamesError}
             </p>
-            <Button onClick={() => void gamesQuery.fetchNextPage()}>
-              {t('retry')}
-            </Button>
+            <Button onClick={() => void fetchNextPage()}>{t('retry')}</Button>
           </div>
         ) : null}
 
-        {gamesQuery.hasNextPage && !gamesQuery.isError ? (
+        {hasNextPage && !isGamesError ? (
           <Button
             className={classes.loadMore}
-            disabled={gamesQuery.isFetchingNextPage}
-            onClick={() => void gamesQuery.fetchNextPage()}
+            disabled={isFetchingNextPage}
+            onClick={() => void fetchNextPage()}
             variant="secondary"
           >
-            {gamesQuery.isFetchingNextPage ? t('loadingMore') : t('loadMore')}
+            {isFetchingNextPage ? t('loadingMore') : t('loadMore')}
           </Button>
         ) : null}
       </section>

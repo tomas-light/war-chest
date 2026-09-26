@@ -1,11 +1,9 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { GameCoin, GameView } from '@war-chest/game-engine';
 import { useState } from 'react';
-import { getGameQueryKey } from '#/entities/game';
 import { RoyalToken, UnitToken } from '#/entities/game-assets';
-import { createSelectedGameApi, useApiErrorMessage } from '#/shared/api';
 import { useTranslation } from '#/shared/i18n/useTranslation';
 import { Button } from '#/shared/ui/button';
+import { usePassTurnMutation } from '../api/usePassTurnMutation';
 import classes from './PassTurnAction.module.scss';
 
 interface Props {
@@ -27,8 +25,6 @@ export function PassTurnAction(props: Props) {
     keyPrefix: 'PassTurnAction',
   });
 
-  const getApiErrorMessage = useApiErrorMessage();
-  const queryClient = useQueryClient();
   const [coinSelection, setCoinSelection] = useState<CoinSelection | null>(
     null
   );
@@ -43,12 +39,15 @@ export function PassTurnAction(props: Props) {
       ? coinSelection.index
       : null;
 
-  const mutation = useMutation({
-    mutationFn: passTurn,
-    onSuccess(game) {
-      onPassed(game.view);
-      queryClient.setQueryData(getGameQueryKey(gameId), game);
-    },
+  const {
+    error: passError,
+    isPending: isPassing,
+    mutate: passTurn,
+  } = usePassTurnMutation({
+    coinIndex: selectedCoinIndex,
+    gameId,
+    onPassed,
+    view,
   });
 
   return (
@@ -61,7 +60,7 @@ export function PassTurnAction(props: Props) {
             aria-label={getCoinLabel(coin, index)}
             aria-pressed={selectedCoinIndex === index}
             className={classes.coinButton}
-            disabled={!canPass || mutation.isPending}
+            disabled={!canPass || isPassing}
             key={getCoinKey(coin, index)}
             onClick={() => selectCoin(index)}
             type="button"
@@ -72,31 +71,15 @@ export function PassTurnAction(props: Props) {
       </div>
 
       <Button
-        disabled={!canPass || selectedCoinIndex === null || mutation.isPending}
-        onClick={() => mutation.mutate()}
+        disabled={!canPass || selectedCoinIndex === null || isPassing}
+        onClick={() => passTurn()}
       >
-        {mutation.isPending ? t('passing') : t('pass')}
+        {isPassing ? t('passing') : t('pass')}
       </Button>
 
-      {mutation.error === null ? null : (
-        <p role="alert">{getApiErrorMessage(mutation.error)}</p>
-      )}
+      {passError && <p role="alert">{passError}</p>}
     </div>
   );
-
-  async function passTurn() {
-    if (selectedCoinIndex === null) {
-      throw new Error('A coin must be selected before passing.');
-    }
-
-    const gameApi = await createSelectedGameApi();
-
-    return gameApi.passTurn(gameId, {
-      coinIndex: selectedCoinIndex,
-      commandId: crypto.randomUUID(),
-      expectedVersion: view.lastEventSequence,
-    });
-  }
 
   function selectCoin(index: number): void {
     setCoinSelection({ eventSequence: view.lastEventSequence, index });

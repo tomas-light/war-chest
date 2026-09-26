@@ -1,10 +1,9 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { GameFormat } from '@war-chest/game-engine';
 import { useState } from 'react';
-import { GameSetupOption, LOBBY_GAMES_QUERY_KEY } from '#/entities/game';
-import { createSelectedGameApi, useApiErrorMessage } from '#/shared/api';
+import { GameSetupOption } from '#/entities/game';
 import { useTranslation } from '#/shared/i18n/useTranslation';
 import { Button } from '#/shared/ui/button';
+import { useCreateGameMutation } from '../api/useCreateGameMutation';
 import classes from './CreateGameForm.module.scss';
 
 interface Props {
@@ -16,33 +15,20 @@ export function CreateGameForm(props: Props) {
   const { t } = useTranslation('features/create-game', {
     keyPrefix: 'CreateGameForm',
   });
-  const getApiErrorMessage = useApiErrorMessage();
-  const queryClient = useQueryClient();
   const [format, setFormat] = useState<GameFormat>('duel');
-  const createGameMutation = useMutation({
-    mutationFn: async () => {
-      const gameApi = await createSelectedGameApi();
-
-      return gameApi.createGame({
-        commandId: crypto.randomUUID(),
-        format,
-      });
-    },
-    onSuccess: async (game) => {
-      await queryClient.invalidateQueries({
-        queryKey: LOBBY_GAMES_QUERY_KEY,
-      });
-      onCreated(game.gameId);
-    },
-  });
+  const {
+    isPending: isGameCreationPending,
+    error: gameCreationError,
+    mutate: createGame,
+  } = useCreateGameMutation({ format, onCreated });
 
   return (
     <form
-      aria-busy={createGameMutation.isPending}
+      aria-busy={isGameCreationPending}
       className={classes.form}
       onSubmit={(event) => {
         event.preventDefault();
-        createGameMutation.mutate();
+        createGame();
       }}
     >
       <fieldset className={classes.group}>
@@ -69,14 +55,14 @@ export function CreateGameForm(props: Props) {
 
       <p className={classes.description}>{t('description')}</p>
 
-      {createGameMutation.error === null ? null : (
+      {gameCreationError && (
         <p className={classes.error} role="alert">
-          {getApiErrorMessage(createGameMutation.error)}
+          {gameCreationError}
         </p>
       )}
 
-      <Button disabled={createGameMutation.isPending} type="submit">
-        {createGameMutation.isPending ? t('creating') : t('create')}
+      <Button disabled={isGameCreationPending} type="submit">
+        {isGameCreationPending ? t('creating') : t('create')}
       </Button>
     </form>
   );
