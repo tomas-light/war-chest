@@ -1,11 +1,9 @@
-import { useQueryClient } from '@tanstack/react-query';
 import type { LobbyGame, LobbyGamePlayer } from '@war-chest/api-contracts';
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuthSession } from '#/entities/auth-session';
-import { invalidateLobbyGames, useLobbyGamesQuery } from '#/entities/game';
+import { useLobbyGamesConnection, useLobbyGamesQuery } from '#/entities/game';
 import { UserAvatar, UserProfileLink } from '#/entities/user';
-import { createSelectedLobbyConnection } from '#/shared/api';
 import {
   appRoutes,
   getActiveGamePageUrl,
@@ -26,10 +24,11 @@ export function LobbyPage() {
   });
 
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   const { session } = useAuthSession();
   const userId = session?.user.id ?? '';
+  useLobbyGamesConnection(userId);
+
   const {
     data: lobbyGames,
     error: lobbyGamesError,
@@ -37,46 +36,12 @@ export function LobbyPage() {
     isPending: isLobbyGamesPending,
     refetch: refetchLobbyGames,
   } = useLobbyGamesQuery();
+
   const games = lobbyGames?.items ?? [];
   const currentPlayerGameId = lobbyGames?.currentPlayerGameId ?? null;
   const currentPlayerGame = games.find(
     (game) => game.id === currentPlayerGameId
   );
-
-  useEffect(() => {
-    if (userId === '') {
-      return;
-    }
-
-    let isCancelled = false;
-    let disconnect: (() => void) | undefined;
-
-    void connectToLobby();
-
-    return () => {
-      isCancelled = true;
-      disconnect?.();
-    };
-
-    async function connectToLobby(): Promise<void> {
-      const connection = await createSelectedLobbyConnection({
-        onSubscribed: refreshLobby,
-        onUpdated: refreshLobby,
-      });
-
-      if (isCancelled) {
-        connection.disconnect();
-        return;
-      }
-
-      disconnect = connection.disconnect;
-      connection.connect();
-
-      function refreshLobby(): void {
-        void invalidateLobbyGames(queryClient);
-      }
-    }
-  }, [queryClient, userId]);
 
   return (
     <main

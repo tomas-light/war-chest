@@ -51,7 +51,7 @@ export function PlayerPanel(props: Props) {
     resources,
     selectedCoinIndex = null,
   } = props;
-  const { t } = useTranslation('pages/active-game', {
+  const { t } = useTranslation('widgets/game-table', {
     keyPrefix: 'PlayerPanel',
   });
 
@@ -180,7 +180,7 @@ interface HandSlotProps {
 
 function HandSlot(props: HandSlotProps) {
   const { coin, index, isPrivate, onCoinClick, selected, visibleCount } = props;
-  const { t } = useTranslation('pages/active-game', {
+  const { t } = useTranslation('widgets/game-table', {
     keyPrefix: 'PlayerPanel',
   });
 
@@ -277,7 +277,7 @@ interface ResourceSectionProps {
 
 function ResourceSection(props: ResourceSectionProps) {
   const { items, label, variant } = props;
-  const { t } = useTranslation('pages/active-game', {
+  const { t } = useTranslation('widgets/game-table', {
     keyPrefix: 'PlayerPanel',
   });
 

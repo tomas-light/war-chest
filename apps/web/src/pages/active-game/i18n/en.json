@@ -116,72 +116,8 @@
     },
     "automaticTransitionHint": "The remaining card is assigned automatically — confirming this choice opens the game table immediately."
   },
-  "ActiveGameTable": {
-    "ally": "Ally",
-    "opponent": "Opponent",
-    "playerBottom": "Bottom player",
-    "playerFallback": "Player {{playerId}}",
-    "playerTop": "Top player",
-    "preparing": "Preparing the battlefield…",
-    "showTeammate": "Show the other team player",
-    "tableArea": "Game board",
-    "you": "You"
-  },
-  "BattlefieldBoard": {
-    "cell": "Cell {{cellId}}",
-    "controlPoint": "Control point on cell {{cellId}}",
-    "initiative": "Initiative · {{player}}",
-    "resetZoom": "Reset board zoom",
-    "unit": "{{unit}} on cell {{cellId}}",
-    "zoomControls": "Game board zoom",
-    "zoomIn": "Zoom in",
-    "zoomOut": "Zoom out"
-  },
   "GameError": {
     "backToLobby": "Back to lobby",
     "title": "Could not open the game table"
-  },
-  "PlayerPanel": {
-    "bag": "Token bag",
-    "blackTeam": "Black team",
-    "disconnected": "Connection lost",
-    "discard": "Discard",
-    "eliminated": "Eliminated",
-    "empty": "Seat available",
-    "hand": "Hand · {{count}}",
-    "initiative": "Initiative owner",
-    "left": "Left the game",
-    "noPlayer": "No player",
-    "playerFallback": "Player {{playerId}}",
-    "royalCoin": "Royal coin {{number}}",
-    "supply": "Supply",
-    "unitCoin": "{{unitId}} coin {{number}}",
-    "unitCount": "{{count}} of {{total}}",
-    "whiteTeam": "White team"
-  },
-  "TurnQueue": {
-    "label": "Turn queue",
-    "loadPrevious": "Load previous turns",
-    "playerFallback": "Player {{playerId}}",
-    "summary": {
-      "current": {
-        "ban": "{{playerName}} is banning a card",
-        "pass": "{{playerName}} is passing",
-        "pick": "{{playerName}} is choosing a card",
-        "turn": "{{playerName}} is taking the current turn"
-      },
-      "done": {
-        "ban": "{{playerName}} banned a card",
-        "pass": "{{playerName}} passed",
-        "pick": "{{playerName}} chose a card",
-        "turn": "{{playerName}} completed the turn"
-      },
-      "upcoming": {
-        "ban": "{{playerName}} will ban a card",
-        "pass": "{{playerName}} will pass",
-        "pick": "{{playerName}} will choose a card",
-        "turn": "Next turn: {{playerName}}"
-      }
-    }
   }
 }

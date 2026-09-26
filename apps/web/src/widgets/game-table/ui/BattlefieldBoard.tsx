@@ -9,9 +9,10 @@ import {
   getBattlefieldLayout,
 } from '@war-chest/game-engine';
 import clsx from 'clsx';
-import { type ReactNode, useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { Heart, Ore, UnitToken } from '#/entities/game-assets';
 import { useTranslation } from '#/shared/i18n/useTranslation';
+import { useBattlefieldViewport } from '../model/useBattlefieldViewport';
 import classes from './BattlefieldBoard.module.scss';
 
 interface Props {
@@ -27,11 +28,6 @@ interface Point {
   y: number;
 }
 
-interface Pan {
-  x: number;
-  y: number;
-}
-
 interface BattlefieldProjection {
   centerXPercent: number;
   horizontalStepPercent: number;
@@ -39,11 +35,7 @@ interface BattlefieldProjection {
   verticalStepPercent: number;
 }
 
-const MIN_SCALE = 1;
-const MAX_SCALE = 2.4;
-const SCALE_STEP = 0.25;
 const LAST_CANONICAL_CELL_INDEX = 6;
-const DESKTOP_MEDIA_QUERY = '(min-width: 621px)';
 
 // Pixel-perfect cell centers measured in the corresponding Figma battlefield
 // frames and converted to percentages so they scale with the board canvas.
@@ -63,41 +55,24 @@ const TEAM_PROJECTION: BattlefieldProjection = {
 export function BattlefieldBoard(props: Props) {
   const { battlefield, format, initiativeOwnerName, perspective, players } =
     props;
-  const { t } = useTranslation('pages/active-game', {
+
+  const { t } = useTranslation('widgets/game-table', {
     keyPrefix: 'BattlefieldBoard',
   });
 
-  const viewportRef = useRef<HTMLDivElement>(null);
-  const pointersRef = useRef(new Map<number, Point>());
-  const gestureRef = useRef<{
-    distance: number;
-    pan: Pan;
-    scale: number;
-  } | null>(null);
-
-  const [pan, setPan] = useState<Pan>({ x: 0, y: 0 });
-  const [scale, setScale] = useState(1);
-
-  useEffect(() => {
-    const desktopMediaQuery = window.matchMedia(DESKTOP_MEDIA_QUERY);
-
-    desktopMediaQuery.addEventListener('change', handleViewportChange);
-
-    return () => {
-      desktopMediaQuery.removeEventListener('change', handleViewportChange);
-    };
-
-    function handleViewportChange(event: MediaQueryListEvent): void {
-      if (!event.matches) {
-        return;
-      }
-
-      pointersRef.current.clear();
-      gestureRef.current = null;
-      setPan({ x: 0, y: 0 });
-      setScale(MIN_SCALE);
-    }
-  }, []);
+  const {
+    canZoomIn,
+    canZoomOut,
+    handlePointerDown,
+    handlePointerEnd,
+    handlePointerMove,
+    pan,
+    resetView,
+    scale,
+    viewportRef,
+    zoomIn,
+    zoomOut,
+  } = useBattlefieldViewport();
 
   const layout = getBattlefieldLayout(format);
   const isFlipped = perspective === 'black';
@@ -214,8 +189,8 @@ export function BattlefieldBoard(props: Props) {
       >
         <button
           aria-label={t('zoomOut')}
-          disabled={scale <= MIN_SCALE}
-          onClick={() => changeScale(-SCALE_STEP)}
+          disabled={!canZoomOut}
+          onClick={zoomOut}
           type="button"
         >
           −
@@ -225,8 +200,8 @@ export function BattlefieldBoard(props: Props) {
         </button>
         <button
           aria-label={t('zoomIn')}
-          disabled={scale >= MAX_SCALE}
-          onClick={() => changeScale(SCALE_STEP)}
+          disabled={!canZoomIn}
+          onClick={zoomIn}
           type="button"
         >
           +
@@ -268,116 +243,6 @@ export function BattlefieldBoard(props: Props) {
 
     return 'neutral';
   }
-
-  function changeScale(delta: number): void {
-    const nextScale = clamp(scale + delta, MIN_SCALE, MAX_SCALE);
-
-    setScale(nextScale);
-    setPan((currentPan) => constrainPan(currentPan, nextScale));
-  }
-
-  function resetView(): void {
-    setPan({ x: 0, y: 0 });
-    setScale(1);
-  }
-
-  function handlePointerDown(event: React.PointerEvent<HTMLDivElement>): void {
-    event.currentTarget.setPointerCapture(event.pointerId);
-    pointersRef.current.set(event.pointerId, {
-      x: event.clientX,
-      y: event.clientY,
-    });
-    startGesture();
-  }
-
-  function handlePointerMove(event: React.PointerEvent<HTMLDivElement>): void {
-    const previousPoint = pointersRef.current.get(event.pointerId);
-    if (previousPoint === undefined) {
-      return;
-    }
-
-    pointersRef.current.set(event.pointerId, {
-      x: event.clientX,
-      y: event.clientY,
-    });
-    const points = [...pointersRef.current.values()];
-
-    if (points.length === 1 && scale > 1) {
-      const [point] = points;
-      if (point === undefined) {
-        return;
-      }
-
-      setPan((currentPan) =>
-        constrainPan(
-          {
-            x: currentPan.x + point.x - previousPoint.x,
-            y: currentPan.y + point.y - previousPoint.y,
-          },
-          scale
-        )
-      );
-      return;
-    }
-
-    if (points.length !== 2 || gestureRef.current === null) {
-      return;
-    }
-
-    const [firstPoint, secondPoint] = points;
-    if (firstPoint === undefined || secondPoint === undefined) {
-      return;
-    }
-
-    const distance = getDistance(firstPoint, secondPoint);
-    const nextScale = clamp(
-      gestureRef.current.scale * (distance / gestureRef.current.distance),
-      MIN_SCALE,
-      MAX_SCALE
-    );
-
-    setScale(nextScale);
-    setPan(constrainPan(gestureRef.current.pan, nextScale));
-  }
-
-  function handlePointerEnd(event: React.PointerEvent<HTMLDivElement>): void {
-    pointersRef.current.delete(event.pointerId);
-    startGesture();
-  }
-
-  function startGesture(): void {
-    const points = [...pointersRef.current.values()];
-    if (points.length !== 2) {
-      gestureRef.current = null;
-      return;
-    }
-
-    const [firstPoint, secondPoint] = points;
-    if (firstPoint === undefined || secondPoint === undefined) {
-      return;
-    }
-
-    gestureRef.current = {
-      distance: getDistance(firstPoint, secondPoint),
-      pan,
-      scale,
-    };
-  }
-
-  function constrainPan(nextPan: Pan, nextScale: number): Pan {
-    const viewport = viewportRef.current;
-    if (viewport === null || nextScale <= 1) {
-      return { x: 0, y: 0 };
-    }
-
-    const maximumX = (viewport.clientWidth * (nextScale - 1)) / 2;
-    const maximumY = (viewport.clientHeight * (nextScale - 1)) / 2;
-
-    return {
-      x: clamp(nextPan.x, -maximumX, maximumX),
-      y: clamp(nextPan.y, -maximumY, maximumY),
-    };
-  }
 }
 
 function projectCell(
@@ -408,12 +273,4 @@ function projectCell(
       projection.originYPercent -
       (projectedColumn + projectedRow) * projection.verticalStepPercent,
   };
-}
-
-function getDistance(firstPoint: Point, secondPoint: Point): number {
-  return Math.hypot(secondPoint.x - firstPoint.x, secondPoint.y - firstPoint.y);
-}
-
-function clamp(value: number, minimum: number, maximum: number): number {
-  return Math.min(Math.max(value, minimum), maximum);
 }

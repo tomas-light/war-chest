@@ -116,72 +116,8 @@
     },
     "automaticTransitionHint": "Оставшаяся карта выдаётся автоматически — сразу после подтверждения откроется игровой стол."
   },
-  "ActiveGameTable": {
-    "ally": "Союзник",
-    "opponent": "Оппонент",
-    "playerBottom": "Игрок снизу",
-    "playerFallback": "Игрок {{playerId}}",
-    "playerTop": "Игрок сверху",
-    "preparing": "Подготавливаем игровое поле…",
-    "showTeammate": "Показать другого игрока команды",
-    "tableArea": "Игровое поле",
-    "you": "Вы"
-  },
-  "BattlefieldBoard": {
-    "cell": "Клетка {{cellId}}",
-    "controlPoint": "Точка руды на клетке {{cellId}}",
-    "initiative": "Инициатива · {{player}}",
-    "resetZoom": "Сбросить масштаб поля",
-    "unit": "{{unit}} на клетке {{cellId}}",
-    "zoomControls": "Масштаб игрового поля",
-    "zoomIn": "Увеличить поле",
-    "zoomOut": "Уменьшить поле"
-  },
   "GameError": {
     "backToLobby": "Вернуться в лобби",
     "title": "Не удалось открыть игровой стол"
-  },
-  "PlayerPanel": {
-    "bag": "Мешок жетонов",
-    "blackTeam": "Чёрная команда",
-    "disconnected": "Соединение потеряно",
-    "discard": "Сброс",
-    "eliminated": "Устранены",
-    "empty": "Место свободно",
-    "hand": "Рука · {{count}}",
-    "initiative": "Владелец инициативы",
-    "left": "Покинул игру",
-    "noPlayer": "Нет игрока",
-    "playerFallback": "Игрок {{playerId}}",
-    "royalCoin": "Королевский жетон {{number}}",
-    "supply": "Снабжение",
-    "unitCoin": "Жетон {{unitId}} {{number}}",
-    "unitCount": "{{count}} из {{total}}",
-    "whiteTeam": "Белая команда"
-  },
-  "TurnQueue": {
-    "label": "Очередь ходов",
-    "loadPrevious": "Загрузить предыдущие ходы",
-    "playerFallback": "Игрок {{playerId}}",
-    "summary": {
-      "current": {
-        "ban": "{{playerName}} сейчас банит карту",
-        "pass": "{{playerName}} сейчас пасует",
-        "pick": "{{playerName}} сейчас выбирает карту",
-        "turn": "Сейчас ходит {{playerName}}"
-      },
-      "done": {
-        "ban": "{{playerName}} забанил карту",
-        "pass": "{{playerName}} спасовал",
-        "pick": "{{playerName}} выбрал карту",
-        "turn": "Ход {{playerName}} завершён"
-      },
-      "upcoming": {
-        "ban": "{{playerName}} будет банить карту",
-        "pass": "{{playerName}} будет пасовать",
-        "pick": "{{playerName}} будет выбирать карту",
-        "turn": "Следующий ход: {{playerName}}"
-      }
-    }
   }
 }

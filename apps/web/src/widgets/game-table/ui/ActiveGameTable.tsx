@@ -31,7 +31,7 @@ export function ActiveGameTable(props: Props) {
   const { onHandCoinClick, playerProfiles, selectedCoinIndex, userId, view } =
     props;
 
-  const { t } = useTranslation('pages/active-game', {
+  const { t } = useTranslation('widgets/game-table', {
     keyPrefix: 'ActiveGameTable',
   });
 

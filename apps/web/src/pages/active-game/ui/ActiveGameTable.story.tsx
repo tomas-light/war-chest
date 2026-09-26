@@ -18,10 +18,9 @@ import {
 import { useState } from 'react';
 import { MemoryRouter } from 'react-router';
 import { type GameWheelAction, GameActions } from '#/features/game-actions';
-import { ActiveGameTable } from './ActiveGameTable';
+import { type HandCoinClickInput, ActiveGameTable } from '#/widgets/game-table';
+import { TurnQueue } from '#/widgets/turn-queue';
 import { getCoinWheelActions } from './getCoinWheelActions';
-import type { HandCoinClickInput } from './PlayerPanel';
-import { TurnQueue } from './TurnQueue';
 import classes from './ActiveGameTable.story.module.scss';
 
 const DUEL_UNITS: readonly UnitId[][] = [

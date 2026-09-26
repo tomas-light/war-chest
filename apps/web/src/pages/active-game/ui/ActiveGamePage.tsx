@@ -15,13 +15,12 @@ import {
   GameHeaderAction,
 } from '#/widgets/game-navigation';
 import { useGameRuntime } from '#/widgets/game-runtime';
+import { type HandCoinClickInput, ActiveGameTable } from '#/widgets/game-table';
+import { TurnQueue } from '#/widgets/turn-queue';
 import { ActiveGameHeader } from './ActiveGameHeader';
 import { ActiveGameSidebar } from './ActiveGameSidebar';
-import { ActiveGameTable } from './ActiveGameTable';
 import { CardSelectionPage } from './CardSelectionPage';
 import { getCoinWheelActions } from './getCoinWheelActions';
-import type { HandCoinClickInput } from './PlayerPanel';
-import { TurnQueue } from './TurnQueue';
 import classes from './ActiveGamePage.module.scss';
 
 export function ActiveGamePage() {
