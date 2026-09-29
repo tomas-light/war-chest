@@ -1,8 +1,13 @@
-import type { GameCoin } from '@war-chest/game-engine';
+import {
+  type CellId,
+  type GameCoin,
+  type UnitId,
+  getTurnActionOptions,
+} from '@war-chest/game-engine';
 import clsx from 'clsx';
 import { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router';
-import { GameActions } from '#/features/game-actions';
+import { GameActions, useTurnDraft } from '#/features/game-actions';
 import { SurrenderGameButton } from '#/features/surrender-game';
 import { useApiErrorMessage } from '#/shared/api';
 import { appRoutes, getGamePageUrl } from '#/shared/config';
@@ -27,10 +32,15 @@ export function ActiveGamePage() {
   const { t } = useTranslation('pages/active-game', {
     keyPrefix: 'ActiveGamePage',
   });
+  const { t: tUnit } = useTranslation('pages/active-game', {
+    keyPrefix: 'CardSelectionPage',
+  });
 
   const getApiErrorMessage = useApiErrorMessage();
   const navigate = useNavigate();
   const [selectedCoin, setSelectedCoin] = useState<SelectedCoin | null>(null);
+  const [targetSelection, setTargetSelection] =
+    useState<TargetSelection | null>(null);
 
   const {
     connectionError,
@@ -44,6 +54,21 @@ export function ActiveGamePage() {
     synchronizationStatus,
     userId,
   } = useGameRuntime();
+
+  const {
+    cancelDraft,
+    confirmDraft,
+    draft,
+    error: draftError,
+    isLoading: isDraftLoading,
+    isPending: isDraftPending,
+    saveDraft,
+  } = useTurnDraft({
+    gameId,
+    onConfirmed: hydrateGame,
+    userId,
+    view: liveState,
+  });
 
   if (gameId === '') {
     return <GameError message={t('notSelected')} onBack={openLobby} />;
@@ -85,15 +110,31 @@ export function ActiveGamePage() {
   }
 
   const activeGameView = liveState;
+
   const currentPlayer = activeGameView.players.find(
     (player) => player.id === userId
   );
   const isParticipant = currentPlayer !== undefined;
+
   const liveEventSequence = liveState.lastEventSequence;
   const currentSelectedCoin =
     selectedCoin?.eventSequence === liveState.lastEventSequence
       ? selectedCoin
       : null;
+
+  const activeDraft =
+    draft?.baseVersion === liveState.lastEventSequence ? draft : null;
+
+  const displayedView =
+    activeDraft === null
+      ? liveState
+      : { ...liveState, battlefield: activeDraft.projectedBattlefield };
+
+  const targetOptions =
+    targetSelection === null
+      ? null
+      : getTurnActionOptions(liveState, userId, targetSelection.coinIndex);
+
   const headerContextAction = renderHeaderContextAction();
   const headerStage = getHeaderStage();
 
@@ -106,6 +147,7 @@ export function ActiveGamePage() {
         synchronizationLabel={getSynchronizationLabel()}
         synchronizationState={getSynchronizationState()}
       />
+
       <main
         className={clsx(classes.page, {
           [classes.selectionPage]: liveState.status === 'cardSelection',
@@ -120,6 +162,7 @@ export function ActiveGamePage() {
               userId={userId}
               view={liveState}
             />
+
             <div className={classes.finishedLayout}>
               <ActiveGameTable
                 onHandCoinClick={handleHandCoinClick}
@@ -157,31 +200,102 @@ export function ActiveGamePage() {
             ) : (
               <div className={classes.layout}>
                 <ActiveGameTable
+                  deployCells={
+                    targetSelection?.type === 'deploy'
+                      ? targetOptions?.deployCells
+                      : undefined
+                  }
+                  onCancelRecruitSelection={closeTargetSelection}
+                  onDeployCellClick={handleDeployCellClick}
                   onHandCoinClick={handleHandCoinClick}
+                  onRecruitUnitClick={handleRecruitUnitClick}
                   playerProfiles={playerProfiles}
+                  recruitUnits={
+                    targetSelection?.type === 'recruit'
+                      ? targetOptions?.recruitUnits
+                      : undefined
+                  }
                   selectedCoinIndex={currentSelectedCoin?.index ?? null}
                   userId={userId}
-                  view={liveState}
+                  view={displayedView}
                 />
               </div>
             )}
           </div>
         )}
       </main>
-      {currentSelectedCoin === null ? null : (
+
+      {targetSelection?.type === 'deploy' && (
+        <section aria-label={t('targetTitle')} className={classes.actionPanel}>
+          <strong>{t('chooseDeployCell')}</strong>
+
+          <Button onClick={closeTargetSelection} variant="secondary">
+            {t('cancelSelection')}
+          </Button>
+        </section>
+      )}
+
+      {activeDraft !== null && (
+        <section aria-label={t('draftTitle')} className={classes.actionPanel}>
+          <strong>{t('draftTitle')}</strong>
+
+          <span>
+            {activeDraft.action.type === 'deploy'
+              ? t('draftDeploy', { cellId: activeDraft.action.cellId })
+              : t('draftRecruit', {
+                  unit: tUnit(`units.${activeDraft.action.unitId}`),
+                })}
+          </span>
+
+          <div className={classes.draftControls}>
+            <Button
+              disabled={isDraftPending}
+              onClick={() => confirmDraft(activeDraft)}
+            >
+              {t('confirmTurn')}
+            </Button>
+
+            <Button
+              disabled={isDraftPending}
+              onClick={() => cancelDraft(activeDraft)}
+              variant="secondary"
+            >
+              {t('cancelTurn')}
+            </Button>
+          </div>
+        </section>
+      )}
+
+      {draftError !== null && (
+        <p className={classes.draftError} role="alert">
+          {getApiErrorMessage(draftError)}
+        </p>
+      )}
+
+      {currentSelectedCoin === null ||
+      activeDraft !== null ||
+      targetSelection !== null ||
+      isDraftLoading ? null : (
         <GameActions
           actions={getCoinWheelActions(
             currentSelectedCoin.coin,
             liveState.status === 'active' &&
               liveState.settings.format === 'duel' &&
-              liveState.currentPlayerId === userId
+              liveState.currentPlayerId === userId,
+            getTurnActionOptions(liveState, userId, currentSelectedCoin.index)
           )}
           anchorElement={currentSelectedCoin.anchorElement}
           coin={currentSelectedCoin.coin}
           coinIndex={currentSelectedCoin.index}
           gameId={gameId}
           onClose={closeGameActions}
+          onDeploy={() =>
+            beginTargetSelection('deploy', currentSelectedCoin.index)
+          }
           onPassed={hydrateGame}
+          onRecruit={() =>
+            beginTargetSelection('recruit', currentSelectedCoin.index)
+          }
           view={liveState}
         />
       )}
@@ -261,6 +375,14 @@ export function ActiveGamePage() {
   }
 
   function handleHandCoinClick(input: HandCoinClickInput): void {
+    if (activeDraft !== null || isDraftPending || isDraftLoading) {
+      return;
+    }
+
+    if (targetSelection !== null) {
+      closeTargetSelection();
+    }
+
     if (
       currentSelectedCoin?.index === input.index &&
       currentSelectedCoin.anchorElement === input.anchorElement
@@ -278,6 +400,47 @@ export function ActiveGamePage() {
   function closeGameActions(): void {
     setSelectedCoin(null);
   }
+
+  function beginTargetSelection(
+    type: TargetSelection['type'],
+    coinIndex: number
+  ): void {
+    setSelectedCoin(null);
+    setTargetSelection({ coinIndex, type });
+  }
+
+  function closeTargetSelection(): void {
+    setTargetSelection(null);
+  }
+
+  function handleDeployCellClick(cellId: CellId): void {
+    if (targetSelection?.type !== 'deploy') {
+      return;
+    }
+
+    saveDraft({
+      action: { cellId, type: 'deploy' },
+      coinIndex: targetSelection.coinIndex,
+    });
+    closeTargetSelection();
+  }
+
+  function handleRecruitUnitClick(unitId: UnitId): void {
+    if (targetSelection?.type !== 'recruit') {
+      return;
+    }
+
+    saveDraft({
+      action: { type: 'recruit', unitId },
+      coinIndex: targetSelection.coinIndex,
+    });
+    closeTargetSelection();
+  }
+}
+
+interface TargetSelection {
+  coinIndex: number;
+  type: 'deploy' | 'recruit';
 }
 
 interface SelectedCoin {

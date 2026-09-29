@@ -180,6 +180,36 @@
   gap: 4px;
 }
 
+.resourceHeader {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.recruitHint {
+  margin: 0;
+  color: var(--wc-color-cyan-soft);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.cancelRecruitSelection {
+  padding: 2px 6px;
+  border: 1px solid var(--wc-color-brass);
+  border-radius: 4px;
+  background: var(--wc-color-ink);
+  color: var(--wc-color-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+}
+
+.cancelRecruitSelection:focus-visible,
+.recruitToken:focus-visible {
+  outline: 2px solid var(--wc-color-cyan);
+  outline-offset: 2px;
+}
+
 .resourceItems {
   gap: 8px;
   flex-wrap: wrap;
@@ -197,6 +227,19 @@
   height: 56px;
 }
 
+.recruitToken {
+  padding: 0;
+  border: 2px solid var(--wc-color-cyan);
+  border-radius: 50%;
+  background: rgb(21 217 237 / 10%);
+  box-shadow: 0 0 12px rgb(21 217 237 / 40%);
+  cursor: pointer;
+}
+
+.recruitToken:hover {
+  box-shadow: 0 0 18px rgb(21 217 237 / 70%);
+}
+
 .resourceToken > .resourceUnitToken {
   width: 56px;
 }
@@ -209,8 +252,15 @@
 }
 
 .discardSection {
-  width: 72px;
-  flex: 0 0 72px;
+  width: min(300px, 100%);
+  flex: 1 1 180px;
+}
+
+.discardGroups,
+.openDiscardCoins {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .discardPile {
@@ -364,6 +414,13 @@
   .resourceToken {
     width: 48px;
     height: 48px;
+  }
+
+  .discardCoin,
+  .discardCoin > span,
+  .discardCoin > img {
+    width: 40px;
+    height: 40px;
   }
 
   .resourceToken > .resourceUnitToken {

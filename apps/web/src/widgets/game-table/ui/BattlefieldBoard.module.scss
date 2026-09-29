@@ -27,18 +27,6 @@ $flat-top-hexagon-aspect-ratio: 1.1547;
   background: var(--wc-color-surface-raised);
 }
 
-.initiative {
-  position: absolute;
-  z-index: 5;
-  top: 12px;
-  left: 50%;
-  margin: 0;
-  color: var(--wc-color-text-muted);
-  font-size: 12px;
-  transform: translateX(-50%);
-  white-space: nowrap;
-}
-
 .viewport {
   overflow: hidden;
   margin: 15px 31px;
@@ -111,10 +99,48 @@ $flat-top-hexagon-aspect-ratio: 1.1547;
   width: 100%;
 }
 
+.deployTarget {
+  position: absolute;
+  z-index: 5;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: auto;
+  display: grid;
+  padding: 0;
+  border: 2px solid var(--wc-color-cyan);
+  border-radius: 50%;
+  aspect-ratio: 1;
+  background: rgb(21 217 237 / 15%);
+  box-shadow: 0 0 16px rgb(21 217 237 / 40%);
+  color: var(--wc-color-cyan-soft);
+  cursor: pointer;
+  font-size: clamp(14px, 2vw, 24px);
+  place-items: center;
+  transform: translate(-50%, -50%);
+}
+
+.deployTarget:focus-visible {
+  outline: 2px solid var(--wc-color-cyan-soft);
+  outline-offset: 3px;
+}
+
 .unit {
   z-index: 3;
+  width: battlefield-width-percentage($duel-control-point-reference-width);
   display: grid;
+  aspect-ratio: 1;
   place-items: center;
+}
+
+.compactUnit {
+  width: battlefield-width-percentage($team-control-point-reference-width);
+}
+
+// The visible field token is 92px inside a 140px duel frame in Figma.
+// The team variant keeps the same ratio: 73.6px inside a 112px frame.
+.unit > .battlefieldUnitToken {
+  width: math.percentage(math.div(92, 140));
 }
 
 .heart {
@@ -161,7 +187,6 @@ $flat-top-hexagon-aspect-ratio: 1.1547;
 }
 
 @media (width > 620px) {
-  .initiative,
   .controls {
     display: none;
   }
@@ -175,18 +200,15 @@ $flat-top-hexagon-aspect-ratio: 1.1547;
     aspect-ratio: 362 / 245;
   }
 
-  .initiative {
-    top: 8px;
-    line-height: 28px;
-  }
-
   .viewport {
     position: absolute;
-    top: 51px;
+    top: 50%;
     right: 11px;
-    bottom: 11px;
     left: 11px;
+    aspect-ratio: #{$battlefield-reference-width} /
+      #{$battlefield-reference-height};
     margin: 0;
+    transform: translateY(-50%);
   }
 
   .canvas {

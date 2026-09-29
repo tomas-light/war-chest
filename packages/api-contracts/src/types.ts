@@ -4,7 +4,9 @@ import type {
   GamePreparationSettings,
   GameSettings,
   GameView,
+  GameViewBattlefieldState,
   GameViewEventData,
+  TurnAction,
   UnitId,
 } from '@war-chest/game-engine';
 
@@ -215,13 +217,44 @@ export interface PassTurnRequest {
   expectedVersion: number;
 }
 
+export interface SaveTurnDraftRequest {
+  action: TurnAction;
+  coinIndex: number;
+  expectedVersion: number;
+}
+
+export interface ConfirmTurnDraftRequest {
+  commandId: string;
+  draftId: string;
+  expectedVersion: number;
+  revision: number;
+}
+
+export interface CancelTurnDraftRequest {
+  draftId: string;
+  revision: number;
+}
+
+export interface GameTurnDraft {
+  action: TurnAction;
+  baseVersion: number;
+  coinIndex: number;
+  id: string;
+  projectedBattlefield: GameViewBattlefieldState;
+  revision: number;
+}
+
+export interface GameTurnDraftResponse {
+  draft: GameTurnDraft | null;
+}
+
 export interface GameEventsResponse {
   events: readonly GameViewEventData[];
   gameId: string;
 }
 
 export interface GameTurnHistoryItem {
-  action: 'pass';
+  action: 'deploy' | 'pass' | 'recruit';
   playerId: string;
   sequence: number;
 }

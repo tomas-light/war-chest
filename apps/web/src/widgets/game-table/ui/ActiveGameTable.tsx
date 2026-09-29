@@ -1,8 +1,10 @@
 import type { LobbyGamePlayer } from '@war-chest/api-contracts';
 import type {
+  CellId,
   GameTeam,
   GameView,
   GameViewPlayer,
+  UnitId,
 } from '@war-chest/game-engine';
 import { type ReactNode, useState } from 'react';
 import { useTranslation } from '#/shared/i18n/useTranslation';
@@ -13,8 +15,13 @@ import { PlayerPanel } from './PlayerPanel';
 import classes from './ActiveGameTable.module.scss';
 
 interface Props {
+  deployCells?: readonly CellId[];
+  onCancelRecruitSelection?(this: void): void;
+  onDeployCellClick?(this: void, cellId: CellId): void;
   onHandCoinClick(this: void, input: HandCoinClickInput): void;
+  onRecruitUnitClick?(this: void, unitId: UnitId): void;
   playerProfiles: readonly LobbyGamePlayer[];
+  recruitUnits?: readonly UnitId[];
   selectedCoinIndex: number | null;
   userId: string;
   view: GameView;
@@ -28,8 +35,18 @@ interface TeamPanelsProps {
 }
 
 export function ActiveGameTable(props: Props) {
-  const { onHandCoinClick, playerProfiles, selectedCoinIndex, userId, view } =
-    props;
+  const {
+    deployCells,
+    onCancelRecruitSelection,
+    onDeployCellClick,
+    onHandCoinClick,
+    onRecruitUnitClick,
+    playerProfiles,
+    recruitUnits,
+    selectedCoinIndex,
+    userId,
+    view,
+  } = props;
 
   const { t } = useTranslation('widgets/game-table', {
     keyPrefix: 'ActiveGameTable',
@@ -46,15 +63,6 @@ export function ActiveGameTable(props: Props) {
   const bottomTeam = topTeam === 'white' ? 'black' : 'white';
   const topPlayers = getTeamPlayers(topTeam);
   const bottomPlayers = getTeamPlayers(bottomTeam);
-
-  const initiativeOwner = view.players.find(
-    (player) => player.id === view.initiativePlayerId
-  );
-  const initiativeOwnerName =
-    findProfile(initiativeOwner)?.displayName ??
-    t('playerFallback', {
-      playerId: initiativeOwner?.id.slice(0, 8) ?? '—',
-    });
 
   if (view.battlefield === null) {
     return (
@@ -75,8 +83,9 @@ export function ActiveGameTable(props: Props) {
 
       <BattlefieldBoard
         battlefield={view.battlefield}
+        deployCells={deployCells}
         format={view.settings.format}
-        initiativeOwnerName={initiativeOwnerName}
+        onDeployCellClick={onDeployCellClick}
         perspective={perspective}
         players={view.players}
       />
@@ -122,11 +131,14 @@ export function ActiveGameTable(props: Props) {
               label={getPlayerLabel(player, position, isSpectator)}
               mobileSwitchControl={mobileSwitchControl}
               onHandCoinClick={getHandCoinClickHandler(player)}
+              onCancelRecruitSelection={getCancelRecruitHandler(player)}
+              onRecruitUnitClick={getRecruitUnitClickHandler(player)}
               player={player}
               profile={findProfile(player)}
               resources={view.battlefield?.playerResources.find(
                 (resources) => resources.playerId === player.id
               )}
+              recruitUnits={getRecruitUnits(player)}
               selectedCoinIndex={
                 player.id === userId ? selectedCoinIndex : null
               }
@@ -150,6 +162,30 @@ export function ActiveGameTable(props: Props) {
       }
 
       return onHandCoinClick;
+    }
+
+    function getRecruitUnits(player: GameViewPlayer) {
+      if (player.id !== userId) {
+        return undefined;
+      }
+
+      return recruitUnits;
+    }
+
+    function getRecruitUnitClickHandler(player: GameViewPlayer) {
+      if (player.id !== userId) {
+        return undefined;
+      }
+
+      return onRecruitUnitClick;
+    }
+
+    function getCancelRecruitHandler(player: GameViewPlayer) {
+      if (player.id !== userId) {
+        return undefined;
+      }
+
+      return onCancelRecruitSelection;
     }
   }
 

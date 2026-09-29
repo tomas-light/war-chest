@@ -17,8 +17,9 @@ import classes from './BattlefieldBoard.module.scss';
 
 interface Props {
   battlefield: GameViewBattlefieldState;
+  deployCells?: readonly CellId[];
   format: GameFormat;
-  initiativeOwnerName: string;
+  onDeployCellClick?(this: void, cellId: CellId): void;
   perspective: GameTeam;
   players: readonly GameViewPlayer[];
 }
@@ -53,8 +54,14 @@ const TEAM_PROJECTION: BattlefieldProjection = {
 };
 
 export function BattlefieldBoard(props: Props) {
-  const { battlefield, format, initiativeOwnerName, perspective, players } =
-    props;
+  const {
+    battlefield,
+    deployCells,
+    format,
+    onDeployCellClick,
+    perspective,
+    players,
+  } = props;
 
   const { t } = useTranslation('widgets/game-table', {
     keyPrefix: 'BattlefieldBoard',
@@ -77,13 +84,9 @@ export function BattlefieldBoard(props: Props) {
   const layout = getBattlefieldLayout(format);
   const isFlipped = perspective === 'black';
   const oreSize = format === 'duel' ? 'large' : 'compact';
-  const unitSize = format === 'duel' ? 'large' : 'regular';
 
   return (
     <section className={classes.boardSection}>
-      <p className={classes.initiative}>
-        {t('initiative', { player: initiativeOwnerName })}
-      </p>
       <div
         className={classes.viewport}
         onPointerCancel={handlePointerEnd}
@@ -146,6 +149,16 @@ export function BattlefieldBoard(props: Props) {
                 tabIndex={0}
               >
                 {content}
+                {deployCells?.includes(cell.cellId) && onDeployCellClick && (
+                  <button
+                    aria-label={t('deployToCell', { cellId: cell.cellId })}
+                    className={classes.deployTarget}
+                    onClick={() => onDeployCellClick(cell.cellId)}
+                    type="button"
+                  >
+                    +
+                  </button>
+                )}
               </span>
             );
           })}
@@ -157,14 +170,16 @@ export function BattlefieldBoard(props: Props) {
 
             return (
               <span
-                className={classes.unit}
+                className={clsx(classes.unit, {
+                  [classes.compactUnit]: format === 'team',
+                })}
                 key={unit.id}
                 style={{ left: `${point.x}%`, top: `${point.y}%` }}
               >
                 <UnitToken
                   alt={t('unit', { cellId: unit.cellId, unit: unit.unitId })}
+                  className={classes.battlefieldUnitToken}
                   color={color}
-                  size={unitSize}
                   unit={unit.unitId}
                 />
                 {Array.from({ length: unit.bolstered }, (_, index) => (

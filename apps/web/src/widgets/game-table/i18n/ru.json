@@ -3,7 +3,6 @@
     "ally": "Союзник",
     "opponent": "Оппонент",
     "playerBottom": "Игрок снизу",
-    "playerFallback": "Игрок {{playerId}}",
     "playerTop": "Игрок сверху",
     "preparing": "Подготавливаем игровое поле…",
     "showTeammate": "Показать другого игрока команды",
@@ -11,9 +10,9 @@
     "you": "Вы"
   },
   "BattlefieldBoard": {
+    "deployToCell": "Разыграть на клетку {{cellId}}",
     "cell": "Клетка {{cellId}}",
     "controlPoint": "Точка руды на клетке {{cellId}}",
-    "initiative": "Инициатива · {{player}}",
     "resetZoom": "Сбросить масштаб поля",
     "unit": "{{unit}} на клетке {{cellId}}",
     "zoomControls": "Масштаб игрового поля",
@@ -23,6 +22,9 @@
   "PlayerPanel": {
     "bag": "Мешок жетонов",
     "blackTeam": "Чёрная команда",
+    "cancelRecruitSelection": "Отменить выбор",
+    "chooseRecruitUnit": "Выберите жетон для найма",
+    "closedDiscardCount": "Закрытых жетонов в сбросе: {{count}}",
     "disconnected": "Соединение потеряно",
     "discard": "Сброс",
     "eliminated": "Устранены",
@@ -31,11 +33,15 @@
     "initiative": "Владелец инициативы",
     "left": "Покинул игру",
     "noPlayer": "Нет игрока",
+    "openRoyalCoin": "Открытый королевский жетон",
+    "openUnitCoin": "Открытый жетон {{unitId}}",
     "playerFallback": "Игрок {{playerId}}",
     "royalCoin": "Королевский жетон {{number}}",
+    "recruitUnit": "Нанять: {{unitId}}",
     "supply": "Снабжение",
     "unitCoin": "Жетон {{unitId}} {{number}}",
     "unitCount": "{{count}} из {{total}}",
+    "unknownOpenCoin": "Открытый жетон",
     "whiteTeam": "Белая команда"
   }
 }

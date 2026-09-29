@@ -167,6 +167,20 @@ export const gameEvents = pgTable(
   ]
 );
 
+export const gameTurnDrafts = pgTable('game_turn_drafts', {
+  action: jsonb('action').$type<JsonValue>().notNull(),
+  baseVersion: integer('base_version').notNull(),
+  coinIndex: integer('coin_index').notNull(),
+  gameId: uuid('game_id')
+    .primaryKey()
+    .references(() => games.id, { onDelete: 'cascade' }),
+  id: uuid('id').notNull(),
+  playerId: uuid('player_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'restrict' }),
+  revision: integer('revision').notNull(),
+});
+
 export type Game = typeof games.$inferSelect;
 export type NewGame = typeof games.$inferInsert;
 export type GameParticipant = typeof gameParticipants.$inferSelect;
@@ -177,3 +191,5 @@ export type ProcessedCommand = typeof processedCommands.$inferSelect;
 export type NewProcessedCommand = typeof processedCommands.$inferInsert;
 export type GameEvent = typeof gameEvents.$inferSelect;
 export type NewGameEvent = typeof gameEvents.$inferInsert;
+export type GameTurnDraft = typeof gameTurnDrafts.$inferSelect;
+export type NewGameTurnDraft = typeof gameTurnDrafts.$inferInsert;

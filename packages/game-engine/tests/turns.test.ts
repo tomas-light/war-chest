@@ -6,7 +6,11 @@ import {
   applyEvent,
   createGame,
   createViewEventFor,
+  createViewFor,
   decide,
+  getTurnActionOptions,
+  parseGameEventData,
+  previewTurnAction,
 } from '../src/index.js';
 
 describe('turn passing and round replenishment', () => {
@@ -172,6 +176,154 @@ describe('turn passing and round replenishment', () => {
         type: 'PassTurn',
       })
     ).toEqual([]);
+  });
+});
+
+describe('recruiting and deploying supported units', () => {
+  let state: GameState;
+  let playerId: string;
+
+  beforeEach(() => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.999);
+    state = createActiveDuel();
+    playerId = state.currentPlayerId ?? '';
+
+    const resources = state.battlefield?.playerResources.find(
+      (item) => item.playerId === playerId
+    );
+
+    if (resources === undefined) {
+      throw new Error('The active player must have battlefield resources.');
+    }
+
+    resources.hand = [
+      { kind: 'unit', unitId: 'cavalry' },
+      { kind: 'unit', unitId: 'cavalry' },
+      { kind: 'royal' },
+    ];
+    resources.supply = [
+      { count: 2, total: 4, unitId: 'cavalry' },
+      { count: 3, total: 5, unitId: 'crossbowman' },
+      { count: 3, total: 5, unitId: 'footman' },
+    ];
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  test('offers deployment on free owned control points for a supported unit', () => {
+    const options = getTurnActionOptions(state, playerId, 0);
+    const owner = state.players.find((player) => player.id === playerId);
+    const expectedCells = state.battlefield?.controlPoints
+      .filter((point) => point.ownerTeam === owner?.team)
+      .map((point) => point.cellId);
+
+    expect(options.deployCells).toEqual(expectedCells);
+    expect(options.recruitUnits).toEqual(['cavalry', 'crossbowman']);
+  });
+
+  test('recruiting spends the chosen coin face down and adds a revealed supply coin', () => {
+    const [event] = decide(state, playerId, {
+      action: { type: 'recruit', unitId: 'crossbowman' },
+      coinIndex: 2,
+      type: 'PerformTurnAction',
+    });
+
+    expect(event?.type).toBe('TurnActionPerformed');
+
+    if (event === undefined) {
+      throw new Error('Recruitment must produce an event.');
+    }
+
+    const nextState = applyEvent(state, parseGameEventData(event));
+    const resources = nextState.battlefield?.playerResources.find(
+      (item) => item.playerId === playerId
+    );
+
+    expect(resources?.discard).toEqual([
+      { coin: { kind: 'royal' }, faceUp: false },
+      { coin: { kind: 'unit', unitId: 'crossbowman' }, faceUp: true },
+    ]);
+    expect(
+      resources?.supply.find((item) => item.unitId === 'crossbowman')?.count
+    ).toBe(2);
+  });
+
+  test('deployment creates one unit and then blocks another of the same type', () => {
+    const [cellId] = getTurnActionOptions(state, playerId, 0).deployCells;
+
+    if (cellId === undefined) {
+      throw new Error('The player must own a free control point.');
+    }
+
+    const [event] = decide(state, playerId, {
+      action: { cellId, type: 'deploy' },
+      coinIndex: 0,
+      type: 'PerformTurnAction',
+    });
+
+    if (event === undefined) {
+      throw new Error('Deployment must produce an event.');
+    }
+
+    const nextState = applyEvent(state, event);
+    nextState.currentPlayerId = playerId;
+
+    expect(nextState.battlefield?.units).toEqual([
+      {
+        bolstered: 0,
+        cellId,
+        id: `${playerId}:1`,
+        ownerId: playerId,
+        unitId: 'cavalry',
+      },
+    ]);
+    expect(getTurnActionOptions(nextState, playerId, 0).deployCells).toEqual(
+      []
+    );
+  });
+
+  test('draft preview preserves the confirmed state and does not draw coins', () => {
+    const view = createViewFor(state, { playerId, role: 'player' });
+    const [cellId] = getTurnActionOptions(view, playerId, 0).deployCells;
+
+    if (cellId === undefined) {
+      throw new Error('The player must own a free control point.');
+    }
+
+    const preview = previewTurnAction({
+      action: { cellId, type: 'deploy' },
+      coinIndex: 0,
+      playerId,
+      view,
+    });
+
+    expect(preview?.units).toHaveLength(1);
+    expect(view.battlefield?.units).toHaveLength(0);
+    expect(preview?.round).toBe(view.battlefield?.round);
+    expect(
+      preview?.playerResources.find((item) => item.playerId === playerId)
+        ?.bagCount
+    ).toBe(
+      view.battlefield?.playerResources.find(
+        (item) => item.playerId === playerId
+      )?.bagCount
+    );
+  });
+
+  test('keeps unsupported unit deployment unavailable', () => {
+    const resources = state.battlefield?.playerResources.find(
+      (item) => item.playerId === playerId
+    );
+
+    if (resources === undefined) {
+      throw new Error('The active player must have resources.');
+    }
+
+    resources.hand = [{ kind: 'unit', unitId: 'footman' }];
+
+    expect(getTurnActionOptions(state, playerId, 0).deployCells).toEqual([]);
   });
 });
 

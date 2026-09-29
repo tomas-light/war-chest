@@ -3,6 +3,7 @@ import {
   type ConfirmCardChoiceRequest,
   type GameResponse,
   gameResponseSchema,
+  gameTurnDraftResponseSchema,
 } from '@war-chest/api-contracts';
 import {
   type FakeDatabase,
@@ -244,6 +245,105 @@ describe('fake game API lifecycle', () => {
 
     expect(privateDiscard).toEqual([{ coin: selectedCoin, faceUp: false }]);
     expect(publicDiscard).toEqual([{ coin: null, faceUp: false }]);
+  });
+
+  test('persists a private recruit draft and commits one revealed supply coin', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.999);
+
+    const firstPlayerApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.firstUser);
+    const secondPlayerApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.secondUser);
+    let game = await firstPlayerApi.createGame(CREATE_GAME_REQUEST);
+
+    game = await firstPlayerApi.joinGame(game.gameId, {
+      commandId: FIRST_JOIN_COMMAND_ID,
+      expectedVersion: game.view.lastEventSequence,
+      seat: 1,
+      team: 'white',
+    });
+    game = await secondPlayerApi.joinGame(game.gameId, {
+      commandId: SECOND_JOIN_COMMAND_ID,
+      expectedVersion: game.view.lastEventSequence,
+      seat: 1,
+      team: 'black',
+    });
+    game = await firstPlayerApi.startGame(game.gameId, {
+      commandId: START_COMMAND_ID,
+      expectedVersion: game.view.lastEventSequence,
+    });
+
+    const currentPlayerId = game.view.currentPlayerId;
+    const currentPlayerApi =
+      currentPlayerId === FAKE_SEED_IDENTIFIERS.firstUser
+        ? firstPlayerApi
+        : secondPlayerApi;
+    const opponentApi =
+      currentPlayerId === FAKE_SEED_IDENTIFIERS.firstUser
+        ? secondPlayerApi
+        : firstPlayerApi;
+    const currentGame = await currentPlayerApi.getGame(game.gameId);
+    const resources = currentGame.view.battlefield?.playerResources.find(
+      (item) => item.playerId === currentPlayerId
+    );
+    const recruitTarget = resources?.supply.find(
+      (item) =>
+        item.count > 0 &&
+        ['cavalry', 'crossbowman', 'lightCavalry', 'swordsman'].includes(
+          item.unitId
+        )
+    );
+
+    if (resources?.hand?.[0] === undefined || recruitTarget === undefined) {
+      throw new Error(
+        'The current player needs a coin and a supported supply unit.'
+      );
+    }
+
+    const draftResponse = await currentPlayerApi.saveTurnDraft(game.gameId, {
+      action: { type: 'recruit', unitId: recruitTarget.unitId },
+      coinIndex: 0,
+      expectedVersion: currentGame.view.lastEventSequence,
+    });
+    const draft = draftResponse.draft;
+
+    if (draft === null) {
+      throw new Error('Recruitment must produce a draft.');
+    }
+
+    expect(gameTurnDraftResponseSchema.safeParse(draftResponse).success).toBe(
+      true
+    );
+    expect(
+      (await currentPlayerApi.getGame(game.gameId)).view.lastEventSequence
+    ).toBe(currentGame.view.lastEventSequence);
+    expect(
+      (await createFakeGameApi(currentPlayerId ?? '').getTurnDraft(game.gameId))
+        .draft?.id
+    ).toBe(draft.id);
+    expect((await opponentApi.getTurnDraft(game.gameId)).draft).toBeNull();
+
+    const confirmedGame = await currentPlayerApi.confirmTurnDraft(game.gameId, {
+      commandId: MOVE_COMMAND_ID,
+      draftId: draft.id,
+      expectedVersion: draft.baseVersion,
+      revision: draft.revision,
+    });
+    const opponentGame = await opponentApi.getGame(game.gameId);
+    const opponentDiscard = opponentGame.view.battlefield?.playerResources.find(
+      (item) => item.playerId === currentPlayerId
+    )?.discard;
+
+    expect(confirmedGame.view.lastEventSequence).toBe(
+      currentGame.view.lastEventSequence + 1
+    );
+    expect(opponentDiscard).toEqual([
+      { coin: null, faceUp: false },
+      { coin: { kind: 'unit', unitId: recruitTarget.unitId }, faceUp: true },
+    ]);
+    expect((await currentPlayerApi.getTurnDraft(game.gameId)).draft).toBeNull();
+    expect(
+      (await currentPlayerApi.listTurnHistory(game.gameId, { limit: 10 }))
+        .items[0]?.action
+    ).toBe('recruit');
   });
 
   test('persists a confirmed card choice from the current player', async () => {

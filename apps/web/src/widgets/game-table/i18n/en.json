@@ -3,7 +3,6 @@
     "ally": "Ally",
     "opponent": "Opponent",
     "playerBottom": "Bottom player",
-    "playerFallback": "Player {{playerId}}",
     "playerTop": "Top player",
     "preparing": "Preparing the battlefield…",
     "showTeammate": "Show the other team player",
@@ -11,9 +10,9 @@
     "you": "You"
   },
   "BattlefieldBoard": {
+    "deployToCell": "Deploy to cell {{cellId}}",
     "cell": "Cell {{cellId}}",
     "controlPoint": "Control point on cell {{cellId}}",
-    "initiative": "Initiative · {{player}}",
     "resetZoom": "Reset board zoom",
     "unit": "{{unit}} on cell {{cellId}}",
     "zoomControls": "Game board zoom",
@@ -23,6 +22,9 @@
   "PlayerPanel": {
     "bag": "Token bag",
     "blackTeam": "Black team",
+    "cancelRecruitSelection": "Cancel selection",
+    "chooseRecruitUnit": "Choose a coin to recruit",
+    "closedDiscardCount": "Face-down coins in discard: {{count}}",
     "disconnected": "Connection lost",
     "discard": "Discard",
     "eliminated": "Eliminated",
@@ -31,11 +33,15 @@
     "initiative": "Initiative owner",
     "left": "Left the game",
     "noPlayer": "No player",
+    "openRoyalCoin": "Face-up royal coin",
+    "openUnitCoin": "Face-up {{unitId}} coin",
     "playerFallback": "Player {{playerId}}",
     "royalCoin": "Royal coin {{number}}",
+    "recruitUnit": "Recruit: {{unitId}}",
     "supply": "Supply",
     "unitCoin": "{{unitId}} coin {{number}}",
     "unitCount": "{{count}} of {{total}}",
+    "unknownOpenCoin": "Face-up coin",
     "whiteTeam": "White team"
   }
 }

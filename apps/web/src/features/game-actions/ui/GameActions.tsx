@@ -30,7 +30,9 @@ interface Props {
   coinIndex: number;
   gameId: string;
   onClose(this: void): void;
+  onDeploy(this: void): void;
   onPassed(this: void, view: GameView): void;
+  onRecruit(this: void): void;
   view: GameView;
 }
 
@@ -75,7 +77,9 @@ function GameActionsContent(props: Props) {
     coinIndex,
     gameId,
     onClose,
+    onDeploy,
     onPassed,
+    onRecruit,
     view,
   } = props;
 
@@ -240,6 +244,10 @@ function GameActionsContent(props: Props) {
 
     if (action.id === 'pass') {
       performAction();
+    } else if (action.id === 'deploy') {
+      onDeploy();
+    } else if (action.id === 'recruit') {
+      onRecruit();
     }
   }
 

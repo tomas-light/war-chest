@@ -133,11 +133,13 @@ button.ornament:focus-visible {
   overflow: hidden;
   border-radius: 50%;
   background: var(--wc-color-ink);
-  color: var(--wc-color-red);
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 1;
   place-items: center;
+}
+
+.actionBadge img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
 }
 
 .summary {

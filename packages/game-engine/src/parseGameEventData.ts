@@ -34,6 +34,10 @@ const gameCoinSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('royal') }).strict(),
   z.object({ kind: z.literal('unit'), unitId: unitIdSchema }).strict(),
 ]);
+const turnActionSchema = z.discriminatedUnion('type', [
+  z.object({ cellId: cellIdSchema, type: z.literal('deploy') }).strict(),
+  z.object({ type: z.literal('recruit'), unitId: unitIdSchema }).strict(),
+]);
 const battlefieldSchema = z
   .object({
     controlPoints: z.array(
@@ -292,6 +296,21 @@ const gameEventDataSchema: z.ZodType<GameEventData> = z.discriminatedUnion(
           })
           .strict(),
         type: z.literal('TurnPassed'),
+      })
+      .strict(),
+    eventMetadataSchema
+      .extend({
+        payload: z
+          .object({
+            action: turnActionSchema,
+            battlefield: battlefieldSchema,
+            coin: gameCoinSchema,
+            moveNumber: z.number().int().positive(),
+            nextPlayerId: z.string(),
+            playerId: z.string(),
+          })
+          .strict(),
+        type: z.literal('TurnActionPerformed'),
       })
       .strict(),
     eventMetadataSchema

@@ -15,8 +15,7 @@
 }
 
 .image,
-.fortification,
-.markers {
+.fortification {
   position: absolute;
   width: 100%;
   inset: 0;
@@ -30,50 +29,17 @@
   z-index: 2;
 }
 
-.markers {
-  z-index: 0;
-  height: 100%;
-}
-
-.markers span {
+.underUnitSelection {
   position: absolute;
-  width: 7%;
-  border: 2px solid rgb(8 13 16 / 90%);
-  border-radius: 50%;
+  z-index: 3;
+  top: 50%;
+  left: 50%;
+  width: 84.2857%;
   aspect-ratio: 1;
-  background: var(--wc-ore-marker);
-  box-shadow: 0 0 8px var(--wc-ore-marker);
+  pointer-events: none;
   transform: translate(-50%, -50%);
 }
 
-.markers span:nth-child(1) {
-  top: 7%;
-  left: 50%;
-}
-
-.markers span:nth-child(2) {
-  top: 50%;
-  left: 93%;
-}
-
-.markers span:nth-child(3) {
-  top: 93%;
-  left: 50%;
-}
-
-.markers span:nth-child(4) {
-  top: 50%;
-  left: 7%;
-}
-
-.cyan {
-  --wc-ore-marker: var(--wc-color-cyan);
-}
-
-.neutral {
-  --wc-ore-marker: var(--wc-color-text-muted);
-}
-
-.red {
-  --wc-ore-marker: var(--wc-color-red);
+.compact .underUnitSelection {
+  width: 80.3571%;
 }

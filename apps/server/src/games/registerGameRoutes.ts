@@ -12,6 +12,7 @@ import { registerPassTurnRoute } from './gameRoutes/registerPassTurnRoute.js';
 import { registerStartGameRoute } from './gameRoutes/registerStartGameRoute.js';
 import { registerSurrenderGameRoute } from './gameRoutes/registerSurrenderGameRoute.js';
 import { registerSwapPlayerPositionsRoute } from './gameRoutes/registerSwapPlayerPositionsRoute.js';
+import { registerTurnDraftRoutes } from './gameRoutes/registerTurnDraftRoutes.js';
 import { registerUpdateGameSettingsRoute } from './gameRoutes/registerUpdateGameSettingsRoute.js';
 
 export function registerGameRoutes(app: FastifyInstance): void {
@@ -24,6 +25,7 @@ export function registerGameRoutes(app: FastifyInstance): void {
   registerJoinGameRoute(app);
   registerLeaveGameRoute(app);
   registerPassTurnRoute(app);
+  registerTurnDraftRoutes(app);
   registerStartGameRoute(app);
   registerSurrenderGameRoute(app);
   registerSwapPlayerPositionsRoute(app);

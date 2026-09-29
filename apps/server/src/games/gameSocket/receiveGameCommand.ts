@@ -12,7 +12,7 @@ export function receiveGameCommand(
 ): void {
   const result = gameCommandMessageSchema.safeParse(message);
 
-  if (!result.success) {
+  if (!result.success || result.data.command.type === 'PerformTurnAction') {
     emitInvalidMessage(context.socket, 'game:command');
     return;
   }

@@ -250,23 +250,34 @@ test('updates the lobby and moves role selection inside a waiting game', async (
     name: 'Очередь ходов',
   });
 
-  await expect(turnQueue.locator('li')).toHaveCount(10);
+  await expect(turnQueue.getByRole('listitem').first()).toHaveAttribute(
+    'aria-setsize',
+    '3'
+  );
   await expect(
-    turnQueue.locator('li').first().getByRole('button')
-  ).toHaveAccessibleName('Сейчас ходит Archer');
+    turnQueue.locator('[data-state="current"] button')
+  ).toHaveAccessibleName(/Сейчас ходит/);
 
-  await startBlankScreenMonitor(secondPage);
-  await secondPage
+  const currentTurnLabel = await turnQueue
+    .locator('[data-state="current"] button')
+    .getAttribute('aria-label');
+  const actingPage = currentTurnLabel?.includes('Cavalry') ? page : secondPage;
+
+  await startBlankScreenMonitor(actingPage);
+  await actingPage
     .getByRole('button', { name: /^Жетон / })
     .first()
     .click();
-  await expectNoBlankScreen(secondPage);
-  await secondPage.getByRole('button', { name: 'Пас', exact: true }).click();
+  await expectNoBlankScreen(actingPage);
+  await actingPage.getByRole('button', { name: 'Пас', exact: true }).click();
 
-  await expect(turnQueue.locator('li')).toHaveCount(11);
+  await expect(turnQueue.getByRole('listitem').first()).toHaveAttribute(
+    'aria-setsize',
+    '4'
+  );
   await expect(
-    turnQueue.locator('li').first().getByRole('button')
-  ).toHaveAccessibleName('Archer спасовал');
+    turnQueue.locator('[data-state="done"] button').first()
+  ).toHaveAccessibleName(/спасовал/);
 
   await page.getByRole('button', { name: 'Сдаться' }).click();
   await expect(page.getByRole('heading', { name: 'Вы сдались' })).toBeVisible();

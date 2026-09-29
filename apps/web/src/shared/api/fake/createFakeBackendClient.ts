@@ -1,11 +1,14 @@
 import {
   type AvatarPresetId,
+  type CancelTurnDraftRequest,
   type CompleteCardSelectionRequest,
   type ConfirmCardChoiceRequest,
+  type ConfirmTurnDraftRequest,
   type CreateGameRequest,
   type GameErrorMessage,
   type GameResponse,
   type GameSnapshotMessage,
+  type GameTurnDraftResponse,
   type GameTurnHistoryQuery,
   type GameTurnHistoryResponse,
   type JoinGameRequest,
@@ -15,6 +18,7 @@ import {
   type LobbyUpdatedMessage,
   type PassTurnRequest,
   type PublicUser,
+  type SaveTurnDraftRequest,
   type SessionResponse,
   type StartGameRequest,
   type SurrenderGameRequest,
@@ -24,6 +28,7 @@ import {
   gameErrorMessageSchema,
   gameResponseSchema,
   gameSnapshotMessageSchema,
+  gameTurnDraftResponseSchema,
   gameTurnHistoryResponseSchema,
   leaveGameResponseSchema,
   lobbyGamesResponseSchema,
@@ -75,6 +80,11 @@ export type FakeBackendEvent =
     };
 
 export interface FakeBackendClient {
+  cancelTurnDraft(
+    this: void,
+    gameId: string,
+    request: CancelTurnDraftRequest
+  ): Promise<GameTurnDraftResponse>;
   completeCardSelection(
     this: void,
     gameId: string,
@@ -85,9 +95,15 @@ export interface FakeBackendClient {
     gameId: string,
     request: ConfirmCardChoiceRequest
   ): Promise<GameResponse>;
+  confirmTurnDraft(
+    this: void,
+    gameId: string,
+    request: ConfirmTurnDraftRequest
+  ): Promise<GameResponse>;
   createGame(this: void, request: CreateGameRequest): Promise<GameResponse>;
   disconnectGameConnection(this: void, subscriptionId: string): Promise<void>;
   getGame(this: void, gameId: string): Promise<GameResponse>;
+  getTurnDraft(this: void, gameId: string): Promise<GameTurnDraftResponse>;
   getPublicUser(this: void, userId: string): Promise<PublicUser>;
   getSession(
     this: void,
@@ -124,6 +140,11 @@ export interface FakeBackendClient {
     gameId: string,
     request: PassTurnRequest
   ): Promise<GameResponse>;
+  saveTurnDraft(
+    this: void,
+    gameId: string,
+    request: SaveTurnDraftRequest
+  ): Promise<GameTurnDraftResponse>;
   listFinishedGames(
     this: void,
     userId: string,
@@ -191,11 +212,14 @@ export function createFakeBackendClient(): FakeBackendClient {
   worker.port.start();
 
   return {
+    cancelTurnDraft,
     completeCardSelection,
     confirmCardChoice,
+    confirmTurnDraft,
     createGame,
     disconnectGameConnection,
     getGame,
+    getTurnDraft,
     getPublicUser,
     getSession,
     joinGame,
@@ -205,6 +229,7 @@ export function createFakeBackendClient(): FakeBackendClient {
     listLobbyGames,
     listTurnHistory,
     passTurn,
+    saveTurnDraft,
     listFinishedGames,
     login,
     loginExisting,
@@ -223,6 +248,59 @@ export function createFakeBackendClient(): FakeBackendClient {
     updateDisplayName,
     uploadAvatar,
   };
+
+  function cancelTurnDraft(
+    gameId: string,
+    request: CancelTurnDraftRequest
+  ): Promise<GameTurnDraftResponse> {
+    return sendRequest(
+      'game.cancelTurnDraft',
+      { gameId, request },
+      createSchemaParser(
+        gameTurnDraftResponseSchema,
+        'The fake backend returned invalid turn draft.'
+      )
+    );
+  }
+
+  function confirmTurnDraft(
+    gameId: string,
+    request: ConfirmTurnDraftRequest
+  ): Promise<GameResponse> {
+    return sendRequest(
+      'game.confirmTurnDraft',
+      { gameId, request },
+      createSchemaParser(
+        gameResponseSchema,
+        'The fake backend returned an invalid game state.'
+      )
+    );
+  }
+
+  function getTurnDraft(gameId: string): Promise<GameTurnDraftResponse> {
+    return sendRequest(
+      'game.getTurnDraft',
+      { gameId },
+      createSchemaParser(
+        gameTurnDraftResponseSchema,
+        'The fake backend returned invalid turn draft.'
+      )
+    );
+  }
+
+  function saveTurnDraft(
+    gameId: string,
+    request: SaveTurnDraftRequest
+  ): Promise<GameTurnDraftResponse> {
+    return sendRequest(
+      'game.saveTurnDraft',
+      { gameId, request },
+      createSchemaParser(
+        gameTurnDraftResponseSchema,
+        'The fake backend returned invalid turn draft.'
+      )
+    );
+  }
 
   function completeCardSelection(
     gameId: string,

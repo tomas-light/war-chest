@@ -2,7 +2,12 @@ import type { LobbyGamePlayer } from '@war-chest/api-contracts';
 import type { GameView } from '@war-chest/game-engine';
 import { createPortal } from 'react-dom';
 import { UserAvatar } from '#/entities/user';
+import draftBanIcon from '#/features/confirm-card-choice/assets/draftBanIcon.svg';
+import deployIcon from '#/features/game-actions/assets/deployIcon.png';
+import passIcon from '#/features/game-actions/assets/passIcon.png';
+import recruitIcon from '#/features/game-actions/assets/recruitIcon.png';
 import { useTranslation } from '#/shared/i18n/useTranslation';
+import draftPickIcon from '../assets/draftPickIcon.svg';
 import QUEUE_SCROLL_BOUNDARY_DOWN from '../assets/queueScrollBoundaryDown.svg';
 import QUEUE_SCROLL_BOUNDARY_UP from '../assets/queueScrollBoundaryUp.svg';
 import QUEUE_SCROLL_CAN_SCROLL_DOWN from '../assets/queueScrollCanScrollDown.svg';
@@ -178,7 +183,7 @@ export function TurnQueue(props: Props) {
 
                     {step.state === 'done' ? (
                       <span className={classes.actionBadge}>
-                        {getActionSymbol(step.action)}
+                        <img alt="" src={getActionIcon(step.action)} />
                       </span>
                     ) : null}
                   </button>
@@ -235,14 +240,22 @@ export function TurnQueue(props: Props) {
   }
 }
 
-function getActionSymbol(action: QueueStep['action']): string {
+function getActionIcon(action: QueueStep['action']): string {
   if (action === 'ban') {
-    return '×';
+    return draftBanIcon;
   }
 
   if (action === 'pass') {
-    return '↷';
+    return passIcon;
   }
 
-  return '✓';
+  if (action === 'deploy') {
+    return deployIcon;
+  }
+
+  if (action === 'recruit') {
+    return recruitIcon;
+  }
+
+  return draftPickIcon;
 }

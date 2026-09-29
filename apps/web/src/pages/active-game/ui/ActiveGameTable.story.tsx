@@ -14,6 +14,7 @@ import {
   createInitialBattlefield,
   createViewFor,
   GAME_RULES_VERSION,
+  getTurnActionOptions,
 } from '@war-chest/game-engine';
 import { useState } from 'react';
 import { MemoryRouter } from 'react-router';
@@ -395,7 +396,8 @@ function TableStory(props: TableStoryProps) {
                 selectedCoin.coin,
                 view.status === 'active' &&
                   view.settings.format === 'duel' &&
-                  view.currentPlayerId === userId
+                  view.currentPlayerId === userId,
+                getTurnActionOptions(view, userId, selectedCoin.index)
               )
             }
             anchorElement={selectedCoin.anchorElement}
@@ -403,7 +405,9 @@ function TableStory(props: TableStoryProps) {
             coinIndex={selectedCoin.index}
             gameId={GAME_ID}
             onClose={closeGameActions}
+            onDeploy={() => undefined}
             onPassed={() => undefined}
+            onRecruit={() => undefined}
             view={view}
           />
         )}

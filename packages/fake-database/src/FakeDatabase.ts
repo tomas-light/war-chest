@@ -34,6 +34,7 @@ export interface FakeDatabaseTables {
   game: SchemaTable<FakeDatabaseSchema, 'games'>;
   gameEvent: SchemaTable<FakeDatabaseSchema, 'gameEvents'>;
   gameParticipant: SchemaTable<FakeDatabaseSchema, 'gameParticipants'>;
+  gameTurnDraft: SchemaTable<FakeDatabaseSchema, 'gameTurnDrafts'>;
   processedCommand: SchemaTable<FakeDatabaseSchema, 'processedCommands'>;
   runtimeFeatureFlags: SchemaTable<FakeDatabaseSchema, 'runtimeFeatureFlags'>;
   user: SchemaTable<FakeDatabaseSchema, 'users'>;
@@ -106,6 +107,7 @@ function createFakeDatabaseTables(
     game: createSchemaTable(database, 'games'),
     gameEvent: createSchemaTable(database, 'gameEvents'),
     gameParticipant: createSchemaTable(database, 'gameParticipants'),
+    gameTurnDraft: createSchemaTable(database, 'gameTurnDrafts'),
     processedCommand: createSchemaTable(database, 'processedCommands'),
     runtimeFeatureFlags: createSchemaTable(database, 'runtimeFeatureFlags'),
     user: createSchemaTable(database, 'users'),
@@ -123,6 +125,7 @@ function createFakeTransactionTables(
     game: transaction.table('games'),
     gameEvent: transaction.table('gameEvents'),
     gameParticipant: transaction.table('gameParticipants'),
+    gameTurnDraft: transaction.table('gameTurnDrafts'),
     processedCommand: transaction.table('processedCommands'),
     runtimeFeatureFlags: transaction.table('runtimeFeatureFlags'),
     user: transaction.table('users'),

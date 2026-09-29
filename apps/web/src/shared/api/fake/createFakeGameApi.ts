@@ -1,8 +1,11 @@
 import type {
+  CancelTurnDraftRequest,
   CompleteCardSelectionRequest,
   ConfirmCardChoiceRequest,
+  ConfirmTurnDraftRequest,
   CreateGameRequest,
   GameResponse,
+  GameTurnDraftResponse,
   GameTurnHistoryQuery,
   GameTurnHistoryResponse,
   JoinGameRequest,
@@ -12,11 +15,13 @@ import type {
   LobbyGamePlayer,
   LobbyGamesResponse,
   PassTurnRequest,
+  SaveTurnDraftRequest,
   StartGameRequest,
   SurrenderGameRequest,
   SwapPlayerPositionsRequest,
   UpdateGameSettingsRequest,
 } from '@war-chest/api-contracts';
+import { saveTurnDraftRequestSchema } from '@war-chest/api-contracts';
 import type {
   FakeGame,
   FakeGameEvent,
@@ -34,6 +39,7 @@ import {
   createViewFor,
   decide,
   parseGameEventData,
+  previewTurnAction,
   restoreGame,
 } from '@war-chest/game-engine';
 import { type ApiClientErrorCode, ApiClientError } from '../ApiClientError';
@@ -57,20 +63,205 @@ interface CreateStoredEventInput {
 
 export function createFakeGameApi(userId: string): GameApi {
   return {
+    cancelTurnDraft,
     completeCardSelection,
     confirmCardChoice,
+    confirmTurnDraft,
     createGame,
     getGame,
+    getTurnDraft,
     joinGame,
     leaveGame,
     listLobbyGames,
     listTurnHistory,
     passTurn,
+    saveTurnDraft,
     startGame,
     surrenderGame,
     swapPlayerPositions,
     updateGameSettings,
   };
+
+  async function getTurnDraft(gameId: string): Promise<GameTurnDraftResponse> {
+    const game = await getGame(gameId);
+
+    if (game.view.currentPlayerId !== userId) {
+      return { draft: null };
+    }
+
+    const database = await getFakeDatabase();
+    const storedDraft = await database.gameTurnDraft.get(gameId);
+
+    if (
+      storedDraft === undefined ||
+      storedDraft.playerId !== userId ||
+      storedDraft.baseVersion !== game.view.lastEventSequence
+    ) {
+      return { draft: null };
+    }
+
+    const parsed = saveTurnDraftRequestSchema.safeParse({
+      action: storedDraft.action,
+      coinIndex: storedDraft.coinIndex,
+      expectedVersion: storedDraft.baseVersion,
+    });
+
+    if (!parsed.success) {
+      return { draft: null };
+    }
+
+    const projectedBattlefield = previewTurnAction({
+      action: parsed.data.action,
+      coinIndex: storedDraft.coinIndex,
+      playerId: userId,
+      view: game.view,
+    });
+
+    if (projectedBattlefield === null) {
+      return { draft: null };
+    }
+
+    return {
+      draft: {
+        action: parsed.data.action,
+        baseVersion: storedDraft.baseVersion,
+        coinIndex: storedDraft.coinIndex,
+        id: storedDraft.id,
+        projectedBattlefield,
+        revision: storedDraft.revision,
+      },
+    };
+  }
+
+  async function saveTurnDraft(
+    gameId: string,
+    request: SaveTurnDraftRequest
+  ): Promise<GameTurnDraftResponse> {
+    const game = await getGame(gameId);
+    const projectedBattlefield = previewTurnAction({
+      action: request.action,
+      coinIndex: request.coinIndex,
+      playerId: userId,
+      view: game.view,
+    });
+
+    if (
+      game.view.lastEventSequence !== request.expectedVersion ||
+      projectedBattlefield === null
+    ) {
+      throw createFakeApiError(
+        'game_version_conflict',
+        'The turn draft is no longer current.'
+      );
+    }
+
+    const database = await getFakeDatabase();
+    const previousDraft = await database.gameTurnDraft.get(gameId);
+    const reusableDraft =
+      previousDraft?.playerId === userId &&
+      previousDraft.baseVersion === request.expectedVersion
+        ? previousDraft
+        : undefined;
+    const id = reusableDraft?.id ?? crypto.randomUUID();
+    const revision = (reusableDraft?.revision ?? 0) + 1;
+    const storedDraft = {
+      action: request.action,
+      baseVersion: request.expectedVersion,
+      coinIndex: request.coinIndex,
+      gameId,
+      id,
+      playerId: userId,
+      revision,
+    };
+
+    if (previousDraft === undefined) {
+      await database.gameTurnDraft.insert(gameId, storedDraft);
+    } else {
+      await database.gameTurnDraft.update(gameId, storedDraft);
+    }
+
+    return {
+      draft: {
+        action: request.action,
+        baseVersion: request.expectedVersion,
+        coinIndex: request.coinIndex,
+        id,
+        projectedBattlefield,
+        revision,
+      },
+    };
+  }
+
+  async function cancelTurnDraft(
+    gameId: string,
+    request: CancelTurnDraftRequest
+  ): Promise<GameTurnDraftResponse> {
+    const database = await getFakeDatabase();
+    const storedDraft = await database.gameTurnDraft.get(gameId);
+
+    if (
+      storedDraft === undefined ||
+      storedDraft.playerId !== userId ||
+      storedDraft.id !== request.draftId ||
+      storedDraft.revision !== request.revision
+    ) {
+      throw createFakeApiError(
+        'game_version_conflict',
+        'The turn draft is no longer current.'
+      );
+    }
+
+    await database.gameTurnDraft.delete(gameId);
+    return { draft: null };
+  }
+
+  async function confirmTurnDraft(
+    gameId: string,
+    request: ConfirmTurnDraftRequest
+  ): Promise<GameResponse> {
+    const database = await getFakeDatabase();
+    const storedDraft = await database.gameTurnDraft.get(gameId);
+
+    if (
+      storedDraft === undefined ||
+      storedDraft.playerId !== userId ||
+      storedDraft.id !== request.draftId ||
+      storedDraft.revision !== request.revision ||
+      storedDraft.baseVersion !== request.expectedVersion
+    ) {
+      throw createFakeApiError(
+        'game_version_conflict',
+        'The turn draft is no longer current.'
+      );
+    }
+
+    const parsed = saveTurnDraftRequestSchema.safeParse({
+      action: storedDraft.action,
+      coinIndex: storedDraft.coinIndex,
+      expectedVersion: storedDraft.baseVersion,
+    });
+
+    if (!parsed.success) {
+      throw createFakeApiError(
+        'invalid_response',
+        'Stored turn draft is invalid.'
+      );
+    }
+
+    const game = await executeCommand({
+      command: {
+        action: parsed.data.action,
+        coinIndex: storedDraft.coinIndex,
+        type: 'PerformTurnAction',
+      },
+      commandId: request.commandId,
+      expectedVersion: request.expectedVersion,
+      gameId,
+    });
+
+    await database.gameTurnDraft.delete(gameId);
+    return game;
+  }
 
   function completeCardSelection(
     gameId: string,
@@ -273,7 +464,7 @@ export function createFakeGameApi(userId: string): GameApi {
       });
 
       if (
-        event.type !== 'TurnPassed' ||
+        (event.type !== 'TurnPassed' && event.type !== 'TurnActionPerformed') ||
         (query.beforeSequence !== undefined &&
           event.sequence >= query.beforeSequence)
       ) {
@@ -289,7 +480,8 @@ export function createFakeGameApi(userId: string): GameApi {
 
     return {
       items: page.map((event) => ({
-        action: 'pass',
+        action:
+          event.type === 'TurnPassed' ? 'pass' : event.payload.action.type,
         playerId: event.payload.playerId,
         sequence: event.sequence,
       })),
