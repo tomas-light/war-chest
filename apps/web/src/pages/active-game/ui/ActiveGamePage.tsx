@@ -4,6 +4,7 @@ import {
   type TurnAction,
   type UnitId,
   getTurnActionOptions,
+  getUnitTacticOptions,
 } from '@war-chest/game-engine';
 import clsx from 'clsx';
 import { useState } from 'react';
@@ -24,7 +25,6 @@ import { useGameRuntime } from '#/widgets/game-runtime';
 import { type HandCoinClickInput, ActiveGameTable } from '#/widgets/game-table';
 import { TurnQueue } from '#/widgets/turn-queue';
 import { ActiveGameHeader } from './ActiveGameHeader';
-import { ActiveGameSidebar } from './ActiveGameSidebar';
 import { CardSelectionPage } from './CardSelectionPage';
 import { getCoinWheelActions } from './getCoinWheelActions';
 import classes from './ActiveGamePage.module.scss';
@@ -43,6 +43,8 @@ export function ActiveGamePage() {
   const [selectedTarget, setTargetSelection] = useState<TargetSelection | null>(
     null
   );
+  const [selectedManeuverUnit, setSelectedManeuverUnit] =
+    useState<SelectedManeuverUnit | null>(null);
 
   const {
     connectionError,
@@ -53,8 +55,10 @@ export function ActiveGamePage() {
     isGamePending,
     liveState,
     playerProfiles,
+    replay,
     synchronizationStatus,
     userId,
+    viewedState,
   } = useGameRuntime();
 
   const {
@@ -111,11 +115,57 @@ export function ActiveGamePage() {
     return <Navigate replace to={getGamePageUrl(gameId)} />;
   }
 
-  const activeGameView = liveState;
+  const activeGameView = viewedState ?? liveState;
+  const isViewingHistory =
+    activeGameView.lastEventSequence !== liveState.lastEventSequence;
+  const isReadOnly =
+    isViewingHistory ||
+    replay.status === 'loading' ||
+    replay.status === 'error';
+  const historyControls = {
+    error: replay.error === null ? null : getApiErrorMessage(replay.error),
+    moveNumber: activeGameView.moveCount,
+    sequence: activeGameView.lastEventSequence,
+    status: replay.status,
+    onPause: replay.pauseReplay,
+    onPlay: replay.playReplay,
+    onReturnToLive: returnToLive,
+    onRetry: replay.retryReplay,
+    onSelect: selectHistory,
+  };
 
-  const targetSelection =
-    selectedTarget?.eventSequence === liveState.lastEventSequence
+  const activeDraft =
+    !isReadOnly && draft?.baseVersion === liveState.lastEventSequence
+      ? draft
+      : null;
+
+  const tacticManeuvers =
+    activeDraft?.action.type === 'tactic' ? activeDraft.action.maneuvers : [];
+  const tacticOptions = getUnitTacticOptions({
+    coinIndex: selectedTarget?.coinIndex ?? activeDraft?.coinIndex ?? -1,
+    game: liveState,
+    maneuvers: tacticManeuvers,
+    playerId: userId,
+  });
+
+  const targetSelection: TargetSelection | null =
+    !isReadOnly && selectedTarget?.eventSequence === liveState.lastEventSequence
       ? selectedTarget
+      : activeDraft?.action.type === 'tactic' &&
+          tacticOptions !== null &&
+          !tacticOptions.isComplete
+        ? {
+            battlefieldUnitId: null,
+            coinIndex: activeDraft.coinIndex,
+            eventSequence: liveState.lastEventSequence,
+            type: 'tactic',
+          }
+        : null;
+  const currentManeuverUnit =
+    !isReadOnly &&
+    targetSelection?.type === 'tactic' &&
+    selectedManeuverUnit?.eventSequence === liveState.lastEventSequence
+      ? selectedManeuverUnit
       : null;
 
   const currentPlayer = activeGameView.players.find(
@@ -125,23 +175,19 @@ export function ActiveGamePage() {
 
   const liveEventSequence = liveState.lastEventSequence;
   const currentSelectedCoin =
-    selectedCoin?.eventSequence === liveState.lastEventSequence
+    !isReadOnly && selectedCoin?.eventSequence === liveState.lastEventSequence
       ? selectedCoin
       : null;
 
-  const activeDraft =
-    draft?.baseVersion === liveState.lastEventSequence ? draft : null;
-
   const displayedView =
     activeDraft === null
-      ? liveState
+      ? activeGameView
       : { ...liveState, battlefield: activeDraft.projectedBattlefield };
 
   const targetOptions =
     targetSelection === null
       ? null
       : getTurnActionOptions(liveState, userId, targetSelection.coinIndex);
-
   const deployCells = getDeployCells();
   const recruitUnits = getRecruitUnits();
   const movableUnitIds = getMovableUnitIds();
@@ -165,7 +211,7 @@ export function ActiveGamePage() {
           [classes.selectionPage]: liveState.status === 'cardSelection',
         })}
       >
-        {liveState.status === 'finished' ? (
+        {liveState.status === 'finished' && !isReadOnly ? (
           <>
             <ActiveGameHeader
               gameId={gameId}
@@ -175,27 +221,32 @@ export function ActiveGamePage() {
               view={liveState}
             />
 
-            <div className={classes.finishedLayout}>
-              <ActiveGameTable
-                onHandCoinClick={handleHandCoinClick}
-                playerProfiles={playerProfiles}
-                selectedCoinIndex={null}
-                userId={userId}
-                view={liveState}
-              />
-              <ActiveGameSidebar
+            <div className={classes.stageLayout}>
+              <TurnQueue
                 gameId={gameId}
-                onViewChanged={hydrateGame}
+                history={historyControls}
+                playerProfiles={playerProfiles}
                 userId={userId}
                 view={liveState}
               />
+              <div className={classes.layout}>
+                <ActiveGameTable
+                  onHandCoinClick={handleHandCoinClick}
+                  playerProfiles={playerProfiles}
+                  selectedCoinIndex={null}
+                  userId={userId}
+                  view={liveState}
+                />
+              </div>
             </div>
           </>
         ) : (
           <div className={classes.stageLayout}>
             <TurnQueue
               gameId={gameId}
+              history={historyControls}
               playerProfiles={playerProfiles}
+              userId={userId}
               view={liveState}
             />
             {liveState.status === 'cardSelection' ? (
@@ -223,8 +274,12 @@ export function ActiveGamePage() {
                   onRecruitUnitClick={handleRecruitUnitClick}
                   playerProfiles={playerProfiles}
                   recruitUnits={recruitUnits}
+                  readOnly={isReadOnly}
                   selectedCoinIndex={currentSelectedCoin?.index ?? null}
-                  selectedUnitId={targetSelection?.battlefieldUnitId}
+                  selectedUnitId={
+                    currentManeuverUnit?.battlefieldUnitId ??
+                    targetSelection?.battlefieldUnitId
+                  }
                   userId={userId}
                   view={displayedView}
                 />
@@ -234,34 +289,47 @@ export function ActiveGamePage() {
         )}
       </main>
 
-      {(targetSelection?.type === 'deploy' ||
-        targetSelection?.type === 'move') && (
-        <section aria-label={t('targetTitle')} className={classes.actionPanel}>
-          <strong>{getTargetPrompt()}</strong>
+      {activeDraft === null &&
+        currentManeuverUnit === null &&
+        (targetSelection?.type === 'deploy' ||
+          targetSelection?.type === 'move' ||
+          targetSelection?.type === 'tactic') && (
+          <section
+            aria-label={t('targetTitle')}
+            className={classes.actionPanel}
+          >
+            <strong>{getTargetPrompt()}</strong>
 
-          <Button onClick={closeTargetSelection} variant="secondary">
-            {t('cancelSelection')}
-          </Button>
-        </section>
-      )}
+            <Button onClick={closeTargetSelection} variant="secondary">
+              {t('cancelSelection')}
+            </Button>
+          </section>
+        )}
 
-      {activeDraft !== null && (
+      {activeDraft !== null && currentManeuverUnit === null && (
         <section aria-label={t('draftTitle')} className={classes.actionPanel}>
           <strong>{t('draftTitle')}</strong>
 
           <span>{getDraftDescription(activeDraft.action)}</span>
+          {targetSelection === null ? null : (
+            <strong>{getTargetPrompt()}</strong>
+          )}
 
           <div className={classes.draftControls}>
             <Button
-              disabled={isDraftPending}
-              onClick={() => confirmDraft(activeDraft)}
+              disabled={
+                isDraftPending ||
+                (activeDraft.action.type === 'tactic' &&
+                  tacticOptions?.isComplete !== true)
+              }
+              onClick={handleConfirmDraft}
             >
               {t('confirmTurn')}
             </Button>
 
             <Button
               disabled={isDraftPending}
-              onClick={() => cancelDraft(activeDraft)}
+              onClick={handleCancelDraft}
               variant="secondary"
             >
               {t('cancelTurn')}
@@ -270,7 +338,29 @@ export function ActiveGamePage() {
         </section>
       )}
 
-      {draftError !== null && (
+      {currentManeuverUnit !== null && tacticOptions !== null && (
+        <GameActions
+          actions={[]}
+          anchorElement={currentManeuverUnit.anchorElement}
+          canMove={tacticOptions.moves.some(
+            (move) =>
+              move.battlefieldUnitId === currentManeuverUnit.battlefieldUnitId
+          )}
+          coin={{ kind: 'unit', unitId: tacticOptions.unitId }}
+          coinIndex={currentManeuverUnit.coinIndex}
+          gameId={gameId}
+          initialWheel="maneuver"
+          key={`${currentManeuverUnit.battlefieldUnitId}-${tacticManeuvers.length}`}
+          onClose={closeManeuverWheel}
+          onDeploy={closeManeuverWheel}
+          onMove={selectTacticMovement}
+          onPassed={hydrateGame}
+          onRecruit={closeManeuverWheel}
+          view={liveState}
+        />
+      )}
+
+      {!isReadOnly && draftError !== null && (
         <p className={classes.draftError} role="alert">
           {getApiErrorMessage(draftError)}
         </p>
@@ -305,6 +395,9 @@ export function ActiveGamePage() {
           onRecruit={() =>
             beginTargetSelection('recruit', currentSelectedCoin.index)
           }
+          onTactic={() =>
+            beginTargetSelection('tactic', currentSelectedCoin.index)
+          }
           view={liveState}
         />
       )}
@@ -328,6 +421,10 @@ export function ActiveGamePage() {
   }
 
   function getMovableUnitIds() {
+    if (targetSelection?.type === 'tactic') {
+      return tacticOptions?.moves.map((move) => move.battlefieldUnitId);
+    }
+
     if (targetSelection?.type === 'move') {
       return targetOptions?.moves.map((move) => move.battlefieldUnitId);
     }
@@ -336,6 +433,16 @@ export function ActiveGamePage() {
   }
 
   function getMoveCells() {
+    if (targetSelection?.type === 'tactic') {
+      if (currentManeuverUnit !== null) {
+        return undefined;
+      }
+
+      return tacticOptions?.moves.find(
+        (move) => move.battlefieldUnitId === targetSelection.battlefieldUnitId
+      )?.cellIds;
+    }
+
     if (targetSelection?.type === 'move') {
       return targetOptions?.moves.find(
         (move) => move.battlefieldUnitId === targetSelection.battlefieldUnitId
@@ -351,6 +458,14 @@ export function ActiveGamePage() {
     }
 
     if (targetSelection?.battlefieldUnitId === null) {
+      if (targetSelection.type === 'tactic' && tacticOptions !== null) {
+        return t('chooseTacticUnit', {
+          number: tacticManeuvers.length + 1,
+          total: tacticOptions.maneuverLimit,
+          unit: tUnit(`units.${tacticOptions.unitId}`),
+        });
+      }
+
       return t('chooseMoveUnit');
     }
 
@@ -358,6 +473,12 @@ export function ActiveGamePage() {
   }
 
   function getDraftDescription(action: TurnAction): string {
+    if (action.type === 'tactic') {
+      return action.maneuvers
+        .map((maneuver) => getDraftDescription(maneuver))
+        .join('; ');
+    }
+
     if (action.type === 'deploy') {
       return t('draftDeploy', { cellId: action.cellId });
     }
@@ -404,7 +525,7 @@ export function ActiveGamePage() {
   }
 
   function renderHeaderContextAction() {
-    if (!isParticipant || activeGameView.status === 'finished') {
+    if (isReadOnly || !isParticipant || activeGameView.status === 'finished') {
       return undefined;
     }
 
@@ -446,7 +567,12 @@ export function ActiveGamePage() {
   }
 
   function handleHandCoinClick(input: HandCoinClickInput): void {
-    if (activeDraft !== null || isDraftPending || isDraftLoading) {
+    if (
+      isReadOnly ||
+      activeDraft !== null ||
+      isDraftPending ||
+      isDraftLoading
+    ) {
       return;
     }
 
@@ -470,6 +596,20 @@ export function ActiveGamePage() {
 
   function closeGameActions(): void {
     setSelectedCoin(null);
+  }
+
+  function selectHistory(sequence: number): void {
+    setSelectedCoin(null);
+    setTargetSelection(null);
+    setSelectedManeuverUnit(null);
+    void replay.viewHistory(sequence);
+  }
+
+  function returnToLive(): void {
+    setSelectedCoin(null);
+    setTargetSelection(null);
+    setSelectedManeuverUnit(null);
+    replay.returnToLive();
   }
 
   function beginTargetSelection(
@@ -498,6 +638,43 @@ export function ActiveGamePage() {
 
   function closeTargetSelection(): void {
     setTargetSelection(null);
+    setSelectedManeuverUnit(null);
+  }
+
+  function closeManeuverWheel(): void {
+    setSelectedManeuverUnit(null);
+  }
+
+  function handleCancelDraft(): void {
+    if (activeDraft === null) {
+      return;
+    }
+
+    closeTargetSelection();
+    cancelDraft(activeDraft);
+  }
+
+  function handleConfirmDraft(): void {
+    if (activeDraft === null) {
+      return;
+    }
+
+    closeTargetSelection();
+    confirmDraft(activeDraft);
+  }
+
+  function selectTacticMovement(): void {
+    if (currentManeuverUnit === null) {
+      return;
+    }
+
+    setTargetSelection({
+      battlefieldUnitId: currentManeuverUnit.battlefieldUnitId,
+      coinIndex: currentManeuverUnit.coinIndex,
+      eventSequence: liveEventSequence,
+      type: 'tactic',
+    });
+    closeManeuverWheel();
   }
 
   function handleDeployCellClick(cellId: CellId): void {
@@ -524,8 +701,25 @@ export function ActiveGamePage() {
     closeTargetSelection();
   }
 
-  function handleMoveUnitClick(battlefieldUnitId: string): void {
-    if (targetSelection?.type !== 'move' || isDraftPending) {
+  function handleMoveUnitClick(
+    battlefieldUnitId: string,
+    anchorElement: HTMLButtonElement
+  ): void {
+    if (
+      (targetSelection?.type !== 'move' &&
+        targetSelection?.type !== 'tactic') ||
+      isDraftPending
+    ) {
+      return;
+    }
+
+    if (targetSelection.type === 'tactic') {
+      setSelectedManeuverUnit({
+        anchorElement,
+        battlefieldUnitId,
+        coinIndex: targetSelection.coinIndex,
+        eventSequence: liveEventSequence,
+      });
       return;
     }
 
@@ -534,10 +728,35 @@ export function ActiveGamePage() {
 
   function handleMoveCellClick(cellId: CellId): void {
     if (
-      targetSelection?.type !== 'move' ||
+      (targetSelection?.type !== 'move' &&
+        targetSelection?.type !== 'tactic') ||
       targetSelection.battlefieldUnitId === null ||
       isDraftPending
     ) {
+      return;
+    }
+
+    if (targetSelection.type === 'tactic') {
+      if (tacticOptions === null) {
+        return;
+      }
+
+      saveDraft({
+        action: {
+          maneuvers: [
+            ...tacticManeuvers,
+            {
+              battlefieldUnitId: targetSelection.battlefieldUnitId,
+              cellId,
+              type: 'move',
+            },
+          ],
+          type: 'tactic',
+          unitId: tacticOptions.unitId,
+        },
+        coinIndex: targetSelection.coinIndex,
+      });
+      closeTargetSelection();
       return;
     }
 
@@ -557,7 +776,7 @@ interface TargetSelection {
   battlefieldUnitId: string | null;
   coinIndex: number;
   eventSequence: number;
-  type: 'deploy' | 'move' | 'recruit';
+  type: 'deploy' | 'move' | 'recruit' | 'tactic';
 }
 
 interface SelectedCoin {
@@ -565,6 +784,13 @@ interface SelectedCoin {
   coin: GameCoin;
   eventSequence: number;
   index: number;
+}
+
+interface SelectedManeuverUnit {
+  anchorElement: HTMLButtonElement;
+  battlefieldUnitId: string;
+  coinIndex: number;
+  eventSequence: number;
 }
 
 interface GameErrorProps {

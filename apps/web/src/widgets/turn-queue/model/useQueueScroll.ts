@@ -1,5 +1,12 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { type UIEvent, useLayoutEffect, useRef, useState } from 'react';
+import {
+  type TouchEvent,
+  type UIEvent,
+  type WheelEvent,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import type { QueueStep } from './getQueueSteps';
 import type { useTurnQueueHistory } from './useTurnQueueHistory';
 
@@ -20,8 +27,9 @@ interface ScrollAvailability {
   up: boolean;
 }
 
-const QUEUE_STEP_SIZE_PX = 62;
-const QUEUE_FOLLOW_PADDING_PX = QUEUE_STEP_SIZE_PX * 3;
+const QUEUE_AVATAR_SIZE_PX = 48;
+const QUEUE_STEP_GAP_PX = 14;
+const QUEUE_STEP_SIZE_PX = QUEUE_AVATAR_SIZE_PX + QUEUE_STEP_GAP_PX;
 
 export function useQueueScroll(options: Options) {
   const {
@@ -40,19 +48,36 @@ export function useQueueScroll(options: Options) {
   const previousTurnKeyRef = useRef<string | null>(null);
   const previousHistoryCountRef = useRef(0);
   const followCurrentRef = useRef(true);
+  const followFrameRef = useRef<number | null>(null);
+  const isLoadingPreviousRef = useRef(false);
+  const previousTouchYRef = useRef<number | null>(null);
 
   const virtualizer = useVirtualizer({
     count: steps.length,
-    estimateSize: () => QUEUE_STEP_SIZE_PX,
+    estimateSize: () => QUEUE_AVATAR_SIZE_PX,
+    gap: QUEUE_STEP_GAP_PX,
     getItemKey: (index) => steps[index]?.key ?? index,
     getScrollElement: () => stepsRef.current,
     overscan: 3,
-    paddingEnd: QUEUE_FOLLOW_PADDING_PX,
   });
   const virtualItems = virtualizer.getVirtualItems();
 
   useLayoutEffect(() => {
+    const stepsElement = stepsRef.current;
+
+    if (stepsElement === null) {
+      return;
+    }
+
     updateScrollAvailability();
+    const observer = new ResizeObserver(updateScrollAvailability);
+    observer.observe(stepsElement);
+
+    if (stepsElement.firstElementChild !== null) {
+      observer.observe(stepsElement.firstElementChild);
+    }
+
+    return () => observer.disconnect();
   }, [steps.length]);
 
   useLayoutEffect(() => {
@@ -87,14 +112,16 @@ export function useQueueScroll(options: Options) {
       !isInitialPosition &&
       (turnChanged || historyChanged) &&
       !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    previousTurnKeyRef.current = currentTurnKey;
+    previousHistoryCountRef.current = historyItemsCount;
+
     const frame = requestAnimationFrame(() => {
-      previousTurnKeyRef.current = currentTurnKey;
-      previousHistoryCountRef.current = historyItemsCount;
+      followFrameRef.current = null;
 
       const targetScrollTop = Math.max(
         0,
         currentStepIndex * QUEUE_STEP_SIZE_PX -
-          (stepsElement.clientHeight - QUEUE_STEP_SIZE_PX) / 2
+          (stepsElement.clientHeight - QUEUE_AVATAR_SIZE_PX) / 2
       );
 
       if (shouldAnimate) {
@@ -103,14 +130,26 @@ export function useQueueScroll(options: Options) {
         stepsElement.scrollTo({ top: targetScrollTop, behavior: 'auto' });
       }
     });
+    followFrameRef.current = frame;
 
-    return () => cancelAnimationFrame(frame);
+    return () => {
+      cancelAnimationFrame(frame);
+
+      if (followFrameRef.current === frame) {
+        followFrameRef.current = null;
+      }
+    };
   }, [currentStepIndex, currentTurnKey, historyItemsCount]);
 
   return {
     canScrollDown: scrollAvailability.down,
     canScrollUp: scrollAvailability.up || hasPreviousSteps,
     handleScroll,
+    handleScrollUp,
+    handleTouchMove,
+    handleTouchStart,
+    handleWheel,
+    handleBottomOrnamentClick,
     handleTopOrnamentClick,
     stepsRef,
     stopFollowingCurrent,
@@ -119,26 +158,75 @@ export function useQueueScroll(options: Options) {
   };
 
   async function loadPreviousSteps(): Promise<void> {
-    if (!hasPreviousSteps || isFetchingPreviousSteps) {
+    if (
+      !hasPreviousSteps ||
+      isFetchingPreviousSteps ||
+      isLoadingPreviousRef.current
+    ) {
       return;
     }
 
+    isLoadingPreviousRef.current = true;
     const previousScrollHeight = stepsRef.current?.scrollHeight ?? 0;
-    await fetchPreviousSteps();
 
-    requestAnimationFrame(() => {
-      if (stepsRef.current !== null) {
-        stepsRef.current.scrollTop +=
-          stepsRef.current.scrollHeight - previousScrollHeight;
-        updateScrollAvailability();
-      }
-    });
+    try {
+      await fetchPreviousSteps();
+
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => {
+          if (stepsRef.current !== null) {
+            stepsRef.current.scrollTop +=
+              stepsRef.current.scrollHeight - previousScrollHeight;
+            updateScrollAvailability();
+          }
+
+          resolve();
+        });
+      });
+    } finally {
+      isLoadingPreviousRef.current = false;
+    }
   }
 
   function handleScroll(event: UIEvent<HTMLDivElement>): void {
     updateScrollAvailability();
 
-    if (event.currentTarget.scrollTop <= 8) {
+    // Following a turn must not interrupt its own animation or fetch older pages.
+    if (event.currentTarget.scrollTop <= 8 && !followCurrentRef.current) {
+      void loadPreviousSteps();
+    }
+  }
+
+  function handleWheel(event: WheelEvent<HTMLDivElement>): void {
+    stopFollowingCurrent();
+
+    if (event.deltaY < 0) {
+      handleScrollUp();
+    }
+  }
+
+  function handleTouchStart(event: TouchEvent<HTMLDivElement>): void {
+    const touch = event.touches.item(0);
+    previousTouchYRef.current = touch?.clientY ?? null;
+    stopFollowingCurrent();
+  }
+
+  function handleTouchMove(event: TouchEvent<HTMLDivElement>): void {
+    const touch = event.touches.item(0);
+    const previousTouchY = previousTouchYRef.current;
+    previousTouchYRef.current = touch?.clientY ?? null;
+
+    if (
+      touch !== null &&
+      previousTouchY !== null &&
+      touch.clientY > previousTouchY
+    ) {
+      handleScrollUp();
+    }
+  }
+
+  function handleScrollUp(): void {
+    if (stepsRef.current !== null && stepsRef.current.scrollTop <= 8) {
       stopFollowingCurrent();
       void loadPreviousSteps();
     }
@@ -157,8 +245,24 @@ export function useQueueScroll(options: Options) {
     void loadPreviousSteps();
   }
 
+  function handleBottomOrnamentClick(): void {
+    stopFollowingCurrent();
+    stepsRef.current?.scrollBy({ top: QUEUE_STEP_SIZE_PX });
+  }
+
   function stopFollowingCurrent(): void {
     followCurrentRef.current = false;
+
+    if (followFrameRef.current !== null) {
+      cancelAnimationFrame(followFrameRef.current);
+      followFrameRef.current = null;
+    }
+
+    const stepsElement = stepsRef.current;
+
+    if (stepsElement !== null) {
+      stepsElement.scrollTo({ top: stepsElement.scrollTop, behavior: 'auto' });
+    }
   }
 
   function updateScrollAvailability(): void {

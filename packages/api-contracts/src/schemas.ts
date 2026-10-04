@@ -6,6 +6,7 @@ import {
   GAME_EXPANSIONS,
   GAME_FORMATS,
   GAME_RULES_VERSION,
+  isUnitTacticActionValid,
   TEAM_CELL_IDS,
   UNIT_IDS,
 } from '@war-chest/game-engine';
@@ -86,6 +87,24 @@ const turnActionSchema = z.discriminatedUnion('type', [
     })
     .strict(),
   z.object({ type: z.literal('recruit'), unitId: unitIdSchema }).strict(),
+  z
+    .object({
+      type: z.literal('tactic'),
+      unitId: unitIdSchema,
+      maneuvers: z.array(
+        z
+          .object({
+            battlefieldUnitId: z.string().min(1),
+            cellId: cellIdSchema,
+            type: z.literal('move'),
+          })
+          .strict()
+      ),
+    })
+    .strict()
+    .refine((action) => isUnitTacticActionValid(action, 'draft'), {
+      message: 'Invalid unit tactic draft.',
+    }),
 ]);
 const gameFormatSchema = z.enum(GAME_FORMATS);
 const cardSelectionModeSchema = z.enum(CARD_SELECTION_MODES);
@@ -261,7 +280,7 @@ export const gameTurnHistoryResponseSchema: z.ZodType<GameTurnHistoryResponse> =
         .array(
           z
             .object({
-              action: z.enum(['deploy', 'move', 'pass', 'recruit']),
+              action: z.enum(['deploy', 'move', 'pass', 'recruit', 'tactic']),
               playerId: z.string(),
               sequence: z.number().int().positive(),
             })

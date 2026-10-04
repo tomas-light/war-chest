@@ -1,0 +1,190 @@
+.anchor {
+  position: relative;
+  width: 48px;
+  min-height: 88px;
+  display: flex;
+  gap: 4px;
+  flex-direction: column;
+  align-items: center;
+  font-size: 12px;
+  line-height: 16px;
+  text-align: center;
+}
+
+.label {
+  height: 16px;
+  color: var(--wc-color-cyan);
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  border: 3px solid var(--wc-color-cyan);
+  border-radius: 50%;
+  place-items: center;
+  pointer-events: none;
+}
+
+.avatar > span {
+  width: 40px;
+  height: 40px;
+}
+
+.controls,
+.loading {
+  position: absolute;
+  z-index: 2;
+  top: 22px;
+  left: 2px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  border-radius: 50%;
+}
+
+.controls {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease;
+}
+
+.anchor:hover .controls,
+.anchor:focus-within .controls,
+.anchor[data-state='playing'] .controls,
+.anchor[data-state='paused'] .controls,
+.anchor[data-state='error'] .controls {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.controls button {
+  position: relative;
+  width: 22px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.controls img {
+  // Figma exports preserve the 2px icon overflow on either side of the overlay.
+  position: absolute;
+  top: 0;
+  left: -2px;
+  display: block;
+  pointer-events: none;
+}
+
+.focusImage,
+.pressedImage {
+  visibility: hidden;
+}
+
+.playControls:has(button:first-of-type:focus-visible) {
+  .controlsImage {
+    visibility: hidden;
+  }
+
+  .focusImage {
+    visibility: visible;
+  }
+}
+
+.playControls:has(button:first-of-type:active) {
+  .controlsImage,
+  .focusImage {
+    visibility: hidden;
+  }
+
+  .pressedImage {
+    visibility: visible;
+  }
+}
+
+.controls button:focus-visible {
+  outline: none;
+}
+
+.controls:not(.playControls) button:focus-visible:after,
+.controls button:last-of-type:focus-visible:after,
+.controls:not(.playControls) button:active:after,
+.controls button:last-of-type:active:after {
+  position: absolute;
+  top: 10px;
+  left: -2px;
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--wc-color-cyan);
+  border-radius: 50%;
+  content: '';
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.controls button:last-of-type:after {
+  left: 0;
+}
+
+.loading img {
+  width: 24px;
+  height: 24px;
+  pointer-events: none;
+}
+
+.loading {
+  align-items: center;
+  justify-content: center;
+  background: var(--wc-color-ink);
+  opacity: 0.7;
+}
+
+.loading img {
+  animation: rotation 1s linear infinite;
+}
+
+.caption {
+  min-height: 16px;
+  color: var(--wc-color-text-muted);
+}
+
+.anchor[data-state='playing'] .caption {
+  color: var(--wc-color-cyan);
+}
+
+.anchor[data-state='error'] .caption {
+  color: var(--wc-color-error);
+}
+
+.accessibleError {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+@keyframes rotation {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (width <= 620px), (hover: none), (pointer: coarse) {
+  .controls {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .controls {
+    transition: none;
+  }
+
+  .loading img {
+    animation: none;
+  }
+}

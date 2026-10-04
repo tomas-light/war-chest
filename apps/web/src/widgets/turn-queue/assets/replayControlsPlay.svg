@@ -1,0 +1,16 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="48" height="44" viewBox="0 0 48 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="TwoButtonsOnHistoryStep" opacity="0.7">
+<path d="M2 22C2 9.84974 11.8497 0 24 0V0C36.1503 0 46 9.84974 46 22V22C46 34.1503 36.1503 44 24 44V44C11.8497 44 2 34.1503 2 22V22Z" fill="#080D10"/>
+<g id="Icon">
+<path id="Vector" d="M8 15L19 22L8 29V15Z" fill="#EEE5D2"/>
+</g>
+<line id="Line 3" x1="25" y1="10" x2="25" y2="34" stroke="#C79635" stroke-width="2"/>
+<g id="Icon_2">
+<path id="Vector_2" d="M29 15L39 22L29 29V15Z" fill="#EEE5D2"/>
+<g id="Vector_3">
+<path d="M42 15V29V15Z" fill="#EEE5D2"/>
+<path d="M42 15V29" stroke="#EEE5D2" stroke-width="2"/>
+</g>
+</g>
+</g>
+</svg>

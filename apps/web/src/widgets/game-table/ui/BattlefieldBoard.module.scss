@@ -238,21 +238,15 @@ $flat-top-hexagon-aspect-ratio: 1.1547;
 
 @media (width <= 620px) {
   .boardSection {
-    // The mobile Figma frame is 362 x 245. Keeping the ratio makes the board
-    // responsive instead of locking every narrow viewport to 245px.
     border-radius: 10px;
-    aspect-ratio: 362 / 245;
   }
 
   .viewport {
-    position: absolute;
-    top: 50%;
-    right: 11px;
-    left: 11px;
-    margin: 0;
+    // Preserve the Figma field ratio and reserve a separate row for zoom controls
+    // so they cannot cover deploy or movement targets on narrow screens.
+    margin: 10px 11px 48px;
     aspect-ratio: #{$battlefield-reference-width} /
       #{$battlefield-reference-height};
-    transform: translateY(-50%);
   }
 
   .canvas {

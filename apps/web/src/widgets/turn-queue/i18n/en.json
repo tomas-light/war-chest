@@ -1,7 +1,47 @@
 {
+  "CurrentTurnAnchor": {
+    "now": "NOW",
+    "play": "Replay history to the current turn",
+    "pause": "Pause replay",
+    "returnToLive": "Return to the current turn",
+    "retry": "Retry loading history",
+    "turn": "Turn {{turnNumber}}",
+    "progress": "{{from}} → {{to}}",
+    "paused": "Paused",
+    "loading": "Loading",
+    "error": "Error"
+  },
+  "TurnHistoryDetail": {
+    "label": "Turn details",
+    "metadata": "TURN {{turn}} · ROUND {{round}}",
+    "close": "Close turn details",
+    "loading": "Loading turn details",
+    "unavailable": "Unable to load turn details",
+    "retry": "Retry",
+    "showTurn": "Show this turn",
+    "teams": {
+      "white": "White",
+      "black": "Black"
+    },
+    "actions": {
+      "deploy": "Deploy",
+      "move": "Move",
+      "pass": "Pass",
+      "recruit": "Recruit",
+      "tactic": "Tactic"
+    },
+    "results": {
+      "deploy": "{{unit}} deployed to {{cell}}",
+      "move": "{{unit}} moved to {{cell}}",
+      "pass": "The player passed the action",
+      "recruit": "A {{unit}} coin was added to the discard pile",
+      "tactic": "The {{unit}} unit performed its tactic maneuvers"
+    }
+  },
   "TurnQueue": {
     "label": "Turn queue",
     "loadPrevious": "Load previous turns",
+    "scrollDown": "Scroll turn queue down",
     "playerFallback": "Player {{playerId}}",
     "summary": {
       "current": {
@@ -11,7 +51,8 @@
         "pass": "{{playerName}} is passing",
         "pick": "{{playerName}} is choosing a card",
         "recruit": "{{playerName}} is recruiting a coin",
-        "turn": "{{playerName}} is taking the current turn"
+        "turn": "{{playerName}} is taking the current turn",
+        "tactic": "{{playerName}} is performing a tactic"
       },
       "done": {
         "ban": "{{playerName}} banned a card",
@@ -20,7 +61,8 @@
         "pass": "{{playerName}} passed",
         "pick": "{{playerName}} chose a card",
         "recruit": "{{playerName}} recruited a coin",
-        "turn": "{{playerName}} completed the turn"
+        "turn": "{{playerName}} completed the turn",
+        "tactic": "{{playerName}} performed a tactic"
       },
       "upcoming": {
         "ban": "{{playerName}} will ban a card",
@@ -29,7 +71,8 @@
         "pass": "{{playerName}} will pass",
         "pick": "{{playerName}} will choose a card",
         "recruit": "{{playerName}} will recruit a coin",
-        "turn": "Next turn: {{playerName}}"
+        "turn": "Next turn: {{playerName}}",
+        "tactic": "{{playerName}} will perform a tactic"
       }
     }
   }

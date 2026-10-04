@@ -21,11 +21,16 @@ interface Props {
   onCancelRecruitSelection?(this: void): void;
   onDeployCellClick?(this: void, cellId: CellId): void;
   onMoveCellClick?(this: void, cellId: CellId): void;
-  onMoveUnitClick?(this: void, battlefieldUnitId: string): void;
+  onMoveUnitClick?(
+    this: void,
+    battlefieldUnitId: string,
+    anchorElement: HTMLButtonElement
+  ): void;
   onHandCoinClick(this: void, input: HandCoinClickInput): void;
   onRecruitUnitClick?(this: void, unitId: UnitId): void;
   playerProfiles: readonly LobbyGamePlayer[];
   recruitUnits?: readonly UnitId[];
+  readOnly?: boolean;
   selectedCoinIndex: number | null;
   selectedUnitId?: string | null;
   userId: string;
@@ -52,6 +57,7 @@ export function ActiveGameTable(props: Props) {
     onRecruitUnitClick,
     playerProfiles,
     recruitUnits,
+    readOnly = false,
     selectedCoinIndex,
     selectedUnitId,
     userId,
@@ -172,7 +178,7 @@ export function ActiveGameTable(props: Props) {
     }
 
     function getHandCoinClickHandler(player: GameViewPlayer) {
-      if (view.status !== 'active' || player.id !== userId) {
+      if (readOnly || view.status !== 'active' || player.id !== userId) {
         return undefined;
       }
 

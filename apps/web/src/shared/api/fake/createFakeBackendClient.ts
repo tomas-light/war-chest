@@ -6,6 +6,7 @@ import {
   type ConfirmTurnDraftRequest,
   type CreateGameRequest,
   type GameErrorMessage,
+  type GameEventsResponse,
   type GameResponse,
   type GameSnapshotMessage,
   type GameTurnDraftResponse,
@@ -26,6 +27,7 @@ import {
   type UpdateGameSettingsRequest,
   type UserGamesResponse,
   gameErrorMessageSchema,
+  gameEventsResponseSchema,
   gameResponseSchema,
   gameSnapshotMessageSchema,
   gameTurnDraftResponseSchema,
@@ -103,6 +105,7 @@ export interface FakeBackendClient {
   createGame(this: void, request: CreateGameRequest): Promise<GameResponse>;
   disconnectGameConnection(this: void, subscriptionId: string): Promise<void>;
   getGame(this: void, gameId: string): Promise<GameResponse>;
+  getGameEvents(this: void, gameId: string): Promise<GameEventsResponse>;
   getTurnDraft(this: void, gameId: string): Promise<GameTurnDraftResponse>;
   getPublicUser(this: void, userId: string): Promise<PublicUser>;
   getSession(
@@ -219,6 +222,7 @@ export function createFakeBackendClient(): FakeBackendClient {
     createGame,
     disconnectGameConnection,
     getGame,
+    getGameEvents,
     getTurnDraft,
     getPublicUser,
     getSession,
@@ -356,6 +360,17 @@ export function createFakeBackendClient(): FakeBackendClient {
       createSchemaParser(
         gameResponseSchema,
         'The fake backend returned an invalid game state.'
+      )
+    );
+  }
+
+  function getGameEvents(gameId: string): Promise<GameEventsResponse> {
+    return sendRequest(
+      'game.getEvents',
+      { gameId },
+      createSchemaParser(
+        gameEventsResponseSchema,
+        'The fake backend returned invalid game events.'
       )
     );
   }

@@ -3,6 +3,7 @@ import { type BattlefieldState, cloneBattlefield } from './Battlefield.js';
 import type { TurnAction } from './command-data/TurnCommandData.js';
 import { cloneGameCoin } from './GameCoin.js';
 import { getTurnActionOptions } from './getTurnActionOptions.js';
+import { getUnitTacticOptions } from './getUnitTacticOptions.js';
 import type { GameState } from './state.js';
 
 interface Input {
@@ -24,8 +25,25 @@ export function performTurnAction(
 
   const options = getTurnActionOptions(state, playerId, coinIndex);
   const currentBattlefield = state.battlefield;
+  const tacticOptions =
+    action.type === 'tactic'
+      ? getUnitTacticOptions({
+          coinIndex,
+          game: state,
+          maneuvers: action.maneuvers,
+          playerId,
+        })
+      : null;
 
   if (currentBattlefield === null) {
+    return null;
+  }
+
+  if (
+    action.type === 'tactic' &&
+    (tacticOptions?.isComplete !== true ||
+      tacticOptions.unitId !== action.unitId)
+  ) {
     return null;
   }
 
@@ -84,6 +102,13 @@ export function performTurnAction(
       coin: { kind: 'unit', unitId: action.unitId },
       faceUp: true,
     });
+  } else if (action.type === 'tactic') {
+    if (tacticOptions === null) {
+      return null;
+    }
+
+    battlefield.units = tacticOptions.units;
+    resources.discard.push({ coin: cloneGameCoin(selectedCoin), faceUp: true });
   } else if (action.type === 'move') {
     const unit = battlefield.units.find(
       (item) => item.id === action.battlefieldUnitId

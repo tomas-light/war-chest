@@ -6,9 +6,16 @@ export interface PassTurnCommandData {
   type: 'PassTurn';
 }
 
+export type UnitManeuver = {
+  battlefieldUnitId: string;
+  cellId: CellId;
+  type: 'move';
+};
+
 export type TurnAction =
   | { cellId: CellId; type: 'deploy' }
-  | { battlefieldUnitId: string; cellId: CellId; type: 'move' }
+  | UnitManeuver
+  | { maneuvers: UnitManeuver[]; type: 'tactic'; unitId: UnitId }
   | { type: 'recruit'; unitId: UnitId };
 
 export interface PerformTurnActionCommandData {

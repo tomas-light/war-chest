@@ -4,6 +4,7 @@ import type {
   ConfirmCardChoiceRequest,
   ConfirmTurnDraftRequest,
   CreateGameRequest,
+  GameEventsResponse,
   GameResponse,
   GameTurnDraftResponse,
   GameTurnHistoryQuery,
@@ -36,6 +37,7 @@ import {
   applyEvent,
   createDefaultGameSettings,
   createGame as createGameEvent,
+  createViewEventFor,
   createViewFor,
   decide,
   parseGameEventData,
@@ -69,6 +71,7 @@ export function createFakeGameApi(userId: string): GameApi {
     confirmTurnDraft,
     createGame,
     getGame,
+    getGameEvents,
     getTurnDraft,
     joinGame,
     leaveGame,
@@ -487,6 +490,31 @@ export function createFakeGameApi(userId: string): GameApi {
       })),
       nextCursor:
         hasNextPage && lastItem !== undefined ? lastItem.sequence : null,
+    };
+  }
+
+  async function getGameEvents(gameId: string): Promise<GameEventsResponse> {
+    await getGame(gameId);
+
+    const database = await getFakeDatabase();
+    const participant = await database.games.getParticipant(gameId, userId);
+    const viewer: Viewer =
+      participant === null ? { role: 'spectator' } : getPlayerViewer(userId);
+    const storedEvents = await database.games.getEvents(gameId);
+
+    return {
+      events: storedEvents.map((event) =>
+        createViewEventFor(
+          parseGameEventData({
+            payload: event.payload,
+            sequence: event.sequence,
+            type: event.type,
+            version: event.version,
+          }),
+          viewer
+        )
+      ),
+      gameId,
     };
   }
 

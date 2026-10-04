@@ -14,8 +14,12 @@
   justify-items: center;
 }
 
+.withCurrent {
+  grid-template-rows: 28px minmax(0, 1fr) 28px auto;
+}
+
 .ornament {
-  width: 52px;
+  width: 48px;
   height: 28px;
   display: block;
   padding: 0;
@@ -38,24 +42,32 @@ button.ornament:focus-visible {
 }
 
 .ornament img {
-  width: 52px;
+  width: 48px;
   height: 28px;
   display: block;
 }
 
 .steps {
-  width: 52px;
+  width: 48px;
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
   padding: 0;
   margin: 0;
+  cursor: grab;
+  overflow-anchor: none;
   scrollbar-width: none;
+  user-select: none;
+}
+
+.dragging,
+.dragging .avatarButton {
+  cursor: grabbing;
 }
 
 .stepsContent {
   position: relative;
-  width: 52px;
+  width: 48px;
 }
 
 .steps:focus-visible {
@@ -69,7 +81,7 @@ button.ornament:focus-visible {
 
 .step {
   position: absolute;
-  left: 2px;
+  left: 0;
   width: 48px;
   height: 48px;
 }
@@ -114,6 +126,35 @@ button.ornament:focus-visible {
   opacity: 0.75;
 }
 
+.step[data-state='selected'] .avatarButton > span:first-child {
+  opacity: 0.75;
+}
+
+.avatarButton:hover {
+  border-color: var(--wc-color-brass-bright);
+}
+
+.avatarButton:active {
+  background: color-mix(in sRGB, var(--wc-color-cyan) 15%, transparent);
+}
+
+.viewingBadge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  border-radius: 50%;
+  background: var(--wc-color-ink);
+  place-items: center;
+}
+
+.viewingBadge img {
+  width: 14px;
+  height: 14px;
+}
+
 .avatarButton > span:first-child {
   transition: opacity 360ms ease;
 }
@@ -145,7 +186,11 @@ button.ornament:focus-visible {
 .summary {
   position: fixed;
   z-index: 80;
-  width: max-content;
+  overflow-y: auto;
+}
+
+.simpleSummary {
+  display: block;
   padding: 8px 10px;
   border: 1px solid var(--wc-color-brass);
   border-radius: 4px 12px;
@@ -153,8 +198,6 @@ button.ornament:focus-visible {
   box-shadow: 0 8px 24px rgb(0 0 0 / 48%);
   color: var(--wc-color-text);
   font-size: 12px;
-  pointer-events: none;
-  transform: translateY(-50%);
 }
 
 @media (width <= 620px) {

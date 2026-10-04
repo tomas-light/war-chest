@@ -18,6 +18,23 @@ export function GameRuntimeProvider() {
   const { session } = useAuthSession();
   const gameId = getGameId(location.pathname);
   const userId = session?.user.id ?? '';
+
+  return (
+    <GameRuntimeSession
+      gameId={gameId}
+      key={`${gameId}:${userId}`}
+      userId={userId}
+    />
+  );
+}
+
+interface SessionProps {
+  gameId: string;
+  userId: string;
+}
+
+function GameRuntimeSession(props: SessionProps) {
+  const { gameId, userId } = props;
   const runtime = useGameRuntimeState({ gameId, userId });
 
   return (

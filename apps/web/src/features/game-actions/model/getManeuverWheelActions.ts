@@ -3,7 +3,8 @@ import type { GameWheelAction } from './GameWheelAction';
 
 export function getManeuverWheelActions(
   coin: GameCoin,
-  canMove: boolean
+  canMove: boolean,
+  canUseTactic: boolean
 ): GameWheelAction[] {
   if (coin.kind === 'royal') {
     return [];
@@ -22,7 +23,7 @@ export function getManeuverWheelActions(
   }
 
   if (definition.hasTactic) {
-    actions.push({ enabled: false, id: 'tactic' });
+    actions.push({ enabled: canUseTactic, id: 'tactic' });
   }
 
   return actions;

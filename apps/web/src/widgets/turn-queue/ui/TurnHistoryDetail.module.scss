@@ -1,0 +1,156 @@
+.card {
+  display: flex;
+  gap: 8px;
+  flex-direction: column;
+  padding: 14px;
+  border: 1px solid var(--wc-color-brass);
+  border-radius: 3px 20px;
+  background: var(--wc-color-ink);
+  box-shadow: 0 14px 36px rgb(0 0 0 / 22%);
+  color: var(--wc-color-text);
+  font-family: var(--wc-font-body);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.card p {
+  margin: 0;
+}
+
+.metadataRow,
+.player,
+.action {
+  min-width: 0;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.metadata {
+  flex: 1;
+  color: var(--wc-color-text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+
+.player > span {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.player p {
+  min-width: 0;
+}
+
+.action strong {
+  color: var(--wc-color-brass-bright);
+  font-family: var(--wc-font-display);
+  font-size: 18px;
+  letter-spacing: 0.12em;
+}
+
+.action > span {
+  flex-shrink: 0;
+}
+
+.action[data-action='pass'] strong {
+  font-family: var(--wc-font-body);
+  font-size: 16px;
+  letter-spacing: 0.035em;
+}
+
+.coordinates {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 32px;
+}
+
+.coordinates[data-action='deploy'] {
+  font-size: 18px;
+  line-height: 24px;
+}
+
+.result {
+  color: var(--wc-color-text-muted);
+}
+
+.error {
+  color: var(--wc-color-error);
+}
+
+.close {
+  width: 44px;
+  height: 44px;
+  display: none;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--wc-color-brass);
+  border-radius: 50%;
+  background: var(--wc-color-ink);
+  cursor: pointer;
+}
+
+.close img,
+.loading img {
+  width: 24px;
+  height: 24px;
+}
+
+.close:focus-visible {
+  outline: 2px solid var(--wc-color-cyan);
+  outline-offset: 2px;
+}
+
+.close:hover {
+  border-color: var(--wc-color-brass-bright);
+}
+
+.view {
+  display: none;
+}
+
+.loading {
+  min-height: 100px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.loading img {
+  animation: rotation 1s linear infinite;
+}
+
+@keyframes rotation {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (width <= 620px) {
+  .action strong {
+    font-family: var(--wc-font-body);
+    font-size: 16px;
+    letter-spacing: 0.035em;
+  }
+
+  .close {
+    display: flex;
+  }
+
+  .view {
+    width: 100%;
+    min-height: 44px;
+    display: block;
+    white-space: normal;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading img {
+    animation: none;
+  }
+}

@@ -1,6 +1,7 @@
 import type { GameViewBattlefieldState } from './Battlefield.js';
 import type { TurnAction } from './command-data/TurnCommandData.js';
 import { getTurnActionOptions } from './getTurnActionOptions.js';
+import { getUnitTacticOptions } from './getUnitTacticOptions.js';
 import type { GameView } from './state.js';
 
 interface Input {
@@ -15,8 +16,24 @@ export function previewTurnAction(
 ): GameViewBattlefieldState | null {
   const { action, coinIndex, playerId, view } = input;
   const battlefield = view.battlefield;
+  const tacticOptions =
+    action.type === 'tactic'
+      ? getUnitTacticOptions({
+          coinIndex,
+          game: view,
+          maneuvers: action.maneuvers,
+          playerId,
+        })
+      : null;
 
   if (battlefield === null) {
+    return null;
+  }
+
+  if (
+    action.type === 'tactic' &&
+    (tacticOptions?.canSave !== true || tacticOptions.unitId !== action.unitId)
+  ) {
     return null;
   }
 
@@ -100,6 +117,21 @@ export function previewTurnAction(
 
       return { ...item, count: item.count - 1 };
     });
+  } else if (action.type === 'tactic') {
+    if (tacticOptions === null) {
+      return null;
+    }
+
+    mutableResources.discard = [
+      ...mutableResources.discard,
+      { coin: { ...selectedCoin }, faceUp: true },
+    ];
+
+    return {
+      ...projectedBattlefield,
+      playerResources,
+      units: tacticOptions.units,
+    };
   } else if (action.type === 'move') {
     mutableResources.discard = [
       ...mutableResources.discard,

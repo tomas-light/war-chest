@@ -27,7 +27,6 @@ export function useTurnQueueHistory(input: Input) {
   const previousEventSequenceRef = useRef(view.lastEventSequence);
   const previousStatusRef = useRef(view.status);
 
-  const initialPageSize = view.settings.format === 'duel' ? 2 : 4;
   const {
     data: historyData,
     fetchNextPage: fetchPreviousSteps,
@@ -35,9 +34,8 @@ export function useTurnQueueHistory(input: Input) {
     isFetchingNextPage: isFetchingPreviousSteps,
     refetch: refetchHistory,
   } = useGameTurnHistoryQuery({
-    enabled: view.status === 'active',
+    enabled: view.status === 'active' || view.status === 'finished',
     gameId,
-    initialPageSize,
   });
 
   const fetchedHistoryItems = useMemo(
@@ -120,7 +118,7 @@ export function useTurnQueueHistory(input: Input) {
     previousStatusRef.current = view.status;
     previousEventSequenceRef.current = view.lastEventSequence;
 
-    if (wasActive && view.status === 'active' && eventSequenceChanged) {
+    if (wasActive && eventSequenceChanged) {
       void refetchHistory();
     }
   }, [refetchHistory, view.lastEventSequence, view.status]);

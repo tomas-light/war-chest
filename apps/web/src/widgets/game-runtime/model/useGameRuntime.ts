@@ -11,6 +11,7 @@ import {
 } from '#/entities/game';
 import { createGameSessionStore } from '#/entities/game-session';
 import { type ApiClientError, createApiClientError } from '#/shared/api';
+import { useGameReplay } from './useGameReplay';
 
 interface Input {
   gameId: string;
@@ -34,6 +35,13 @@ export function useGameRuntimeState(input: Input) {
 
   const gameSessionStore = useMemo(() => createGameSessionStore(), []);
   const liveState = useStore(gameSessionStore, (state) => state.liveState);
+  const viewedState = useStore(gameSessionStore, (state) => state.viewedState);
+  const replay = useGameReplay({
+    gameId: input.gameId,
+    gameSessionStore,
+    userId: input.userId,
+    viewedState,
+  });
   const retainedPlayerProfiles = useStore(
     gameSessionStore,
     (state) => state.playerProfiles
@@ -120,6 +128,8 @@ export function useGameRuntimeState(input: Input) {
     isGamePending,
     isLobbyPending,
     liveState,
+    replay,
+    viewedState,
     playerProfiles,
     synchronizationStatus,
   };

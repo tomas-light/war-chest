@@ -11,6 +11,7 @@ import {
   GAME_EXPANSIONS,
   GAME_FORMATS,
 } from './GameSettings.js';
+import { isUnitTacticActionValid } from './isUnitTacticActionValid.js';
 import type { JsonValue } from './state.js';
 import { UNIT_IDS } from './UnitId.js';
 
@@ -44,6 +45,24 @@ const turnActionSchema = z.discriminatedUnion('type', [
     })
     .strict(),
   z.object({ type: z.literal('recruit'), unitId: unitIdSchema }).strict(),
+  z
+    .object({
+      type: z.literal('tactic'),
+      unitId: unitIdSchema,
+      maneuvers: z.array(
+        z
+          .object({
+            battlefieldUnitId: z.string().min(1),
+            cellId: cellIdSchema,
+            type: z.literal('move'),
+          })
+          .strict()
+      ),
+    })
+    .strict()
+    .refine((action) => isUnitTacticActionValid(action, 'complete'), {
+      message: 'Invalid completed unit tactic.',
+    }),
 ]);
 const battlefieldSchema = z
   .object({

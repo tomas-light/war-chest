@@ -23,6 +23,7 @@
     "draftMove": "Move {{from}} → {{to}}",
     "draftRecruit": "Recruit: {{unit}}",
     "draftTitle": "Turn draft",
+    "chooseTacticUnit": "Choose a {{unit}} unit for maneuver {{number}} of {{total}}",
     "gameUnavailable": "The game state is unavailable.",
     "notSelected": "No game was selected.",
     "targetTitle": "Choose action target",

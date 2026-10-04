@@ -6,10 +6,12 @@ import type {
 } from '@war-chest/game-engine';
 
 export interface QueueStep {
-  action: 'ban' | 'deploy' | 'move' | 'pass' | 'pick' | 'recruit' | 'turn';
+  action:
+    'ban' | 'deploy' | 'move' | 'pass' | 'pick' | 'recruit' | 'tactic' | 'turn';
   key: string;
   playerId: string;
   state: 'current' | 'done' | 'upcoming';
+  sequence?: number;
 }
 
 export interface PendingTurn {
@@ -29,7 +31,7 @@ export function getQueueSteps(
     );
   }
 
-  if (view.status === 'active') {
+  if (view.status === 'active' || view.status === 'finished') {
     const completedSteps = [
       ...historyItems.map((item) => ({
         sequence: item.sequence,
@@ -37,6 +39,7 @@ export function getQueueSteps(
           action: item.action,
           key: `history-${item.sequence}`,
           playerId: item.playerId,
+          sequence: item.sequence,
           state: 'done' as const,
         },
       })),
@@ -52,6 +55,10 @@ export function getQueueSteps(
     ]
       .sort((first, second) => first.sequence - second.sequence)
       .map((item) => item.step);
+
+    if (view.status === 'finished') {
+      return completedSteps;
+    }
 
     return [...completedSteps, ...getActiveGameSteps(view)];
   }

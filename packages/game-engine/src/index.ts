@@ -163,4 +163,6 @@ export type {
 } from './viewEvents.js';
 export { UNIT_IDS } from './UnitId.js';
 export { getUnitDefinition } from './UnitDefinition.js';
+export { getUnitTacticOptions } from './getUnitTacticOptions.js';
+export { isUnitTacticActionValid } from './isUnitTacticActionValid.js';
 export type { UnitId } from './UnitId.js';

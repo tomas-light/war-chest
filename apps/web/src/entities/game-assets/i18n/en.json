@@ -1,0 +1,20 @@
+{
+  "units": {
+    "archer": "Archer",
+    "berserker": "Berserker",
+    "cavalry": "Cavalry",
+    "crossbowman": "Crossbowman",
+    "ensign": "Ensign",
+    "footman": "Footman",
+    "knight": "Knight",
+    "lancer": "Lancer",
+    "lightCavalry": "Light Cavalry",
+    "marshal": "Marshal",
+    "mercenary": "Mercenary",
+    "pikeman": "Pikeman",
+    "royalGuard": "Royal Guard",
+    "scout": "Scout",
+    "swordsman": "Swordsman",
+    "warriorPriest": "Warrior Priest"
+  }
+}

@@ -8,11 +8,12 @@ import { createSelectedGameApi, useTranslatedApiResult } from '#/shared/api';
 interface Options {
   enabled: boolean;
   gameId: string;
-  initialPageSize: number;
 }
 
+const TURN_HISTORY_PAGE_SIZE = 20;
+
 export function useGameTurnHistoryQuery(options: Options) {
-  const { enabled, gameId, initialPageSize } = options;
+  const { enabled, gameId } = options;
 
   const query = useInfiniteQuery<GameTurnHistoryResponse>({
     enabled,
@@ -20,7 +21,7 @@ export function useGameTurnHistoryQuery(options: Options) {
     initialPageParam: undefined as number | undefined,
     queryFn: async ({ pageParam }) => {
       const gameApi = await createSelectedGameApi();
-      const query: GameTurnHistoryQuery = { limit: initialPageSize };
+      const query: GameTurnHistoryQuery = { limit: TURN_HISTORY_PAGE_SIZE };
 
       if (typeof pageParam === 'number') {
         query.beforeSequence = pageParam;
@@ -28,7 +29,7 @@ export function useGameTurnHistoryQuery(options: Options) {
 
       return gameApi.listTurnHistory(gameId, query);
     },
-    queryKey: ['game-turn-history', gameId, initialPageSize],
+    queryKey: ['game-turn-history', gameId, TURN_HISTORY_PAGE_SIZE],
   });
 
   return useTranslatedApiResult(query);
