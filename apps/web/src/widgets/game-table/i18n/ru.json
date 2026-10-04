@@ -10,6 +10,8 @@
     "you": "Вы"
   },
   "BattlefieldBoard": {
+    "moveToCell": "Переместить на клетку {{cellId}}",
+    "selectMoveUnit": "Переместить {{unit}} с клетки {{cellId}}",
     "deployToCell": "Разыграть на клетку {{cellId}}",
     "cell": "Клетка {{cellId}}",
     "controlPoint": "Точка руды на клетке {{cellId}}",

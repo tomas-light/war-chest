@@ -16,21 +16,27 @@ import {
 } from '#/entities/game-assets';
 import { useTranslation } from '#/shared/i18n/useTranslation';
 import { useGameActionMutation } from '../api/useGameActionMutation';
+import attackIcon from '../assets/attackIcon.png';
+import captureIcon from '../assets/captureIcon.png';
 import deployIcon from '../assets/deployIcon.png';
 import maneuverIcon from '../assets/maneuverIcon.png';
 import passIcon from '../assets/passIcon.png';
 import recruitIcon from '../assets/recruitIcon.png';
+import tacticIcon from '../assets/tacticIcon.png';
 import type { GameWheelAction } from '../model/GameWheelAction';
+import { getManeuverWheelActions } from '../model/getManeuverWheelActions';
 import classes from './GameActions.module.scss';
 
 interface Props {
   actions: readonly GameWheelAction[];
   anchorElement: HTMLElement;
+  canMove: boolean;
   coin: GameCoin;
   coinIndex: number;
   gameId: string;
   onClose(this: void): void;
   onDeploy(this: void): void;
+  onMove(this: void): void;
   onPassed(this: void, view: GameView): void;
   onRecruit(this: void): void;
   view: GameView;
@@ -64,7 +70,7 @@ const VIEWPORT_MARGIN_PX = 12;
 export function GameActions(props: Props) {
   return (
     <Suspense fallback={null}>
-      <GameActionsContent {...props} />
+      <GameActionsContent {...props} key={props.coinIndex} />
     </Suspense>
   );
 }
@@ -73,11 +79,13 @@ function GameActionsContent(props: Props) {
   const {
     actions,
     anchorElement,
+    canMove,
     coin,
     coinIndex,
     gameId,
     onClose,
     onDeploy,
+    onMove,
     onPassed,
     onRecruit,
     view,
@@ -87,9 +95,16 @@ function GameActionsContent(props: Props) {
     keyPrefix: 'GameActions',
   });
   const wheelRef = useRef<HTMLDivElement>(null);
+  const previousManeuverWheelRef = useRef(false);
+  const [isManeuverWheel, setManeuverWheel] = useState(false);
   const [position, setPosition] = useState<WheelPosition>(() =>
     getWheelPosition(anchorElement)
   );
+
+  const visibleActions = isManeuverWheel
+    ? getManeuverWheelActions(coin, canMove)
+    : actions;
+  const hubLabel = isManeuverWheel ? t('back') : t('close');
 
   const {
     error: actionError,
@@ -102,6 +117,24 @@ function GameActionsContent(props: Props) {
     onPassed,
     view,
   });
+
+  useLayoutEffect(() => {
+    if (isManeuverWheel) {
+      const moveButton = wheelRef.current?.querySelector<HTMLButtonElement>(
+        '[data-action="move"]:enabled'
+      );
+      const hubButton =
+        wheelRef.current?.querySelector<HTMLButtonElement>('[data-hub]');
+
+      (moveButton ?? hubButton)?.focus();
+    } else if (previousManeuverWheelRef.current) {
+      wheelRef.current
+        ?.querySelector<HTMLButtonElement>('[data-action="maneuver"]')
+        ?.focus();
+    }
+
+    previousManeuverWheelRef.current = isManeuverWheel;
+  }, [isManeuverWheel]);
 
   useLayoutEffect(() => {
     function updatePosition(): void {
@@ -138,7 +171,11 @@ function GameActionsContent(props: Props) {
 
     function handleKeyDown(event: globalThis.KeyboardEvent): void {
       if (event.key === 'Escape') {
-        onClose();
+        if (isManeuverWheel) {
+          setManeuverWheel(false);
+        } else {
+          onClose();
+        }
       }
     }
 
@@ -149,12 +186,13 @@ function GameActionsContent(props: Props) {
       document.removeEventListener('pointerdown', handlePointerDown);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [anchorElement, onClose]);
+  }, [anchorElement, isManeuverWheel, onClose]);
 
   return createPortal(
     <div
       className={classes.wheel}
-      data-count={actions.length}
+      data-count={visibleActions.length}
+      data-wheel={isManeuverWheel ? 'maneuver' : 'coin'}
       data-error-placement={
         position.top + WHEEL_SIZE_PX + ERROR_MIN_SPACE_PX > window.innerHeight
           ? 'above'
@@ -163,8 +201,8 @@ function GameActionsContent(props: Props) {
       ref={wheelRef}
       style={{ left: position.left, top: position.top }}
     >
-      {actions.map((action, index) => {
-        const geometry = getSectorGeometry(index, actions.length);
+      {visibleActions.map((action, index) => {
+        const geometry = getSectorGeometry(index, visibleActions.length);
 
         return (
           <button
@@ -181,7 +219,7 @@ function GameActionsContent(props: Props) {
             <span
               aria-hidden="true"
               className={classes.actionContent}
-              data-icon-first={isIconFirst(index, actions.length)}
+              data-icon-first={isIconFirst(index, visibleActions.length)}
               style={geometry.contentStyle}
             >
               <span className={classes.actionIcon}>
@@ -200,10 +238,11 @@ function GameActionsContent(props: Props) {
         className={classes.dividers}
         viewBox={`0 0 ${WHEEL_SIZE_PX} ${WHEEL_SIZE_PX}`}
       >
-        {actions.map((action, index) => {
-          const sectorAngle = 360 / actions.length;
+        {visibleActions.map((action, index) => {
+          const sectorAngle = 360 / visibleActions.length;
           const boundaryAngle =
-            getSectorCenterAngle(index, actions.length) - sectorAngle / 2;
+            getSectorCenterAngle(index, visibleActions.length) -
+            sectorAngle / 2;
           const inner = getPoint(boundaryAngle, HUB_RADIUS_PX);
           const outer = getPoint(boundaryAngle, WHEEL_RADIUS_PX);
 
@@ -220,9 +259,10 @@ function GameActionsContent(props: Props) {
       </svg>
 
       <button
-        aria-label={t('close')}
+        aria-label={hubLabel}
         className={classes.selectedCoin}
-        onClick={onClose}
+        data-hub
+        onClick={handleHubClick}
         type="button"
       >
         {renderCoin()}
@@ -246,8 +286,20 @@ function GameActionsContent(props: Props) {
       performAction();
     } else if (action.id === 'deploy') {
       onDeploy();
+    } else if (action.id === 'maneuver') {
+      setManeuverWheel(true);
+    } else if (action.id === 'move') {
+      onMove();
     } else if (action.id === 'recruit') {
       onRecruit();
+    }
+  }
+
+  function handleHubClick(): void {
+    if (isManeuverWheel) {
+      setManeuverWheel(false);
+    } else {
+      onClose();
     }
   }
 
@@ -284,6 +336,22 @@ function getWheelPosition(anchorElement: HTMLElement): WheelPosition {
 }
 
 function renderActionIcon(actionId: GameWheelAction['id']) {
+  if (actionId === 'move') {
+    return <img alt="" src={maneuverIcon} />;
+  }
+
+  if (actionId === 'capture') {
+    return <img alt="" src={captureIcon} />;
+  }
+
+  if (actionId === 'attack') {
+    return <img alt="" src={attackIcon} />;
+  }
+
+  if (actionId === 'tactic') {
+    return <img alt="" src={tacticIcon} />;
+  }
+
   if (actionId === 'deploy') {
     return <img alt="" src={deployIcon} />;
   }

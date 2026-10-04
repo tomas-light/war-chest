@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { UserAvatar } from '#/entities/user';
 import draftBanIcon from '#/features/confirm-card-choice/assets/draftBanIcon.svg';
 import deployIcon from '#/features/game-actions/assets/deployIcon.png';
+import maneuverIcon from '#/features/game-actions/assets/maneuverIcon.png';
 import passIcon from '#/features/game-actions/assets/passIcon.png';
 import recruitIcon from '#/features/game-actions/assets/recruitIcon.png';
 import { useTranslation } from '#/shared/i18n/useTranslation';
@@ -255,6 +256,10 @@ function getActionIcon(action: QueueStep['action']): string {
 
   if (action === 'recruit') {
     return recruitIcon;
+  }
+
+  if (action === 'move') {
+    return maneuverIcon;
   }
 
   return draftPickIcon;

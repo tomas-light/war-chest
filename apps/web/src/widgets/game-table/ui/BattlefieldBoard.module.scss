@@ -120,7 +120,33 @@ $flat-top-hexagon-aspect-ratio: 1.1547;
   transform: translate(-50%, -50%);
 }
 
-.deployTarget:focus-visible {
+.moveTarget {
+  position: absolute;
+  z-index: 5;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  inset: 0;
+}
+
+.groundMoveHighlight {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 102.5325%;
+  transform: translate(-50%, -50%);
+}
+
+.compactCell .groundMoveHighlight {
+  width: 102.7315%;
+}
+
+.deployTarget:focus-visible,
+.moveTarget:focus-visible,
+.unitSelection:focus-visible {
   outline: 2px solid var(--wc-color-cyan-soft);
   outline-offset: 3px;
 }
@@ -131,6 +157,24 @@ $flat-top-hexagon-aspect-ratio: 1.1547;
   display: grid;
   aspect-ratio: 1;
   place-items: center;
+  transition: left 200ms ease-in-out, top 200ms ease-in-out;
+}
+
+.unitSelection {
+  position: absolute;
+  width: 66%;
+  padding: 0;
+  border: 2px solid var(--wc-color-cyan);
+  border-radius: 50%;
+  aspect-ratio: 1;
+  background: transparent;
+  box-shadow: 0 0 12px rgb(21 217 237 / 40%);
+  cursor: pointer;
+}
+
+.unitSelection[aria-pressed='true'] {
+  border-color: var(--wc-color-brass-bright);
+  box-shadow: 0 0 12px rgb(199 150 53 / 50%);
 }
 
 .compactUnit {
@@ -205,9 +249,9 @@ $flat-top-hexagon-aspect-ratio: 1.1547;
     top: 50%;
     right: 11px;
     left: 11px;
+    margin: 0;
     aspect-ratio: #{$battlefield-reference-width} /
       #{$battlefield-reference-height};
-    margin: 0;
     transform: translateY(-50%);
   }
 
@@ -218,7 +262,8 @@ $flat-top-hexagon-aspect-ratio: 1.1547;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .canvas {
+  .canvas,
+  .unit {
     transition: none;
   }
 }

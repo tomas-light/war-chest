@@ -43,6 +43,17 @@ export function performTurnAction(
     return null;
   }
 
+  if (
+    action.type === 'move' &&
+    !options.moves.some(
+      (move) =>
+        move.battlefieldUnitId === action.battlefieldUnitId &&
+        move.cellIds.includes(action.cellId)
+    )
+  ) {
+    return null;
+  }
+
   const battlefield = cloneBattlefield(currentBattlefield);
   const resources = battlefield.playerResources.find(
     (item) => item.playerId === playerId
@@ -71,6 +82,20 @@ export function performTurnAction(
     });
     resources.discard.push({
       coin: { kind: 'unit', unitId: action.unitId },
+      faceUp: true,
+    });
+  } else if (action.type === 'move') {
+    const unit = battlefield.units.find(
+      (item) => item.id === action.battlefieldUnitId
+    );
+
+    if (unit === undefined) {
+      return null;
+    }
+
+    unit.cellId = action.cellId;
+    resources.discard.push({
+      coin: cloneGameCoin(selectedCoin),
       faceUp: true,
     });
   } else {

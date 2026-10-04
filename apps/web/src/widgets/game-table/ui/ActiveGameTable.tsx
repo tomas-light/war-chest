@@ -16,13 +16,18 @@ import classes from './ActiveGameTable.module.scss';
 
 interface Props {
   deployCells?: readonly CellId[];
+  moveCells?: readonly CellId[];
+  movableUnitIds?: readonly string[];
   onCancelRecruitSelection?(this: void): void;
   onDeployCellClick?(this: void, cellId: CellId): void;
+  onMoveCellClick?(this: void, cellId: CellId): void;
+  onMoveUnitClick?(this: void, battlefieldUnitId: string): void;
   onHandCoinClick(this: void, input: HandCoinClickInput): void;
   onRecruitUnitClick?(this: void, unitId: UnitId): void;
   playerProfiles: readonly LobbyGamePlayer[];
   recruitUnits?: readonly UnitId[];
   selectedCoinIndex: number | null;
+  selectedUnitId?: string | null;
   userId: string;
   view: GameView;
 }
@@ -37,13 +42,18 @@ interface TeamPanelsProps {
 export function ActiveGameTable(props: Props) {
   const {
     deployCells,
+    moveCells,
+    movableUnitIds,
     onCancelRecruitSelection,
     onDeployCellClick,
+    onMoveCellClick,
+    onMoveUnitClick,
     onHandCoinClick,
     onRecruitUnitClick,
     playerProfiles,
     recruitUnits,
     selectedCoinIndex,
+    selectedUnitId,
     userId,
     view,
   } = props;
@@ -85,9 +95,14 @@ export function ActiveGameTable(props: Props) {
         battlefield={view.battlefield}
         deployCells={deployCells}
         format={view.settings.format}
+        moveCells={moveCells}
+        movableUnitIds={movableUnitIds}
         onDeployCellClick={onDeployCellClick}
+        onMoveCellClick={onMoveCellClick}
+        onMoveUnitClick={onMoveUnitClick}
         perspective={perspective}
         players={view.players}
+        selectedUnitId={selectedUnitId}
       />
 
       {renderTeamPanels({

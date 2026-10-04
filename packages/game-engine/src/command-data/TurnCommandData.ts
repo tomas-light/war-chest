@@ -7,7 +7,9 @@ export interface PassTurnCommandData {
 }
 
 export type TurnAction =
-  { cellId: CellId; type: 'deploy' } | { type: 'recruit'; unitId: UnitId };
+  | { cellId: CellId; type: 'deploy' }
+  | { battlefieldUnitId: string; cellId: CellId; type: 'move' }
+  | { type: 'recruit'; unitId: UnitId };
 
 export interface PerformTurnActionCommandData {
   action: TurnAction;

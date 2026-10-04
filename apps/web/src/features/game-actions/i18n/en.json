@@ -1,13 +1,18 @@
 {
   "GameActions": {
+    "attack": "Attack",
+    "back": "Back to coin actions",
+    "capture": "Capture",
     "close": "Close action wheel",
     "deploy": "Deploy",
     "initiative": "Initiative",
     "maneuver": "Maneuver",
+    "move": "Move",
     "pass": "Pass",
     "passing": "Passing…",
     "recruit": "Recruit",
     "reinforce": "Reinforce",
+    "tactic": "Tactic",
     "unavailable": "This action is not available yet"
   }
 }

@@ -36,6 +36,17 @@ export function previewTurnAction(
     return null;
   }
 
+  if (
+    action.type === 'move' &&
+    !options.moves.some(
+      (move) =>
+        move.battlefieldUnitId === action.battlefieldUnitId &&
+        move.cellIds.includes(action.cellId)
+    )
+  ) {
+    return null;
+  }
+
   const projectedBattlefield: GameViewBattlefieldState = {
     controlPoints: battlefield.controlPoints.map((point) => ({ ...point })),
     playerResources: battlefield.playerResources.map((resources) => ({
@@ -89,6 +100,23 @@ export function previewTurnAction(
 
       return { ...item, count: item.count - 1 };
     });
+  } else if (action.type === 'move') {
+    mutableResources.discard = [
+      ...mutableResources.discard,
+      { coin: { ...selectedCoin }, faceUp: true },
+    ];
+
+    return {
+      ...projectedBattlefield,
+      playerResources,
+      units: projectedBattlefield.units.map((unit) => {
+        if (unit.id === action.battlefieldUnitId) {
+          return { ...unit, cellId: action.cellId };
+        }
+
+        return unit;
+      }),
+    };
   } else {
     if (selectedCoin.kind !== 'unit') {
       return null;

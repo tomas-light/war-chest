@@ -25,6 +25,20 @@
   z-index: 1;
 }
 
+.availableMoveHighlight {
+  position: absolute;
+  top: 50.2643%;
+  left: 50%;
+  width: 83.4907%;
+  transform: translate(-50%, -50%);
+}
+
+.compact .availableMoveHighlight {
+  top: 50.2411%;
+  left: 50.4464%;
+  width: 85.3038%;
+}
+
 .fortification {
   z-index: 2;
 }

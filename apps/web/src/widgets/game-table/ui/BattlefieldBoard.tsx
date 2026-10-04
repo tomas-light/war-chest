@@ -10,7 +10,12 @@ import {
 } from '@war-chest/game-engine';
 import clsx from 'clsx';
 import type { ReactNode } from 'react';
-import { Heart, Ore, UnitToken } from '#/entities/game-assets';
+import {
+  AvailableMoveHighlight,
+  Heart,
+  Ore,
+  UnitToken,
+} from '#/entities/game-assets';
 import { useTranslation } from '#/shared/i18n/useTranslation';
 import { useBattlefieldViewport } from '../model/useBattlefieldViewport';
 import classes from './BattlefieldBoard.module.scss';
@@ -19,9 +24,14 @@ interface Props {
   battlefield: GameViewBattlefieldState;
   deployCells?: readonly CellId[];
   format: GameFormat;
+  moveCells?: readonly CellId[];
+  movableUnitIds?: readonly string[];
   onDeployCellClick?(this: void, cellId: CellId): void;
+  onMoveCellClick?(this: void, cellId: CellId): void;
+  onMoveUnitClick?(this: void, battlefieldUnitId: string): void;
   perspective: GameTeam;
   players: readonly GameViewPlayer[];
+  selectedUnitId?: string | null;
 }
 
 interface Point {
@@ -58,9 +68,14 @@ export function BattlefieldBoard(props: Props) {
     battlefield,
     deployCells,
     format,
+    moveCells,
+    movableUnitIds,
     onDeployCellClick,
+    onMoveCellClick,
+    onMoveUnitClick,
     perspective,
     players,
+    selectedUnitId,
   } = props;
 
   const { t } = useTranslation('widgets/game-table', {
@@ -111,6 +126,7 @@ export function BattlefieldBoard(props: Props) {
               content = (
                 <Ore
                   alt={t('controlPoint', { cellId: cell.cellId })}
+                  availableToMove={moveCells?.includes(cell.cellId)}
                   color={getControlPointColor(controlPoint)}
                   fortified={controlPoint.fortified}
                   size={oreSize}
@@ -159,6 +175,21 @@ export function BattlefieldBoard(props: Props) {
                     +
                   </button>
                 )}
+                {moveCells?.includes(cell.cellId) && onMoveCellClick && (
+                  <button
+                    aria-label={t('moveToCell', { cellId: cell.cellId })}
+                    className={classes.moveTarget}
+                    onClick={() => onMoveCellClick(cell.cellId)}
+                    type="button"
+                  >
+                    {cell.kind === 'ground' && (
+                      <AvailableMoveHighlight
+                        className={classes.groundMoveHighlight}
+                        size={oreSize}
+                      />
+                    )}
+                  </button>
+                )}
               </span>
             );
           })}
@@ -173,6 +204,8 @@ export function BattlefieldBoard(props: Props) {
                 className={clsx(classes.unit, {
                   [classes.compactUnit]: format === 'team',
                 })}
+                data-cell-id={unit.cellId}
+                data-unit-id={unit.id}
                 key={unit.id}
                 style={{ left: `${point.x}%`, top: `${point.y}%` }}
               >
@@ -182,6 +215,18 @@ export function BattlefieldBoard(props: Props) {
                   color={color}
                   unit={unit.unitId}
                 />
+                {movableUnitIds?.includes(unit.id) && onMoveUnitClick && (
+                  <button
+                    aria-label={t('selectMoveUnit', {
+                      cellId: unit.cellId,
+                      unit: unit.unitId,
+                    })}
+                    aria-pressed={selectedUnitId === unit.id}
+                    className={classes.unitSelection}
+                    onClick={() => onMoveUnitClick(unit.id)}
+                    type="button"
+                  />
+                )}
                 {Array.from({ length: unit.bolstered }, (_, index) => (
                   <Heart
                     alt=""

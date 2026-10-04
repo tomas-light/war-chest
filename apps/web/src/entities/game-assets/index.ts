@@ -12,6 +12,7 @@ export { Heart } from './ui/Heart';
 export { InitiativeToken } from './ui/InitiativeToken';
 export { RoyalToken } from './ui/RoyalToken';
 export { Ore } from './ui/Ore';
+export { AvailableMoveHighlight } from './ui/AvailableMoveHighlight';
 export { UnitPortrait } from './ui/UnitPortrait';
 export { UnitToken } from './ui/UnitToken';
 export { VerticalUnitCardArtwork } from './ui/VerticalUnitCardArtwork';

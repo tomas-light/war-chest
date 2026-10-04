@@ -108,14 +108,19 @@ export interface WarChestResources {
   };
   'features/game-actions': {
     GameActions: {
+      attack: '';
+      back: '';
+      capture: '';
       close: '';
       deploy: '';
       initiative: '';
       maneuver: '';
+      move: '';
       pass: '';
       passing: '';
       recruit: '';
       reinforce: '';
+      tactic: '';
       unavailable: '';
     };
   };
@@ -215,9 +220,12 @@ export interface WarChestResources {
       cancelSelection: '';
       cancelTurn: '';
       chooseDeployCell: '';
+      chooseMoveCell: '';
+      chooseMoveUnit: '';
       confirmTurn: '';
       connecting: '';
       draftDeploy: '{{cellId}}';
+      draftMove: '{{from}} {{to}}';
       draftRecruit: '{{unit}}';
       draftTitle: '';
       gameUnavailable: '';
@@ -603,7 +611,9 @@ export interface WarChestResources {
       cell: '{{cellId}}';
       controlPoint: '{{cellId}}';
       deployToCell: '{{cellId}}';
+      moveToCell: '{{cellId}}';
       resetZoom: '';
+      selectMoveUnit: '{{cellId}} {{unit}}';
       unit: '{{cellId}} {{unit}}';
       zoomControls: '';
       zoomIn: '';
@@ -655,6 +665,7 @@ export interface WarChestResources {
         current: {
           ban: '{{playerName}}';
           deploy: '{{playerName}}';
+          move: '{{playerName}}';
           pass: '{{playerName}}';
           pick: '{{playerName}}';
           recruit: '{{playerName}}';
@@ -663,6 +674,7 @@ export interface WarChestResources {
         done: {
           ban: '{{playerName}}';
           deploy: '{{playerName}}';
+          move: '{{playerName}}';
           pass: '{{playerName}}';
           pick: '{{playerName}}';
           recruit: '{{playerName}}';
@@ -671,6 +683,7 @@ export interface WarChestResources {
         upcoming: {
           ban: '{{playerName}}';
           deploy: '{{playerName}}';
+          move: '{{playerName}}';
           pass: '{{playerName}}';
           pick: '{{playerName}}';
           recruit: '{{playerName}}';
@@ -738,14 +751,19 @@ export interface WarChestTranslationParameters {
   'features/developer-tools.DeveloperPanel.featureFlagsLoading': null;
   'features/developer-tools.DeveloperPanel.label': null;
   'features/developer-tools.DeveloperPanel.title': null;
+  'features/game-actions.GameActions.attack': null;
+  'features/game-actions.GameActions.back': null;
+  'features/game-actions.GameActions.capture': null;
   'features/game-actions.GameActions.close': null;
   'features/game-actions.GameActions.deploy': null;
   'features/game-actions.GameActions.initiative': null;
   'features/game-actions.GameActions.maneuver': null;
+  'features/game-actions.GameActions.move': null;
   'features/game-actions.GameActions.pass': null;
   'features/game-actions.GameActions.passing': null;
   'features/game-actions.GameActions.recruit': null;
   'features/game-actions.GameActions.reinforce': null;
+  'features/game-actions.GameActions.tactic': null;
   'features/game-actions.GameActions.unavailable': null;
   'features/join-game.JoinGameButton.label': { seat: unknown };
   'features/leave-game.LeaveGameButton.close': null;
@@ -797,9 +815,12 @@ export interface WarChestTranslationParameters {
   'pages/active-game.ActiveGamePage.cancelSelection': null;
   'pages/active-game.ActiveGamePage.cancelTurn': null;
   'pages/active-game.ActiveGamePage.chooseDeployCell': null;
+  'pages/active-game.ActiveGamePage.chooseMoveCell': null;
+  'pages/active-game.ActiveGamePage.chooseMoveUnit': null;
   'pages/active-game.ActiveGamePage.confirmTurn': null;
   'pages/active-game.ActiveGamePage.connecting': null;
   'pages/active-game.ActiveGamePage.draftDeploy': { cellId: unknown };
+  'pages/active-game.ActiveGamePage.draftMove': { from: unknown; to: unknown };
   'pages/active-game.ActiveGamePage.draftRecruit': { unit: unknown };
   'pages/active-game.ActiveGamePage.draftTitle': null;
   'pages/active-game.ActiveGamePage.gameUnavailable': null;
@@ -1134,7 +1155,12 @@ export interface WarChestTranslationParameters {
   'widgets/game-table.BattlefieldBoard.cell': { cellId: unknown };
   'widgets/game-table.BattlefieldBoard.controlPoint': { cellId: unknown };
   'widgets/game-table.BattlefieldBoard.deployToCell': { cellId: unknown };
+  'widgets/game-table.BattlefieldBoard.moveToCell': { cellId: unknown };
   'widgets/game-table.BattlefieldBoard.resetZoom': null;
+  'widgets/game-table.BattlefieldBoard.selectMoveUnit': {
+    cellId: unknown;
+    unit: unknown;
+  };
   'widgets/game-table.BattlefieldBoard.unit': {
     cellId: unknown;
     unit: unknown;
@@ -1185,6 +1211,7 @@ export interface WarChestTranslationParameters {
   'widgets/turn-queue.TurnQueue.summary.current.deploy': {
     playerName: unknown;
   };
+  'widgets/turn-queue.TurnQueue.summary.current.move': { playerName: unknown };
   'widgets/turn-queue.TurnQueue.summary.current.pass': { playerName: unknown };
   'widgets/turn-queue.TurnQueue.summary.current.pick': { playerName: unknown };
   'widgets/turn-queue.TurnQueue.summary.current.recruit': {
@@ -1193,6 +1220,7 @@ export interface WarChestTranslationParameters {
   'widgets/turn-queue.TurnQueue.summary.current.turn': { playerName: unknown };
   'widgets/turn-queue.TurnQueue.summary.done.ban': { playerName: unknown };
   'widgets/turn-queue.TurnQueue.summary.done.deploy': { playerName: unknown };
+  'widgets/turn-queue.TurnQueue.summary.done.move': { playerName: unknown };
   'widgets/turn-queue.TurnQueue.summary.done.pass': { playerName: unknown };
   'widgets/turn-queue.TurnQueue.summary.done.pick': { playerName: unknown };
   'widgets/turn-queue.TurnQueue.summary.done.recruit': { playerName: unknown };
@@ -1201,6 +1229,7 @@ export interface WarChestTranslationParameters {
   'widgets/turn-queue.TurnQueue.summary.upcoming.deploy': {
     playerName: unknown;
   };
+  'widgets/turn-queue.TurnQueue.summary.upcoming.move': { playerName: unknown };
   'widgets/turn-queue.TurnQueue.summary.upcoming.pass': { playerName: unknown };
   'widgets/turn-queue.TurnQueue.summary.upcoming.pick': { playerName: unknown };
   'widgets/turn-queue.TurnQueue.summary.upcoming.recruit': {

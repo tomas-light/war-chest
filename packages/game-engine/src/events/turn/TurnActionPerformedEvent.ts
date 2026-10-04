@@ -60,8 +60,9 @@ export class TurnActionPerformedEvent implements ApplicableEvent<TurnActionPerfo
           viewer
         ),
         coin:
-          viewer.role === 'player' &&
-          viewer.playerId === this.data.payload.playerId
+          this.data.payload.action.type === 'move' ||
+          (viewer.role === 'player' &&
+            viewer.playerId === this.data.payload.playerId)
             ? cloneGameCoin(this.data.payload.coin)
             : null,
       },

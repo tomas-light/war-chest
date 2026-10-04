@@ -26,6 +26,7 @@ export function getCoinWheelActions(
     enabled:
       (id === 'pass' && canPass) ||
       (id === 'deploy' && options.deployCells.length > 0) ||
+      (id === 'maneuver' && options.deployedUnitIds.length > 0) ||
       (id === 'recruit' && options.recruitUnits.length > 0),
     id,
   }));

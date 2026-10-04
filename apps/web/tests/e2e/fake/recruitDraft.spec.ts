@@ -21,11 +21,11 @@ type SetupGameApi = {
   startGame(gameId: string, request: StartGameRequest): Promise<GameResponse>;
 };
 
-test('recruits and deploys through private drafts in fake API', async ({
+test('recruits, deploys and moves through private drafts in fake API', async ({
   context,
   page,
 }) => {
-  test.setTimeout(90_000);
+  test.setTimeout(120_000);
 
   await context.addInitScript(() => {
     localStorage.setItem(
@@ -265,6 +265,164 @@ test('recruits and deploys through private drafts in fake API', async ({
   await deployPage.setViewportSize({ height: 900, width: 1440 });
   await expectFieldTokenSize(targetCell, deployedToken);
   await expectCircle(underUnitSelection);
+
+  const movementOpportunity = await page.evaluate(
+    async ({ firstPlayerId, gameId }) => {
+      const moduleUrl = '/src/shared/api/fake/createFakeGameApi.ts';
+      const fakeApiModule: unknown = await import(moduleUrl);
+      const { createFakeGameApi } = fakeApiModule as FakeApiModule;
+
+      for (let turn = 0; turn < 36; turn += 1) {
+        const game = await createFakeGameApi(firstPlayerId).getGame(gameId);
+        const playerId = game.view.currentPlayerId;
+
+        if (playerId === null) {
+          throw new Error('The active duel must have a current player.');
+        }
+
+        const currentPlayerApi = createFakeGameApi(playerId);
+        const currentGame = await currentPlayerApi.getGame(gameId);
+        const unit = currentGame.view.battlefield?.units.find(
+          (unit) => unit.ownerId === playerId
+        );
+        const hand = currentGame.view.battlefield?.playerResources.find(
+          (resources) => resources.playerId === playerId
+        )?.hand;
+        const coinIndex =
+          hand?.findIndex(
+            (coin) => coin.kind === 'unit' && coin.unitId === unit?.unitId
+          ) ?? -1;
+
+        if (unit !== undefined && coinIndex >= 0) {
+          return {
+            battlefieldUnitId: unit.id,
+            coinIndex,
+            from: unit.cellId,
+            playerId,
+            unitId: unit.unitId,
+          };
+        }
+
+        await currentPlayerApi.passTurn(gameId, {
+          coinIndex: 0,
+          commandId: crypto.randomUUID(),
+          expectedVersion: currentGame.view.lastEventSequence,
+        });
+      }
+
+      throw new Error('No matching movement coin appeared after 36 turns.');
+    },
+    { firstPlayerId: FIRST_PLAYER_ID, gameId }
+  );
+
+  const movePage =
+    movementOpportunity.playerId === FIRST_PLAYER_ID ? page : secondPage;
+  const observingPage = movePage === page ? secondPage : page;
+
+  await movePage.goto(`/games/play/${gameId}`);
+  await observingPage.goto(`/games/play/${gameId}`);
+  const movingUnit = movePage.locator(
+    `[data-unit-id="${movementOpportunity.battlefieldUnitId}"]`
+  );
+  const observedUnit = observingPage.locator(
+    `[data-unit-id="${movementOpportunity.battlefieldUnitId}"]`
+  );
+
+  await chooseMovement();
+  await movePage.screenshot({
+    path: 'test-results/move-selection-desktop.png',
+    fullPage: true,
+  });
+  const moveTarget = movePage
+    .getByRole('button', { name: /^Переместить на клетку / })
+    .first();
+  const targetLabel = await moveTarget.getAttribute('aria-label');
+  const destinationCell = targetLabel?.replace('Переместить на клетку ', '');
+
+  if (destinationCell === undefined) {
+    throw new Error('Movement must offer an adjacent target.');
+  }
+
+  await moveTarget.click();
+  await expect(movingUnit).toHaveAttribute('data-cell-id', destinationCell);
+  await expect(observedUnit).toHaveAttribute(
+    'data-cell-id',
+    movementOpportunity.from
+  );
+  await movePage.getByRole('button', { name: 'Отменить ход' }).click();
+  await expect(movingUnit).toHaveAttribute(
+    'data-cell-id',
+    movementOpportunity.from
+  );
+  await expect(observedUnit).toHaveAttribute(
+    'data-cell-id',
+    movementOpportunity.from
+  );
+
+  await movePage.setViewportSize({ height: 844, width: 390 });
+  await chooseMovement();
+  await movePage.screenshot({
+    path: 'test-results/move-selection-mobile.png',
+    fullPage: true,
+  });
+  await movePage
+    .getByRole('button', {
+      name: `Переместить на клетку ${destinationCell}`,
+      exact: true,
+    })
+    .focus();
+  await movePage.keyboard.press('Enter');
+  await expect(movingUnit).toHaveAttribute('data-cell-id', destinationCell);
+  await movePage.reload();
+  await expect(movingUnit).toHaveAttribute('data-cell-id', destinationCell);
+  await expect(
+    movePage.getByRole('region', { name: 'Черновик хода' })
+  ).toBeVisible();
+  await movePage.screenshot({
+    path: 'test-results/move-draft-mobile.png',
+    fullPage: true,
+  });
+  await movePage.getByRole('button', { name: 'Подтвердить ход' }).click();
+  await expect(
+    movePage.getByRole('region', { name: 'Черновик хода' })
+  ).toHaveCount(0);
+  await expect(observedUnit).toHaveAttribute('data-cell-id', destinationCell);
+  await expect(
+    observingPage
+      .getByRole('img', {
+        name: `Открытый жетон ${movementOpportunity.unitId}`,
+        exact: true,
+      })
+      .last()
+  ).toBeVisible();
+  await expect(
+    movePage.getByRole('button', { name: /переместил юнита/ })
+  ).toBeVisible();
+  await movePage.reload();
+  await expect(movingUnit).toHaveAttribute('data-cell-id', destinationCell);
+
+  async function chooseMovement(): Promise<void> {
+    await movePage
+      .getByRole('button', { name: /^(Жетон |Королевский жетон )/ })
+      .nth(movementOpportunity.coinIndex)
+      .click();
+    await movePage.getByRole('button', { name: 'Манёвр' }).click();
+    await expect(movePage.locator('[data-wheel="maneuver"]')).toBeVisible();
+    await movePage
+      .getByRole('button', { name: 'Движение', exact: true })
+      .click();
+    const unitButton = movePage.getByRole('button', {
+      name: `Переместить ${movementOpportunity.unitId} с клетки ${movementOpportunity.from}`,
+      exact: true,
+    });
+    await expect(unitButton).toHaveAttribute('aria-pressed', 'true');
+    await expect(
+      movePage.getByText('Выберите подсвеченного юнита для перемещения')
+    ).toHaveCount(0);
+    await expect(
+      movePage.getByText('Выберите подсвеченную соседнюю клетку')
+    ).toBeVisible();
+  }
 
   async function chooseRecruitTarget(): Promise<void> {
     await currentPage

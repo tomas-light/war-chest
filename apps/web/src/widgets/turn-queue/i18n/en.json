@@ -7,6 +7,7 @@
       "current": {
         "ban": "{{playerName}} is banning a card",
         "deploy": "{{playerName}} is deploying a unit",
+        "move": "{{playerName}} is moving a unit",
         "pass": "{{playerName}} is passing",
         "pick": "{{playerName}} is choosing a card",
         "recruit": "{{playerName}} is recruiting a coin",
@@ -15,6 +16,7 @@
       "done": {
         "ban": "{{playerName}} banned a card",
         "deploy": "{{playerName}} deployed a unit",
+        "move": "{{playerName}} moved a unit",
         "pass": "{{playerName}} passed",
         "pick": "{{playerName}} chose a card",
         "recruit": "{{playerName}} recruited a coin",
@@ -23,6 +25,7 @@
       "upcoming": {
         "ban": "{{playerName}} will ban a card",
         "deploy": "{{playerName}} will deploy a unit",
+        "move": "{{playerName}} will move a unit",
         "pass": "{{playerName}} will pass",
         "pick": "{{playerName}} will choose a card",
         "recruit": "{{playerName}} will recruit a coin",

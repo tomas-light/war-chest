@@ -10,6 +10,8 @@
     "you": "You"
   },
   "BattlefieldBoard": {
+    "moveToCell": "Move to cell {{cellId}}",
+    "selectMoveUnit": "Move {{unit}} from cell {{cellId}}",
     "deployToCell": "Deploy to cell {{cellId}}",
     "cell": "Cell {{cellId}}",
     "controlPoint": "Control point on cell {{cellId}}",

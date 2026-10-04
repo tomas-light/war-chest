@@ -162,4 +162,5 @@ export type {
   ViewSequenceAdvancedEventData,
 } from './viewEvents.js';
 export { UNIT_IDS } from './UnitId.js';
+export { getUnitDefinition } from './UnitDefinition.js';
 export type { UnitId } from './UnitId.js';

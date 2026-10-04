@@ -78,6 +78,13 @@ const gameCoinSchema = z.discriminatedUnion('kind', [
 const cellIdSchema = z.enum(TEAM_CELL_IDS);
 const turnActionSchema = z.discriminatedUnion('type', [
   z.object({ cellId: cellIdSchema, type: z.literal('deploy') }).strict(),
+  z
+    .object({
+      battlefieldUnitId: z.string().min(1),
+      cellId: cellIdSchema,
+      type: z.literal('move'),
+    })
+    .strict(),
   z.object({ type: z.literal('recruit'), unitId: unitIdSchema }).strict(),
 ]);
 const gameFormatSchema = z.enum(GAME_FORMATS);
@@ -254,7 +261,7 @@ export const gameTurnHistoryResponseSchema: z.ZodType<GameTurnHistoryResponse> =
         .array(
           z
             .object({
-              action: z.enum(['deploy', 'pass', 'recruit']),
+              action: z.enum(['deploy', 'move', 'pass', 'recruit']),
               playerId: z.string(),
               sequence: z.number().int().positive(),
             })

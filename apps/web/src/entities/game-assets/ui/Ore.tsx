@@ -5,6 +5,7 @@ import ORE_UNDER_UNIT_CYAN from '../assets/oreUnderUnitCyan.svg';
 import ORE_UNDER_UNIT_NEUTRAL from '../assets/oreUnderUnitNeutral.svg';
 import ORE_UNDER_UNIT_RED from '../assets/oreUnderUnitRed.svg';
 import type { OreColor } from '../model/gameAssetTypes';
+import { AvailableMoveHighlight } from './AvailableMoveHighlight';
 import { Fortification } from './Fortification';
 import { SpriteImage } from './SpriteImage';
 import classes from './Ore.module.scss';
@@ -22,6 +23,7 @@ const ORE_UNDER_UNIT_ASSETS = {
 
 interface Props {
   alt?: string;
+  availableToMove?: boolean;
   className?: string;
   color: OreColor;
   fortified: boolean;
@@ -32,6 +34,7 @@ interface Props {
 export function Ore(props: Props) {
   const {
     alt = '',
+    availableToMove = false,
     className,
     color,
     fortified,
@@ -41,6 +44,12 @@ export function Ore(props: Props) {
 
   return (
     <span className={clsx(classes.ore, classes[size], className)}>
+      {availableToMove && (
+        <AvailableMoveHighlight
+          className={classes.availableMoveHighlight}
+          size={size}
+        />
+      )}
       <SpriteImage
         alt={alt}
         asset={ORE_ASSETS[color]}

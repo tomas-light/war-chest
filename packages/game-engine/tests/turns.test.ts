@@ -1,6 +1,7 @@
 import { DEFAULT_RUNTIME_FEATURE_FLAGS } from '@war-chest/feature-flags';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import {
+  type BattlefieldUnit,
   type GameCommandData,
   type GameState,
   applyEvent,
@@ -324,6 +325,221 @@ describe('recruiting and deploying supported units', () => {
     resources.hand = [{ kind: 'unit', unitId: 'footman' }];
 
     expect(getTurnActionOptions(state, playerId, 0).deployCells).toEqual([]);
+  });
+});
+
+describe('ordinary unit movement', () => {
+  let state: GameState;
+  let movingUnit: BattlefieldUnit;
+
+  beforeEach(() => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.999);
+    state = createActiveDuel();
+    state.currentPlayerId = 'player-one';
+
+    if (state.battlefield === null) {
+      throw new Error('The active duel must have a battlefield.');
+    }
+
+    const [resources] = state.battlefield.playerResources;
+
+    if (resources === undefined) {
+      throw new Error('The active player must have resources.');
+    }
+
+    resources.hand = [
+      { kind: 'unit', unitId: 'cavalry' },
+      { kind: 'unit', unitId: 'crossbowman' },
+      { kind: 'royal' },
+    ];
+    movingUnit = {
+      bolstered: 2,
+      cellId: 'B1',
+      id: 'moving-unit',
+      ownerId: 'player-one',
+      unitId: 'cavalry',
+    };
+    state.battlefield.units = [movingUnit];
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  test('offers B1 neighbors within the board', () => {
+    expect(getTurnActionOptions(state, 'player-one', 0).moves).toEqual([
+      { battlefieldUnitId: 'moving-unit', cellIds: ['A1', 'B2', 'C1', 'C2'] },
+    ]);
+  });
+
+  test('offers all six neighbors of D4', () => {
+    movingUnit.cellId = 'D4';
+
+    expect(getTurnActionOptions(state, 'player-one', 0).moves).toEqual([
+      {
+        battlefieldUnitId: 'moving-unit',
+        cellIds: ['C3', 'C4', 'D3', 'D5', 'E4', 'E5'],
+      },
+    ]);
+  });
+
+  test('excludes both friendly and enemy occupied neighbors', () => {
+    state.battlefield!.units.push(
+      {
+        bolstered: 0,
+        cellId: 'C1',
+        id: 'friendly-unit',
+        ownerId: 'player-one',
+        unitId: 'crossbowman',
+      },
+      {
+        bolstered: 0,
+        cellId: 'C2',
+        id: 'enemy-unit',
+        ownerId: 'player-two',
+        unitId: 'cavalry',
+      }
+    );
+
+    expect(getTurnActionOptions(state, 'player-one', 0).moves).toEqual([
+      { battlefieldUnitId: 'moving-unit', cellIds: ['A1', 'B2'] },
+    ]);
+  });
+
+  test('moves B1 to C2 with the same identity and bolstered coins', () => {
+    const [event] = decide(state, 'player-one', {
+      action: { battlefieldUnitId: 'moving-unit', cellId: 'C2', type: 'move' },
+      coinIndex: 0,
+      type: 'PerformTurnAction',
+    });
+
+    if (event === undefined) {
+      throw new Error('A legal move must produce an event.');
+    }
+
+    const nextState = applyEvent(state, parseGameEventData(event));
+
+    expect(nextState.battlefield?.units).toEqual([
+      {
+        bolstered: 2,
+        cellId: 'C2',
+        id: 'moving-unit',
+        ownerId: 'player-one',
+        unitId: 'cavalry',
+      },
+    ]);
+    expect(movingUnit.cellId).toBe('B1');
+  });
+
+  test('spends the matching hand coin face up and advances the turn', () => {
+    const [event] = decide(state, 'player-one', {
+      action: { battlefieldUnitId: 'moving-unit', cellId: 'C2', type: 'move' },
+      coinIndex: 0,
+      type: 'PerformTurnAction',
+    });
+
+    if (event === undefined) {
+      throw new Error('A legal move must produce an event.');
+    }
+
+    const nextState = applyEvent(state, event);
+    const [resources] = nextState.battlefield!.playerResources;
+
+    expect(resources?.hand).toHaveLength(2);
+    expect(resources?.discard).toEqual([
+      { coin: { kind: 'unit', unitId: 'cavalry' }, faceUp: true },
+    ]);
+    expect(nextState.currentPlayerId).toBe('player-two');
+  });
+
+  test('reveals the spent maneuver coin to spectators', () => {
+    const [event] = decide(state, 'player-one', {
+      action: { battlefieldUnitId: 'moving-unit', cellId: 'C2', type: 'move' },
+      coinIndex: 0,
+      type: 'PerformTurnAction',
+    });
+
+    if (event === undefined) {
+      throw new Error('A legal move must produce an event.');
+    }
+
+    const viewEvent = createViewEventFor(event, { role: 'spectator' });
+
+    if (viewEvent.type !== 'TurnActionPerformed') {
+      throw new Error('Movement must emit TurnActionPerformed.');
+    }
+
+    expect(viewEvent.payload.coin).toEqual({ kind: 'unit', unitId: 'cavalry' });
+  });
+
+  test.each([
+    { cellId: 'C2', coinIndex: 1, name: 'another unit coin' },
+    { cellId: 'C2', coinIndex: 2, name: 'a royal coin' },
+    { cellId: 'D3', coinIndex: 0, name: 'a non-adjacent cell' },
+    { cellId: 'B1', coinIndex: 0, name: 'the source cell' },
+    { cellId: 'E1', coinIndex: 0, name: 'a cell outside the duel' },
+  ] as const)('rejects movement using $name', ({ cellId, coinIndex }) => {
+    expect(
+      decide(state, 'player-one', {
+        action: { battlefieldUnitId: 'moving-unit', cellId, type: 'move' },
+        coinIndex,
+        type: 'PerformTurnAction',
+      })
+    ).toEqual([]);
+  });
+
+  test('rejects moving an opponent unit', () => {
+    movingUnit.ownerId = 'player-two';
+
+    expect(
+      decide(state, 'player-one', {
+        action: {
+          battlefieldUnitId: 'moving-unit',
+          cellId: 'C2',
+          type: 'move',
+        },
+        coinIndex: 0,
+        type: 'PerformTurnAction',
+      })
+    ).toEqual([]);
+  });
+
+  test('leaves control point ownership unchanged when moving onto it', () => {
+    movingUnit.cellId = 'A2';
+    const [event] = decide(state, 'player-one', {
+      action: { battlefieldUnitId: 'moving-unit', cellId: 'A3', type: 'move' },
+      coinIndex: 0,
+      type: 'PerformTurnAction',
+    });
+
+    if (event === undefined) {
+      throw new Error('A legal move must produce an event.');
+    }
+
+    expect(applyEvent(state, event).battlefield?.controlPoints).toEqual(
+      state.battlefield?.controlPoints
+    );
+  });
+
+  test('previews movement without mutating the confirmed view or drawing coins', () => {
+    const view = createViewFor(state, {
+      playerId: 'player-one',
+      role: 'player',
+    });
+    const originalView = structuredClone(view);
+    const preview = previewTurnAction({
+      action: { battlefieldUnitId: 'moving-unit', cellId: 'C2', type: 'move' },
+      coinIndex: 0,
+      playerId: 'player-one',
+      view,
+    });
+
+    expect(preview?.units[0]?.cellId).toBe('C2');
+    expect(view).toEqual(originalView);
+    expect(preview?.round).toBe(view.battlefield?.round);
+    expect(preview?.playerResources.map((item) => item.bagCount)).toEqual(
+      view.battlefield?.playerResources.map((item) => item.bagCount)
+    );
   });
 });
 
