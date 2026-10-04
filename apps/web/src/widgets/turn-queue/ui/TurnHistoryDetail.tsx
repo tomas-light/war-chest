@@ -124,6 +124,15 @@ export function TurnHistoryDetail(props: Props) {
               {coordinates}
             </p>
           )}
+          {(detail.maneuvers ?? []).map((maneuver) => (
+            <p
+              className={classes.coordinates}
+              data-action="move"
+              key={maneuver.battlefieldUnitId}
+            >
+              {maneuver.fromCellId} → {maneuver.cellId}
+            </p>
+          ))}
           <p className={classes.result}>
             {t(`results.${detail.action}`, {
               cell: detail.cellId ?? '',

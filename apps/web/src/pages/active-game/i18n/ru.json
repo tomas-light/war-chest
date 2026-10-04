@@ -23,6 +23,7 @@
     "draftMove": "Перемещение {{from}} → {{to}}",
     "draftRecruit": "Наём: {{unit}}",
     "draftTitle": "Черновик хода",
+    "chooseTacticUnit": "Выберите юнит «{{unit}}» для манёвра {{number}} из {{total}}",
     "gameUnavailable": "Состояние игры недоступно.",
     "notSelected": "Игра не выбрана.",
     "targetTitle": "Выбор цели действия",

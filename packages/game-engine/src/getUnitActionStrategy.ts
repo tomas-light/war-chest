@@ -3,6 +3,7 @@ import { BerserkerStrategy } from './unitActionStrategies/BerserkerStrategy.js';
 import { CavalryStrategy } from './unitActionStrategies/CavalryStrategy.js';
 import { CrossbowmanStrategy } from './unitActionStrategies/CrossbowmanStrategy.js';
 import { EnsignStrategy } from './unitActionStrategies/EnsignStrategy.js';
+import { FootmanStrategy } from './unitActionStrategies/FootmanStrategy.js';
 import { KnightStrategy } from './unitActionStrategies/KnightStrategy.js';
 import { LancerStrategy } from './unitActionStrategies/LancerStrategy.js';
 import { LightCavalryStrategy } from './unitActionStrategies/LightCavalryStrategy.js';
@@ -22,6 +23,7 @@ const UNIT_ACTION_STRATEGIES: Readonly<
   cavalry: new CavalryStrategy(),
   crossbowman: new CrossbowmanStrategy(),
   ensign: new EnsignStrategy(),
+  footman: new FootmanStrategy(),
   knight: new KnightStrategy(),
   lancer: new LancerStrategy(),
   lightCavalry: new LightCavalryStrategy(),

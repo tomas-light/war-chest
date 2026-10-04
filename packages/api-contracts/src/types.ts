@@ -254,7 +254,7 @@ export interface GameEventsResponse {
 }
 
 export interface GameTurnHistoryItem {
-  action: 'deploy' | 'move' | 'pass' | 'recruit';
+  action: 'deploy' | 'move' | 'pass' | 'recruit' | 'tactic';
   playerId: string;
   sequence: number;
 }

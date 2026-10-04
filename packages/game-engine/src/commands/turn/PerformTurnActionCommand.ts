@@ -1,3 +1,4 @@
+import { cloneTurnAction } from '../../cloneTurnAction.js';
 import type { PerformTurnActionCommandData } from '../../command-data/TurnCommandData.js';
 import { type GameEventData, GAME_EVENT_VERSION } from '../../events.js';
 import { cloneGameCoin } from '../../GameCoin.js';
@@ -14,7 +15,7 @@ export class PerformTurnActionCommand implements DecidableCommand<PerformTurnAct
   ): PerformTurnActionCommand {
     return new PerformTurnActionCommand({
       ...data,
-      action: { ...data.action },
+      action: cloneTurnAction(data.action),
     });
   }
 
@@ -41,7 +42,7 @@ export class PerformTurnActionCommand implements DecidableCommand<PerformTurnAct
     return [
       {
         payload: {
-          action: { ...this.data.action },
+          action: cloneTurnAction(this.data.action),
           battlefield: result.battlefield,
           coin: cloneGameCoin(selectedCoin),
           moveNumber: state.moveCount + 1,
@@ -56,6 +57,6 @@ export class PerformTurnActionCommand implements DecidableCommand<PerformTurnAct
   }
 
   toData(): PerformTurnActionCommandData {
-    return { ...this.data, action: { ...this.data.action } };
+    return { ...this.data, action: cloneTurnAction(this.data.action) };
   }
 }

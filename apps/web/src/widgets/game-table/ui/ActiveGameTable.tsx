@@ -21,7 +21,11 @@ interface Props {
   onCancelRecruitSelection?(this: void): void;
   onDeployCellClick?(this: void, cellId: CellId): void;
   onMoveCellClick?(this: void, cellId: CellId): void;
-  onMoveUnitClick?(this: void, battlefieldUnitId: string): void;
+  onMoveUnitClick?(
+    this: void,
+    battlefieldUnitId: string,
+    anchorElement: HTMLButtonElement
+  ): void;
   onHandCoinClick(this: void, input: HandCoinClickInput): void;
   onRecruitUnitClick?(this: void, unitId: UnitId): void;
   playerProfiles: readonly LobbyGamePlayer[];

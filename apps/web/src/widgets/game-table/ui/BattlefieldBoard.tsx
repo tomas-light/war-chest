@@ -28,7 +28,11 @@ interface Props {
   movableUnitIds?: readonly string[];
   onDeployCellClick?(this: void, cellId: CellId): void;
   onMoveCellClick?(this: void, cellId: CellId): void;
-  onMoveUnitClick?(this: void, battlefieldUnitId: string): void;
+  onMoveUnitClick?(
+    this: void,
+    battlefieldUnitId: string,
+    anchorElement: HTMLButtonElement
+  ): void;
   perspective: GameTeam;
   players: readonly GameViewPlayer[];
   selectedUnitId?: string | null;
@@ -223,7 +227,9 @@ export function BattlefieldBoard(props: Props) {
                     })}
                     aria-pressed={selectedUnitId === unit.id}
                     className={classes.unitSelection}
-                    onClick={() => onMoveUnitClick(unit.id)}
+                    onClick={(event) =>
+                      onMoveUnitClick(unit.id, event.currentTarget)
+                    }
                     type="button"
                   />
                 )}

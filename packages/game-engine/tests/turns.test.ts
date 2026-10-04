@@ -4,6 +4,7 @@ import {
   type BattlefieldUnit,
   type GameCommandData,
   type GameState,
+  type PerformTurnActionCommandData,
   applyEvent,
   createGame,
   createViewEventFor,
@@ -11,6 +12,7 @@ import {
   decide,
   getTurnActionOptions,
   getUnitDefinition,
+  getUnitTacticOptions,
   parseGameEventData,
   previewTurnAction,
 } from '../src/index.js';
@@ -221,7 +223,7 @@ describe.each(STANDARD_UNIT_IDS)('recruiting and deploying %s', (unitId) => {
     ];
     resources.supply = [
       { count: 2, total: getUnitDefinition(unitId).tokenCount, unitId },
-      { count: 3, total: 5, unitId: 'footman' },
+      { count: 3, total: 5, unitId: 'mercenary' },
     ];
   });
 
@@ -403,7 +405,7 @@ describe.each(STANDARD_UNIT_IDS)('recruiting and deploying %s', (unitId) => {
       throw new Error('The active player must have resources.');
     }
 
-    resources.hand = [{ kind: 'unit', unitId: 'footman' }];
+    resources.hand = [{ kind: 'unit', unitId: 'mercenary' }];
 
     expect(getTurnActionOptions(state, playerId, 0).deployCells).toEqual([]);
   });
@@ -621,6 +623,397 @@ describe.each(STANDARD_UNIT_IDS)('ordinary movement of %s', (unitId) => {
     expect(preview?.playerResources.map((item) => item.bagCount)).toEqual(
       view.battlefield?.playerResources.map((item) => item.bagCount)
     );
+  });
+});
+
+describe('footman deployment and tactic', () => {
+  let state: GameState;
+  let command: PerformTurnActionCommandData;
+
+  beforeEach(() => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.999);
+    state = createActiveDuel();
+    state.currentPlayerId = 'player-one';
+
+    if (state.battlefield === null) {
+      throw new Error('The active duel must have a battlefield.');
+    }
+
+    const [resources] = state.battlefield.playerResources;
+
+    if (resources === undefined) {
+      throw new Error('The active player must have resources.');
+    }
+
+    resources.hand = [
+      { kind: 'unit', unitId: 'footman' },
+      { kind: 'royal' },
+      { kind: 'unit', unitId: 'archer' },
+    ];
+    resources.supply = [{ count: 3, total: 5, unitId: 'footman' }];
+    state.battlefield.units = [
+      {
+        bolstered: 1,
+        cellId: 'B1',
+        id: 'first-footman',
+        ownerId: 'player-one',
+        unitId: 'footman',
+      },
+      {
+        bolstered: 0,
+        cellId: 'C2',
+        id: 'second-footman',
+        ownerId: 'player-one',
+        unitId: 'footman',
+      },
+    ];
+    command = {
+      action: {
+        type: 'tactic',
+        unitId: 'footman',
+        maneuvers: [
+          { battlefieldUnitId: 'first-footman', cellId: 'C1', type: 'move' },
+          { battlefieldUnitId: 'second-footman', cellId: 'B1', type: 'move' },
+        ],
+      },
+      coinIndex: 0,
+      type: 'PerformTurnAction',
+    };
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  test('recruits a footman from supply using a royal coin', () => {
+    const [event] = decide(state, 'player-one', {
+      action: { type: 'recruit', unitId: 'footman' },
+      coinIndex: 1,
+      type: 'PerformTurnAction',
+    });
+
+    if (event === undefined) {
+      throw new Error('Recruitment must produce an event.');
+    }
+
+    const [resources] = applyEvent(state, event).battlefield!.playerResources;
+
+    expect(resources?.supply).toEqual([
+      { count: 2, total: 5, unitId: 'footman' },
+    ]);
+    expect(resources?.discard).toEqual([
+      { coin: { kind: 'royal' }, faceUp: false },
+      { coin: { kind: 'unit', unitId: 'footman' }, faceUp: true },
+    ]);
+  });
+
+  test('deploys a second footman with a distinct identity', () => {
+    state.battlefield!.units = state.battlefield!.units.slice(0, 1);
+    const [cellId] = getTurnActionOptions(state, 'player-one', 0).deployCells;
+
+    if (cellId === undefined) {
+      throw new Error('The player must own a free control point.');
+    }
+
+    const [event] = decide(state, 'player-one', {
+      action: { cellId, type: 'deploy' },
+      coinIndex: 0,
+      type: 'PerformTurnAction',
+    });
+
+    if (event === undefined) {
+      throw new Error('Second deployment must produce an event.');
+    }
+
+    const [firstUnit] = state.battlefield!.units;
+
+    expect(applyEvent(state, event).battlefield?.units).toEqual([
+      firstUnit,
+      {
+        bolstered: 0,
+        cellId,
+        id: 'player-one:1',
+        ownerId: 'player-one',
+        unitId: 'footman',
+      },
+    ]);
+  });
+
+  test('rejects deploying a third footman', () => {
+    expect(
+      decide(state, 'player-one', {
+        action: { cellId: 'A3', type: 'deploy' },
+        coinIndex: 0,
+        type: 'PerformTurnAction',
+      })
+    ).toEqual([]);
+  });
+
+  test('does not count the opponent footman toward the deployment limit', () => {
+    state.battlefield!.units = state.battlefield!.units.map((unit) => {
+      if (unit.id === 'second-footman') {
+        return { ...unit, ownerId: 'player-two' };
+      }
+
+      return unit;
+    });
+
+    expect(getTurnActionOptions(state, 'player-one', 0).deployCells).toContain(
+      'A3'
+    );
+  });
+
+  test('ordinary movement moves only the selected footman', () => {
+    const [event] = decide(state, 'player-one', {
+      action: {
+        battlefieldUnitId: 'first-footman',
+        cellId: 'C1',
+        type: 'move',
+      },
+      coinIndex: 0,
+      type: 'PerformTurnAction',
+    });
+
+    if (event === undefined) {
+      throw new Error('Ordinary movement must produce an event.');
+    }
+
+    expect(
+      applyEvent(state, event).battlefield?.units.map((unit) => unit.cellId)
+    ).toEqual(['C1', 'C2']);
+  });
+
+  test('offers the second move against the position after the first', () => {
+    const options = getUnitTacticOptions({
+      coinIndex: 0,
+      game: state,
+      maneuvers: [
+        { battlefieldUnitId: 'first-footman', cellId: 'C1', type: 'move' },
+      ],
+      playerId: 'player-one',
+    });
+
+    expect(options?.moves).toEqual([
+      {
+        battlefieldUnitId: 'second-footman',
+        cellIds: ['B1', 'B2', 'C3', 'D2', 'D3'],
+      },
+    ]);
+  });
+
+  test('commits two ordered movements with one payment and one turn transition', () => {
+    const originalState = structuredClone(state);
+    const [event] = decide(state, 'player-one', command);
+
+    if (event === undefined) {
+      throw new Error('The footman tactic must produce an event.');
+    }
+
+    const nextState = applyEvent(state, parseGameEventData(event));
+    const [resources] = nextState.battlefield!.playerResources;
+
+    expect(nextState.battlefield?.units).toEqual([
+      {
+        bolstered: 1,
+        cellId: 'C1',
+        id: 'first-footman',
+        ownerId: 'player-one',
+        unitId: 'footman',
+      },
+      {
+        bolstered: 0,
+        cellId: 'B1',
+        id: 'second-footman',
+        ownerId: 'player-one',
+        unitId: 'footman',
+      },
+    ]);
+    expect(resources?.hand).toHaveLength(2);
+    expect(resources?.discard).toEqual([
+      { coin: { kind: 'unit', unitId: 'footman' }, faceUp: true },
+    ]);
+    expect(nextState.moveCount).toBe(state.moveCount + 1);
+    expect(nextState.currentPlayerId).toBe('player-two');
+    expect(state).toEqual(originalState);
+  });
+
+  test.each([
+    { maneuverCount: 0, isComplete: false },
+    { maneuverCount: 1, isComplete: false },
+    { maneuverCount: 2, isComplete: true },
+  ])(
+    'reports tactic completion after $maneuverCount movements',
+    ({ maneuverCount, isComplete }) => {
+      if (command.action.type !== 'tactic') {
+        throw new Error('The command must contain a footman tactic.');
+      }
+
+      const options = getUnitTacticOptions({
+        coinIndex: 0,
+        game: state,
+        maneuvers: command.action.maneuvers.slice(0, maneuverCount),
+        playerId: 'player-one',
+      });
+
+      expect(options?.isComplete).toBe(isComplete);
+    }
+  );
+
+  test.each([
+    { maneuverCount: 0, canSave: false },
+    { maneuverCount: 1, canSave: true },
+    { maneuverCount: 2, canSave: true },
+  ])(
+    'reports whether a prefix of $maneuverCount movements can be saved',
+    ({ maneuverCount, canSave }) => {
+      if (command.action.type !== 'tactic') {
+        throw new Error('The command must contain a footman tactic.');
+      }
+
+      const options = getUnitTacticOptions({
+        coinIndex: 0,
+        game: state,
+        maneuvers: command.action.maneuvers.slice(0, maneuverCount),
+        playerId: 'player-one',
+      });
+
+      expect(options?.canSave).toBe(canSave);
+    }
+  );
+
+  test('rejects a tactic whose unit type differs from the paying coin', () => {
+    if (command.action.type !== 'tactic') {
+      throw new Error('The command must contain a footman tactic.');
+    }
+
+    command.action.unitId = 'archer';
+
+    expect(decide(state, 'player-one', command)).toEqual([]);
+  });
+
+  test('rejects an incomplete tactic in a persisted event', () => {
+    const [event] = decide(state, 'player-one', command);
+
+    if (
+      event?.type !== 'TurnActionPerformed' ||
+      event.payload.action.type !== 'tactic'
+    ) {
+      throw new Error('The tactic must produce a TurnActionPerformed event.');
+    }
+
+    event.payload.action.maneuvers = event.payload.action.maneuvers.slice(0, 1);
+
+    expect(() => parseGameEventData(event)).toThrow();
+  });
+
+  test('previews the first step but rejects confirming an incomplete tactic', () => {
+    const action: PerformTurnActionCommandData['action'] = {
+      type: 'tactic',
+      unitId: 'footman',
+      maneuvers: [
+        { battlefieldUnitId: 'first-footman', cellId: 'C1', type: 'move' },
+      ],
+    };
+    const view = createViewFor(state, {
+      playerId: 'player-one',
+      role: 'player',
+    });
+
+    expect(
+      previewTurnAction({
+        action,
+        coinIndex: 0,
+        playerId: 'player-one',
+        view,
+      })?.units.map((unit) => unit.cellId)
+    ).toEqual(['C1', 'C2']);
+    expect(decide(state, 'player-one', { ...command, action })).toEqual([]);
+  });
+
+  test('keeps a tactic unavailable when only one footman is on the field', () => {
+    state.battlefield!.units = state.battlefield!.units.slice(0, 1);
+
+    expect(
+      getUnitTacticOptions({
+        coinIndex: 0,
+        game: state,
+        maneuvers: [],
+        playerId: 'player-one',
+      })
+    ).toBeNull();
+    expect(getTurnActionOptions(state, 'player-one', 0).moves).toHaveLength(1);
+  });
+
+  test.each([
+    { name: 'the royal coin', coinIndex: 1 },
+    { name: 'another unit coin', coinIndex: 2 },
+  ])('rejects a tactic paid with $name', ({ coinIndex }) => {
+    expect(decide(state, 'player-one', { ...command, coinIndex })).toEqual([]);
+  });
+
+  test('rejects moving the same footman twice', () => {
+    command.action = {
+      type: 'tactic',
+      unitId: 'footman',
+      maneuvers: [
+        { battlefieldUnitId: 'first-footman', cellId: 'C1', type: 'move' },
+        { battlefieldUnitId: 'first-footman', cellId: 'D2', type: 'move' },
+      ],
+    };
+
+    expect(decide(state, 'player-one', command)).toEqual([]);
+  });
+
+  test('rejects a first movement into a cell the second footman has not vacated yet', () => {
+    command.action = {
+      type: 'tactic',
+      unitId: 'footman',
+      maneuvers: [
+        { battlefieldUnitId: 'first-footman', cellId: 'C2', type: 'move' },
+        { battlefieldUnitId: 'second-footman', cellId: 'D3', type: 'move' },
+      ],
+    };
+
+    expect(decide(state, 'player-one', command)).toEqual([]);
+  });
+
+  test('rejects a second movement into the first footman destination', () => {
+    command.action = {
+      type: 'tactic',
+      unitId: 'footman',
+      maneuvers: [
+        { battlefieldUnitId: 'first-footman', cellId: 'C1', type: 'move' },
+        { battlefieldUnitId: 'second-footman', cellId: 'C1', type: 'move' },
+      ],
+    };
+
+    expect(decide(state, 'player-one', command)).toEqual([]);
+  });
+
+  test('rejects moving an opponent footman', () => {
+    state.battlefield!.units = state.battlefield!.units.map((unit) => ({
+      ...unit,
+      ownerId: 'player-two',
+    }));
+
+    expect(decide(state, 'player-one', command)).toEqual([]);
+  });
+
+  test('reveals the tactic payment to spectators', () => {
+    const [event] = decide(state, 'player-one', command);
+
+    if (event === undefined) {
+      throw new Error('The tactic must produce an event.');
+    }
+
+    const viewEvent = createViewEventFor(event, { role: 'spectator' });
+
+    if (viewEvent.type !== 'TurnActionPerformed') {
+      throw new Error('The tactic must emit TurnActionPerformed.');
+    }
+
+    expect(viewEvent.payload.coin).toEqual({ kind: 'unit', unitId: 'footman' });
+    expect(viewEvent.payload.action).toEqual(command.action);
   });
 });
 

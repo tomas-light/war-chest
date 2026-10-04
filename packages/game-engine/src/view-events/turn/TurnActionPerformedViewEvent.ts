@@ -1,4 +1,5 @@
 import type { GameViewBattlefieldState } from '../../Battlefield.js';
+import { cloneTurnAction } from '../../cloneTurnAction.js';
 import { NullableGameViewError } from '../../errors/NullableGameViewError.js';
 import type { GameView } from '../../state.js';
 import type { TurnActionPerformedViewEventData } from '../../viewEvents.js';
@@ -15,7 +16,7 @@ export class TurnActionPerformedViewEvent implements ApplicableViewEvent<TurnAct
       ...data,
       payload: {
         ...data.payload,
-        action: { ...data.payload.action },
+        action: cloneTurnAction(data.payload.action),
         battlefield: cloneViewBattlefield(data.payload.battlefield),
         coin: data.payload.coin === null ? null : { ...data.payload.coin },
       },

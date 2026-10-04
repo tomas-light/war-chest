@@ -2,12 +2,19 @@ import type { CellId, GameViewEventData, UnitId } from '@war-chest/game-engine';
 import { restoreHistoricalView } from '#/entities/game-session';
 
 interface TurnDetails {
-  action: 'deploy' | 'move' | 'pass' | 'recruit';
+  action: 'deploy' | 'move' | 'pass' | 'recruit' | 'tactic';
+  maneuvers?: readonly ManeuverDetail[];
   cellId: CellId | null;
   fromCellId: CellId | null;
   moveNumber: number;
   round: number;
   unitId: UnitId | null;
+}
+
+interface ManeuverDetail {
+  battlefieldUnitId: string;
+  cellId: CellId;
+  fromCellId: CellId | null;
 }
 
 export function getTurnDetails(
@@ -41,7 +48,17 @@ export function getTurnDetails(
   const action = event.payload.action;
   detail.action = action.type;
 
-  if (action.type === 'recruit') {
+  if (action.type === 'tactic') {
+    detail.unitId = action.unitId;
+    detail.maneuvers = action.maneuvers.map((maneuver) => ({
+      battlefieldUnitId: maneuver.battlefieldUnitId,
+      cellId: maneuver.cellId,
+      fromCellId:
+        before.battlefield?.units.find(
+          (unit) => unit.id === maneuver.battlefieldUnitId
+        )?.cellId ?? null,
+    }));
+  } else if (action.type === 'recruit') {
     detail.unitId = action.unitId;
   } else if (action.type === 'move') {
     const unit = before.battlefield?.units.find(

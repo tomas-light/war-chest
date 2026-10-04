@@ -440,7 +440,7 @@ function getActionIcon(action: QueueStep['action']): string {
     return recruitIcon;
   }
 
-  if (action === 'move') {
+  if (action === 'move' || action === 'tactic') {
     return maneuverIcon;
   }
 

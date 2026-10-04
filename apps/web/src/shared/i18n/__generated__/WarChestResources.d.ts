@@ -242,6 +242,7 @@ export interface WarChestResources {
       chooseDeployCell: '';
       chooseMoveCell: '';
       chooseMoveUnit: '';
+      chooseTacticUnit: '{{number}} {{total}} {{unit}}';
       confirmTurn: '';
       connecting: '';
       draftDeploy: '{{cellId}}';
@@ -695,6 +696,7 @@ export interface WarChestResources {
         move: '';
         pass: '';
         recruit: '';
+        tactic: '';
       };
       close: '';
       label: '';
@@ -705,6 +707,7 @@ export interface WarChestResources {
         move: '{{cell}} {{unit}}';
         pass: '';
         recruit: '{{unit}}';
+        tactic: '{{unit}}';
       };
       retry: '';
       showTurn: '';
@@ -727,6 +730,7 @@ export interface WarChestResources {
           pass: '{{playerName}}';
           pick: '{{playerName}}';
           recruit: '{{playerName}}';
+          tactic: '{{playerName}}';
           turn: '{{playerName}}';
         };
         done: {
@@ -736,6 +740,7 @@ export interface WarChestResources {
           pass: '{{playerName}}';
           pick: '{{playerName}}';
           recruit: '{{playerName}}';
+          tactic: '{{playerName}}';
           turn: '{{playerName}}';
         };
         upcoming: {
@@ -745,6 +750,7 @@ export interface WarChestResources {
           pass: '{{playerName}}';
           pick: '{{playerName}}';
           recruit: '{{playerName}}';
+          tactic: '{{playerName}}';
           turn: '{{playerName}}';
         };
       };
@@ -891,6 +897,11 @@ export interface WarChestTranslationParameters {
   'pages/active-game.ActiveGamePage.chooseDeployCell': null;
   'pages/active-game.ActiveGamePage.chooseMoveCell': null;
   'pages/active-game.ActiveGamePage.chooseMoveUnit': null;
+  'pages/active-game.ActiveGamePage.chooseTacticUnit': {
+    number: unknown;
+    total: unknown;
+    unit: unknown;
+  };
   'pages/active-game.ActiveGamePage.confirmTurn': null;
   'pages/active-game.ActiveGamePage.connecting': null;
   'pages/active-game.ActiveGamePage.draftDeploy': { cellId: unknown };
@@ -1295,6 +1306,7 @@ export interface WarChestTranslationParameters {
   'widgets/turn-queue.TurnHistoryDetail.actions.move': null;
   'widgets/turn-queue.TurnHistoryDetail.actions.pass': null;
   'widgets/turn-queue.TurnHistoryDetail.actions.recruit': null;
+  'widgets/turn-queue.TurnHistoryDetail.actions.tactic': null;
   'widgets/turn-queue.TurnHistoryDetail.close': null;
   'widgets/turn-queue.TurnHistoryDetail.label': null;
   'widgets/turn-queue.TurnHistoryDetail.loading': null;
@@ -1312,6 +1324,7 @@ export interface WarChestTranslationParameters {
   };
   'widgets/turn-queue.TurnHistoryDetail.results.pass': null;
   'widgets/turn-queue.TurnHistoryDetail.results.recruit': { unit: unknown };
+  'widgets/turn-queue.TurnHistoryDetail.results.tactic': { unit: unknown };
   'widgets/turn-queue.TurnHistoryDetail.retry': null;
   'widgets/turn-queue.TurnHistoryDetail.showTurn': null;
   'widgets/turn-queue.TurnHistoryDetail.teams.black': null;
@@ -1331,6 +1344,9 @@ export interface WarChestTranslationParameters {
   'widgets/turn-queue.TurnQueue.summary.current.recruit': {
     playerName: unknown;
   };
+  'widgets/turn-queue.TurnQueue.summary.current.tactic': {
+    playerName: unknown;
+  };
   'widgets/turn-queue.TurnQueue.summary.current.turn': { playerName: unknown };
   'widgets/turn-queue.TurnQueue.summary.done.ban': { playerName: unknown };
   'widgets/turn-queue.TurnQueue.summary.done.deploy': { playerName: unknown };
@@ -1338,6 +1354,7 @@ export interface WarChestTranslationParameters {
   'widgets/turn-queue.TurnQueue.summary.done.pass': { playerName: unknown };
   'widgets/turn-queue.TurnQueue.summary.done.pick': { playerName: unknown };
   'widgets/turn-queue.TurnQueue.summary.done.recruit': { playerName: unknown };
+  'widgets/turn-queue.TurnQueue.summary.done.tactic': { playerName: unknown };
   'widgets/turn-queue.TurnQueue.summary.done.turn': { playerName: unknown };
   'widgets/turn-queue.TurnQueue.summary.upcoming.ban': { playerName: unknown };
   'widgets/turn-queue.TurnQueue.summary.upcoming.deploy': {
@@ -1347,6 +1364,9 @@ export interface WarChestTranslationParameters {
   'widgets/turn-queue.TurnQueue.summary.upcoming.pass': { playerName: unknown };
   'widgets/turn-queue.TurnQueue.summary.upcoming.pick': { playerName: unknown };
   'widgets/turn-queue.TurnQueue.summary.upcoming.recruit': {
+    playerName: unknown;
+  };
+  'widgets/turn-queue.TurnQueue.summary.upcoming.tactic': {
     playerName: unknown;
   };
   'widgets/turn-queue.TurnQueue.summary.upcoming.turn': { playerName: unknown };

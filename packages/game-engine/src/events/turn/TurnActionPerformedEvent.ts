@@ -1,4 +1,5 @@
 import { cloneBattlefield, createBattlefieldView } from '../../Battlefield.js';
+import { cloneTurnAction } from '../../cloneTurnAction.js';
 import { NullableGameStateError } from '../../errors/NullableGameStateError.js';
 import type { TurnActionPerformedEventData } from '../../events.js';
 import { cloneGameCoin } from '../../GameCoin.js';
@@ -17,7 +18,7 @@ export class TurnActionPerformedEvent implements ApplicableEvent<TurnActionPerfo
       ...data,
       payload: {
         ...data.payload,
-        action: { ...data.payload.action },
+        action: cloneTurnAction(data.payload.action),
         battlefield: cloneBattlefield(data.payload.battlefield),
         coin: cloneGameCoin(data.payload.coin),
       },
@@ -54,13 +55,14 @@ export class TurnActionPerformedEvent implements ApplicableEvent<TurnActionPerfo
       ...this.data,
       payload: {
         ...this.data.payload,
-        action: { ...this.data.payload.action },
+        action: cloneTurnAction(this.data.payload.action),
         battlefield: createBattlefieldView(
           this.data.payload.battlefield,
           viewer
         ),
         coin:
           this.data.payload.action.type === 'move' ||
+          this.data.payload.action.type === 'tactic' ||
           (viewer.role === 'player' &&
             viewer.playerId === this.data.payload.playerId)
             ? cloneGameCoin(this.data.payload.coin)

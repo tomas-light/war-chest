@@ -1,4 +1,8 @@
-import type { GameCoin, GameView } from '@war-chest/game-engine';
+import {
+  type GameCoin,
+  type GameView,
+  getUnitTacticOptions,
+} from '@war-chest/game-engine';
 import {
   type CSSProperties,
   Suspense,
@@ -39,6 +43,8 @@ interface Props {
   onMove(this: void): void;
   onPassed(this: void, view: GameView): void;
   onRecruit(this: void): void;
+  onTactic?(this: void): void;
+  initialWheel?: 'coin' | 'maneuver';
   view: GameView;
 }
 
@@ -88,6 +94,8 @@ function GameActionsContent(props: Props) {
     onMove,
     onPassed,
     onRecruit,
+    onTactic,
+    initialWheel = 'coin',
     view,
   } = props;
 
@@ -96,15 +104,28 @@ function GameActionsContent(props: Props) {
   });
   const wheelRef = useRef<HTMLDivElement>(null);
   const previousManeuverWheelRef = useRef(false);
-  const [isManeuverWheel, setManeuverWheel] = useState(false);
+  const [isManeuverWheel, setManeuverWheel] = useState(
+    initialWheel === 'maneuver'
+  );
   const [position, setPosition] = useState<WheelPosition>(() =>
     getWheelPosition(anchorElement)
   );
 
   const visibleActions = isManeuverWheel
-    ? getManeuverWheelActions(coin, canMove)
+    ? getManeuverWheelActions(
+        coin,
+        canMove,
+        onTactic !== undefined &&
+          (getUnitTacticOptions({
+            coinIndex,
+            game: view,
+            maneuvers: [],
+            playerId: view.currentPlayerId ?? '',
+          })?.moves.length ?? 0) > 0
+      )
     : actions;
-  const hubLabel = isManeuverWheel ? t('back') : t('close');
+  const hubLabel =
+    isManeuverWheel && initialWheel === 'coin' ? t('back') : t('close');
 
   const {
     error: actionError,
@@ -171,7 +192,7 @@ function GameActionsContent(props: Props) {
 
     function handleKeyDown(event: globalThis.KeyboardEvent): void {
       if (event.key === 'Escape') {
-        if (isManeuverWheel) {
+        if (isManeuverWheel && initialWheel === 'coin') {
           setManeuverWheel(false);
         } else {
           onClose();
@@ -186,7 +207,7 @@ function GameActionsContent(props: Props) {
       document.removeEventListener('pointerdown', handlePointerDown);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [anchorElement, isManeuverWheel, onClose]);
+  }, [anchorElement, initialWheel, isManeuverWheel, onClose]);
 
   return createPortal(
     <div
@@ -292,11 +313,13 @@ function GameActionsContent(props: Props) {
       onMove();
     } else if (action.id === 'recruit') {
       onRecruit();
+    } else if (action.id === 'tactic') {
+      onTactic?.();
     }
   }
 
   function handleHubClick(): void {
-    if (isManeuverWheel) {
+    if (isManeuverWheel && initialWheel === 'coin') {
       setManeuverWheel(false);
     } else {
       onClose();

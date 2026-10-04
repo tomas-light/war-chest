@@ -19,18 +19,23 @@
     "unavailable": "Не удалось загрузить детали хода",
     "retry": "Повторить",
     "showTurn": "Показать этот ход",
-    "teams": { "white": "Белые", "black": "Чёрные" },
+    "teams": {
+      "white": "Белые",
+      "black": "Чёрные"
+    },
     "actions": {
       "deploy": "Размещение",
       "move": "Перемещение",
       "pass": "Пас",
-      "recruit": "Найм"
+      "recruit": "Найм",
+      "tactic": "Тактика"
     },
     "results": {
       "deploy": "Юнит «{{unit}}» размещён на клетке {{cell}}",
       "move": "Юнит «{{unit}}» перемещён на клетку {{cell}}",
       "pass": "Игрок пропустил действие",
-      "recruit": "Жетон «{{unit}}» добавлен в сброс"
+      "recruit": "Жетон «{{unit}}» добавлен в сброс",
+      "tactic": "Юнит «{{unit}}» выполнил манёвры тактики"
     }
   },
   "TurnQueue": {
@@ -46,7 +51,8 @@
         "pass": "{{playerName}} сейчас пасует",
         "pick": "{{playerName}} сейчас выбирает карту",
         "recruit": "{{playerName}} сейчас нанимает жетон",
-        "turn": "Сейчас ходит {{playerName}}"
+        "turn": "Сейчас ходит {{playerName}}",
+        "tactic": "{{playerName}} сейчас выполняет тактику"
       },
       "done": {
         "ban": "{{playerName}} забанил карту",
@@ -55,7 +61,8 @@
         "pass": "{{playerName}} спасовал",
         "pick": "{{playerName}} выбрал карту",
         "recruit": "{{playerName}} нанял жетон",
-        "turn": "Ход {{playerName}} завершён"
+        "turn": "Ход {{playerName}} завершён",
+        "tactic": "{{playerName}} выполнил тактику"
       },
       "upcoming": {
         "ban": "{{playerName}} будет банить карту",
@@ -64,7 +71,8 @@
         "pass": "{{playerName}} будет пасовать",
         "pick": "{{playerName}} будет выбирать карту",
         "recruit": "{{playerName}} будет нанимать жетон",
-        "turn": "Следующий ход: {{playerName}}"
+        "turn": "Следующий ход: {{playerName}}",
+        "tactic": "{{playerName}} будет выполнять тактику"
       }
     }
   }
