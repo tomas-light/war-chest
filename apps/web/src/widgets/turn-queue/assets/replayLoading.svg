@@ -1,0 +1,7 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Icon">
+<path id="Loading ring segment" d="M12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4C7.58172 4 4 7.58172 4 12C4 16.4183 7.58172 20 12 20Z" stroke="#EEE5D2" stroke-width="2"/>
+<path id="Loading ring segment_2" d="M12 4C14.1217 4 16.1566 4.84285 17.6569 6.34315C19.1571 7.84344 20 9.87827 20 12" stroke="#EEE5D2" stroke-width="2" stroke-linecap="round"/>
+<path id="Loading ring segment_3" d="M12 20C9.87827 20 7.84344 19.1571 6.34315 17.6569C4.84285 16.1566 4 14.1217 4 12" stroke="#EEE5D2" stroke-width="2" stroke-linecap="round"/>
+</g>
+</svg>

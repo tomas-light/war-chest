@@ -1,0 +1,20 @@
+{
+  "units": {
+    "archer": "Лучник",
+    "berserker": "Берсерк",
+    "cavalry": "Кавалерия",
+    "crossbowman": "Арбалетчик",
+    "ensign": "Знаменосец",
+    "footman": "Пехотинец",
+    "knight": "Рыцарь",
+    "lancer": "Конный копейщик",
+    "lightCavalry": "Лёгкая кавалерия",
+    "marshal": "Полководец",
+    "mercenary": "Наёмник",
+    "pikeman": "Пикинёр",
+    "royalGuard": "Королевская стража",
+    "scout": "Разведчик",
+    "swordsman": "Мечник",
+    "warriorPriest": "Воин-жрец"
+  }
+}

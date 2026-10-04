@@ -1,7 +1,42 @@
 {
+  "CurrentTurnAnchor": {
+    "now": "NOW",
+    "play": "Replay history to the current turn",
+    "pause": "Pause replay",
+    "returnToLive": "Return to the current turn",
+    "retry": "Retry loading history",
+    "turn": "Turn {{turnNumber}}",
+    "progress": "{{from}} → {{to}}",
+    "paused": "Paused",
+    "loading": "Loading",
+    "error": "Error"
+  },
+  "TurnHistoryDetail": {
+    "label": "Turn details",
+    "metadata": "TURN {{turn}} · ROUND {{round}}",
+    "close": "Close turn details",
+    "loading": "Loading turn details",
+    "unavailable": "Unable to load turn details",
+    "retry": "Retry",
+    "showTurn": "Show this turn",
+    "teams": { "white": "White", "black": "Black" },
+    "actions": {
+      "deploy": "Deploy",
+      "move": "Move",
+      "pass": "Pass",
+      "recruit": "Recruit"
+    },
+    "results": {
+      "deploy": "{{unit}} deployed to {{cell}}",
+      "move": "{{unit}} moved to {{cell}}",
+      "pass": "The player passed the action",
+      "recruit": "A {{unit}} coin was added to the discard pile"
+    }
+  },
   "TurnQueue": {
     "label": "Turn queue",
     "loadPrevious": "Load previous turns",
+    "scrollDown": "Scroll turn queue down",
     "playerFallback": "Player {{playerId}}",
     "summary": {
       "current": {

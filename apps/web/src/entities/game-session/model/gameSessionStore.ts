@@ -17,6 +17,7 @@ interface GameSessionState {
   applyEvents(events: readonly GameViewEventData[]): void;
   hydrate(view: GameView, events?: readonly GameViewEventData[]): void;
   retainPlayerProfiles(players: readonly LobbyGamePlayer[]): void;
+  viewHistoricalState(view: GameView): void;
   viewLiveState(): void;
 }
 
@@ -33,15 +34,24 @@ export function createGameSessionStore() {
       set((state) => applyEvents(state, events));
     },
     hydrate(view, events = []) {
-      set({
+      set((state) => ({
         events,
         liveState: view,
         synchronizationStatus: 'ready',
-        viewedState: view,
-      });
+        viewedState:
+          state.viewedState === state.liveState ? view : state.viewedState,
+      }));
     },
     retainPlayerProfiles(players) {
       set({ playerProfiles: players });
+    },
+    viewHistoricalState(view) {
+      set((state) => ({
+        viewedState:
+          view.lastEventSequence === state.liveState?.lastEventSequence
+            ? state.liveState
+            : view,
+      }));
     },
     viewLiveState() {
       set((state) => ({ viewedState: state.liveState }));
@@ -75,6 +85,7 @@ function applyEvents(
     events: [...state.events, ...newEvents],
     liveState,
     synchronizationStatus: liveState === null ? 'idle' : 'ready',
-    viewedState: liveState,
+    viewedState:
+      state.viewedState === state.liveState ? liveState : state.viewedState,
   };
 }

@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from 'react';
 import { useTranslation } from '#/shared/i18n/useTranslation';
 import { Button } from '#/shared/ui/button';
 import { TextField } from '#/shared/ui/text-field';
@@ -27,12 +28,21 @@ export function CodeStage(props: Props) {
     keyPrefix: 'CodeStage',
   });
 
+  const inputRef = useRef<HTMLInputElement>(null);
+  const hasFocusedRef = useRef(false);
+
+  useLayoutEffect(() => {
+    if (!isPending && !hasFocusedRef.current && inputRef.current !== null) {
+      inputRef.current.focus();
+      hasFocusedRef.current = true;
+    }
+  }, [isPending]);
+
   return (
     <>
       <p className={classes.description}>{t('codeDescription', { email })}</p>
       <TextField
         autoComplete="one-time-code"
-        autoFocus
         className={classes.codeInput}
         disabled={isPending}
         id="login-code"
@@ -44,6 +54,7 @@ export function CodeStage(props: Props) {
         }
         pattern="\d{6}"
         required
+        ref={inputRef}
         value={code}
       />
 

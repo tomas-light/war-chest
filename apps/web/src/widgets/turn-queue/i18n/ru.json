@@ -1,7 +1,42 @@
 {
+  "CurrentTurnAnchor": {
+    "now": "СЕЙЧАС",
+    "play": "Проиграть историю до текущего хода",
+    "pause": "Приостановить replay",
+    "returnToLive": "Вернуться к текущему ходу",
+    "retry": "Повторить загрузку истории",
+    "turn": "Ход {{turnNumber}}",
+    "progress": "{{from}} → {{to}}",
+    "paused": "Пауза",
+    "loading": "Загрузка",
+    "error": "Ошибка"
+  },
+  "TurnHistoryDetail": {
+    "label": "Детали хода",
+    "metadata": "ХОД {{turn}} · РАУНД {{round}}",
+    "close": "Закрыть детали хода",
+    "loading": "Загрузка деталей хода",
+    "unavailable": "Не удалось загрузить детали хода",
+    "retry": "Повторить",
+    "showTurn": "Показать этот ход",
+    "teams": { "white": "Белые", "black": "Чёрные" },
+    "actions": {
+      "deploy": "Размещение",
+      "move": "Перемещение",
+      "pass": "Пас",
+      "recruit": "Найм"
+    },
+    "results": {
+      "deploy": "Юнит «{{unit}}» размещён на клетке {{cell}}",
+      "move": "Юнит «{{unit}}» перемещён на клетку {{cell}}",
+      "pass": "Игрок пропустил действие",
+      "recruit": "Жетон «{{unit}}» добавлен в сброс"
+    }
+  },
   "TurnQueue": {
     "label": "Очередь ходов",
     "loadPrevious": "Загрузить предыдущие ходы",
+    "scrollDown": "Прокрутить ленту вниз",
     "playerFallback": "Игрок {{playerId}}",
     "summary": {
       "current": {

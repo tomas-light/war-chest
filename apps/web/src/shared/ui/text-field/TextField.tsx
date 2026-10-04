@@ -1,8 +1,8 @@
 import clsx from 'clsx';
-import type { InputHTMLAttributes } from 'react';
+import type { ComponentProps } from 'react';
 import classes from './TextField.module.scss';
 
-interface Props extends InputHTMLAttributes<HTMLInputElement> {
+interface Props extends ComponentProps<'input'> {
   id: string;
   label: string;
 }

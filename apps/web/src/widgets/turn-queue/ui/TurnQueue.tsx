@@ -1,5 +1,6 @@
 import type { LobbyGamePlayer } from '@war-chest/api-contracts';
 import type { GameView } from '@war-chest/game-engine';
+import clsx from 'clsx';
 import { createPortal } from 'react-dom';
 import { UserAvatar } from '#/entities/user';
 import draftBanIcon from '#/features/confirm-card-choice/assets/draftBanIcon.svg';
@@ -9,40 +10,65 @@ import passIcon from '#/features/game-actions/assets/passIcon.png';
 import recruitIcon from '#/features/game-actions/assets/recruitIcon.png';
 import { useTranslation } from '#/shared/i18n/useTranslation';
 import draftPickIcon from '../assets/draftPickIcon.svg';
+import VIEWING from '../assets/historyViewing.svg';
 import QUEUE_SCROLL_BOUNDARY_DOWN from '../assets/queueScrollBoundaryDown.svg';
 import QUEUE_SCROLL_BOUNDARY_UP from '../assets/queueScrollBoundaryUp.svg';
 import QUEUE_SCROLL_CAN_SCROLL_DOWN from '../assets/queueScrollCanScrollDown.svg';
 import QUEUE_SCROLL_CAN_SCROLL_UP from '../assets/queueScrollCanScrollUp.svg';
 import type { QueueStep } from '../model/getQueueSteps';
+import { useQueueDrag } from '../model/useQueueDrag';
 import { useQueueScroll } from '../model/useQueueScroll';
 import { getSummaryStyle, useQueueSummary } from '../model/useQueueSummary';
 import { useTurnQueueHistory } from '../model/useTurnQueueHistory';
+import { CurrentTurnAnchor } from './CurrentTurnAnchor';
+import { TurnHistoryDetail } from './TurnHistoryDetail';
 import classes from './TurnQueue.module.scss';
 
 interface Props {
   gameId: string;
   playerProfiles: readonly LobbyGamePlayer[];
   view: GameView;
+  userId?: string;
+  history?: HistoryControls;
+}
+
+interface HistoryControls {
+  error: string | null;
+  moveNumber: number;
+  sequence: number;
+  status: 'idle' | 'review' | 'loading' | 'playing' | 'paused' | 'error';
+  onPause(this: void): void;
+  onPlay(this: void): void;
+  onReturnToLive(this: void): void;
+  onRetry(this: void): void;
+  onSelect(this: void, sequence: number): void;
 }
 
 export function TurnQueue(props: Props) {
-  const { gameId, playerProfiles, view } = props;
+  const { gameId, history, playerProfiles, userId = '', view } = props;
 
   const { t } = useTranslation('widgets/turn-queue', {
     keyPrefix: 'TurnQueue',
   });
 
+  // Load unit names with the rail so opening a card never suspends its focused avatar.
+  useTranslation('entities/game-assets', { keyPrefix: 'units' });
+
   const {
     closeHoveredSummary,
     closeSummary,
+    dismissSummary,
+    keepSummaryOpen,
     openSummary,
+    showHoveredSummary,
     showSummary,
     summaryId,
     summaryPosition,
+    summaryRef,
   } = useQueueSummary();
 
   const {
-    currentStepIndex,
+    currentStepIndex: liveStepIndex,
     currentTurnKey,
     fetchPreviousSteps,
     hasPreviousSteps,
@@ -53,10 +79,36 @@ export function TurnQueue(props: Props) {
     gameId,
     view,
   });
+  const isHistorical =
+    history !== undefined && history.sequence !== view.lastEventSequence;
+  const showNow =
+    isHistorical ||
+    history?.status === 'loading' ||
+    history?.status === 'error';
+  const selectedStepIndex = steps.findIndex(
+    (step) => isHistorical && step.sequence === history?.sequence
+  );
+  const currentStepIndex =
+    selectedStepIndex < 0 ? liveStepIndex : selectedStepIndex;
+  const scrollTurnKey = isHistorical
+    ? `history-${history.sequence}`
+    : currentTurnKey;
+  const currentTurnNumber =
+    view.status === 'finished' ? view.moveCount : view.moveCount + 1;
+  let onViewSummary: ((sequence: number) => void) | undefined = undefined;
+
+  if (history !== undefined) {
+    onViewSummary = handleViewSummary;
+  }
   const {
     canScrollDown,
     canScrollUp,
+    handleBottomOrnamentClick,
     handleScroll,
+    handleScrollUp,
+    handleTouchMove,
+    handleTouchStart,
+    handleWheel,
     handleTopOrnamentClick,
     stepsRef,
     stopFollowingCurrent,
@@ -64,12 +116,27 @@ export function TurnQueue(props: Props) {
     virtualizer,
   } = useQueueScroll({
     currentStepIndex,
-    currentTurnKey,
+    currentTurnKey: scrollTurnKey,
     fetchPreviousSteps,
     hasPreviousSteps,
     historyItemsCount,
     isFetchingPreviousSteps,
     steps,
+  });
+
+  const {
+    handleClickCapture,
+    handleLostPointerCapture,
+    handlePointerCancel,
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerUp,
+    isDragging,
+  } = useQueueDrag({
+    onDragStart: closeSummary,
+    onInteractionStart: stopFollowingCurrent,
+    onScrollUp: handleScrollUp,
+    scrollElementRef: stepsRef,
   });
 
   const topOrnament = canScrollUp
@@ -85,7 +152,10 @@ export function TurnQueue(props: Props) {
 
   return (
     <>
-      <aside aria-label={t('label')} className={classes.queue}>
+      <aside
+        aria-label={t('label')}
+        className={clsx(classes.queue, { [classes.withCurrent]: showNow })}
+      >
         <button
           aria-label={t('loadPrevious')}
           className={classes.ornament}
@@ -98,7 +168,9 @@ export function TurnQueue(props: Props) {
         </button>
 
         <div
-          className={classes.steps}
+          className={clsx(classes.steps, { [classes.dragging]: isDragging })}
+          onClickCapture={handleClickCapture}
+          onDragStart={(event) => event.preventDefault()}
           onKeyDown={(event) => {
             if (
               [
@@ -112,11 +184,20 @@ export function TurnQueue(props: Props) {
             ) {
               stopFollowingCurrent();
             }
+
+            if (['ArrowUp', 'PageUp', 'Home'].includes(event.key)) {
+              handleScrollUp();
+            }
           }}
-          onPointerDown={stopFollowingCurrent}
+          onLostPointerCapture={handleLostPointerCapture}
+          onPointerCancel={handlePointerCancel}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
           onScroll={handleScroll}
-          onTouchStart={stopFollowingCurrent}
-          onWheel={stopFollowingCurrent}
+          onTouchMove={handleTouchMove}
+          onTouchStart={handleTouchStart}
+          onWheel={handleWheel}
           ref={stepsRef}
           role="list"
           tabIndex={0}
@@ -135,14 +216,24 @@ export function TurnQueue(props: Props) {
 
               const profile = getProfile(step.playerId);
               const summary = getSummary(step, profile.displayName);
-              const isOpen = openSummary?.stepIndex === index;
+              const isOpen = openSummary?.step.key === step.key;
+              const isSelected =
+                isHistorical && step.sequence === history?.sequence;
+              let stepState: QueueStep['state'] | 'selected' = step.state;
+              let ariaCurrent: 'step' | undefined = undefined;
+
+              if (isSelected) {
+                stepState = 'selected';
+                ariaCurrent = 'step';
+              }
 
               return (
                 <div
                   aria-posinset={index + 1}
                   aria-setsize={steps.length}
                   className={classes.step}
-                  data-state={step.state}
+                  data-state={stepState}
+                  data-sequence={step.sequence}
                   key={virtualItem.key}
                   role="listitem"
                   style={{ top: virtualItem.start }}
@@ -150,33 +241,69 @@ export function TurnQueue(props: Props) {
                   <button
                     aria-describedby={isOpen ? summaryId : undefined}
                     aria-expanded={isOpen}
+                    aria-current={ariaCurrent}
                     aria-label={summary}
                     className={classes.avatarButton}
-                    onBlur={closeSummary}
+                    onPointerDown={(event) => {
+                      if (event.pointerType === 'touch') {
+                        showSummary({
+                          anchorElement: event.currentTarget,
+                          isTouch: true,
+                          step,
+                          text: summary,
+                        });
+                      }
+                    }}
+                    onBlur={(event) => {
+                      if (
+                        event.relatedTarget instanceof Node &&
+                        summaryRef.current?.contains(event.relatedTarget)
+                      ) {
+                        return;
+                      }
+
+                      closeHoveredSummary();
+                    }}
                     onClick={(event) => {
+                      const isTouch =
+                        window.matchMedia('(hover: none)').matches ||
+                        (event.nativeEvent instanceof PointerEvent &&
+                          event.nativeEvent.pointerType === 'touch');
+
                       showSummary({
                         anchorElement: event.currentTarget,
-                        stepIndex: index,
+                        isTouch,
+                        step,
                         text: summary,
                       });
+
+                      if (
+                        !isTouch &&
+                        step.sequence !== undefined &&
+                        history !== undefined
+                      ) {
+                        history.onSelect(step.sequence);
+                      }
                     }}
                     onFocus={(event) => {
                       showSummary({
                         anchorElement: event.currentTarget,
-                        stepIndex: index,
+                        step,
                         text: summary,
                       });
                     }}
                     onMouseEnter={(event) => {
-                      showSummary({
+                      if (isDragging) {
+                        return;
+                      }
+
+                      showHoveredSummary({
                         anchorElement: event.currentTarget,
-                        stepIndex: index,
+                        step,
                         text: summary,
                       });
                     }}
-                    onMouseLeave={(event) => {
-                      closeHoveredSummary(event.currentTarget);
-                    }}
+                    onMouseLeave={closeHoveredSummary}
                     title={summary}
                     type="button"
                   >
@@ -187,6 +314,11 @@ export function TurnQueue(props: Props) {
                         <img alt="" src={getActionIcon(step.action)} />
                       </span>
                     ) : null}
+                    {isSelected ? (
+                      <span aria-hidden="true" className={classes.viewingBadge}>
+                        <img alt="" src={VIEWING} />
+                      </span>
+                    ) : null}
                   </button>
                 </div>
               );
@@ -194,30 +326,80 @@ export function TurnQueue(props: Props) {
           </div>
         </div>
 
-        <span
-          aria-hidden="true"
+        <button
+          aria-label={t('scrollDown')}
           className={classes.ornament}
           data-edge="bottom"
+          disabled={!canScrollDown}
+          onClick={handleBottomOrnamentClick}
+          type="button"
         >
           <img alt="" src={bottomOrnament} />
-        </span>
+        </button>
+
+        {showNow && history !== undefined ? (
+          <CurrentTurnAnchor
+            error={history.error}
+            onPause={history.onPause}
+            onPlay={history.onPlay}
+            onReturnToLive={history.onReturnToLive}
+            onRetry={history.onRetry}
+            profile={getProfile(
+              view.currentPlayerId ?? steps.at(-1)?.playerId ?? ''
+            )}
+            status={history.status}
+            turnNumber={currentTurnNumber}
+            viewedTurnNumber={history.moveNumber}
+          />
+        ) : null}
       </aside>
 
       {openSummary !== null && summaryPosition !== null
         ? createPortal(
-            <span
+            <div
               className={classes.summary}
               id={summaryId}
-              role="status"
+              onBlur={(event) => {
+                if (
+                  event.relatedTarget instanceof Node &&
+                  (summaryRef.current?.contains(event.relatedTarget) ||
+                    openSummary.anchorElement.contains(event.relatedTarget))
+                ) {
+                  return;
+                }
+                closeHoveredSummary();
+              }}
+              onMouseEnter={keepSummaryOpen}
+              onMouseLeave={closeHoveredSummary}
+              ref={summaryRef}
               style={getSummaryStyle(summaryPosition)}
             >
-              {openSummary.text}
-            </span>,
+              {openSummary.step.sequence === undefined ? (
+                <span className={classes.simpleSummary} role="status">
+                  {openSummary.text}
+                </span>
+              ) : (
+                <TurnHistoryDetail
+                  eventSequence={view.lastEventSequence}
+                  gameId={gameId}
+                  onClose={dismissSummary}
+                  onView={onViewSummary}
+                  profile={getProfile(openSummary.step.playerId)}
+                  sequence={openSummary.step.sequence}
+                  userId={userId}
+                />
+              )}
+            </div>,
             document.body
           )
         : null}
     </>
   );
+
+  function handleViewSummary(sequence: number): void {
+    closeSummary();
+    history?.onSelect(sequence);
+  }
 
   function getProfile(playerId: string): LobbyGamePlayer {
     const profile = playerProfiles.find((item) => item.id === playerId);

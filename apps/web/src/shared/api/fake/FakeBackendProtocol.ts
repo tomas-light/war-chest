@@ -12,6 +12,7 @@ export const FAKE_BACKEND_OPERATIONS = [
   'game.confirmCardChoice',
   'game.confirmTurnDraft',
   'game.get',
+  'game.getEvents',
   'game.getTurnDraft',
   'game.join',
   'game.leave',

@@ -6,6 +6,10 @@ export {
   useGameQuery,
 } from './api/useGameQuery';
 export { useGameTurnHistoryQuery } from './api/useGameTurnHistoryQuery';
+export {
+  getGameEventsQueryOptions,
+  useGameEventsQuery,
+} from './api/useGameEventsQuery';
 export { useGameConnection } from './api/useGameConnection';
 export { useLobbyGamesConnection } from './api/useLobbyGamesConnection';
 export {

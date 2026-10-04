@@ -12,6 +12,26 @@ export interface WarChestResources {
       sessionErrorTitle: '';
     };
   };
+  'entities/game-assets': {
+    units: {
+      archer: '';
+      berserker: '';
+      cavalry: '';
+      crossbowman: '';
+      ensign: '';
+      footman: '';
+      knight: '';
+      lancer: '';
+      lightCavalry: '';
+      marshal: '';
+      mercenary: '';
+      pikeman: '';
+      royalGuard: '';
+      scout: '';
+      swordsman: '';
+      warriorPriest: '';
+    };
+  };
   'entities/user': {
     UserAvatar: {
       label: '{{userName}}';
@@ -657,10 +677,48 @@ export interface WarChestResources {
     };
   };
   'widgets/turn-queue': {
+    CurrentTurnAnchor: {
+      error: '';
+      loading: '';
+      now: '';
+      pause: '';
+      paused: '';
+      play: '';
+      progress: '{{from}} {{to}}';
+      retry: '';
+      returnToLive: '';
+      turn: '{{turnNumber}}';
+    };
+    TurnHistoryDetail: {
+      actions: {
+        deploy: '';
+        move: '';
+        pass: '';
+        recruit: '';
+      };
+      close: '';
+      label: '';
+      loading: '';
+      metadata: '{{round}} {{turn}}';
+      results: {
+        deploy: '{{cell}} {{unit}}';
+        move: '{{cell}} {{unit}}';
+        pass: '';
+        recruit: '{{unit}}';
+      };
+      retry: '';
+      showTurn: '';
+      teams: {
+        black: '';
+        white: '';
+      };
+      unavailable: '';
+    };
     TurnQueue: {
       label: '';
       loadPrevious: '';
       playerFallback: '{{playerId}}';
+      scrollDown: '';
       summary: {
         current: {
           ban: '{{playerName}}';
@@ -701,6 +759,22 @@ export interface WarChestTranslationParameters {
   'app/router.AppRouter.retry': null;
   'app/router.AppRouter.sessionErrorDescription': null;
   'app/router.AppRouter.sessionErrorTitle': null;
+  'entities/game-assets.units.archer': null;
+  'entities/game-assets.units.berserker': null;
+  'entities/game-assets.units.cavalry': null;
+  'entities/game-assets.units.crossbowman': null;
+  'entities/game-assets.units.ensign': null;
+  'entities/game-assets.units.footman': null;
+  'entities/game-assets.units.knight': null;
+  'entities/game-assets.units.lancer': null;
+  'entities/game-assets.units.lightCavalry': null;
+  'entities/game-assets.units.marshal': null;
+  'entities/game-assets.units.mercenary': null;
+  'entities/game-assets.units.pikeman': null;
+  'entities/game-assets.units.royalGuard': null;
+  'entities/game-assets.units.scout': null;
+  'entities/game-assets.units.swordsman': null;
+  'entities/game-assets.units.warriorPriest': null;
   'entities/user.UserAvatar.label': { userName: unknown };
   'entities/user.UserProfileLink.label': { userName: unknown };
   'features/auth-login.CodeStage.changeEmail': null;
@@ -1204,9 +1278,49 @@ export interface WarChestTranslationParameters {
   'widgets/session-navigation.SessionNavigation.mainNavigation': null;
   'widgets/session-navigation.SessionNavigation.profile': null;
   'widgets/session-navigation.SessionNavigation.sessionPending': null;
+  'widgets/turn-queue.CurrentTurnAnchor.error': null;
+  'widgets/turn-queue.CurrentTurnAnchor.loading': null;
+  'widgets/turn-queue.CurrentTurnAnchor.now': null;
+  'widgets/turn-queue.CurrentTurnAnchor.pause': null;
+  'widgets/turn-queue.CurrentTurnAnchor.paused': null;
+  'widgets/turn-queue.CurrentTurnAnchor.play': null;
+  'widgets/turn-queue.CurrentTurnAnchor.progress': {
+    from: unknown;
+    to: unknown;
+  };
+  'widgets/turn-queue.CurrentTurnAnchor.retry': null;
+  'widgets/turn-queue.CurrentTurnAnchor.returnToLive': null;
+  'widgets/turn-queue.CurrentTurnAnchor.turn': { turnNumber: unknown };
+  'widgets/turn-queue.TurnHistoryDetail.actions.deploy': null;
+  'widgets/turn-queue.TurnHistoryDetail.actions.move': null;
+  'widgets/turn-queue.TurnHistoryDetail.actions.pass': null;
+  'widgets/turn-queue.TurnHistoryDetail.actions.recruit': null;
+  'widgets/turn-queue.TurnHistoryDetail.close': null;
+  'widgets/turn-queue.TurnHistoryDetail.label': null;
+  'widgets/turn-queue.TurnHistoryDetail.loading': null;
+  'widgets/turn-queue.TurnHistoryDetail.metadata': {
+    round: unknown;
+    turn: unknown;
+  };
+  'widgets/turn-queue.TurnHistoryDetail.results.deploy': {
+    cell: unknown;
+    unit: unknown;
+  };
+  'widgets/turn-queue.TurnHistoryDetail.results.move': {
+    cell: unknown;
+    unit: unknown;
+  };
+  'widgets/turn-queue.TurnHistoryDetail.results.pass': null;
+  'widgets/turn-queue.TurnHistoryDetail.results.recruit': { unit: unknown };
+  'widgets/turn-queue.TurnHistoryDetail.retry': null;
+  'widgets/turn-queue.TurnHistoryDetail.showTurn': null;
+  'widgets/turn-queue.TurnHistoryDetail.teams.black': null;
+  'widgets/turn-queue.TurnHistoryDetail.teams.white': null;
+  'widgets/turn-queue.TurnHistoryDetail.unavailable': null;
   'widgets/turn-queue.TurnQueue.label': null;
   'widgets/turn-queue.TurnQueue.loadPrevious': null;
   'widgets/turn-queue.TurnQueue.playerFallback': { playerId: unknown };
+  'widgets/turn-queue.TurnQueue.scrollDown': null;
   'widgets/turn-queue.TurnQueue.summary.current.ban': { playerName: unknown };
   'widgets/turn-queue.TurnQueue.summary.current.deploy': {
     playerName: unknown;

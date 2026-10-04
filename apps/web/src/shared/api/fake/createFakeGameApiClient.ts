@@ -11,6 +11,7 @@ export function createFakeGameApiClient(): GameApi {
     confirmTurnDraft: client.confirmTurnDraft,
     createGame: client.createGame,
     getGame: client.getGame,
+    getGameEvents: client.getGameEvents,
     getTurnDraft: client.getTurnDraft,
     joinGame: client.joinGame,
     leaveGame: client.leaveGame,

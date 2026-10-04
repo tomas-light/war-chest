@@ -41,6 +41,14 @@
   cursor: not-allowed;
 }
 
+.action:disabled:after {
+  position: absolute;
+  background: url('../assets/disabledPattern.svg') repeat;
+  content: '';
+  inset: 0;
+  pointer-events: none;
+}
+
 .action:disabled .actionContent {
   opacity: 0.72;
 }

@@ -371,6 +371,10 @@ async function dispatchRequest(
     return gameApi.getGame(readGameId(request.payload));
   }
 
+  if (request.operation === 'game.getEvents') {
+    return gameApi.getGameEvents(readGameId(request.payload));
+  }
+
   if (request.operation === 'game.listLobby') {
     requireNullPayload(request.payload);
     return gameApi.listLobbyGames();

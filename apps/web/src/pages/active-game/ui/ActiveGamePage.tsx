@@ -24,7 +24,6 @@ import { useGameRuntime } from '#/widgets/game-runtime';
 import { type HandCoinClickInput, ActiveGameTable } from '#/widgets/game-table';
 import { TurnQueue } from '#/widgets/turn-queue';
 import { ActiveGameHeader } from './ActiveGameHeader';
-import { ActiveGameSidebar } from './ActiveGameSidebar';
 import { CardSelectionPage } from './CardSelectionPage';
 import { getCoinWheelActions } from './getCoinWheelActions';
 import classes from './ActiveGamePage.module.scss';
@@ -53,8 +52,10 @@ export function ActiveGamePage() {
     isGamePending,
     liveState,
     playerProfiles,
+    replay,
     synchronizationStatus,
     userId,
+    viewedState,
   } = useGameRuntime();
 
   const {
@@ -111,10 +112,27 @@ export function ActiveGamePage() {
     return <Navigate replace to={getGamePageUrl(gameId)} />;
   }
 
-  const activeGameView = liveState;
+  const activeGameView = viewedState ?? liveState;
+  const isViewingHistory =
+    activeGameView.lastEventSequence !== liveState.lastEventSequence;
+  const isReadOnly =
+    isViewingHistory ||
+    replay.status === 'loading' ||
+    replay.status === 'error';
+  const historyControls = {
+    error: replay.error === null ? null : getApiErrorMessage(replay.error),
+    moveNumber: activeGameView.moveCount,
+    sequence: activeGameView.lastEventSequence,
+    status: replay.status,
+    onPause: replay.pauseReplay,
+    onPlay: replay.playReplay,
+    onReturnToLive: returnToLive,
+    onRetry: replay.retryReplay,
+    onSelect: selectHistory,
+  };
 
   const targetSelection =
-    selectedTarget?.eventSequence === liveState.lastEventSequence
+    !isReadOnly && selectedTarget?.eventSequence === liveState.lastEventSequence
       ? selectedTarget
       : null;
 
@@ -125,16 +143,18 @@ export function ActiveGamePage() {
 
   const liveEventSequence = liveState.lastEventSequence;
   const currentSelectedCoin =
-    selectedCoin?.eventSequence === liveState.lastEventSequence
+    !isReadOnly && selectedCoin?.eventSequence === liveState.lastEventSequence
       ? selectedCoin
       : null;
 
   const activeDraft =
-    draft?.baseVersion === liveState.lastEventSequence ? draft : null;
+    !isReadOnly && draft?.baseVersion === liveState.lastEventSequence
+      ? draft
+      : null;
 
   const displayedView =
     activeDraft === null
-      ? liveState
+      ? activeGameView
       : { ...liveState, battlefield: activeDraft.projectedBattlefield };
 
   const targetOptions =
@@ -165,7 +185,7 @@ export function ActiveGamePage() {
           [classes.selectionPage]: liveState.status === 'cardSelection',
         })}
       >
-        {liveState.status === 'finished' ? (
+        {liveState.status === 'finished' && !isReadOnly ? (
           <>
             <ActiveGameHeader
               gameId={gameId}
@@ -175,27 +195,32 @@ export function ActiveGamePage() {
               view={liveState}
             />
 
-            <div className={classes.finishedLayout}>
-              <ActiveGameTable
-                onHandCoinClick={handleHandCoinClick}
-                playerProfiles={playerProfiles}
-                selectedCoinIndex={null}
-                userId={userId}
-                view={liveState}
-              />
-              <ActiveGameSidebar
+            <div className={classes.stageLayout}>
+              <TurnQueue
                 gameId={gameId}
-                onViewChanged={hydrateGame}
+                history={historyControls}
+                playerProfiles={playerProfiles}
                 userId={userId}
                 view={liveState}
               />
+              <div className={classes.layout}>
+                <ActiveGameTable
+                  onHandCoinClick={handleHandCoinClick}
+                  playerProfiles={playerProfiles}
+                  selectedCoinIndex={null}
+                  userId={userId}
+                  view={liveState}
+                />
+              </div>
             </div>
           </>
         ) : (
           <div className={classes.stageLayout}>
             <TurnQueue
               gameId={gameId}
+              history={historyControls}
               playerProfiles={playerProfiles}
+              userId={userId}
               view={liveState}
             />
             {liveState.status === 'cardSelection' ? (
@@ -223,6 +248,7 @@ export function ActiveGamePage() {
                   onRecruitUnitClick={handleRecruitUnitClick}
                   playerProfiles={playerProfiles}
                   recruitUnits={recruitUnits}
+                  readOnly={isReadOnly}
                   selectedCoinIndex={currentSelectedCoin?.index ?? null}
                   selectedUnitId={targetSelection?.battlefieldUnitId}
                   userId={userId}
@@ -270,7 +296,7 @@ export function ActiveGamePage() {
         </section>
       )}
 
-      {draftError !== null && (
+      {!isReadOnly && draftError !== null && (
         <p className={classes.draftError} role="alert">
           {getApiErrorMessage(draftError)}
         </p>
@@ -404,7 +430,7 @@ export function ActiveGamePage() {
   }
 
   function renderHeaderContextAction() {
-    if (!isParticipant || activeGameView.status === 'finished') {
+    if (isReadOnly || !isParticipant || activeGameView.status === 'finished') {
       return undefined;
     }
 
@@ -446,7 +472,12 @@ export function ActiveGamePage() {
   }
 
   function handleHandCoinClick(input: HandCoinClickInput): void {
-    if (activeDraft !== null || isDraftPending || isDraftLoading) {
+    if (
+      isReadOnly ||
+      activeDraft !== null ||
+      isDraftPending ||
+      isDraftLoading
+    ) {
       return;
     }
 
@@ -470,6 +501,18 @@ export function ActiveGamePage() {
 
   function closeGameActions(): void {
     setSelectedCoin(null);
+  }
+
+  function selectHistory(sequence: number): void {
+    setSelectedCoin(null);
+    setTargetSelection(null);
+    void replay.viewHistory(sequence);
+  }
+
+  function returnToLive(): void {
+    setSelectedCoin(null);
+    setTargetSelection(null);
+    replay.returnToLive();
   }
 
   function beginTargetSelection(

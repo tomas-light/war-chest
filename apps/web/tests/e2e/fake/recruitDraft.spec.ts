@@ -1,6 +1,7 @@
 import { type Locator, type Page, expect, test } from '@playwright/test';
 import type {
   CreateGameRequest,
+  GameEventsResponse,
   GameResponse,
   JoinGameRequest,
   PassTurnRequest,
@@ -13,9 +14,14 @@ type FakeApiModule = {
   createFakeGameApi(this: void, userId: string): SetupGameApi;
 };
 
+interface FakeClientModule {
+  createFakeGameApiClient(this: void): SetupGameApi;
+}
+
 type SetupGameApi = {
   createGame(request: CreateGameRequest): Promise<GameResponse>;
   getGame(gameId: string): Promise<GameResponse>;
+  getGameEvents(gameId: string): Promise<GameEventsResponse>;
   joinGame(gameId: string, request: JoinGameRequest): Promise<GameResponse>;
   passTurn(gameId: string, request: PassTurnRequest): Promise<GameResponse>;
   startGame(gameId: string, request: StartGameRequest): Promise<GameResponse>;
@@ -375,6 +381,7 @@ test('recruits, deploys and moves through private drafts in fake API', async ({
   await expect(movingUnit).toHaveAttribute('data-cell-id', destinationCell);
   await movePage.reload();
   await expect(movingUnit).toHaveAttribute('data-cell-id', destinationCell);
+
   await expect(
     movePage.getByRole('region', { name: 'Черновик хода' })
   ).toBeVisible();
@@ -400,6 +407,137 @@ test('recruits, deploys and moves through private drafts in fake API', async ({
   ).toBeVisible();
   await movePage.reload();
   await expect(movingUnit).toHaveAttribute('data-cell-id', destinationCell);
+
+  const historySequences = await movePage.evaluate(
+    async ({ gameId, playerId }) => {
+      const moduleUrl = '/src/shared/api/fake/createFakeGameApi.ts';
+      const module: unknown = await import(moduleUrl);
+      const { createFakeGameApi } = module as FakeApiModule;
+      const history = await createFakeGameApi(playerId).getGameEvents(gameId);
+      const turns = history.events.filter(
+        (event) =>
+          event.type === 'TurnPassed' || event.type === 'TurnActionPerformed'
+      );
+      const move = turns.at(-1);
+      const previous = turns.at(-2);
+
+      if (move === undefined || previous === undefined) {
+        throw new Error(
+          'Move history must contain the move and its preceding turn.'
+        );
+      }
+
+      return { move: move.sequence, previous: previous.sequence };
+    },
+    { gameId, playerId: movementOpportunity.playerId }
+  );
+  const queue = movePage.getByRole('complementary', { name: 'Очередь ходов' });
+  const moveStep = queue.locator(
+    `[data-sequence="${historySequences.move}"] button`
+  );
+  const previousStep = queue.locator(
+    `[data-sequence="${historySequences.previous}"] button`
+  );
+
+  for (const width of [1440, 390, 320]) {
+    await movePage.setViewportSize({ height: 900, width });
+    const tableBefore = await movePage
+      .getByRole('region', { name: 'Игровое поле' })
+      .boundingBox();
+    await moveStep.focus();
+    const detail = movePage.getByRole('dialog', { name: 'Детали хода' });
+    await expect(
+      detail.getByText(`${movementOpportunity.from} → ${destinationCell}`, {
+        exact: true,
+      })
+    ).toBeVisible();
+    const tableAfter = await movePage
+      .getByRole('region', { name: 'Игровое поле' })
+      .boundingBox();
+    expect(tableAfter).toEqual(tableBefore);
+    const detailBounds = await detail.boundingBox();
+    expect(detailBounds?.x).toBeGreaterThan(0);
+    expect(
+      (detailBounds?.x ?? 0) + (detailBounds?.width ?? 0)
+    ).toBeLessThanOrEqual(width);
+    await movePage.screenshot({
+      path: `test-results/history-detail-${width}.png`,
+      fullPage: true,
+    });
+    await movePage.keyboard.press('Escape');
+    await expect(detail).toHaveCount(0);
+    await expect(moveStep).toBeFocused();
+    if (width === 1440) {
+      await previousStep.hover();
+    } else {
+      await previousStep.focus();
+    }
+
+    await expect(detail).toBeVisible();
+    await previousStep.click();
+    await expect(previousStep).toHaveAttribute('aria-current', 'step');
+    await expect(previousStep).toHaveAttribute('aria-expanded', 'true');
+    await expect(detail).toBeVisible();
+    await expect(movingUnit).toHaveAttribute(
+      'data-cell-id',
+      movementOpportunity.from
+    );
+    await expect(
+      movePage.getByRole('button', { name: /^(Жетон |Королевский жетон )/ })
+    ).toHaveCount(0);
+    await expect(movePage.getByText('СЕЙЧАС', { exact: true })).toBeVisible();
+    await movePage.screenshot({
+      path: `test-results/history-review-${width}.png`,
+      fullPage: true,
+    });
+    await movePage
+      .getByRole('button', { name: 'Вернуться к текущему ходу', exact: true })
+      .focus();
+    await movePage.keyboard.press('Enter');
+    await expect(movingUnit).toHaveAttribute('data-cell-id', destinationCell);
+    await expect(movePage.getByText('СЕЙЧАС', { exact: true })).toHaveCount(0);
+  }
+
+  await movePage.setViewportSize({ height: 900, width: 1440 });
+  await previousStep.click();
+  const newTurnSequence = await observingPage.evaluate(async (gameId) => {
+    const moduleUrl = '/src/shared/api/fake/createFakeGameApiClient.ts';
+    const module: unknown = await import(moduleUrl);
+    const { createFakeGameApiClient } = module as FakeClientModule;
+    const client = createFakeGameApiClient();
+    const game = await client.getGame(gameId);
+    const passed = await client.passTurn(gameId, {
+      coinIndex: 0,
+      commandId: crypto.randomUUID(),
+      expectedVersion: game.view.lastEventSequence,
+    });
+
+    return passed.view.lastEventSequence;
+  }, gameId);
+  await expect(
+    queue.locator(`[data-sequence="${newTurnSequence}"]`)
+  ).toBeVisible();
+  await expect(movingUnit).toHaveAttribute(
+    'data-cell-id',
+    movementOpportunity.from
+  );
+  await expect(previousStep).toHaveAttribute('aria-current', 'step');
+  await movePage
+    .getByRole('button', { name: 'Проиграть историю до текущего хода' })
+    .focus();
+  await movePage.keyboard.press('Enter');
+  await movePage.getByRole('button', { name: 'Приостановить replay' }).click();
+  await expect(movePage.getByText('Пауза', { exact: true })).toBeVisible();
+  await movePage.waitForTimeout(1200);
+  await expect(movingUnit).toHaveAttribute(
+    'data-cell-id',
+    movementOpportunity.from
+  );
+  await movePage
+    .getByRole('button', { name: 'Проиграть историю до текущего хода' })
+    .click();
+  await expect(movingUnit).toHaveAttribute('data-cell-id', destinationCell);
+  await expect(movePage.getByText('СЕЙЧАС', { exact: true })).toHaveCount(0);
 
   async function chooseMovement(): Promise<void> {
     await movePage

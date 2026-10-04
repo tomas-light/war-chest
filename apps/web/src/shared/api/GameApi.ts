@@ -4,6 +4,7 @@ import {
   type ConfirmCardChoiceRequest,
   type ConfirmTurnDraftRequest,
   type CreateGameRequest,
+  type GameEventsResponse,
   type GameResponse,
   type GameTurnDraftResponse,
   type GameTurnHistoryQuery,
@@ -18,6 +19,7 @@ import {
   type SurrenderGameRequest,
   type SwapPlayerPositionsRequest,
   type UpdateGameSettingsRequest,
+  gameEventsResponseSchema,
   gameResponseSchema,
   gameTurnDraftResponseSchema,
   gameTurnHistoryResponseSchema,
@@ -69,6 +71,7 @@ export interface GameApi {
   ): Promise<GameResponse>;
   createGame(this: void, request: CreateGameRequest): Promise<GameResponse>;
   getGame(this: void, gameId: string): Promise<GameResponse>;
+  getGameEvents(this: void, gameId: string): Promise<GameEventsResponse>;
   getTurnDraft(this: void, gameId: string): Promise<GameTurnDraftResponse>;
   joinGame(
     this: void,
@@ -126,6 +129,7 @@ export function createRealGameApi(): GameApi {
     confirmTurnDraft,
     createGame,
     getGame,
+    getGameEvents,
     getTurnDraft,
     joinGame,
     leaveGame,
@@ -227,6 +231,14 @@ export function createRealGameApi(): GameApi {
       invalidResponseMessage: 'The server returned an invalid game state.',
       schema: gameResponseSchema,
       url: `${GAMES_API_URL}/${gameId}`,
+    });
+  }
+
+  function getGameEvents(gameId: string): Promise<GameEventsResponse> {
+    return requestJson({
+      invalidResponseMessage: 'The server returned invalid game events.',
+      schema: gameEventsResponseSchema,
+      url: `${GAMES_API_URL}/${gameId}/events?afterSequence=0`,
     });
   }
 

@@ -11,6 +11,7 @@ import {
   deleteFakeDatabase,
   FAKE_SEED_IDENTIFIERS,
 } from '@war-chest/fake-database';
+import { restoreView } from '@war-chest/game-engine';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { createFakeGameApi } from './createFakeGameApi';
 import { getFakeDatabase } from './getFakeDatabase';
@@ -245,6 +246,64 @@ describe('fake game API lifecycle', () => {
 
     expect(privateDiscard).toEqual([{ coin: selectedCoin, faceUp: false }]);
     expect(publicDiscard).toEqual([{ coin: null, faceUp: false }]);
+  });
+
+  test('history reconstructs personalized hands and keeps an opponent pass private', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.999);
+    const firstPlayerApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.firstUser);
+    const secondPlayerApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.secondUser);
+    let game = await firstPlayerApi.createGame(CREATE_GAME_REQUEST);
+    game = await firstPlayerApi.joinGame(game.gameId, {
+      commandId: FIRST_JOIN_COMMAND_ID,
+      expectedVersion: game.view.lastEventSequence,
+      seat: 1,
+      team: 'white',
+    });
+    game = await secondPlayerApi.joinGame(game.gameId, {
+      commandId: SECOND_JOIN_COMMAND_ID,
+      expectedVersion: game.view.lastEventSequence,
+      seat: 1,
+      team: 'black',
+    });
+    game = await firstPlayerApi.startGame(game.gameId, {
+      commandId: START_COMMAND_ID,
+      expectedVersion: game.view.lastEventSequence,
+    });
+    const currentPlayerApi = createFakeGameApi(game.view.currentPlayerId ?? '');
+    const currentPlayerGame = await currentPlayerApi.getGame(game.gameId);
+    await currentPlayerApi.passTurn(game.gameId, {
+      coinIndex: 0,
+      commandId: PASS_COMMAND_ID,
+      expectedVersion: currentPlayerGame.view.lastEventSequence,
+    });
+
+    const opponentId =
+      game.view.currentPlayerId === FAKE_SEED_IDENTIFIERS.firstUser
+        ? FAKE_SEED_IDENTIFIERS.secondUser
+        : FAKE_SEED_IDENTIFIERS.firstUser;
+    const opponentApi = createFakeGameApi(opponentId);
+    const opponentHistory = await opponentApi.getGameEvents(game.gameId);
+    const ownHistory = await currentPlayerApi.getGameEvents(game.gameId);
+    const spectatorApi = createFakeGameApi(FAKE_SEED_IDENTIFIERS.thirdUser);
+    const spectatorHistory = await spectatorApi.getGameEvents(game.gameId);
+
+    expect(restoreView(ownHistory.events)).toEqual(
+      (await currentPlayerApi.getGame(game.gameId)).view
+    );
+    expect(restoreView(opponentHistory.events)).toEqual(
+      (await opponentApi.getGame(game.gameId)).view
+    );
+    expect(restoreView(spectatorHistory.events)).toEqual(
+      (await spectatorApi.getGame(game.gameId)).view
+    );
+    expect(opponentHistory.events.at(-1)).toMatchObject({
+      type: 'TurnPassed',
+      payload: { coin: null },
+    });
+    expect(spectatorHistory.events.at(-1)).toMatchObject({
+      type: 'TurnPassed',
+      payload: { coin: null },
+    });
   });
 
   test('persists a private recruit draft and commits one revealed supply coin', async () => {
