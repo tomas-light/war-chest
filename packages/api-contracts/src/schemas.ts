@@ -12,9 +12,11 @@ import {
 import { z } from 'zod';
 import type {
   ApiError,
+  CancelTurnDraftRequest,
   CompleteCardSelectionRequest,
   CompleteEmailRegistrationRequest,
   ConfirmCardChoiceRequest,
+  ConfirmTurnDraftRequest,
   CreateGameRequest,
   EmailCodeRequestedResponse,
   GameCommandMessage,
@@ -26,6 +28,7 @@ import type {
   GameResponse,
   GameSnapshotMessage,
   GameSyncMessage,
+  GameTurnDraftResponse,
   GameTurnHistoryResponse,
   JoinGameRequest,
   LeaveGameRequest,
@@ -35,6 +38,7 @@ import type {
   PassTurnRequest,
   PublicUser,
   RequestEmailCodeRequest,
+  SaveTurnDraftRequest,
   SelectAvatarPresetRequest,
   SessionResponse,
   StartGameRequest,
@@ -72,6 +76,17 @@ const gameCoinSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('unit'), unitId: unitIdSchema }).strict(),
 ]);
 const cellIdSchema = z.enum(TEAM_CELL_IDS);
+const turnActionSchema = z.discriminatedUnion('type', [
+  z.object({ cellId: cellIdSchema, type: z.literal('deploy') }).strict(),
+  z
+    .object({
+      battlefieldUnitId: z.string().min(1),
+      cellId: cellIdSchema,
+      type: z.literal('move'),
+    })
+    .strict(),
+  z.object({ type: z.literal('recruit'), unitId: unitIdSchema }).strict(),
+]);
 const gameFormatSchema = z.enum(GAME_FORMATS);
 const cardSelectionModeSchema = z.enum(CARD_SELECTION_MODES);
 const gameExpansionSchema = z.enum(GAME_EXPANSIONS);
@@ -246,7 +261,7 @@ export const gameTurnHistoryResponseSchema: z.ZodType<GameTurnHistoryResponse> =
         .array(
           z
             .object({
-              action: z.literal('pass'),
+              action: z.enum(['deploy', 'move', 'pass', 'recruit']),
               playerId: z.string(),
               sequence: z.number().int().positive(),
             })
@@ -333,6 +348,28 @@ export const passTurnRequestSchema: z.ZodType<PassTurnRequest> = z
     commandId: z.uuid(),
     expectedVersion: z.number().int().nonnegative(),
   })
+  .strict();
+
+export const saveTurnDraftRequestSchema: z.ZodType<SaveTurnDraftRequest> = z
+  .object({
+    action: turnActionSchema,
+    coinIndex: z.number().int().nonnegative(),
+    expectedVersion: z.number().int().nonnegative(),
+  })
+  .strict();
+
+export const confirmTurnDraftRequestSchema: z.ZodType<ConfirmTurnDraftRequest> =
+  z
+    .object({
+      commandId: z.uuid(),
+      draftId: z.uuid(),
+      expectedVersion: z.number().int().nonnegative(),
+      revision: z.number().int().positive(),
+    })
+    .strict();
+
+export const cancelTurnDraftRequestSchema: z.ZodType<CancelTurnDraftRequest> = z
+  .object({ draftId: z.uuid(), revision: z.number().int().positive() })
   .strict();
 
 const gameViewPlayerSchema = z
@@ -423,6 +460,22 @@ const gameViewBattlefieldSchema = z
       .readonly(),
     round: z.number().int().positive(),
     units: z.array(battlefieldUnitSchema).readonly(),
+  })
+  .strict();
+
+export const gameTurnDraftResponseSchema: z.ZodType<GameTurnDraftResponse> = z
+  .object({
+    draft: z
+      .object({
+        action: turnActionSchema,
+        baseVersion: z.number().int().nonnegative(),
+        coinIndex: z.number().int().nonnegative(),
+        id: z.uuid(),
+        projectedBattlefield: gameViewBattlefieldSchema,
+        revision: z.number().int().positive(),
+      })
+      .strict()
+      .nullable(),
   })
   .strict();
 
@@ -647,6 +700,21 @@ const turnPassedViewEventSchema = eventMetadataSchema
     type: z.literal('TurnPassed'),
   })
   .strict();
+const turnActionPerformedViewEventSchema = eventMetadataSchema
+  .extend({
+    payload: z
+      .object({
+        action: turnActionSchema,
+        battlefield: gameViewBattlefieldSchema,
+        coin: gameCoinSchema.nullable(),
+        moveNumber: z.number().int().positive(),
+        nextPlayerId: z.string(),
+        playerId: z.string(),
+      })
+      .strict(),
+    type: z.literal('TurnActionPerformed'),
+  })
+  .strict();
 const gameFinishedViewEventSchema = eventMetadataSchema
   .extend({
     payload: z.object({ winnerTeam: gameTeamSchema }).strict(),
@@ -674,6 +742,7 @@ export const gameViewEventSchema = z.discriminatedUnion('type', [
   gameStartedViewEventSchema,
   testMovePerformedViewEventSchema,
   turnPassedViewEventSchema,
+  turnActionPerformedViewEventSchema,
   gameFinishedViewEventSchema,
   viewSequenceAdvancedEventSchema,
 ]);
@@ -757,6 +826,13 @@ const gameCommandSchema = z.discriminatedUnion('type', [
     .object({
       coinIndex: z.number().int().nonnegative(),
       type: z.literal('PassTurn'),
+    })
+    .strict(),
+  z
+    .object({
+      action: turnActionSchema,
+      coinIndex: z.number().int().nonnegative(),
+      type: z.literal('PerformTurnAction'),
     })
     .strict(),
 ]);

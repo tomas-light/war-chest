@@ -1,8 +1,14 @@
-import type { GameCoin } from '@war-chest/game-engine';
+import {
+  type CellId,
+  type GameCoin,
+  type TurnAction,
+  type UnitId,
+  getTurnActionOptions,
+} from '@war-chest/game-engine';
 import clsx from 'clsx';
 import { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router';
-import { GameActions } from '#/features/game-actions';
+import { GameActions, useTurnDraft } from '#/features/game-actions';
 import { SurrenderGameButton } from '#/features/surrender-game';
 import { useApiErrorMessage } from '#/shared/api';
 import { appRoutes, getGamePageUrl } from '#/shared/config';
@@ -27,10 +33,16 @@ export function ActiveGamePage() {
   const { t } = useTranslation('pages/active-game', {
     keyPrefix: 'ActiveGamePage',
   });
+  const { t: tUnit } = useTranslation('pages/active-game', {
+    keyPrefix: 'CardSelectionPage',
+  });
 
   const getApiErrorMessage = useApiErrorMessage();
   const navigate = useNavigate();
   const [selectedCoin, setSelectedCoin] = useState<SelectedCoin | null>(null);
+  const [selectedTarget, setTargetSelection] = useState<TargetSelection | null>(
+    null
+  );
 
   const {
     connectionError,
@@ -44,6 +56,21 @@ export function ActiveGamePage() {
     synchronizationStatus,
     userId,
   } = useGameRuntime();
+
+  const {
+    cancelDraft,
+    confirmDraft,
+    draft,
+    error: draftError,
+    isLoading: isDraftLoading,
+    isPending: isDraftPending,
+    saveDraft,
+  } = useTurnDraft({
+    gameId,
+    onConfirmed: hydrateGame,
+    userId,
+    view: liveState,
+  });
 
   if (gameId === '') {
     return <GameError message={t('notSelected')} onBack={openLobby} />;
@@ -85,15 +112,41 @@ export function ActiveGamePage() {
   }
 
   const activeGameView = liveState;
+
+  const targetSelection =
+    selectedTarget?.eventSequence === liveState.lastEventSequence
+      ? selectedTarget
+      : null;
+
   const currentPlayer = activeGameView.players.find(
     (player) => player.id === userId
   );
   const isParticipant = currentPlayer !== undefined;
+
   const liveEventSequence = liveState.lastEventSequence;
   const currentSelectedCoin =
     selectedCoin?.eventSequence === liveState.lastEventSequence
       ? selectedCoin
       : null;
+
+  const activeDraft =
+    draft?.baseVersion === liveState.lastEventSequence ? draft : null;
+
+  const displayedView =
+    activeDraft === null
+      ? liveState
+      : { ...liveState, battlefield: activeDraft.projectedBattlefield };
+
+  const targetOptions =
+    targetSelection === null
+      ? null
+      : getTurnActionOptions(liveState, userId, targetSelection.coinIndex);
+
+  const deployCells = getDeployCells();
+  const recruitUnits = getRecruitUnits();
+  const movableUnitIds = getMovableUnitIds();
+  const moveCells = getMoveCells();
+
   const headerContextAction = renderHeaderContextAction();
   const headerStage = getHeaderStage();
 
@@ -106,6 +159,7 @@ export function ActiveGamePage() {
         synchronizationLabel={getSynchronizationLabel()}
         synchronizationState={getSynchronizationState()}
       />
+
       <main
         className={clsx(classes.page, {
           [classes.selectionPage]: liveState.status === 'cardSelection',
@@ -120,6 +174,7 @@ export function ActiveGamePage() {
               userId={userId}
               view={liveState}
             />
+
             <div className={classes.finishedLayout}>
               <ActiveGameTable
                 onHandCoinClick={handleHandCoinClick}
@@ -157,36 +212,166 @@ export function ActiveGamePage() {
             ) : (
               <div className={classes.layout}>
                 <ActiveGameTable
+                  deployCells={deployCells}
+                  moveCells={moveCells}
+                  movableUnitIds={movableUnitIds}
+                  onCancelRecruitSelection={closeTargetSelection}
+                  onDeployCellClick={handleDeployCellClick}
                   onHandCoinClick={handleHandCoinClick}
+                  onMoveCellClick={handleMoveCellClick}
+                  onMoveUnitClick={handleMoveUnitClick}
+                  onRecruitUnitClick={handleRecruitUnitClick}
                   playerProfiles={playerProfiles}
+                  recruitUnits={recruitUnits}
                   selectedCoinIndex={currentSelectedCoin?.index ?? null}
+                  selectedUnitId={targetSelection?.battlefieldUnitId}
                   userId={userId}
-                  view={liveState}
+                  view={displayedView}
                 />
               </div>
             )}
           </div>
         )}
       </main>
-      {currentSelectedCoin === null ? null : (
+
+      {(targetSelection?.type === 'deploy' ||
+        targetSelection?.type === 'move') && (
+        <section aria-label={t('targetTitle')} className={classes.actionPanel}>
+          <strong>{getTargetPrompt()}</strong>
+
+          <Button onClick={closeTargetSelection} variant="secondary">
+            {t('cancelSelection')}
+          </Button>
+        </section>
+      )}
+
+      {activeDraft !== null && (
+        <section aria-label={t('draftTitle')} className={classes.actionPanel}>
+          <strong>{t('draftTitle')}</strong>
+
+          <span>{getDraftDescription(activeDraft.action)}</span>
+
+          <div className={classes.draftControls}>
+            <Button
+              disabled={isDraftPending}
+              onClick={() => confirmDraft(activeDraft)}
+            >
+              {t('confirmTurn')}
+            </Button>
+
+            <Button
+              disabled={isDraftPending}
+              onClick={() => cancelDraft(activeDraft)}
+              variant="secondary"
+            >
+              {t('cancelTurn')}
+            </Button>
+          </div>
+        </section>
+      )}
+
+      {draftError !== null && (
+        <p className={classes.draftError} role="alert">
+          {getApiErrorMessage(draftError)}
+        </p>
+      )}
+
+      {currentSelectedCoin === null ||
+      activeDraft !== null ||
+      targetSelection !== null ||
+      isDraftLoading ? null : (
         <GameActions
           actions={getCoinWheelActions(
             currentSelectedCoin.coin,
             liveState.status === 'active' &&
               liveState.settings.format === 'duel' &&
-              liveState.currentPlayerId === userId
+              liveState.currentPlayerId === userId,
+            getTurnActionOptions(liveState, userId, currentSelectedCoin.index)
           )}
           anchorElement={currentSelectedCoin.anchorElement}
           coin={currentSelectedCoin.coin}
           coinIndex={currentSelectedCoin.index}
+          canMove={
+            getTurnActionOptions(liveState, userId, currentSelectedCoin.index)
+              .moves.length > 0
+          }
           gameId={gameId}
           onClose={closeGameActions}
+          onDeploy={() =>
+            beginTargetSelection('deploy', currentSelectedCoin.index)
+          }
+          onMove={() => beginTargetSelection('move', currentSelectedCoin.index)}
           onPassed={hydrateGame}
+          onRecruit={() =>
+            beginTargetSelection('recruit', currentSelectedCoin.index)
+          }
           view={liveState}
         />
       )}
     </>
   );
+
+  function getDeployCells() {
+    if (targetSelection?.type === 'deploy') {
+      return targetOptions?.deployCells;
+    }
+
+    return undefined;
+  }
+
+  function getRecruitUnits() {
+    if (targetSelection?.type === 'recruit') {
+      return targetOptions?.recruitUnits;
+    }
+
+    return undefined;
+  }
+
+  function getMovableUnitIds() {
+    if (targetSelection?.type === 'move') {
+      return targetOptions?.moves.map((move) => move.battlefieldUnitId);
+    }
+
+    return undefined;
+  }
+
+  function getMoveCells() {
+    if (targetSelection?.type === 'move') {
+      return targetOptions?.moves.find(
+        (move) => move.battlefieldUnitId === targetSelection.battlefieldUnitId
+      )?.cellIds;
+    }
+
+    return undefined;
+  }
+
+  function getTargetPrompt(): string {
+    if (targetSelection?.type === 'deploy') {
+      return t('chooseDeployCell');
+    }
+
+    if (targetSelection?.battlefieldUnitId === null) {
+      return t('chooseMoveUnit');
+    }
+
+    return t('chooseMoveCell');
+  }
+
+  function getDraftDescription(action: TurnAction): string {
+    if (action.type === 'deploy') {
+      return t('draftDeploy', { cellId: action.cellId });
+    }
+
+    if (action.type === 'move') {
+      const unit = liveState?.battlefield?.units.find(
+        (item) => item.id === action.battlefieldUnitId
+      );
+
+      return t('draftMove', { from: unit?.cellId, to: action.cellId });
+    }
+
+    return t('draftRecruit', { unit: tUnit(`units.${action.unitId}`) });
+  }
 
   function getSynchronizationLabel(): string {
     if (connectionError !== null) {
@@ -261,6 +446,14 @@ export function ActiveGamePage() {
   }
 
   function handleHandCoinClick(input: HandCoinClickInput): void {
+    if (activeDraft !== null || isDraftPending || isDraftLoading) {
+      return;
+    }
+
+    if (targetSelection !== null) {
+      closeTargetSelection();
+    }
+
     if (
       currentSelectedCoin?.index === input.index &&
       currentSelectedCoin.anchorElement === input.anchorElement
@@ -278,6 +471,93 @@ export function ActiveGamePage() {
   function closeGameActions(): void {
     setSelectedCoin(null);
   }
+
+  function beginTargetSelection(
+    type: TargetSelection['type'],
+    coinIndex: number
+  ): void {
+    let battlefieldUnitId: string | null = null;
+
+    if (type === 'move') {
+      const options = getTurnActionOptions(activeGameView, userId, coinIndex);
+      const [onlyMove] = options.moves;
+
+      if (options.moves.length === 1 && onlyMove !== undefined) {
+        battlefieldUnitId = onlyMove.battlefieldUnitId;
+      }
+    }
+
+    setSelectedCoin(null);
+    setTargetSelection({
+      battlefieldUnitId,
+      coinIndex,
+      eventSequence: liveEventSequence,
+      type,
+    });
+  }
+
+  function closeTargetSelection(): void {
+    setTargetSelection(null);
+  }
+
+  function handleDeployCellClick(cellId: CellId): void {
+    if (targetSelection?.type !== 'deploy') {
+      return;
+    }
+
+    saveDraft({
+      action: { cellId, type: 'deploy' },
+      coinIndex: targetSelection.coinIndex,
+    });
+    closeTargetSelection();
+  }
+
+  function handleRecruitUnitClick(unitId: UnitId): void {
+    if (targetSelection?.type !== 'recruit') {
+      return;
+    }
+
+    saveDraft({
+      action: { type: 'recruit', unitId },
+      coinIndex: targetSelection.coinIndex,
+    });
+    closeTargetSelection();
+  }
+
+  function handleMoveUnitClick(battlefieldUnitId: string): void {
+    if (targetSelection?.type !== 'move' || isDraftPending) {
+      return;
+    }
+
+    setTargetSelection({ ...targetSelection, battlefieldUnitId });
+  }
+
+  function handleMoveCellClick(cellId: CellId): void {
+    if (
+      targetSelection?.type !== 'move' ||
+      targetSelection.battlefieldUnitId === null ||
+      isDraftPending
+    ) {
+      return;
+    }
+
+    saveDraft({
+      action: {
+        battlefieldUnitId: targetSelection.battlefieldUnitId,
+        cellId,
+        type: 'move',
+      },
+      coinIndex: targetSelection.coinIndex,
+    });
+    closeTargetSelection();
+  }
+}
+
+interface TargetSelection {
+  battlefieldUnitId: string | null;
+  coinIndex: number;
+  eventSequence: number;
+  type: 'deploy' | 'move' | 'recruit';
 }
 
 interface SelectedCoin {

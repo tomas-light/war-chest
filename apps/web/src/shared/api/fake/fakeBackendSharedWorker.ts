@@ -1,13 +1,16 @@
 import {
   type GameResponse,
+  cancelTurnDraftRequestSchema,
   completeCardSelectionRequestSchema,
   confirmCardChoiceRequestSchema,
+  confirmTurnDraftRequestSchema,
   createGameRequestSchema,
   gameParamsSchema,
   gameTurnHistoryQuerySchema,
   joinGameRequestSchema,
   leaveGameRequestSchema,
   passTurnRequestSchema,
+  saveTurnDraftRequestSchema,
   selectAvatarPresetRequestSchema,
   startGameRequestSchema,
   surrenderGameRequestSchema,
@@ -281,6 +284,49 @@ async function dispatchRequest(
   }
 
   const gameApi = createFakeGameApi(userId);
+
+  if (request.operation === 'game.getTurnDraft') {
+    return gameApi.getTurnDraft(readGameId(request.payload));
+  }
+
+  if (request.operation === 'game.saveTurnDraft') {
+    const gameId = readGameId(request.payload);
+    return gameApi.saveTurnDraft(
+      gameId,
+      readNestedRequest(
+        request.payload,
+        saveTurnDraftRequestSchema,
+        'Invalid fake turn draft request.'
+      )
+    );
+  }
+
+  if (request.operation === 'game.cancelTurnDraft') {
+    const gameId = readGameId(request.payload);
+    return gameApi.cancelTurnDraft(
+      gameId,
+      readNestedRequest(
+        request.payload,
+        cancelTurnDraftRequestSchema,
+        'Invalid fake turn draft cancellation.'
+      )
+    );
+  }
+
+  if (request.operation === 'game.confirmTurnDraft') {
+    const gameId = readGameId(request.payload);
+    const result = await gameApi.confirmTurnDraft(
+      gameId,
+      readNestedRequest(
+        request.payload,
+        confirmTurnDraftRequestSchema,
+        'Invalid fake turn draft confirmation.'
+      )
+    );
+
+    await broadcastGameUpdate(gameId);
+    return result;
+  }
 
   if (request.operation === 'game.create') {
     const result = await gameApi.createGame(

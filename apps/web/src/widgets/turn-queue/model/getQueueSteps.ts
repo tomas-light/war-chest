@@ -6,7 +6,7 @@ import type {
 } from '@war-chest/game-engine';
 
 export interface QueueStep {
-  action: 'ban' | 'pass' | 'pick' | 'turn';
+  action: 'ban' | 'deploy' | 'move' | 'pass' | 'pick' | 'recruit' | 'turn';
   key: string;
   playerId: string;
   state: 'current' | 'done' | 'upcoming';

@@ -5,6 +5,7 @@ import type {
   CardSelectionPhase,
   GameStartSelection,
 } from './CardSelection.js';
+import type { TurnAction } from './command-data/TurnCommandData.js';
 import type { GAME_EVENT_VERSION, GAME_RULES_VERSION } from './events.js';
 import type { GameCoin } from './GameCoin.js';
 import type { GamePreparationSettings, GameSettings } from './GameSettings.js';
@@ -137,6 +138,18 @@ export interface TurnPassedViewEventData extends EventMetadata {
   type: 'TurnPassed';
 }
 
+export interface TurnActionPerformedViewEventData extends EventMetadata {
+  payload: {
+    action: TurnAction;
+    battlefield: GameViewBattlefieldState;
+    coin: GameCoin | null;
+    moveNumber: number;
+    nextPlayerId: string;
+    playerId: string;
+  };
+  type: 'TurnActionPerformed';
+}
+
 interface PublicTestMoveData {
   moveNumber: number;
   nextPlayerId: string;
@@ -186,5 +199,6 @@ export type GameViewEventData =
   | PlayerPositionsSwappedViewEventData
   | PlayerReconnectedViewEventData
   | TestMovePerformedViewEventData
+  | TurnActionPerformedViewEventData
   | TurnPassedViewEventData
   | ViewSequenceAdvancedEventData;

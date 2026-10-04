@@ -126,7 +126,7 @@ test('highlights only the hovered or focused wheel sector', async ({
   await pass.hover();
   await expect(pass).not.toHaveCSS('background-color', restingFill);
   await expect(recruit).toHaveCSS('background-color', restingFill);
-  await expect(recruit).toBeDisabled();
+  await expect(recruit).toBeEnabled();
 
   await pass.focus();
   await page.keyboard.press('Tab');

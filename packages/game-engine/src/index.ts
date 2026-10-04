@@ -38,11 +38,13 @@ export type {
   LeaveGameCommandData,
   LifecycleCommandData,
   PassTurnCommandData,
+  PerformTurnActionCommandData,
   StartGameCommandData,
   SurrenderGameCommandData,
   SwapPlayerPositionsCommandData,
   TestMoveCommandData,
   TestScenarioCommandData,
+  TurnAction,
   TurnCommandData,
   UpdateGameSettingsCommandData,
 } from './commands.js';
@@ -63,6 +65,8 @@ export { createViewEventFor } from './createViewEventFor.js';
 export { createViewFor } from './createViewFor.js';
 export { decide } from './decide.js';
 export { decidePresence } from './decidePresence.js';
+export { getTurnActionOptions } from './getTurnActionOptions.js';
+export type { TurnActionOptions } from './getTurnActionOptions.js';
 export type {
   DefeatDisconnectedPlayerCommandData,
   DisconnectPlayerCommandData,
@@ -106,11 +110,13 @@ export type {
   PlayerPositionsSwappedEventData,
   PlayerReconnectedEventData,
   TestMovePerformedEventData,
+  TurnActionPerformedEventData,
   TurnPassedEventData,
 } from './events.js';
 export { hydrateEvent } from './events/hydrateEvent.js';
 export type { ApplicableEvent } from './events/ApplicableEvent.js';
 export { parseGameEventData } from './parseGameEventData.js';
+export { previewTurnAction } from './previewTurnAction.js';
 export { hydrateCommand } from './commands/hydrateCommand.js';
 export type { DecidableCommand } from './commands/DecidableCommand.js';
 export { hydrateViewEvent } from './view-events/hydrateViewEvent.js';
@@ -151,8 +157,10 @@ export type {
   PrivateTestMovePerformedViewEventData,
   PublicTestMovePerformedViewEventData,
   TestMovePerformedViewEventData,
+  TurnActionPerformedViewEventData,
   TurnPassedViewEventData,
   ViewSequenceAdvancedEventData,
 } from './viewEvents.js';
 export { UNIT_IDS } from './UnitId.js';
+export { getUnitDefinition } from './UnitDefinition.js';
 export type { UnitId } from './UnitId.js';

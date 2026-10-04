@@ -88,6 +88,49 @@
   color: var(--wc-color-error);
 }
 
+.actionPanel {
+  position: fixed;
+  z-index: 60;
+  right: 16px;
+  bottom: 16px;
+  left: 16px;
+  width: min(560px, calc(100% - 32px));
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--wc-color-brass);
+  border-radius: 4px 18px;
+  margin: 0 auto;
+  background: var(--wc-color-ink);
+  box-shadow: 0 18px 48px rgb(0 0 0 / 62%);
+  color: var(--wc-color-text);
+}
+
+.actionPanel strong {
+  color: var(--wc-color-brass-bright);
+  font-family: var(--wc-font-display);
+}
+
+.draftControls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.draftError {
+  position: fixed;
+  z-index: 61;
+  right: 16px;
+  bottom: 190px;
+  left: 16px;
+  width: min(560px, calc(100% - 32px));
+  padding: 10px;
+  border: 1px solid var(--wc-color-error);
+  margin: 0 auto;
+  background: var(--wc-color-ink);
+  color: var(--wc-color-error);
+}
+
 @media (width <= 900px) {
   .layout,
   .finishedLayout {

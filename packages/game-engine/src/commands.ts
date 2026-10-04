@@ -31,5 +31,7 @@ export type {
 } from './command-data/CardSelectionCommandData.js';
 export type {
   PassTurnCommandData,
+  PerformTurnActionCommandData,
+  TurnAction,
   TurnCommandData,
 } from './command-data/TurnCommandData.js';

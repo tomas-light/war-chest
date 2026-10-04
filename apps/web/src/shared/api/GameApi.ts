@@ -1,8 +1,11 @@
 import {
+  type CancelTurnDraftRequest,
   type CompleteCardSelectionRequest,
   type ConfirmCardChoiceRequest,
+  type ConfirmTurnDraftRequest,
   type CreateGameRequest,
   type GameResponse,
+  type GameTurnDraftResponse,
   type GameTurnHistoryQuery,
   type GameTurnHistoryResponse,
   type JoinGameRequest,
@@ -10,11 +13,13 @@ import {
   type LeaveGameResponse,
   type LobbyGamesResponse,
   type PassTurnRequest,
+  type SaveTurnDraftRequest,
   type StartGameRequest,
   type SurrenderGameRequest,
   type SwapPlayerPositionsRequest,
   type UpdateGameSettingsRequest,
   gameResponseSchema,
+  gameTurnDraftResponseSchema,
   gameTurnHistoryResponseSchema,
   leaveGameResponseSchema,
   lobbyGamesResponseSchema,
@@ -42,6 +47,11 @@ interface ResponseSchema<Result> {
 }
 
 export interface GameApi {
+  cancelTurnDraft(
+    this: void,
+    gameId: string,
+    request: CancelTurnDraftRequest
+  ): Promise<GameTurnDraftResponse>;
   completeCardSelection(
     this: void,
     gameId: string,
@@ -52,8 +62,14 @@ export interface GameApi {
     gameId: string,
     request: ConfirmCardChoiceRequest
   ): Promise<GameResponse>;
+  confirmTurnDraft(
+    this: void,
+    gameId: string,
+    request: ConfirmTurnDraftRequest
+  ): Promise<GameResponse>;
   createGame(this: void, request: CreateGameRequest): Promise<GameResponse>;
   getGame(this: void, gameId: string): Promise<GameResponse>;
+  getTurnDraft(this: void, gameId: string): Promise<GameTurnDraftResponse>;
   joinGame(
     this: void,
     gameId: string,
@@ -75,6 +91,11 @@ export interface GameApi {
     gameId: string,
     request: PassTurnRequest
   ): Promise<GameResponse>;
+  saveTurnDraft(
+    this: void,
+    gameId: string,
+    request: SaveTurnDraftRequest
+  ): Promise<GameTurnDraftResponse>;
   startGame(
     this: void,
     gameId: string,
@@ -99,20 +120,71 @@ export interface GameApi {
 
 export function createRealGameApi(): GameApi {
   return {
+    cancelTurnDraft,
     completeCardSelection,
     confirmCardChoice,
+    confirmTurnDraft,
     createGame,
     getGame,
+    getTurnDraft,
     joinGame,
     leaveGame,
     listLobbyGames,
     listTurnHistory,
     passTurn,
+    saveTurnDraft,
     startGame,
     surrenderGame,
     swapPlayerPositions,
     updateGameSettings,
   };
+
+  function cancelTurnDraft(
+    gameId: string,
+    request: CancelTurnDraftRequest
+  ): Promise<GameTurnDraftResponse> {
+    return requestJson({
+      body: request,
+      invalidResponseMessage: 'The server returned an invalid turn draft.',
+      method: 'POST',
+      schema: gameTurnDraftResponseSchema,
+      url: `${GAMES_API_URL}/${gameId}/turn-draft/cancel`,
+    });
+  }
+
+  function confirmTurnDraft(
+    gameId: string,
+    request: ConfirmTurnDraftRequest
+  ): Promise<GameResponse> {
+    return requestJson({
+      body: request,
+      invalidResponseMessage: 'The server returned an invalid game state.',
+      method: 'POST',
+      schema: gameResponseSchema,
+      url: `${GAMES_API_URL}/${gameId}/turn-draft/confirm`,
+    });
+  }
+
+  function getTurnDraft(gameId: string): Promise<GameTurnDraftResponse> {
+    return requestJson({
+      invalidResponseMessage: 'The server returned an invalid turn draft.',
+      schema: gameTurnDraftResponseSchema,
+      url: `${GAMES_API_URL}/${gameId}/turn-draft`,
+    });
+  }
+
+  function saveTurnDraft(
+    gameId: string,
+    request: SaveTurnDraftRequest
+  ): Promise<GameTurnDraftResponse> {
+    return requestJson({
+      body: request,
+      invalidResponseMessage: 'The server returned an invalid turn draft.',
+      method: 'POST',
+      schema: gameTurnDraftResponseSchema,
+      url: `${GAMES_API_URL}/${gameId}/turn-draft`,
+    });
+  }
 
   function completeCardSelection(
     gameId: string,

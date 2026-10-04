@@ -3,6 +3,7 @@ import type {
   Game,
   GameEvent,
   GameParticipant,
+  GameTurnDraft,
   ProcessedCommand,
   User,
 } from '@war-chest/database';
@@ -13,6 +14,7 @@ export const FAKE_DATABASE_STORE_NAMES = [
   'authSessions',
   'gameEvents',
   'gameParticipants',
+  'gameTurnDrafts',
   'games',
   'processedCommands',
   'runtimeFeatureFlags',
@@ -28,6 +30,7 @@ export type FakeGame = Game;
 export type FakeGameParticipant = GameParticipant;
 export type FakeProcessedCommand = ProcessedCommand;
 export type FakeGameEvent = GameEvent;
+export type FakeGameTurnDraft = GameTurnDraft;
 
 export interface FakeRuntimeFeatureFlags {
   featureFlags: RuntimeFeatureFlags;
@@ -50,6 +53,10 @@ export interface FakeDatabaseSchema extends DBSchema {
   gameParticipants: {
     key: [string, string];
     value: FakeGameParticipant;
+  };
+  gameTurnDrafts: {
+    key: string;
+    value: FakeGameTurnDraft;
   };
   games: {
     key: string;

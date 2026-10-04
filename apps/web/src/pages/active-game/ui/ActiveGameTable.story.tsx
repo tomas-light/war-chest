@@ -5,6 +5,7 @@ import type {
 } from '@war-chest/api-contracts';
 import { DEFAULT_RUNTIME_FEATURE_FLAGS } from '@war-chest/feature-flags';
 import {
+  type CellId,
   type GameCoin,
   type GameFormat,
   type GamePlayer,
@@ -14,6 +15,7 @@ import {
   createInitialBattlefield,
   createViewFor,
   GAME_RULES_VERSION,
+  getTurnActionOptions,
 } from '@war-chest/game-engine';
 import { useState } from 'react';
 import { MemoryRouter } from 'react-router';
@@ -75,6 +77,109 @@ LAST_COIN_QUERY_CLIENT.setQueryData(['game-turn-history', GAME_ID, 2], {
 
 export function DuelWhitePlayer() {
   return <TableStory format="duel" userId="player-one" />;
+}
+
+export function DuelUnitMovement() {
+  return <UnitMovementStory format="duel" userId="player-one" />;
+}
+
+export function DuelCavalryManeuvers() {
+  return (
+    <TableStory format="duel" maneuverUnitId="cavalry" userId="player-one" />
+  );
+}
+
+export function DuelSwordsmanManeuvers() {
+  return (
+    <TableStory format="duel" maneuverUnitId="swordsman" userId="player-one" />
+  );
+}
+
+export function DuelArcherManeuvers() {
+  return (
+    <TableStory format="duel" maneuverUnitId="archer" userId="player-one" />
+  );
+}
+
+export function DuelBlockedMovement() {
+  return (
+    <TableStory
+      blockedMovement
+      format="duel"
+      maneuverUnitId="cavalry"
+      userId="player-one"
+    />
+  );
+}
+
+export function DuelBlackUnitMovement() {
+  return <UnitMovementStory format="duel" userId="player-two" />;
+}
+
+export function TeamUnitMovement() {
+  return <UnitMovementStory format="team" userId="player-one" />;
+}
+
+interface UnitMovementStoryProps {
+  format: GameFormat;
+  userId: string;
+}
+
+function UnitMovementStory(props: UnitMovementStoryProps) {
+  const { format, userId } = props;
+  const [cellId, setCellId] = useState<CellId>('B1');
+
+  const players = createPlayers(format);
+  const state = createState(format, players);
+
+  if (state.battlefield === null) {
+    throw new Error('Movement story requires a battlefield.');
+  }
+
+  state.battlefield.units = [
+    {
+      bolstered: 2,
+      cellId,
+      id: 'moving-unit',
+      ownerId: userId,
+      unitId: 'cavalry',
+    },
+  ];
+
+  const view = createViewFor(state, { playerId: userId, role: 'player' });
+  const moveCells: readonly CellId[] =
+    cellId === 'B1'
+      ? ['A1', 'B2', 'C1', 'C2']
+      : ['B1', 'B2', 'C1', 'C3', 'D2', 'D3'];
+
+  return (
+    <QueryClientProvider client={QUERY_CLIENT}>
+      <MemoryRouter>
+        <main className={classes.page}>
+          <button onClick={toggleCell} type="button">
+            B1 ↔ C2
+          </button>
+          <ActiveGameTable
+            onHandCoinClick={() => undefined}
+            moveCells={moveCells}
+            onMoveCellClick={() => undefined}
+            playerProfiles={createProfiles(players)}
+            selectedCoinIndex={null}
+            userId={userId}
+            view={view}
+          />
+        </main>
+      </MemoryRouter>
+    </QueryClientProvider>
+  );
+
+  function toggleCell(): void {
+    if (cellId === 'B1') {
+      setCellId('C2');
+    } else {
+      setCellId('B1');
+    }
+  }
 }
 
 export function DuelWheelFourSectors() {
@@ -347,16 +452,59 @@ export function DuelQueueConsecutiveTurns() {
 }
 
 interface TableStoryProps {
+  blockedMovement?: boolean;
   format: GameFormat;
   royalFirst?: boolean;
+  maneuverUnitId?: UnitId;
   userId: string;
   wheelActions?: readonly GameWheelAction[];
 }
 
 function TableStory(props: TableStoryProps) {
-  const { format, royalFirst = false, userId, wheelActions } = props;
+  const {
+    blockedMovement = false,
+    format,
+    maneuverUnitId,
+    royalFirst = false,
+    userId,
+    wheelActions,
+  } = props;
   const players = createPlayers(format);
   const state = createState(format, players);
+
+  if (maneuverUnitId !== undefined && state.battlefield !== null) {
+    const resources = state.battlefield.playerResources.find(
+      (item) => item.playerId === userId
+    );
+
+    if (resources !== undefined) {
+      resources.hand[0] = { kind: 'unit', unitId: maneuverUnitId };
+    }
+
+    state.battlefield.units = [
+      {
+        bolstered: 0,
+        cellId: 'B1',
+        id: 'maneuver-unit',
+        ownerId: userId,
+        unitId: maneuverUnitId,
+      },
+    ];
+
+    if (blockedMovement) {
+      const occupiedCells: readonly CellId[] = ['A1', 'B2', 'C1', 'C2'];
+
+      state.battlefield.units.push(
+        ...occupiedCells.map((cellId) => ({
+          bolstered: 0,
+          cellId,
+          id: `blocking-${cellId}`,
+          ownerId: 'player-two',
+          unitId: 'pikeman' as const,
+        }))
+      );
+    }
+  }
 
   if (royalFirst) {
     const resources = state.battlefield?.playerResources.find(
@@ -395,15 +543,23 @@ function TableStory(props: TableStoryProps) {
                 selectedCoin.coin,
                 view.status === 'active' &&
                   view.settings.format === 'duel' &&
-                  view.currentPlayerId === userId
+                  view.currentPlayerId === userId,
+                getTurnActionOptions(view, userId, selectedCoin.index)
               )
             }
             anchorElement={selectedCoin.anchorElement}
+            canMove={
+              getTurnActionOptions(view, userId, selectedCoin.index).moves
+                .length > 0
+            }
             coin={selectedCoin.coin}
             coinIndex={selectedCoin.index}
             gameId={GAME_ID}
             onClose={closeGameActions}
+            onDeploy={() => undefined}
+            onMove={() => undefined}
             onPassed={() => undefined}
+            onRecruit={() => undefined}
             view={view}
           />
         )}

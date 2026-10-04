@@ -6,20 +6,29 @@
     "summary": {
       "current": {
         "ban": "{{playerName}} сейчас банит карту",
+        "deploy": "{{playerName}} сейчас разыгрывает юнита",
+        "move": "{{playerName}} сейчас перемещает юнита",
         "pass": "{{playerName}} сейчас пасует",
         "pick": "{{playerName}} сейчас выбирает карту",
+        "recruit": "{{playerName}} сейчас нанимает жетон",
         "turn": "Сейчас ходит {{playerName}}"
       },
       "done": {
         "ban": "{{playerName}} забанил карту",
+        "deploy": "{{playerName}} разыграл юнита",
+        "move": "{{playerName}} переместил юнита",
         "pass": "{{playerName}} спасовал",
         "pick": "{{playerName}} выбрал карту",
+        "recruit": "{{playerName}} нанял жетон",
         "turn": "Ход {{playerName}} завершён"
       },
       "upcoming": {
         "ban": "{{playerName}} будет банить карту",
+        "deploy": "{{playerName}} будет разыгрывать юнита",
+        "move": "{{playerName}} будет перемещать юнита",
         "pass": "{{playerName}} будет пасовать",
         "pick": "{{playerName}} будет выбирать карту",
+        "recruit": "{{playerName}} будет нанимать жетон",
         "turn": "Следующий ход: {{playerName}}"
       }
     }

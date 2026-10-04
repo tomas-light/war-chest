@@ -85,6 +85,13 @@ export function useBattlefieldViewport() {
   }
 
   function handlePointerDown(event: PointerEvent<HTMLDivElement>): void {
+    if (
+      event.target instanceof Element &&
+      event.target.closest('button') !== null
+    ) {
+      return;
+    }
+
     event.currentTarget.setPointerCapture(event.pointerId);
     pointersRef.current.set(event.pointerId, {
       x: event.clientX,

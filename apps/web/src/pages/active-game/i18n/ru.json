@@ -12,9 +12,20 @@
     "winnerFallback": "Игрок {{playerId}}"
   },
   "ActiveGamePage": {
+    "cancelSelection": "Отменить выбор",
+    "cancelTurn": "Отменить ход",
+    "chooseDeployCell": "Выберите подсвеченную точку для розыгрыша",
+    "chooseMoveUnit": "Выберите подсвеченного юнита для перемещения",
+    "chooseMoveCell": "Выберите подсвеченную соседнюю клетку",
+    "confirmTurn": "Подтвердить ход",
     "connecting": "Подключаемся к игровому столу…",
+    "draftDeploy": "Розыгрыш на клетку {{cellId}}",
+    "draftMove": "Перемещение {{from}} → {{to}}",
+    "draftRecruit": "Наём: {{unit}}",
+    "draftTitle": "Черновик хода",
     "gameUnavailable": "Состояние игры недоступно.",
     "notSelected": "Игра не выбрана.",
+    "targetTitle": "Выбор цели действия",
     "stage": {
       "active": "",
       "cardSelection": "Выбор карт",
@@ -37,7 +48,7 @@
     "historyTitle": "История ходов",
     "openHistory": "Открыть историю",
     "turnEyebrow": "Ход",
-    "unitActionsUnavailable": "Действия отрядов пока недоступны"
+    "unitActionsUnavailable": "Остальные действия отрядов пока недоступны"
   },
   "CardSelectionPage": {
     "title": "Выбор карт",

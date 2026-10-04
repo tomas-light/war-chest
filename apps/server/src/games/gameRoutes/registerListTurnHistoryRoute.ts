@@ -38,7 +38,7 @@ export function registerListTurnHistoryRoute(app: FastifyInstance): void {
 
     const history = result.events.flatMap((event) => {
       if (
-        event.type !== 'TurnPassed' ||
+        (event.type !== 'TurnPassed' && event.type !== 'TurnActionPerformed') ||
         (query.data.beforeSequence !== undefined &&
           event.sequence >= query.data.beforeSequence)
       ) {
@@ -54,7 +54,10 @@ export function registerListTurnHistoryRoute(app: FastifyInstance): void {
 
     return reply.send({
       items: page.map((event) => ({
-        action: 'pass' as const,
+        action:
+          event.type === 'TurnPassed'
+            ? ('pass' as const)
+            : event.payload.action.type,
         playerId: event.payload.playerId,
         sequence: event.sequence,
       })),

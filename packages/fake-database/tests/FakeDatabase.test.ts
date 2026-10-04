@@ -39,6 +39,7 @@ describe('fake database', () => {
       'authSessions',
       'gameEvents',
       'gameParticipants',
+      'gameTurnDrafts',
       'games',
       'processedCommands',
       'runtimeFeatureFlags',

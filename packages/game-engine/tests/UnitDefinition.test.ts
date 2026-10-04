@@ -1,7 +1,30 @@
 import { describe, expect, test } from 'vitest';
 import { getUnitDefinition } from '../src/UnitDefinition.js';
+import { UNIT_IDS } from '../src/UnitId.js';
 
 describe('unit definitions', () => {
+  test('distinguishes ordinary attacks from attacks available only through a tactic', () => {
+    expect(
+      UNIT_IDS.filter((unitId) => !getUnitDefinition(unitId).canAttack)
+    ).toEqual(['archer', 'lancer']);
+  });
+
+  test('distinguishes chosen tactics from automatic unit abilities', () => {
+    expect(
+      UNIT_IDS.filter((unitId) => getUnitDefinition(unitId).hasTactic)
+    ).toEqual([
+      'archer',
+      'cavalry',
+      'crossbowman',
+      'ensign',
+      'footman',
+      'lancer',
+      'lightCavalry',
+      'marshal',
+      'royalGuard',
+    ]);
+  });
+
   test('stores the token count printed on every unit card', () => {
     expect({
       archer: getUnitDefinition('archer').tokenCount,

@@ -199,6 +199,11 @@ Multi-user fake mode поддерживаем только в development-бра
 
 ### Управление feature flags
 
+Статус на 4 октября 2026 года: чтение application flags через real HTTP
+и fake RPC реализовано, dev-панель показывает их read-only. Описанное ниже
+редактирование выбранной fake-игры через `DevelopmentApi` ещё не реализовано;
+это целевой контракт, а не доступная операция панели.
+
 Локальные overrides игровых feature flags в Zustand больше не используем. В
 fake-режиме dev-панель изменяет данные самой fake-игры через отдельный
 `DevelopmentApi`:
@@ -235,8 +240,8 @@ IndexedDB. Seed и reset позволяют подготовить началь�
 
 1. ✅ Добавить общие runtime-проверяемые HTTP- и Socket.IO-контракты в
    `@war-chest/api-contracts` и базовый игровой connection в `shared/api`.
-2. 🟡 Добавлены базовый gateway и real Socket.IO adapter; HTTP adapter и общий
-   provider ещё не реализованы.
+2. ✅ Реализованы real/fake HTTP adapters и общий игровой runtime provider
+   с безопасным snapshot, Zustand-store и Socket.IO/SharedWorker connection.
 3. ✅ Добавить persisted-переключатель в `/login` и открываемую после входа
    dev-панель.
 4. ✅ Создан `packages/fake-database` на базе npm-пакета `idb`: добавлены схема
@@ -245,8 +250,9 @@ IndexedDB. Seed и reset позволяют подготовить началь�
 6. ✅ Добавить три seeded fake-аккаунта и provider-specific авторизацию через
    кнопки Google, Telegram и Yandex. Auth adapter хранит указатель сессии во
    вкладке, а данные читает и изменяет через worker.
-7. ✅ Реализованы fake game API жизненного цикла, lobby subscription и игровое
-   соединение с безопасными snapshots через worker.
+7. ✅ Реализованы fake game API жизненного цикла, выбора карт, паса и
+   одношагового turn draft, lobby subscription и игровое соединение
+   с безопасными snapshots через worker.
 8. Добавить fake-only управление feature flags через `DevelopmentApi`.
 9. Проверить состав production bundle.
 

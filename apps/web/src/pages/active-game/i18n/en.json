@@ -12,9 +12,20 @@
     "winnerFallback": "Player {{playerId}}"
   },
   "ActiveGamePage": {
+    "cancelSelection": "Cancel selection",
+    "cancelTurn": "Cancel turn",
+    "chooseDeployCell": "Choose a highlighted control point to deploy",
+    "chooseMoveUnit": "Choose a highlighted unit to move",
+    "chooseMoveCell": "Choose a highlighted adjacent cell",
+    "confirmTurn": "Confirm turn",
     "connecting": "Connecting to the game table…",
+    "draftDeploy": "Deploy to cell {{cellId}}",
+    "draftMove": "Move {{from}} → {{to}}",
+    "draftRecruit": "Recruit: {{unit}}",
+    "draftTitle": "Turn draft",
     "gameUnavailable": "The game state is unavailable.",
     "notSelected": "No game was selected.",
+    "targetTitle": "Choose action target",
     "stage": {
       "active": "",
       "cardSelection": "Card selection",
@@ -37,7 +48,7 @@
     "historyTitle": "Move history",
     "openHistory": "Open history",
     "turnEyebrow": "Turn",
-    "unitActionsUnavailable": "Unit actions are not available yet"
+    "unitActionsUnavailable": "Other unit actions are not available yet"
   },
   "CardSelectionPage": {
     "title": "Card selection",
