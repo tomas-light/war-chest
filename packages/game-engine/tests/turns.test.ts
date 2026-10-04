@@ -10,9 +10,26 @@ import {
   createViewFor,
   decide,
   getTurnActionOptions,
+  getUnitDefinition,
   parseGameEventData,
   previewTurnAction,
 } from '../src/index.js';
+
+const STANDARD_UNIT_IDS = [
+  'archer',
+  'berserker',
+  'cavalry',
+  'crossbowman',
+  'ensign',
+  'knight',
+  'lancer',
+  'lightCavalry',
+  'marshal',
+  'pikeman',
+  'royalGuard',
+  'swordsman',
+  'warriorPriest',
+] as const;
 
 describe('turn passing and round replenishment', () => {
   let state: GameState;
@@ -180,7 +197,7 @@ describe('turn passing and round replenishment', () => {
   });
 });
 
-describe('recruiting and deploying supported units', () => {
+describe.each(STANDARD_UNIT_IDS)('recruiting and deploying %s', (unitId) => {
   let state: GameState;
   let playerId: string;
 
@@ -198,13 +215,12 @@ describe('recruiting and deploying supported units', () => {
     }
 
     resources.hand = [
-      { kind: 'unit', unitId: 'cavalry' },
-      { kind: 'unit', unitId: 'cavalry' },
+      { kind: 'unit', unitId },
+      { kind: 'unit', unitId },
       { kind: 'royal' },
     ];
     resources.supply = [
-      { count: 2, total: 4, unitId: 'cavalry' },
-      { count: 3, total: 5, unitId: 'crossbowman' },
+      { count: 2, total: getUnitDefinition(unitId).tokenCount, unitId },
       { count: 3, total: 5, unitId: 'footman' },
     ];
   });
@@ -221,12 +237,12 @@ describe('recruiting and deploying supported units', () => {
       .map((point) => point.cellId);
 
     expect(options.deployCells).toEqual(expectedCells);
-    expect(options.recruitUnits).toEqual(['cavalry', 'crossbowman']);
+    expect(options.recruitUnits).toEqual([unitId]);
   });
 
   test('recruiting spends the chosen coin face down and adds a revealed supply coin', () => {
     const [event] = decide(state, playerId, {
-      action: { type: 'recruit', unitId: 'crossbowman' },
+      action: { type: 'recruit', unitId },
       coinIndex: 2,
       type: 'PerformTurnAction',
     });
@@ -244,11 +260,76 @@ describe('recruiting and deploying supported units', () => {
 
     expect(resources?.discard).toEqual([
       { coin: { kind: 'royal' }, faceUp: false },
-      { coin: { kind: 'unit', unitId: 'crossbowman' }, faceUp: true },
+      { coin: { kind: 'unit', unitId }, faceUp: true },
     ]);
     expect(
-      resources?.supply.find((item) => item.unitId === 'crossbowman')?.count
-    ).toBe(2);
+      resources?.supply.find((item) => item.unitId === unitId)?.count
+    ).toBe(1);
+  });
+
+  test('rejects recruitment when supply is exhausted', () => {
+    const resources = state.battlefield?.playerResources.find(
+      (item) => item.playerId === playerId
+    );
+
+    if (resources === undefined) {
+      throw new Error('The active player must have resources.');
+    }
+
+    resources.supply = [
+      { count: 0, total: getUnitDefinition(unitId).tokenCount, unitId },
+    ];
+
+    expect(
+      decide(state, playerId, {
+        action: { type: 'recruit', unitId },
+        coinIndex: 0,
+        type: 'PerformTurnAction',
+      })
+    ).toEqual([]);
+  });
+
+  test('previews recruitment without spending confirmed resources or drawing coins', () => {
+    const view = createViewFor(state, { playerId, role: 'player' });
+    const originalView = structuredClone(view);
+    const preview = previewTurnAction({
+      action: { type: 'recruit', unitId },
+      coinIndex: 0,
+      playerId,
+      view,
+    });
+    const resources = preview?.playerResources.find(
+      (item) => item.playerId === playerId
+    );
+
+    expect(resources?.handCount).toBe(2);
+    expect(resources?.discard).toEqual([
+      { coin: { kind: 'unit', unitId }, faceUp: false },
+      { coin: { kind: 'unit', unitId }, faceUp: true },
+    ]);
+    expect(
+      resources?.supply.find((item) => item.unitId === unitId)?.count
+    ).toBe(1);
+    expect(view).toEqual(originalView);
+    expect(preview?.playerResources.map((item) => item.bagCount)).toEqual(
+      view.battlefield?.playerResources.map((item) => item.bagCount)
+    );
+  });
+
+  test('rejects deployment paid with a royal coin', () => {
+    const [cellId] = getTurnActionOptions(state, playerId, 0).deployCells;
+
+    if (cellId === undefined) {
+      throw new Error('The player must own a free control point.');
+    }
+
+    expect(
+      decide(state, playerId, {
+        action: { cellId, type: 'deploy' },
+        coinIndex: 2,
+        type: 'PerformTurnAction',
+      })
+    ).toEqual([]);
   });
 
   test('deployment creates one unit and then blocks another of the same type', () => {
@@ -277,7 +358,7 @@ describe('recruiting and deploying supported units', () => {
         cellId,
         id: `${playerId}:1`,
         ownerId: playerId,
-        unitId: 'cavalry',
+        unitId,
       },
     ]);
     expect(getTurnActionOptions(nextState, playerId, 0).deployCells).toEqual(
@@ -328,7 +409,7 @@ describe('recruiting and deploying supported units', () => {
   });
 });
 
-describe('ordinary unit movement', () => {
+describe.each(STANDARD_UNIT_IDS)('ordinary movement of %s', (unitId) => {
   let state: GameState;
   let movingUnit: BattlefieldUnit;
 
@@ -348,8 +429,8 @@ describe('ordinary unit movement', () => {
     }
 
     resources.hand = [
-      { kind: 'unit', unitId: 'cavalry' },
-      { kind: 'unit', unitId: 'crossbowman' },
+      { kind: 'unit', unitId },
+      { kind: 'unit', unitId: 'footman' },
       { kind: 'royal' },
     ];
     movingUnit = {
@@ -357,7 +438,7 @@ describe('ordinary unit movement', () => {
       cellId: 'B1',
       id: 'moving-unit',
       ownerId: 'player-one',
-      unitId: 'cavalry',
+      unitId,
     };
     state.battlefield.units = [movingUnit];
   });
@@ -390,14 +471,14 @@ describe('ordinary unit movement', () => {
         cellId: 'C1',
         id: 'friendly-unit',
         ownerId: 'player-one',
-        unitId: 'crossbowman',
+        unitId: 'footman',
       },
       {
         bolstered: 0,
         cellId: 'C2',
         id: 'enemy-unit',
         ownerId: 'player-two',
-        unitId: 'cavalry',
+        unitId,
       }
     );
 
@@ -425,7 +506,7 @@ describe('ordinary unit movement', () => {
         cellId: 'C2',
         id: 'moving-unit',
         ownerId: 'player-one',
-        unitId: 'cavalry',
+        unitId,
       },
     ]);
     expect(movingUnit.cellId).toBe('B1');
@@ -447,7 +528,7 @@ describe('ordinary unit movement', () => {
 
     expect(resources?.hand).toHaveLength(2);
     expect(resources?.discard).toEqual([
-      { coin: { kind: 'unit', unitId: 'cavalry' }, faceUp: true },
+      { coin: { kind: 'unit', unitId }, faceUp: true },
     ]);
     expect(nextState.currentPlayerId).toBe('player-two');
   });
@@ -469,7 +550,7 @@ describe('ordinary unit movement', () => {
       throw new Error('Movement must emit TurnActionPerformed.');
     }
 
-    expect(viewEvent.payload.coin).toEqual({ kind: 'unit', unitId: 'cavalry' });
+    expect(viewEvent.payload.coin).toEqual({ kind: 'unit', unitId });
   });
 
   test.each([

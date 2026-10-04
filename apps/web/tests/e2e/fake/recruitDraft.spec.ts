@@ -165,10 +165,19 @@ test('recruits, deploys and moves through private drafts in fake API', async ({
       const fakeApiModule: unknown = await import(moduleUrl);
       const { createFakeGameApi } = fakeApiModule as FakeApiModule;
       const supportedUnits = new Set([
-        'lightCavalry',
+        'archer',
+        'berserker',
         'cavalry',
         'crossbowman',
+        'ensign',
+        'knight',
+        'lancer',
+        'lightCavalry',
+        'marshal',
+        'pikeman',
+        'royalGuard',
         'swordsman',
+        'warriorPriest',
       ]);
 
       for (let turn = 0; turn < 12; turn += 1) {
@@ -190,7 +199,13 @@ test('recruits, deploys and moves through private drafts in fake API', async ({
         );
 
         if (coinIndex !== undefined && coinIndex >= 0) {
-          return { coinIndex, playerId };
+          const coin = hand?.at(coinIndex);
+
+          if (coin?.kind !== 'unit') {
+            throw new Error('Deployment must use a unit coin.');
+          }
+
+          return { coinIndex, playerId, unitId: coin.unitId };
         }
 
         if (hand === undefined || hand === null || hand.length === 0) {
@@ -244,6 +259,10 @@ test('recruits, deploys and moves through private drafts in fake API', async ({
   await expect(
     deployPage.getByRole('img', { name: /^Открытый жетон / })
   ).toBeVisible();
+  await deployPage.screenshot({
+    path: 'test-results/deploy-selection-mobile.png',
+    fullPage: true,
+  });
   await deployTarget.click();
   await expect(
     deployPage.getByRole('region', { name: 'Черновик хода' })
@@ -254,7 +273,7 @@ test('recruits, deploys and moves through private drafts in fake API', async ({
   ).toHaveCount(0);
 
   const deployedToken = deployPage.getByRole('img', {
-    name: /^(cavalry|crossbowman|lightCavalry|swordsman) на клетке /,
+    name: new RegExp(`^${deployOpportunity.unitId} на клетке `),
   });
   await expect(deployedToken).toBeVisible();
   await expectFieldTokenSize(targetCell, deployedToken);
